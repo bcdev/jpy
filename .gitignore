@@ -1,5 +1,6 @@
 target
 build
+local.txt
 .idea
 *.iml
 *.class
