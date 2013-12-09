@@ -20,9 +20,16 @@ Disadvantages to the 'beampy' codegen approach:
 * Slower, method resolution at runtime, memory overhead
 
 
+Current TODO
+------------
 
-Other
------
+* Each parameter in a parameter list shall have a deallocator, so that we can release locally allocated resources
+  for parameters after the JNI call: e.g. buffers, or newly allocated Java strings
+
+
+
+Design Issues
+-------------
 
 * If we only have one JOverloadedMethod then we should use JMethod instead. JOverloadedMethod must be a sub-type of JMethod.
 * Add various modes of operation:
@@ -45,3 +52,5 @@ if (e != NULL) {
     PyErr_Format(format, message)
 	...
 }
+
+
