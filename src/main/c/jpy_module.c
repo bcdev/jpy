@@ -131,7 +131,7 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* jvm, void* reserved)
  */
 PyMODINIT_FUNC PyInit_jpy(void)
 {
-    printf("PyInit_jpy: enter\n");
+    //printf("PyInit_jpy: enter\n");
 
     /////////////////////////////////////////////////////////////////////////
 
@@ -178,7 +178,7 @@ PyMODINIT_FUNC PyInit_jpy(void)
 
     /////////////////////////////////////////////////////////////////////////
 
-    printf("PyInit_jpy: exit\n");
+    //printf("PyInit_jpy: exit\n");
 
     return JPy_Module;
 }
@@ -240,7 +240,7 @@ PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds)
             return NULL;
         }
         jvmOptions[i].optionString = PyUnicode_AsUTF8(option);
-        printf("jvmOptions[%d].optionString = '%s'\n", i, jvmOptions[i].optionString);
+        //printf("jvmOptions[%d].optionString = '%s'\n", i, jvmOptions[i].optionString);
         if (jvmOptions[i].optionString == NULL) {
             PyMem_Del(jvmOptions);
             return NULL;
@@ -413,7 +413,6 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     {
         jclass c = (*jenv)->FindClass(jenv, "java/lang/String");
         JPy_JString = JType_GetType(c, JNI_FALSE);
-        printf("JPy_JString = %p\n", JPy_JString);
     }
 
     return 0;
@@ -450,9 +449,7 @@ char* JPy_AllocTypeNameUTF(JNIEnv* jenv, jclass classRef)
     // todo: handle errors
     typeNameStr = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetName_MID);
     typeName = (*jenv)->GetStringUTFChars(jenv, typeNameStr, NULL);
-
     typeNameCopy = JPy_CopyUTF(typeName);
-
     (*jenv)->ReleaseStringUTFChars(jenv, classRef, typeName);
 
     return typeNameCopy;
@@ -468,6 +465,7 @@ PyObject* JPy_GetTypeNameString(JNIEnv* jenv, jclass classRef)
     jclass typeNameObj;
     const char* typeName;
 
+    // todo: handle errors
     typeNameObj = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetName_MID);
     typeName = (*jenv)->GetStringUTFChars(jenv, typeNameObj, NULL);
     typeString = Py_BuildValue("s", typeName);
@@ -485,6 +483,7 @@ PyObject* JPy_ConvertJavaToStringToPythonString(JNIEnv* jenv, jobject objectRef)
         return Py_BuildValue("");
     }
 
+    // todo: handle errors
     stringRef = (*jenv)->CallObjectMethod(jenv, objectRef, JPy_Object_ToString_MID);
     returnValue = JPy_ConvertJavaToPythonString(jenv, stringRef);
     (*jenv)->DeleteLocalRef(jenv, stringRef);
@@ -501,6 +500,7 @@ PyObject* JPy_ConvertJavaToPythonString(JNIEnv* jenv, jstring stringRef)
         return Py_BuildValue("");
     }
 
+    // todo: handle errors
     length = (*jenv)->GetStringLength(jenv, stringRef);
     if (length > 0) {
         const jchar* chars;
