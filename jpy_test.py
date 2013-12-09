@@ -28,6 +28,16 @@ class TestString(unittest.TestCase):
         s2 = s.substring(2)
         self.assertEqual(s2, 'bo')
 
+    def test_getBytes(self):
+        s = self.String('Bibo')
+        self.assertTrue('getBytes' in self.String.__dict__)
+        array = s.getBytes()
+        self.assertEqual(type(array), jpy.CArray)
+        self.assertEqual(len(array), 4)
+        self.assertEqual(array[0], 66)
+        self.assertEqual(array[1], 105)
+        self.assertEqual(array[2], 98)
+        self.assertEqual(array[3], 111)
 
 import os
 

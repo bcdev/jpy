@@ -185,14 +185,6 @@ PyObject* JPy_FromJString(JNIEnv* jenv, JPy_JType* type, jstring stringRef)
  */
 PyObject* JPy_FromJObject(JNIEnv* jenv, JPy_JType* type, jobject objectRef)
 {
-    JPy_JObj* returnValue;
-
-    if (objectRef == NULL) {
-        return Py_BuildValue("");
-    }
-
-    // todo: special treatment of arrays!
-
     // We can either
     //   1) create a JObj instance for objectRef using given type (current impl.), or
     //   2) get the actual class of the return value and lookup its JType and create an JObj instance.
@@ -202,8 +194,7 @@ PyObject* JPy_FromJObject(JNIEnv* jenv, JPy_JType* type, jobject objectRef)
     // actualClassRef = (*jenv)->GetObjectClass(jenv, objectRef);
     // actualType = JType_GetType(actualClassRef, JNI_FALSE);
 
-    returnValue = JObj_FromType(jenv, type, objectRef);
-    return (PyObject*) returnValue;
+    return JType_ConvertJavaToPythonObject(jenv, type, objectRef);
 }
 
 
@@ -218,11 +209,6 @@ PyObject* JMethod_InvokeMethod(JPy_JMethod* jMethod, JPy_JType* type, PyObject* 
     PyTypeObject* returnType;
 
     JPY_GET_JENV(jenv, NULL)
-
-    if (jMethod->returnDescriptor->type->componentType != NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "array return types not handled yet (TODO)");
-        return NULL;
-    }
 
     //printf("JMethod_InvokeMethod 1: typeCode=%c\n", typeCode);
     if (JMethod_CreateJArgs(jMethod, argTuple, &jArgs) < 0) {

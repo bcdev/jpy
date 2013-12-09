@@ -2,6 +2,7 @@
 #include "jpy_jtype.h"
 #include "jpy_jmethod.h"
 #include "jpy_jobj.h"
+#include "jpy_carray.h"
 
 JPy_JType* JType_New(JNIEnv* jenv, jclass classRef, jboolean resolve);
 int JType_ResolveType(JNIEnv* jenv, JPy_JType* type);
@@ -151,6 +152,8 @@ JPy_JType* JType_New(JNIEnv* jenv, jclass classRef, jboolean resolve)
         PyErr_NoMemory();
         return NULL;
     }
+
+    type->isPrimitive = (*jenv)->CallBooleanMethod(jenv, type->classRef, JPy_Class_IsPrimitive_MID);
 
     if (JPy_IsDebug()) printf("JType_New: javaName='%s', resolve=%d, type=%p\n", type->javaName, resolve, type);
 
@@ -335,10 +338,59 @@ int JType_ConvertToJString(JPy_JType* type, PyObject* arg, jvalue* value)
 
 PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject objectRef)
 {
-    // todo: check for Java wrapper types as well: java.lang.Byte, java.lang.Short, java.lang.Integer, ...
-    if ((PyTypeObject*) type == JPy_JString) {
-        return JPy_ConvertJavaToPythonString(jenv, objectRef);
-        //return JPy_ConvertJavaToStringToPythonString(jenv, objectRef);
+    if (objectRef == NULL) {
+        return Py_BuildValue("");
+    }
+
+    if (type->componentType == NULL) {
+        // todo: check for Java wrapper types as well: java.lang.Byte, java.lang.Short, java.lang.Integer, ...
+        if ((PyTypeObject*) type == JPy_JString) {
+            return JPy_ConvertJavaToPythonString(jenv, objectRef);
+            //return JPy_ConvertJavaToStringToPythonString(jenv, objectRef);
+        } else {
+            return (PyObject*) JObj_FromType(jenv, type, objectRef);
+        }
+    } else if (type->componentType->isPrimitive) {
+        JPy_CArray* array;
+        const char* format;
+        jint length;
+        jbyte* items;
+
+        length = (*jenv)->GetArrayLength(jenv, objectRef);
+        items = (*jenv)->GetPrimitiveArrayCritical(jenv, objectRef, 0);
+        if (items == NULL) {
+            PyErr_NoMemory();
+            return NULL;
+        }
+        if ((PyTypeObject*) type->componentType == JPy_JBoolean) {
+            format = "b";
+        } else if ((PyTypeObject*) type->componentType == JPy_JByte) {
+            format = "b";
+        } else if ((PyTypeObject*) type->componentType == JPy_JChar) {
+            format = "h";
+        } else if ((PyTypeObject*) type->componentType == JPy_JShort) {
+            format = "h";
+        } else if ((PyTypeObject*) type->componentType == JPy_JInt) {
+            format = "i";
+        } else if ((PyTypeObject*) type->componentType == JPy_JLong) {
+            format = "l";
+        } else if ((PyTypeObject*) type->componentType == JPy_JFloat) {
+            format = "f";
+        } else if ((PyTypeObject*) type->componentType == JPy_JDouble) {
+            format = "d";
+        } else {
+            // todo: raise internal error
+        }
+
+        array = (JPy_CArray*) CArray_New(format, length);
+        if (array == NULL) {
+            return NULL;
+        }
+        memcpy(array->items, items, length);
+
+        (*jenv)->ReleasePrimitiveArrayCritical(jenv, objectRef, items, 0);
+
+        return array;
     } else {
         return (PyObject*) JObj_FromType(jenv, type, objectRef);
     }
@@ -421,7 +473,6 @@ int JType_ProcessMethod(JNIEnv* jenv, JPy_JType* type, PyObject* methodKey, cons
     JPy_ReturnDescriptor* returnDescriptor = NULL;
     jint paramCount;
     JPy_JMethod* jMethod;
-
 
     paramCount = (*jenv)->GetArrayLength(jenv, paramTypes);
     if (JPy_IsDebug()) printf("JType_ProcessMethod: methodName=%s, paramCount=%d, isStatic=%d, mid=%p\n", methodName, paramCount, isStatic, mid);
@@ -663,9 +714,6 @@ JPy_ParamDescriptor* JType_CreateParamDescriptors(JNIEnv* jenv, int paramCount, 
 void JType_InitParamDescriptorMethods(JPy_ParamDescriptor* paramDescriptor)
 {
     PyTypeObject* type = (PyTypeObject*) paramDescriptor->type;
-
-    //jboolean isPrimitive;
-    //isPrimitive = (*jenv)->CallBooleanMethod(jenv, classRef, JPy_Class_IsPrimitive_MID);
 
     if (type == JPy_JVoid) {
         paramDescriptor->assessToJValue = NULL;
