@@ -34,7 +34,7 @@ class JavaPackageImporter(importlib.abc.MetaPathFinder):
         if is_reload:
             module = sys.modules[fullname]
             print('module found!')
-            # todo - check what to do next...
+            # Now, check what to do next...?
         else:
             module = new_module(fullname)
             sys.modules[fullname] = module
@@ -42,7 +42,7 @@ class JavaPackageImporter(importlib.abc.MetaPathFinder):
             module.__path__ = None
             dot_pos = fullname.rfind('.')
             module.__package__ = fullname[:dot_pos] if dot_pos > 0 else ''
-            # todo - call into C-lib and load Java package or class
+            # Now, call into C-lib and load Java package or class...
             print('new module: ' + module.__name__)
             module.File = File
             module.Float = Float
