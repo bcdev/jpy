@@ -26,7 +26,6 @@ class TestMethodReturnValues(unittest.TestCase):
     def test_objects(self):
         obj = self.Dummy()
         self.assertEqual(obj.getValue_String('Hi!'), 'Hi!')
-        # fails, since equal method missing in JObj
         self.assertEqual(obj.getValue_Object(obj), obj)
 
     # todo - add the others here

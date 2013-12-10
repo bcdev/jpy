@@ -75,8 +75,13 @@ PyTypeObject* JPy_JString = NULL;
 
 // Global VM Information (todo: put this into JPy_JVM structure)
 // {{{
+
+jclass JPy_Comparable_JClass = NULL;
+
 jclass JPy_Object_JClass = NULL;
 jmethodID JPy_Object_ToString_MID = NULL;
+jmethodID JPy_Object_HashCode_MID = NULL;
+jmethodID JPy_Object_Equals_MID = NULL;
 
 jclass JPy_Class_JClass = NULL;
 jmethodID JPy_Class_GetName_MID = NULL;
@@ -389,8 +394,12 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
 {
     // todo: check, if we need to convert all jclass types using NewGlobalReference()
 
+    JPy_Comparable_JClass = (*jenv)->FindClass(jenv, "java/lang/Comparable");
+
     JPy_Object_JClass = (*jenv)->FindClass(jenv, "java/lang/Object");
     JPy_Object_ToString_MID = (*jenv)->GetMethodID(jenv, JPy_Object_JClass, "toString", "()Ljava/lang/String;");
+    JPy_Object_HashCode_MID = (*jenv)->GetMethodID(jenv, JPy_Object_JClass, "hashCode", "()I");
+    JPy_Object_Equals_MID = (*jenv)->GetMethodID(jenv, JPy_Object_JClass, "equals", "(Ljava/lang/Object;)Z");
 
     JPy_Class_JClass = (*jenv)->FindClass(jenv, "java/lang/Class");
     JPy_Class_GetName_MID = (*jenv)->GetMethodID(jenv, JPy_Class_JClass, "getName", "()Ljava/lang/String;");

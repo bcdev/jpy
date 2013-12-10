@@ -40,9 +40,13 @@ extern PyTypeObject* JPy_JString;
 
 
 
+// java.lang.Comparable
+extern jclass JPy_Comparable_JClass;
 // java.lang.Object
 extern jclass JPy_Object_JClass;
 extern jmethodID JPy_Object_ToString_MID;
+extern jmethodID JPy_Object_HashCode_MID;
+extern jmethodID JPy_Object_Equals_MID;
 // java.lang.Class
 extern jclass JPy_Class_JClass;
 extern jmethodID JPy_Class_GetName_MID;

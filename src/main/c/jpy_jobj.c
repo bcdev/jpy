@@ -107,8 +107,134 @@ void JObj_dealloc(JPy_JObj* self)
     Py_TYPE(self)->tp_free((PyObject*) self);
 }
 
+int JObj_CompareTo(JPy_JObj* obj1, JPy_JObj* obj2)
+{
+    JNIEnv* jenv;
+    jobject ref1;
+    jobject ref2;
+    int value;
+
+    JPY_GET_JENV(jenv, -2)
+
+    ref1 = obj1->objectRef;
+    ref2 = obj2->objectRef;
+
+    if (ref1 == ref2 || (*jenv)->IsSameObject(jenv, ref1, ref2)) {
+        return 0;
+    } else if ((*jenv)->IsInstanceOf(jenv, ref1, JPy_Comparable_JClass)) {
+        // todo: optimize following code
+        jclass classRef = (*jenv)->GetObjectClass(jenv, ref1);
+        jmethodID mid = (*jenv)->GetMethodID(jenv, classRef, "compareTo", "(Ljava/lang/Object;)I");
+        value = (*jenv)->CallIntMethod(jenv, ref1, mid, ref2);
+    } else {
+        value = (char*) ref1 - (char*) ref2;
+    }
+
+    return (value == 0) ? 0 : (value < 0) ? -1 : +1;
+}
+
+int JObj_Equals(JPy_JObj* obj1, JPy_JObj* obj2)
+{
+    JNIEnv* jenv;
+    jobject ref1;
+    jobject ref2;
+
+    JPY_GET_JENV(jenv, -2)
+
+    ref1 = obj1->objectRef;
+    ref2 = obj2->objectRef;
+
+    if ((*jenv)->IsSameObject(jenv, ref1, ref2)) {
+        return 1;
+    } else {
+        return (*jenv)->CallIntMethod(jenv, ref1, JPy_Object_Equals_MID, ref2);
+    }
+}
+
 /**
- * The JObj type's tp_repr slot. Called when repr(obj) is called.
+ * The JObj type's tp_richcompare slot. Python: obj1 <opid> obj2
+ */
+PyObject* JObj_richcompare(PyObject* obj1, PyObject* obj2, int opid)
+{
+    if (!JObj_Check(obj1) || !JObj_Check(obj2)) {
+        Py_RETURN_FALSE;
+    }
+    if (opid == Py_LT) {
+        int value = JObj_CompareTo((JPy_JObj*) obj1, (JPy_JObj*) obj2);
+        if (value == -2) {
+            return NULL;
+        } else if (value == -1) {
+            Py_RETURN_TRUE;
+        } else {
+            Py_RETURN_FALSE;
+        }
+    } else if (opid == Py_LE) {
+        int value = JObj_CompareTo((JPy_JObj*) obj1, (JPy_JObj*) obj2);
+        if (value == -2) {
+            return NULL;
+        } else if (value == -1 || value == 0) {
+            Py_RETURN_TRUE;
+        } else {
+            Py_RETURN_FALSE;
+        }
+    } else if (opid == Py_GT) {
+        int value = JObj_CompareTo((JPy_JObj*) obj1, (JPy_JObj*) obj2);
+        if (value == -2) {
+            return NULL;
+        } else if (value == +1) {
+            Py_RETURN_TRUE;
+        } else {
+            Py_RETURN_FALSE;
+        }
+    } else if (opid == Py_GE) {
+        int value = JObj_CompareTo((JPy_JObj*) obj1, (JPy_JObj*) obj2);
+        if (value == -2) {
+            return NULL;
+        } else if (value == +1 || value == 0) {
+            Py_RETURN_TRUE;
+        } else {
+            Py_RETURN_FALSE;
+        }
+    } else if (opid == Py_EQ) {
+        int value = JObj_Equals((JPy_JObj*) obj1, (JPy_JObj*) obj2);
+        if (value == -2) {
+            return NULL;
+        } else if (value) {
+            Py_RETURN_TRUE;
+        } else {
+            Py_RETURN_FALSE;
+        }
+    } else if (opid == Py_NE) {
+        int value = JObj_Equals((JPy_JObj*) obj1, (JPy_JObj*) obj2);
+        if (value == -2) {
+            return NULL;
+        } else if (value) {
+            Py_RETURN_FALSE;
+        } else {
+            Py_RETURN_TRUE;
+        }
+    } else {
+        PyErr_SetString(PyExc_RuntimeError, "internal error: unrecognized opid");
+        return NULL;
+    }
+}
+
+/**
+ * The JObj type's tp_hash slot. Python: hash(obj)
+ */
+long JObj_hash(JPy_JObj* self)
+{
+    JNIEnv* jenv;
+    jenv = JPy_GetJNIEnv();
+    if (jenv != NULL) {
+        return (*jenv)->CallIntMethod(jenv, self->objectRef, JPy_Object_HashCode_MID);
+    }
+    return -1;
+}
+
+
+/**
+ * The JObj type's tp_repr slot. Python: repr(obj))
  */
 PyObject* JObj_repr(JPy_JObj* self)
 {
@@ -116,7 +242,7 @@ PyObject* JObj_repr(JPy_JObj* self)
 }
 
 /**
- * The JObj type's tp_str slot. Called if str(obj) is called.
+ * The JObj type's tp_str slot. Python: str(obj)
  */
 PyObject* JObj_str(JPy_JObj* self)
 {
@@ -283,10 +409,11 @@ int JType_InitSlots(JPy_JType* type)
 
     // todo: check Java Object type and create python protocols: Map/dict, List/list, Set/set
 
-    // todo: complete list of built-in methods for Java Object: toString(), hashKey(), equals()
     typeObj->tp_alloc = PyType_GenericAlloc;
     typeObj->tp_new = PyType_GenericNew;
     typeObj->tp_init = (initproc) JObj_init;
+    typeObj->tp_richcompare = (richcmpfunc) JObj_richcompare;
+    typeObj->tp_hash = (hashfunc) JObj_hash;
     typeObj->tp_repr = (reprfunc) JObj_repr;
     typeObj->tp_str = (reprfunc) JObj_str;
     typeObj->tp_dealloc = (destructor) JObj_dealloc;
