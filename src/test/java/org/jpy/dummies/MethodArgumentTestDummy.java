@@ -1,24 +1,28 @@
 package org.jpy.dummies;
 
-import org.jpy.ReturnValue;
+import org.jpy.Mutable;
+import org.jpy.Return;
 
 /**
- * Used as a test class for the test cases in jpy_jvm_librt_test.py
+ * Used as a test class for the test cases in jpy_dummies_test.py
  *
  * @author Norman Fomferra
  */
 @SuppressWarnings("UnusedDeclaration")
 public class MethodArgumentTestDummy {
 
-    private final int id;
-
-    public MethodArgumentTestDummy(int id) {
-        this.id = id;
+    public void modifyObject(@Mutable Thing object, int value) {
+        object.setValue(value);
     }
 
-    public int getId() {
-        return id;
+    public int[] getArray1D_int(@Return int[] array) {
+        return array;
     }
 
-    // todo: add variants here
+    public int[] modifyArray1D_int(@Mutable @Return int[] value, int item0, int item1, int item2) {
+        value[0] = item0;
+        value[1] = item1;
+        value[2] = item2;
+        return value;
+    }
 }

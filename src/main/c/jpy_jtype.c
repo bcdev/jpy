@@ -357,6 +357,7 @@ PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject
         jbyte* items;
 
         length = (*jenv)->GetArrayLength(jenv, objectRef);
+        //printf("JType_ConvertJavaToPythonObject: length=%d\n", length);
         items = (*jenv)->GetPrimitiveArrayCritical(jenv, objectRef, 0);
         if (items == NULL) {
             PyErr_NoMemory();
@@ -383,14 +384,13 @@ PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject
         }
 
         array = (JPy_CArray*) CArray_New(format, length);
-        if (array == NULL) {
-            return NULL;
+        if (array != NULL) {
+            memcpy(array->items, items, array->item_size * length);
         }
-        memcpy(array->items, items, length);
 
         (*jenv)->ReleasePrimitiveArrayCritical(jenv, objectRef, items, 0);
 
-        return array;
+        return (PyObject*) array;
     } else {
         return (PyObject*) JObj_FromType(jenv, type, objectRef);
     }

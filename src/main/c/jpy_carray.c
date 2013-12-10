@@ -448,6 +448,7 @@ PyObject* CArray_New(const char* format, int length) {
 
     self = (JPy_CArray*) type->tp_alloc(type, 0);
     CArray_InitInstance(self, format, items, item_size, length, CArray_FreeMemory);
+    Py_INCREF(self);
     return (PyObject*) self;
 }
 
