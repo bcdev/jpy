@@ -30,7 +30,8 @@ Current TODO
 
 Design Issues
 -------------
-
+* Add a new module function 'import' which calls 'get_class' but then creates new modules up the last dot in the class name.
+  E.g. java.io.File will create the module 'java', than create 'io' and add this to 'java' and then add class 'File' to 'io'.
 * Add 'get_ref' method to JObj_Type so that we can easily test for Java object identity
 * Add 'classpath' parameter to 'create_jvm' function. It is a list of path entries.
   This is needed because using the JVM option '-Djava.class.path=<classpath>' is platform-specific due to the
@@ -58,4 +59,4 @@ if (e != NULL) {
 	...
 }
 
-
+Wrap Java exceptions into our Python JException_Type.
