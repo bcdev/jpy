@@ -31,6 +31,8 @@ Current TODO
 Design Issues
 -------------
 
+* Add 'get_ref' method to JObj_Type so that we can easily test for Java object identity
+
 * If we only have one JOverloadedMethod then we should use JMethod instead. JOverloadedMethod must be a sub-type of JMethod.
 * Add various modes of operation:
   - actual_type (retrieve the actual class of a returned Java object or use the return type of the Java method declaration).
