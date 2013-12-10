@@ -11,6 +11,7 @@ def _collect_classpath(path, classpath):
 
 def _create_classpath():
 
+    # todo: read 'beam_home' from a configuration file (beampy.ini)
     beam_home = os.getenv('BEAM_HOME', os.getenv('BEAM5_HOME'))
 
     invalid_beam_home = RuntimeError('BEAM_HOME environment variable must be set to a valid BEAM installation directors')
@@ -31,7 +32,6 @@ def _create_classpath():
             and os.path.exists(beam_mod)):
         raise invalid_beam_home
 
-
     os.listdir(beam_lib)
 
     classpath = []
@@ -44,12 +44,19 @@ def _create_classpath():
 
 classpath = _create_classpath()
 
-import pprint
-pprint.pprint(classpath)
+del _create_classpath
+del _collect_classpath
 
-jpy.create_jvm(options=['-Djava.class.path=' + os.pathsep.join(classpath), '-Xmx512M'])
+#import pprint
+#pprint.pprint(classpath)
+
+# todo: read 'debug' and additional options from a configuration file (beampy.ini)
+#debug = True
+debug = False
+jpy.create_jvm(options=['-Djava.class.path=' + os.pathsep.join(classpath), '-Xmx512M'], debug=debug)
 
 try:
+    # todo: read pre-defined types from a configuration file (beampy.ini)
     ProductIO = jpy.get_jtype('org.esa.beam.framework.dataio.ProductIO')
     Product = jpy.get_jtype('org.esa.beam.framework.datamodel.Product')
     Band = jpy.get_jtype('org.esa.beam.framework.datamodel.Band')
@@ -58,3 +65,4 @@ try:
 except Exception:
     jpy.destroy_jvm()
     raise
+
