@@ -269,6 +269,11 @@ int JType_InitSlots(JPy_JType* type)
 
     typeObj->tp_getattro = JObj_getattro;
 
+    // todo: add  <sequence> protocol to 'java.lang.String' type.
+    // Note that we have to do this after assigning the type to the global variable 'JPy_JString'.
+    // However, this function (JType_InitSlots) is called *while* assigning the value 'JPy_JString'
+    // so we cannot use to test against it here.
+
     // If this type is an array type, add support for the <sequence> protocol
     if (type->componentType != NULL) {
         typeObj->tp_as_sequence = &JObj_as_sequence;
