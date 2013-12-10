@@ -284,8 +284,11 @@ PyObject* JObj_getattro(PyObject* self, PyObject* name)
 Py_ssize_t JObj_sq_length(JPy_JObj* self)
 {
     JNIEnv* jenv;
+    jsize length;
     JPY_GET_JENV(jenv, -1)
-    return (Py_ssize_t) (*jenv)->GetArrayLength(jenv, self->objectRef);
+    length = (*jenv)->GetArrayLength(jenv, self->objectRef);
+    //printf("JObj_sq_length: length=%d\n", length);
+    return (Py_ssize_t) length;
 }
 
 /*
@@ -297,8 +300,11 @@ PyObject* JObj_sq_item(JPy_JObj* self, Py_ssize_t index)
     JNIEnv* jenv;
     JPy_JType* type;
     jobject objectRef;
+    jsize length;
 
     JPY_GET_JENV(jenv, NULL)
+
+    //printf("JObj_sq_item: index=%d\n", index);
 
     type = (JPy_JType*) Py_TYPE(self);
     if (type->componentType == NULL) {
@@ -306,11 +312,20 @@ PyObject* JObj_sq_item(JPy_JObj* self, Py_ssize_t index)
         return NULL;
     }
 
+    // This is annoying and slow in Python 3.3.2: We must have this check, in order to raise an PyExc_IndexError,
+    // otherwise Python functions such as list(jarr) will not succeed.
+    // Tis is really strange, because n = sq_length() will be called and subsequent sq_item(index=0 ... n) calls will be done.
+    length = (*jenv)->GetArrayLength(jenv, self->objectRef);
+    if (index < 0 || index >= length) {
+        PyErr_SetString(PyExc_IndexError, "Java array index out of bounds");
+        return NULL;
+    }
+
     objectRef = (*jenv)->GetObjectArrayElement(jenv, self->objectRef, (jsize) index);
     if ((*jenv)->ExceptionCheck(jenv)) {
         (*jenv)->ExceptionDescribe(jenv);
         (*jenv)->ExceptionClear(jenv);
-        PyErr_SetString(PyExc_RuntimeError, "internal error: GetObjectArrayElement failed");
+        PyErr_SetString(PyExc_RuntimeError, "index error");
         return NULL;
     }
 
@@ -332,12 +347,12 @@ int JObj_sq_ass_item(JPy_JObj* self, Py_ssize_t index, PyObject* item)
     type = (JPy_JType*) Py_TYPE(self);
     if (type->componentType == NULL) {
         PyErr_SetString(PyExc_RuntimeError, "internal error: object is not an array");
-        return -2;
+        return -1;
     }
 
     if (item != Py_None) {
         if (JType_ConvertPythonToJavaObject(jenv, type->componentType, item, &elementRef) < 0) {
-            return -3;
+            return -1;
         }
     } else {
         elementRef = NULL;
@@ -346,8 +361,8 @@ int JObj_sq_ass_item(JPy_JObj* self, Py_ssize_t index, PyObject* item)
     if ((*jenv)->ExceptionCheck(jenv)) {
         (*jenv)->ExceptionDescribe(jenv);
         (*jenv)->ExceptionClear(jenv);
-        PyErr_SetString(PyExc_RuntimeError, "internal error: SetObjectArrayElement failed");
-        return -4;
+        PyErr_SetString(PyExc_RuntimeError, "index error");
+        return -1;
     }
     return 0;
 }
