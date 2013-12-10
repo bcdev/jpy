@@ -28,6 +28,20 @@ class TestString(unittest.TestCase):
         s2 = s.substring(2)
         self.assertEqual(s2, 'bo')
 
+
+    def test_split(self):
+        s = self.String('/usr/local/bibo')
+        self.assertTrue('split' in self.String.__dict__)
+        array = s.split('/')
+        self.assertEqual(len(array), 4)
+        self.assertEqual(array[0], '')
+        self.assertEqual(array[1], 'usr')
+        self.assertEqual(array[2], 'local')
+        self.assertEqual(array[3], 'bibo')
+        array = s.split('/', 2)
+        self.assertEqual(array[0], '')
+        self.assertEqual(array[1], 'usr/local/bibo')
+
     def test_getBytes(self):
         s = self.String('Bibo')
         self.assertTrue('getBytes' in self.String.__dict__)
