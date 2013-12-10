@@ -6,9 +6,9 @@ jpy.create_jvm(options=['-Djava.class.path=target/test-classes', '-Xmx512M'])
 class TestMethodReturnValues(unittest.TestCase):
 
     def setUp(self):
-        self.Dummy = jpy.get_jtype('org.jpy.dummies.MethodReturnValueTestDummy')
-        self.Thing = jpy.get_jtype('org.jpy.dummies.Thing')
-        self.assertTrue('org.jpy.dummies.MethodReturnValueTestDummy' in jpy.jtypes)
+        self.Dummy = jpy.get_class('org.jpy.dummies.MethodReturnValueTestDummy')
+        self.Thing = jpy.get_class('org.jpy.dummies.Thing')
+        self.assertTrue('org.jpy.dummies.MethodReturnValueTestDummy' in jpy.types)
 
     def test_void(self):
         dummy = self.Dummy()

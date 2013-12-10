@@ -9,7 +9,7 @@
 
 PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds);
 PyObject* JPy_destroy_jvm(PyObject* self, PyObject* args);
-PyObject* JPy_get_jtype(PyObject* self, PyObject* args, PyObject* kwds);
+PyObject* JPy_get_class(PyObject* self, PyObject* args, PyObject* kwds);
 PyObject* JPy_cast(PyObject* self, PyObject* args);
 
 static PyMethodDef JPy_Functions[] = {
@@ -20,8 +20,8 @@ static PyMethodDef JPy_Functions[] = {
     {"destroy_jvm", JPy_destroy_jvm, METH_VARARGS,
                     "destroy_jvm() - destroys the current Java VM."},
 
-    {"get_jtype",   (PyCFunction) JPy_get_jtype, METH_VARARGS|METH_KEYWORDS,
-                    "get_jtype(name, resolve=True) - gets the Java type with the given name. Loads it if not already done. Resolves its methods."},
+    {"get_class",   (PyCFunction) JPy_get_class, METH_VARARGS|METH_KEYWORDS,
+                    "get_class(name, resolve=True) - gets the Java type with the given name. Loads it if not already done. Resolves its methods."},
 
     {"cast",        JPy_cast, METH_VARARGS,
                     "cast(jobj, class_name) - casts jobj to the Java class given by class_name. Returns None if the cast is not possible"},
@@ -43,8 +43,8 @@ static struct PyModuleDef JPy_ModuleDef =
 };
 
 PyObject* JPy_Module = NULL;
-PyObject* JPy_Exception = NULL;
 PyObject* JPy_Types = NULL;
+PyObject* JException_Type = NULL;
 
 typedef struct {
     // A global reference to a Java VM.
@@ -180,15 +180,15 @@ PyMODINIT_FUNC PyInit_jpy(void)
 
     /////////////////////////////////////////////////////////////////////////
 
-    JPy_Exception = PyErr_NewException("jpy.Exception", NULL, NULL);
-    Py_INCREF(JPy_Exception);
-    PyModule_AddObject(JPy_Module, "jexception", JPy_Exception);
+    JException_Type = PyErr_NewException("jpy.JException", NULL, NULL);
+    Py_INCREF(JException_Type);
+    PyModule_AddObject(JPy_Module, "JException", JException_Type);
 
     /////////////////////////////////////////////////////////////////////////
 
     JPy_Types = PyDict_New();
     Py_INCREF(JPy_Types);
-    PyModule_AddObject(JPy_Module, "jtypes", JPy_Types);
+    PyModule_AddObject(JPy_Module, "types", JPy_Types);
 
     /////////////////////////////////////////////////////////////////////////
 
@@ -227,7 +227,7 @@ PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds)
     }
 
     JVM.DEBUG = JNI_FALSE;
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|p", keywords, &options, &JVM.DEBUG)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|p:create_jvm", keywords, &options, &JVM.DEBUG)) {
         return NULL;
     }
 
@@ -322,14 +322,14 @@ PyObject* JPy_destroy_jvm(PyObject* self, PyObject* args)
     return Py_BuildValue("");
 }
 
-PyObject* JPy_get_jtype(PyObject* self, PyObject* args, PyObject* kwds)
+PyObject* JPy_get_class(PyObject* self, PyObject* args, PyObject* kwds)
 {
     static char* keywords[] = {"name", "resolve", NULL};
     const char* className;
     int resolve;
 
     resolve = JNI_TRUE;
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|p", keywords, &className, &resolve)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|p:get_class", keywords, &className, &resolve)) {
         return NULL;
     }
 

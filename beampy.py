@@ -57,11 +57,11 @@ jpy.create_jvm(options=['-Djava.class.path=' + os.pathsep.join(classpath), '-Xmx
 
 try:
     # todo: read pre-defined types from a configuration file (beampy.ini)
-    ProductIO = jpy.get_jtype('org.esa.beam.framework.dataio.ProductIO')
-    Product = jpy.get_jtype('org.esa.beam.framework.datamodel.Product')
-    Band = jpy.get_jtype('org.esa.beam.framework.datamodel.Band')
-    VirtualBand = jpy.get_jtype('org.esa.beam.framework.datamodel.VirtualBand')
-    GeoCoding = jpy.get_jtype('org.esa.beam.framework.datamodel.GeoCoding')
+    ProductIO = jpy.get_class('org.esa.beam.framework.dataio.ProductIO')
+    Product = jpy.get_class('org.esa.beam.framework.datamodel.Product')
+    Band = jpy.get_class('org.esa.beam.framework.datamodel.Band')
+    VirtualBand = jpy.get_class('org.esa.beam.framework.datamodel.VirtualBand')
+    GeoCoding = jpy.get_class('org.esa.beam.framework.datamodel.GeoCoding')
 except Exception:
     jpy.destroy_jvm()
     raise

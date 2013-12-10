@@ -10,8 +10,8 @@ extern "C" {
 #include <jni.h>
 
 extern PyObject* JPy_Module;
-extern PyObject* JPy_Exception;
 extern PyObject* JPy_Types;
+extern PyObject* JException_Type;
 
 #define JPy_JINIT_ATTR_NAME "__jinit__"
 

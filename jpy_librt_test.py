@@ -6,8 +6,8 @@ jpy.create_jvm(options=['-Xmx512M'])
 class TestString(unittest.TestCase):
 
     def setUp(self):
-        self.String = jpy.get_jtype('java.lang.String')
-        self.assertTrue('java.lang.String' in jpy.jtypes)
+        self.String = jpy.get_class('java.lang.String')
+        self.assertTrue('java.lang.String' in jpy.types)
 
     def test_constructor(self):
         s = self.String('Bibo')
@@ -58,8 +58,8 @@ import os
 class TestFile(unittest.TestCase):
 
     def setUp(self):
-        self.File = jpy.get_jtype('java.io.File')
-        self.assertTrue('java.io.File' in jpy.jtypes)
+        self.File = jpy.get_class('java.io.File')
+        self.assertTrue('java.io.File' in jpy.types)
 
     def test_constructor(self):
         f = self.File('/usr/local/bibo')
@@ -84,7 +84,7 @@ class TestFile(unittest.TestCase):
         path = f.toPath()
         self.assertEqual(str(type(path)), '<class \'java.nio.file.Path\'>')
 
-        jpy.get_jtype('java.nio.file.Path')
+        jpy.get_class('java.nio.file.Path')
         n1 = path.getName(0)
         n2 = path.getName(1)
         n3 = path.getName(2)
