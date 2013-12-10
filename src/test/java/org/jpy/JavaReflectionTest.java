@@ -1,7 +1,7 @@
 package org.jpy;
 
+import org.jpy.dummies.MethodReturnValueTestDummy;
 import org.junit.Test;
-import org.junit.Assert;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -9,9 +9,23 @@ import java.lang.reflect.Method;
 import static org.junit.Assert.assertEquals;
 
 /**
+ * The tests in here are actually not tests; they are only used to clarify the reflection API and JVM properties.
  * @author Norman Fomferra
  */
 public class JavaReflectionTest {
+
+    @Test
+    public void testPrimitiveAndVoidNames() throws Exception {
+        assertEquals("boolean", Boolean.TYPE.getName());
+        assertEquals("byte", Byte.TYPE.getName());
+        assertEquals("char", Character.TYPE.getName());
+        assertEquals("short", Short.TYPE.getName());
+        assertEquals("int", Integer.TYPE.getName());
+        assertEquals("long", Long.TYPE.getName());
+        assertEquals("float", Float.TYPE.getName());
+        assertEquals("double", Double.TYPE.getName());
+        assertEquals("void", Void.TYPE.getName());
+    }
 
     @Test
     public void testObjectArrays() throws Exception {
@@ -20,6 +34,7 @@ public class JavaReflectionTest {
         assertEquals(String[][].class, aClass.getComponentType());
         assertEquals(String[].class, aClass.getComponentType().getComponentType());
         assertEquals(String.class, aClass.getComponentType().getComponentType().getComponentType());
+        assertEquals(null, aClass.getComponentType().getComponentType().getComponentType().getComponentType());
     }
 
     @Test
@@ -29,13 +44,13 @@ public class JavaReflectionTest {
         assertEquals(double[][].class, aClass.getComponentType());
         assertEquals(double[].class, aClass.getComponentType().getComponentType());
         assertEquals(Double.TYPE, aClass.getComponentType().getComponentType().getComponentType());
-        assertEquals("double", Double.TYPE.getName());
+        assertEquals(null, aClass.getComponentType().getComponentType().getComponentType().getComponentType());
     }
 
     public static void main(String[] args) {
         dumpTypeInfo(double[].class);
         dumpTypeInfo(String.class);
-        dumpTypeInfo(Bibo.class);
+        dumpTypeInfo(MethodReturnValueTestDummy.class);
     }
 
     private static void dumpTypeInfo(Class<?> type) {
