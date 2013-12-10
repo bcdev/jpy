@@ -32,6 +32,9 @@ Design Issues
 -------------
 
 * Add 'get_ref' method to JObj_Type so that we can easily test for Java object identity
+* Add 'classpath' parameter to 'create_jvm' function. It is a list of path entries.
+  This is needed because using the JVM option '-Djava.class.path=<classpath>' is platform-specific due to the
+  platform-dependent path separator. (todo: are there any other platform-specific JVM options?)
 
 * If we only have one JOverloadedMethod then we should use JMethod instead. JOverloadedMethod must be a sub-type of JMethod.
 * Add various modes of operation:
