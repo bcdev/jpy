@@ -433,6 +433,9 @@ int JType_InitSlots(JPy_JType* type)
     typeObj->tp_str = (reprfunc) JObj_str;
     typeObj->tp_dealloc = (destructor) JObj_dealloc;
 
+    // Check if we should set type.__module__ to the to the first part (up to the last dot) of the tp_name.
+    // See http://docs.python.org/3/c-api/exceptions.html?highlight=pyerr_newexception#PyErr_NewException
+
     if (PyType_Ready(typeObj) < 0) {
         return -1;
     }
