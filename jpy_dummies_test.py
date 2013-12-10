@@ -86,7 +86,21 @@ class TestMethodReturnValues(unittest.TestCase):
         self.assertEqual(array[1], 2.01)
         self.assertEqual(array[2], 3.01)
 
+    def test_array1d_String(self):
+        dummy = self.Dummy()
+        array = dummy.getArray1D_String('A', 'B', 'C')
+        self.assertEqual(len(array), 3)
+        self.assertEqual(array[0], 'A')
+        self.assertEqual(array[1], 'B')
+        self.assertEqual(array[2], 'C')
 
+    def test_array1d_Object(self):
+        dummy = self.Dummy()
+        array = dummy.getArray1D_Object(self.Thing(7), self.Thing(8), self.Thing(9))
+        self.assertEqual(len(array), 3)
+        self.assertEqual(array[0], self.Thing(7))
+        self.assertEqual(array[1], self.Thing(8))
+        self.assertEqual(array[2], self.Thing(9))
 
 if __name__ == '__main__':
     unittest.main()

@@ -80,6 +80,14 @@ public class MethodReturnValueTestDummy {
         return new double[]{item0, item1, item2};
     }
 
+    public String[] getArray1D_String(String item0, String item1, String item2) {
+        return new String[]{item0, item1, item2};
+    }
+
+    public Thing[] getArray1D_Object(Thing item0, Thing item1, Thing item2) {
+        return new Thing[]{item0, item1, item2};
+    }
+
     // add other variants
 
     ///////////////////////////////////////////////////////////////////////////////////
