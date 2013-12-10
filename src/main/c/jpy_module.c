@@ -222,7 +222,7 @@ PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds)
     jint        res;
 
     if (JVM.jvm != NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "only a single Java VM can be instantiated (use jvm.destroy_jvm() first)");
+        PyErr_SetString(PyExc_RuntimeError, "only a single Java VM can be instantiated (use jpy.destroy_jvm() first)");
         return NULL;
     }
 
