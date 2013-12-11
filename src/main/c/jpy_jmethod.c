@@ -490,7 +490,7 @@ JPy_JMethod* JOverloadedMethod_FindMethod(JPy_JOverloadedMethod* overloadedMetho
     matchValueMax = -1;
     bestMethod = NULL;
 
-    if (JPy_IsDebug()) printf("JOverloadedMethod_FindMethod: overloadCount=%d\n", overloadCount);
+    if (JPy_IsDebug()) printf("JOverloadedMethod_FindMethod: in class '%s': overloadCount=%d\n", overloadedMethod->declaringClass->javaName, overloadCount);
 
     for (i = 0; i < overloadCount; i++) {
         currMethod = (JPy_JMethod*) PyList_GetItem(overloadedMethod->methodList, i);
