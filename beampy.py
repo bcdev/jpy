@@ -55,6 +55,22 @@ del _collect_classpath
 debug = False
 jpy.create_jvm(options=['-Djava.class.path=' + os.pathsep.join(classpath), '-Xmx512M'], debug=debug)
 
+def callback(type, method):
+    if method.name == 'readPixels' and method.param_count >= 5:
+        index = 4
+        param_type_str = str(method.get_param_type(index))
+        if param_type_str == "<class '[I'>"\
+            or param_type_str == "<class '[F'>" \
+            or param_type_str == "<class '[D'>":
+            method.set_param_mutable(index, True)
+            method.set_param_return(index, True)
+            print('Method "{0}": modified parameter {1:d}: mutable = {2}, return = {3}'.format(
+                  method.name, index, method.is_param_mutable(4), method.is_param_return(4)))
+    return True
+
+jpy.type_callbacks['org.esa.beam.framework.datamodel.RasterDataNode'] = callback
+
+
 try:
     # todo: read pre-defined types from a configuration file (beampy.ini)
     ProductIO = jpy.get_class('org.esa.beam.framework.dataio.ProductIO')

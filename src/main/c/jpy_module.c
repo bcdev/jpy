@@ -44,6 +44,7 @@ static struct PyModuleDef JPy_ModuleDef =
 
 PyObject* JPy_Module = NULL;
 PyObject* JPy_Types = NULL;
+PyObject* JPy_Type_Callbacks = NULL;
 PyObject* JException_Type = NULL;
 
 typedef struct {
@@ -189,6 +190,12 @@ PyMODINIT_FUNC PyInit_jpy(void)
     JPy_Types = PyDict_New();
     Py_INCREF(JPy_Types);
     PyModule_AddObject(JPy_Module, "types", JPy_Types);
+
+    /////////////////////////////////////////////////////////////////////////
+
+    JPy_Type_Callbacks = PyDict_New();
+    Py_INCREF(JPy_Type_Callbacks);
+    PyModule_AddObject(JPy_Module, "type_callbacks", JPy_Type_Callbacks);
 
     /////////////////////////////////////////////////////////////////////////
 

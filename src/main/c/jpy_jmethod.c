@@ -324,6 +324,93 @@ PyObject* JMethod_str(JPy_JMethod* self)
 }
 
 
+static PyMemberDef JMethod_members[] =
+{
+    {"name",        T_OBJECT_EX, offsetof(JPy_JMethod, name),       READONLY, "Method name"},
+    {"param_count", T_INT,       offsetof(JPy_JMethod, paramCount), READONLY, "Number of method parameters"},
+    {"is_static",   T_BOOL,      offsetof(JPy_JMethod, isStatic),   READONLY, "Tests if this is a static method"},
+    {NULL}  /* Sentinel */
+};
+
+#define JMethod_CheckParameterIndex(self, index) \
+    if (index < 0 || index >= self->paramCount) { \
+        PyErr_SetString(PyExc_IndexError, "invalid parameter index"); \
+        return NULL; \
+    }
+
+
+PyObject* JMethod_get_param_type(JPy_JMethod* self, PyObject* args)
+{
+    PyObject* type;
+    int index;
+    if (!PyArg_ParseTuple(args, "i:get_param_type", &index)) {
+        return NULL;
+    }
+    JMethod_CheckParameterIndex(self, index);
+    type = (PyObject*) self->paramDescriptors[index].type;
+    Py_INCREF(type);
+    return type;
+}
+
+PyObject* JMethod_is_param_mutable(JPy_JMethod* self, PyObject* args)
+{
+    int index;
+    int value;
+    if (!PyArg_ParseTuple(args, "i:is_param_mutable", &index)) {
+        return NULL;
+    }
+    JMethod_CheckParameterIndex(self, index);
+    value = self->paramDescriptors[index].is_mutable;
+    return PyBool_FromLong(value);
+}
+
+PyObject* JMethod_set_param_mutable(JPy_JMethod* self, PyObject* args)
+{
+    int index;
+    int value;
+    if (!PyArg_ParseTuple(args, "ip:set_param_mutable", &index, &value)) {
+        return NULL;
+    }
+    JMethod_CheckParameterIndex(self, index);
+    self->paramDescriptors[index].is_mutable = value;
+    return Py_BuildValue("");
+}
+
+PyObject* JMethod_is_param_return(JPy_JMethod* self, PyObject* args)
+{
+    int index = 0;
+    int value = 0;
+    if (!PyArg_ParseTuple(args, "i:is_param_return", &index)) {
+        return NULL;
+    }
+    JMethod_CheckParameterIndex(self, index);
+    value = self->paramDescriptors[index].is_return;
+    return PyBool_FromLong(value);
+}
+
+PyObject* JMethod_set_param_return(JPy_JMethod* self, PyObject* args)
+{
+    int index = 0;
+    int value = 0;
+    if (!PyArg_ParseTuple(args, "ip:set_param_return", &index, &value)) {
+        return NULL;
+    }
+    JMethod_CheckParameterIndex(self, index);
+    self->paramDescriptors[index].is_return = value;
+    return Py_BuildValue("");
+}
+
+
+static PyMethodDef JMethod_methods[] =
+{
+    {"get_param_type",    (PyCFunction) JMethod_get_param_type,    METH_VARARGS, "Gets the type of the parameter given by index"},
+    {"is_param_mutable",  (PyCFunction) JMethod_is_param_mutable,  METH_VARARGS, "Tests if the method parameter given by index is mutable"},
+    {"is_param_return",   (PyCFunction) JMethod_is_param_return,   METH_VARARGS, "Tests if the method parameter given by index is the return value"},
+    {"set_param_mutable", (PyCFunction) JMethod_set_param_mutable, METH_VARARGS, "Sets whether the method parameter given by index is mutable"},
+    {"set_param_return",  (PyCFunction) JMethod_set_param_return,  METH_VARARGS, "Sets whether the method parameter given by index is the return value"},
+    {NULL}  /* Sentinel */
+};
+
 /**
  * Implements the BeamPy_JObjectType class singleton.
  */
@@ -355,8 +442,8 @@ PyTypeObject JMethod_Type = {
     0,                            /* tp_weaklistoffset */
     NULL,                         /* tp_iter */
     NULL,                         /* tp_iternext */
-    NULL,                         /* tp_methods */
-    NULL,                         /* tp_members */
+    JMethod_methods,              /* tp_methods */
+    JMethod_members,              /* tp_members */
     NULL,                         /* tp_getset */
     NULL,                         /* tp_base */
     NULL,                         /* tp_dict */
@@ -388,7 +475,7 @@ JPy_JMethod* JOverloadedMethod_FindMethod(JPy_JOverloadedMethod* overloadedMetho
         return NULL;
     }
     if (overloadCount == 0) {
-        PyErr_SetString(PyExc_RuntimeError, "internal error");
+        PyErr_SetString(PyExc_RuntimeError, "no method overloads available");
         return NULL;
     }
 
@@ -433,25 +520,45 @@ JPy_JMethod* JOverloadedMethod_FindMethod(JPy_JOverloadedMethod* overloadedMetho
     return bestMethod;
 }
 
-JPy_JOverloadedMethod* JOverloadedMethod_New(JPy_JType* type, PyObject* name, JPy_JMethod* method)
+JPy_JOverloadedMethod* JOverloadedMethod_New(JPy_JType* declaringClass, PyObject* name, JPy_JMethod* method)
 {
     PyTypeObject* methodType = &JOverloadedMethod_Type;
     JPy_JOverloadedMethod* overloadedMethod;
 
     overloadedMethod = (JPy_JOverloadedMethod*) methodType->tp_alloc(methodType, 0);
-    overloadedMethod->type = type;
+    overloadedMethod->declaringClass = declaringClass;
     overloadedMethod->name = name;
-    overloadedMethod->methodList = Py_BuildValue("[O]", method);
+    overloadedMethod->methodList = PyList_New(0);
 
-    Py_INCREF((PyObject*) type);
-    Py_INCREF((PyObject*) name);
+    Py_INCREF((PyObject*) overloadedMethod->declaringClass);
+    Py_INCREF((PyObject*) overloadedMethod->name);
     Py_INCREF((PyObject*) overloadedMethod);
+
+    JOverloadedMethod_AddMethod(overloadedMethod, method);
 
     return overloadedMethod;
 }
 
 int JOverloadedMethod_AddMethod(JPy_JOverloadedMethod* overloadedMethod, JPy_JMethod* method)
 {
+    PyObject* callable;
+    PyObject* callableResult;
+
+    //printf("JOverloadedMethod_AddMethod: javaName='%s'\n", overloadedMethod->declaringClass->javaName);
+
+    callable = PyDict_GetItemString(JPy_Type_Callbacks, overloadedMethod->declaringClass->javaName);
+    if (callable != NULL) {
+        if (PyCallable_Check(callable)) {
+            callableResult = PyObject_CallFunction(callable, "OO", overloadedMethod->declaringClass, method);
+            if (callableResult == NULL) {
+                if (JPy_IsDebug()) printf("Warning: failed to invoke callback on method addition\n");
+            } else if (callableResult == Py_None || callableResult == Py_False) {
+                if (JPy_IsDebug()) printf("Warning: rejecting method due to callback return value\n");
+                return 0;
+            }
+        }
+    }
+
     return PyList_Append(overloadedMethod->methodList, (PyObject*) method);
 }
 
@@ -460,7 +567,7 @@ int JOverloadedMethod_AddMethod(JPy_JOverloadedMethod* overloadedMethod, JPy_JMe
  */
 void JOverloadedMethod_dealloc(JPy_JOverloadedMethod* self)
 {
-    Py_DECREF((PyObject*) self->type);
+    Py_DECREF((PyObject*) self->declaringClass);
     Py_DECREF((PyObject*) self->name);
     Py_DECREF((PyObject*) self->methodList);
     Py_TYPE(self)->tp_free((PyObject*) self);
@@ -482,7 +589,7 @@ PyObject* JOverloadedMethod_call(JPy_JOverloadedMethod* self, PyObject *args, Py
 
     //printf("JOverloadedMethod_call 2: method=%p\n", method);
 
-    return JMethod_InvokeMethod(method, self->type, args);
+    return JMethod_InvokeMethod(method, self->declaringClass, args);
 }
 
 /**

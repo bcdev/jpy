@@ -11,6 +11,7 @@ extern "C" {
 
 extern PyObject* JPy_Module;
 extern PyObject* JPy_Types;
+extern PyObject* JPy_Type_Callbacks;
 extern PyObject* JException_Type;
 
 #define JPy_JINIT_ATTR_NAME "__jinit__"

@@ -25,11 +25,11 @@ typedef struct JPy_JType
     // If component type of this type if this type is an array, NULL otherwise.
     struct JPy_JType* componentType;
     // If TRUE, 'classRef' refers to a primitive type (or 'void').
-    jboolean isPrimitive;
+    char isPrimitive;
     // If TRUE, the type is currently being resolved.
-    jboolean isResolving;
+    char isResolving;
     // If TRUE, all the class constructors and methods have already been resolved.
-    jboolean isResolved;
+    char isResolved;
 }
 JPy_JType;
 
@@ -57,6 +57,8 @@ JPy_ReturnDescriptor;
 typedef struct
 {
     JPy_JType* type;
+    char is_mutable;
+    char is_return;
     JPy_FnAssessToJValue assessToJValue;     // used for method parameters only
     JPy_FnConvertToJValue convertToJValue;   // used for method parameters only
 }

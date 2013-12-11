@@ -17,12 +17,12 @@ typedef struct
     PyObject* name;
     // Method parameter count.
     int paramCount;
+    // Method is static?
+    char isStatic;
     // Method parameter types. Will be NULL, if parameter_count == 0.
     JPy_ParamDescriptor* paramDescriptors;
     // Method return type. Will be NULL for constructors.
     JPy_ReturnDescriptor* returnDescriptor;
-    // Method is static?
-    jboolean isStatic;
     // Method ID retrieved from JNI.
     jmethodID mid;
 }
@@ -40,8 +40,8 @@ typedef struct
 {
     PyObject_HEAD
 
-    // The containing type.
-    JPy_JType* type;
+    // The declaring class.
+    JPy_JType* declaringClass;
     // Method name.
     PyObject* name;
     // List of method overloads (a PyList with items of type JPy_JMethod).
@@ -56,7 +56,7 @@ extern PyTypeObject JOverloadedMethod_Type;
 
 JPy_JMethod*           JOverloadedMethod_FindMethod(JPy_JOverloadedMethod* overloadedMethod, PyObject* argTuple);
 JPy_JMethod*           JOverloadedMethod_FindStaticMethod(JPy_JOverloadedMethod* overloadedMethod, PyObject* argTuple);
-JPy_JOverloadedMethod* JOverloadedMethod_New(JPy_JType* type, PyObject* name, JPy_JMethod* method);
+JPy_JOverloadedMethod* JOverloadedMethod_New(JPy_JType* declaringClass, PyObject* name, JPy_JMethod* method);
 int                    JOverloadedMethod_AddMethod(JPy_JOverloadedMethod* overloadedMethod, JPy_JMethod* method);
 
 JPy_JMethod* JMethod_New(PyObject* name,
