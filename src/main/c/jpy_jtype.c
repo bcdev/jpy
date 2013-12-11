@@ -161,182 +161,6 @@ JPy_JType* JType_New(JNIEnv* jenv, jclass classRef, jboolean resolve)
     return type;
 }
 
-int JType_AssessToJBoolean(JPy_JType* type, PyObject* arg)
-{
-    if (PyBool_Check(arg)) return 100;
-    else if (PyLong_Check(arg)) return 10;
-    else return 0;
-}
-
-int JType_ConvertToJBoolean(JPy_JType* type, PyObject* arg, jvalue* value)
-{
-    value->z = (jboolean) (PyLong_AsLong(arg) != 0);
-    return 0;
-}
-
-int JType_AssessToJByte(JPy_JType* type, PyObject* arg)
-{
-    if (PyLong_Check(arg)) return 100;
-    else if (PyBool_Check(arg)) return 10;
-    else return 0;
-}
-
-int JType_ConvertToJByte(JPy_JType* type, PyObject* arg, jvalue* value)
-{
-    value->b = (jbyte) PyLong_AsLong(arg);
-    return 0;
-}
-
-int JType_AssessToJChar(JPy_JType* type, PyObject* arg)
-{
-    if (PyLong_Check(arg)) return 100;
-    else if (PyBool_Check(arg)) return 10;
-    else return 0;
-}
-
-int JType_ConvertToJChar(JPy_JType* type, PyObject* arg, jvalue* value)
-{
-    value->c = (jchar) PyLong_AsLong(arg);
-    return 0;
-}
-
-int JType_AssessToJShort(JPy_JType* type, PyObject* arg)
-{
-    if (PyLong_Check(arg)) return 100;
-    else if (PyBool_Check(arg)) return 10;
-    else return 0;
-}
-
-int JType_ConvertToJShort(JPy_JType* type, PyObject* arg, jvalue* value)
-{
-    value->s = (jshort) PyLong_AsLong(arg);
-    return 0;
-}
-
-int JType_AssessToJInt(JPy_JType* type, PyObject* arg)
-{
-    if (PyLong_Check(arg)) return 100;
-    else if (PyBool_Check(arg)) return 10;
-    else return 0;
-}
-
-int JType_ConvertToJInt(JPy_JType* type, PyObject* arg, jvalue* value)
-{
-    value->i = (jint) PyLong_AsLong(arg);
-    return 0;
-}
-
-int JType_AssessToJLong(JPy_JType* type, PyObject* arg)
-{
-    if (PyLong_Check(arg)) return 100;
-    else if (PyBool_Check(arg)) return 10;
-    else return 0;
-}
-
-int JType_ConvertToJLong(JPy_JType* type, PyObject* arg, jvalue* value)
-{
-    value->j = (jlong) PyLong_AsLongLong(arg);
-    return 0;
-}
-
-int JType_AssessToJFloat(JPy_JType* type, PyObject* arg)
-{
-    if (PyFloat_Check(arg)) return 90; // not 100, in order to give 'double' a chance
-    else if (PyNumber_Check(arg)) return 50;
-    else if (PyLong_Check(arg)) return 10;
-    else if (PyBool_Check(arg)) return 1;
-    else return 0;
-}
-
-int JType_ConvertToJFloat(JPy_JType* type, PyObject* arg, jvalue* value)
-{
-    value->f = (jfloat) PyFloat_AsDouble(arg);
-    return 0;
-}
-
-int JType_AssessToJDouble(JPy_JType* type, PyObject* arg)
-{
-    if (PyFloat_Check(arg)) return 100;
-    else if (PyNumber_Check(arg)) return 50;
-    else if (PyLong_Check(arg)) return 10;
-    else if (PyBool_Check(arg)) return 1;
-    else return 0;
-}
-
-int JType_ConvertToJDouble(JPy_JType* type, PyObject* arg, jvalue* value)
-{
-    value->d = (jdouble) PyFloat_AsDouble(arg);
-    return 0;
-}
-
-int JType_AssessToJObject(JPy_JType* type, PyObject* arg)
-{
-    JNIEnv* jenv;
-    JPy_JType* jArgType;
-    JPy_JObj* jArg;
-
-    if (arg == Py_None) {
-        // Signal it is possible, but give low priority since we cannot perform any type checks on 'None'
-        return 1;
-    }
-
-    if (!JObj_Check(arg)) {
-        return 0;
-    }
-
-    jArgType = (JPy_JType*) Py_TYPE(arg);
-    if (jArgType == type) {
-        return 100;
-    }
-
-    JPY_GET_JENV(jenv, 0)
-
-    jArg = (JPy_JObj*) arg;
-    if ((*jenv)->IsInstanceOf(jenv, jArg->objectRef, type->classRef)) {
-        if (jArgType->componentType == type->componentType) {
-            return 90;
-        }
-        if (jArgType->componentType != NULL && type->componentType != NULL) {
-            // Determines whether an object of clazz1 can be safely cast to clazz2.
-            if ((*jenv)->IsAssignableFrom(jenv, jArgType->componentType->classRef, type->componentType->classRef)) {
-                return 80;
-            }
-        }
-    }
-
-    return 0;
-}
-
-int JType_ConvertToJObject(JPy_JType* type, PyObject* arg, jvalue* value)
-{
-    if (arg == Py_None) {
-        value->l = NULL;
-    } else {
-        JPy_JObj* obj = (JPy_JObj*) arg;
-        value->l = obj->objectRef;
-    }
-    return 0;
-}
-
-int JType_AssessToJString(JPy_JType* type, PyObject* arg)
-{
-    if (arg == Py_None) {
-        // Signal it is possible, but give low priority since we cannot perform any type checks on 'None'
-        return 1;
-    }
-    if (PyUnicode_Check(arg)) {
-        return 100;
-    }
-    return 0;
-}
-
-int JType_ConvertToJString(JPy_JType* type, PyObject* arg, jvalue* value)
-{
-    JNIEnv* jenv;
-    JPY_GET_JENV(jenv, -1);
-    return JPy_ConvertPythonToJavaString(jenv, arg, &value->l);
-}
-
 PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject objectRef)
 {
     if (objectRef == NULL) {
@@ -748,47 +572,226 @@ JPy_ParamDescriptor* JType_CreateParamDescriptors(JNIEnv* jenv, int paramCount, 
     return paramDescriptors;
 }
 
+int JType_AssessToJBoolean(JPy_ParamDescriptor* paramDescriptor, PyObject* arg)
+{
+    if (PyBool_Check(arg)) return 100;
+    else if (PyLong_Check(arg)) return 10;
+    else return 0;
+}
+
+int JType_ConvertToJBoolean(JPy_ParamDescriptor* paramDescriptor, PyObject* arg, jvalue* value)
+{
+    value->z = (jboolean) (PyLong_AsLong(arg) != 0);
+    return 0;
+}
+
+int JType_AssessToJByte(JPy_ParamDescriptor* paramDescriptor, PyObject* arg)
+{
+    if (PyLong_Check(arg)) return 100;
+    else if (PyBool_Check(arg)) return 10;
+    else return 0;
+}
+
+int JType_ConvertToJByte(JPy_ParamDescriptor* paramDescriptor, PyObject* arg, jvalue* value)
+{
+    value->b = (jbyte) PyLong_AsLong(arg);
+    return 0;
+}
+
+int JType_AssessToJChar(JPy_ParamDescriptor* paramDescriptor, PyObject* arg)
+{
+    if (PyLong_Check(arg)) return 100;
+    else if (PyBool_Check(arg)) return 10;
+    else return 0;
+}
+
+int JType_ConvertToJChar(JPy_ParamDescriptor* paramDescriptor, PyObject* arg, jvalue* value)
+{
+    value->c = (jchar) PyLong_AsLong(arg);
+    return 0;
+}
+
+int JType_AssessToJShort(JPy_ParamDescriptor* paramDescriptor, PyObject* arg)
+{
+    if (PyLong_Check(arg)) return 100;
+    else if (PyBool_Check(arg)) return 10;
+    else return 0;
+}
+
+int JType_ConvertToJShort(JPy_ParamDescriptor* paramDescriptor, PyObject* arg, jvalue* value)
+{
+    value->s = (jshort) PyLong_AsLong(arg);
+    return 0;
+}
+
+int JType_AssessToJInt(JPy_ParamDescriptor* paramDescriptor, PyObject* arg)
+{
+    if (PyLong_Check(arg)) return 100;
+    else if (PyBool_Check(arg)) return 10;
+    else return 0;
+}
+
+int JType_ConvertToJInt(JPy_ParamDescriptor* paramDescriptor, PyObject* arg, jvalue* value)
+{
+    value->i = (jint) PyLong_AsLong(arg);
+    return 0;
+}
+
+int JType_AssessToJLong(JPy_ParamDescriptor* paramDescriptor, PyObject* arg)
+{
+    if (PyLong_Check(arg)) return 100;
+    else if (PyBool_Check(arg)) return 10;
+    else return 0;
+}
+
+int JType_ConvertToJLong(JPy_ParamDescriptor* paramDescriptor, PyObject* arg, jvalue* value)
+{
+    value->j = (jlong) PyLong_AsLongLong(arg);
+    return 0;
+}
+
+int JType_AssessToJFloat(JPy_ParamDescriptor* paramDescriptor, PyObject* arg)
+{
+    if (PyFloat_Check(arg)) return 90; // not 100, in order to give 'double' a chance
+    else if (PyNumber_Check(arg)) return 50;
+    else if (PyLong_Check(arg)) return 10;
+    else if (PyBool_Check(arg)) return 1;
+    else return 0;
+}
+
+int JType_ConvertToJFloat(JPy_ParamDescriptor* paramDescriptor, PyObject* arg, jvalue* value)
+{
+    value->f = (jfloat) PyFloat_AsDouble(arg);
+    return 0;
+}
+
+int JType_AssessToJDouble(JPy_ParamDescriptor* paramDescriptor, PyObject* arg)
+{
+    if (PyFloat_Check(arg)) return 100;
+    else if (PyNumber_Check(arg)) return 50;
+    else if (PyLong_Check(arg)) return 10;
+    else if (PyBool_Check(arg)) return 1;
+    else return 0;
+}
+
+int JType_ConvertToJDouble(JPy_ParamDescriptor* paramDescriptor, PyObject* arg, jvalue* value)
+{
+    value->d = (jdouble) PyFloat_AsDouble(arg);
+    return 0;
+}
+
+int JType_AssessToJString(JPy_ParamDescriptor* paramDescriptor, PyObject* arg)
+{
+    if (arg == Py_None) {
+        // Signal it is possible, but give low priority since we cannot perform any type checks on 'None'
+        return 1;
+    }
+    if (PyUnicode_Check(arg)) {
+        return 100;
+    }
+    return 0;
+}
+
+int JType_ConvertToJString(JPy_ParamDescriptor* paramDescriptor, PyObject* arg, jvalue* value)
+{
+    JNIEnv* jenv;
+    JPY_GET_JENV(jenv, -1);
+    return JPy_ConvertPythonToJavaString(jenv, arg, &value->l);
+}
+
+int JType_AssessToJObject(JPy_ParamDescriptor* paramDescriptor, PyObject* arg)
+{
+    JNIEnv* jenv;
+    JPy_JType* jParamType;
+    JPy_JType* jArgType;
+    JPy_JObj* jArg;
+
+    if (arg == Py_None) {
+        // Signal it is possible, but give low priority since we cannot perform any type checks on 'None'
+        return 1;
+    }
+
+    if (!JObj_Check(arg)) {
+        return 0;
+    }
+
+    jArgType = (JPy_JType*) Py_TYPE(arg);
+    if (jArgType == paramDescriptor->type) {
+        return 100;
+    }
+
+    JPY_GET_JENV(jenv, 0)
+
+    jParamType = paramDescriptor->type;
+
+    jArg = (JPy_JObj*) arg;
+    if ((*jenv)->IsInstanceOf(jenv, jArg->objectRef, jParamType->classRef)) {
+        if (jArgType->componentType == jParamType->componentType) {
+            return 90;
+        }
+        if (jArgType->componentType != NULL && jParamType->componentType != NULL) {
+            // Determines whether an object of clazz1 can be safely cast to clazz2.
+            if ((*jenv)->IsAssignableFrom(jenv, jArgType->componentType->classRef, jParamType->componentType->classRef)) {
+                return 80;
+            }
+        }
+    }
+
+    return 0;
+}
+
+int JType_ConvertToJObject(JPy_ParamDescriptor* paramDescriptor, PyObject* arg, jvalue* value)
+{
+    if (arg == Py_None) {
+        value->l = NULL;
+    } else {
+        JPy_JObj* obj = (JPy_JObj*) arg;
+        value->l = obj->objectRef;
+    }
+    return 0;
+}
+
 void JType_InitParamDescriptorFunctions(JPy_ParamDescriptor* paramDescriptor)
 {
     PyTypeObject* type = (PyTypeObject*) paramDescriptor->type;
 
     if (type == JPy_JVoid) {
-        paramDescriptor->assessToJValue = NULL;
-        paramDescriptor->convertToJValue = NULL;
+        paramDescriptor->paramAssessor = NULL;
+        paramDescriptor->paramConverter = NULL;
     } else if (type == JPy_JBoolean) {
-        paramDescriptor->assessToJValue = JType_AssessToJBoolean;
-        paramDescriptor->convertToJValue = JType_ConvertToJBoolean;
+        paramDescriptor->paramAssessor = JType_AssessToJBoolean;
+        paramDescriptor->paramConverter = JType_ConvertToJBoolean;
     } else if (type == JPy_JByte) {
-        paramDescriptor->assessToJValue = JType_AssessToJByte;
-        paramDescriptor->convertToJValue = JType_ConvertToJByte;
+        paramDescriptor->paramAssessor = JType_AssessToJByte;
+        paramDescriptor->paramConverter = JType_ConvertToJByte;
     } else if (type == JPy_JChar) {
-        paramDescriptor->assessToJValue = JType_AssessToJChar;
-        paramDescriptor->convertToJValue = JType_ConvertToJChar;
+        paramDescriptor->paramAssessor = JType_AssessToJChar;
+        paramDescriptor->paramConverter = JType_ConvertToJChar;
     } else if (type == JPy_JShort) {
-        paramDescriptor->assessToJValue = JType_AssessToJShort;
-        paramDescriptor->convertToJValue = JType_ConvertToJShort;
+        paramDescriptor->paramAssessor = JType_AssessToJShort;
+        paramDescriptor->paramConverter = JType_ConvertToJShort;
     } else if (type == JPy_JInt) {
-        paramDescriptor->assessToJValue = JType_AssessToJInt;
-        paramDescriptor->convertToJValue = JType_ConvertToJInt;
+        paramDescriptor->paramAssessor = JType_AssessToJInt;
+        paramDescriptor->paramConverter = JType_ConvertToJInt;
     } else if (type == JPy_JLong) {
-        paramDescriptor->assessToJValue = JType_AssessToJLong;
-        paramDescriptor->convertToJValue = JType_ConvertToJLong;
+        paramDescriptor->paramAssessor = JType_AssessToJLong;
+        paramDescriptor->paramConverter = JType_ConvertToJLong;
     } else if (type == JPy_JFloat) {
-        paramDescriptor->assessToJValue = JType_AssessToJFloat;
-        paramDescriptor->convertToJValue = JType_ConvertToJFloat;
+        paramDescriptor->paramAssessor = JType_AssessToJFloat;
+        paramDescriptor->paramConverter = JType_ConvertToJFloat;
     } else if (type == JPy_JDouble) {
-        paramDescriptor->assessToJValue = JType_AssessToJDouble;
-        paramDescriptor->convertToJValue = JType_ConvertToJDouble;
+        paramDescriptor->paramAssessor = JType_AssessToJDouble;
+        paramDescriptor->paramConverter = JType_ConvertToJDouble;
     } else if (type == JPy_JString) {
-        paramDescriptor->assessToJValue = JType_AssessToJString;
-        paramDescriptor->convertToJValue = JType_ConvertToJString;
+        paramDescriptor->paramAssessor = JType_AssessToJString;
+        paramDescriptor->paramConverter = JType_ConvertToJString;
     //} else if (type == JPy_JMap) {
     //} else if (type == JPy_JList) {
     //} else if (type == JPy_JSet) {
     } else {
         // todo: use paramDescriptor->is_mutable / is_return to select more specific functions
-        paramDescriptor->assessToJValue = JType_AssessToJObject;
-        paramDescriptor->convertToJValue = JType_ConvertToJObject;
+        paramDescriptor->paramAssessor = JType_AssessToJObject;
+        paramDescriptor->paramConverter = JType_ConvertToJObject;
     }
 }
 

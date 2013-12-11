@@ -102,7 +102,7 @@ int JMethod_AssessConversion(JPy_JMethod* jMethod, int argCount, PyObject* argTu
     for (i = i0; i < argCount; i++) {
 
         arg = PyTuple_GetItem(argTuple, i);
-        matchValue = paramDescriptor->assessToJValue(paramDescriptor->type, arg);
+        matchValue = paramDescriptor->paramAssessor(paramDescriptor, arg);
         if (matchValue == 0) {
             //printf("JMethod_AssessConversion 6\n");
             // current arg does not match parameter type at all
@@ -151,7 +151,7 @@ int JMethod_CreateJArgs(JPy_JMethod* jMethod, PyObject* argTuple, jvalue** jArgs
     jValue = jValues;
     for (i = i0; i < argCount; i++) {
         arg = PyTuple_GetItem(argTuple, i);
-        if (paramDescriptor->convertToJValue(paramDescriptor->type, arg, jValue) < 0) {
+        if (paramDescriptor->paramConverter(paramDescriptor, arg, jValue) < 0) {
             return -1;
         }
         paramDescriptor++;
@@ -366,7 +366,7 @@ PyObject* JMethod_is_param_mutable(JPy_JMethod* self, PyObject* args)
         return NULL;
     }
     JMethod_CheckParameterIndex(self, index);
-    value = self->paramDescriptors[index].is_mutable;
+    value = self->paramDescriptors[index].isMutable;
     return PyBool_FromLong(value);
 }
 
@@ -378,7 +378,7 @@ PyObject* JMethod_set_param_mutable(JPy_JMethod* self, PyObject* args)
         return NULL;
     }
     JMethod_CheckParameterIndex(self, index);
-    self->paramDescriptors[index].is_mutable = value;
+    self->paramDescriptors[index].isMutable = value;
     return Py_BuildValue("");
 }
 
@@ -390,7 +390,7 @@ PyObject* JMethod_is_param_return(JPy_JMethod* self, PyObject* args)
         return NULL;
     }
     JMethod_CheckParameterIndex(self, index);
-    value = self->paramDescriptors[index].is_return;
+    value = self->paramDescriptors[index].isReturn;
     return PyBool_FromLong(value);
 }
 
@@ -402,7 +402,7 @@ PyObject* JMethod_set_param_return(JPy_JMethod* self, PyObject* args)
         return NULL;
     }
     JMethod_CheckParameterIndex(self, index);
-    self->paramDescriptors[index].is_return = value;
+    self->paramDescriptors[index].isReturn = value;
     return Py_BuildValue("");
 }
 

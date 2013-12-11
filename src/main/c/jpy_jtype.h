@@ -38,14 +38,15 @@ JPy_JType;
  */
 extern PyTypeObject JType_Type;
 
+typedef struct JPy_ParamDescriptor;
 
-typedef int (*JPy_FnAssessToJValue)(JPy_JType*, PyObject*);
-typedef int (*JPy_FnConvertToJValue)(JPy_JType*, PyObject*, jvalue*);
+typedef int (*JPy_ParamAssessor)(struct JPy_ParamDescriptor*, PyObject*);
+typedef int (*JPy_ParamConverter)(struct JPy_ParamDescriptor*, PyObject*, jvalue*);
 
 /**
  * Method return value descriptor.
  */
-typedef struct
+typedef struct JPy_ReturnDescriptor
 {
     JPy_JType* type;
 }
@@ -54,13 +55,13 @@ JPy_ReturnDescriptor;
 /**
  * Method parameter descriptor.
  */
-typedef struct
+typedef struct JPy_ParamDescriptor
 {
     JPy_JType* type;
-    char is_mutable;
-    char is_return;
-    JPy_FnAssessToJValue assessToJValue;     // used for method parameters only
-    JPy_FnConvertToJValue convertToJValue;   // used for method parameters only
+    char isMutable;
+    char isReturn;
+    JPy_ParamAssessor paramAssessor;
+    JPy_ParamConverter paramConverter;
 }
 JPy_ParamDescriptor;
 
