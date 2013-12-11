@@ -13,7 +13,8 @@ int JType_ProcessClassMethods(JNIEnv* jenv, JPy_JType* type);
 int JType_AddMethod(JPy_JType* type, PyObject* methodKey, JPy_JMethod* method);
 JPy_ReturnDescriptor* JType_CreateReturnDescriptor(JNIEnv* jenv, jclass returnType);
 JPy_ParamDescriptor* JType_CreateParamDescriptors(JNIEnv* jenv, int paramCount, jarray paramTypes);
-void JType_InitParamDescriptorMethods(JPy_ParamDescriptor* paramDescriptor);
+void JType_InitParamDescriptorFunctions(JPy_ParamDescriptor* paramDescriptor);
+void JType_InitMethodParamDescriptorFunctions(JPy_JType* type, JPy_JMethod* method);
 
 
 PyTypeObject* JType_GetTypeForName(const char* typeName, jboolean resolve)
@@ -466,13 +467,36 @@ int JType_ResolveType(JNIEnv* jenv, JPy_JType* type)
     return 0;
 }
 
+jboolean JType_AcceptMethod(JPy_JType* declaringClass, JPy_JMethod* method)
+{
+    PyObject* callable;
+    PyObject* callableResult;
+
+    //printf("JOverloadedMethod_AddMethod: javaName='%s'\n", overloadedMethod->declaringClass->javaName);
+
+    callable = PyDict_GetItemString(JPy_Type_Callbacks, declaringClass->javaName);
+    if (callable != NULL) {
+        if (PyCallable_Check(callable)) {
+            callableResult = PyObject_CallFunction(callable, "OO", declaringClass, method);
+            if (callableResult == Py_None || callableResult == Py_False) {
+                return JNI_FALSE;
+            } else if (callableResult == NULL) {
+                if (JPy_IsDebug()) printf("JType_AcceptMethod: warning: failed to invoke callback on method addition\n");
+                // Ignore this problem and continue
+            }
+        }
+    }
+
+    return JNI_TRUE;
+}
+
 
 int JType_ProcessMethod(JNIEnv* jenv, JPy_JType* type, PyObject* methodKey, const char* methodName, jclass returnType, jarray paramTypes, jboolean isStatic, jmethodID mid)
 {
     JPy_ParamDescriptor* paramDescriptors = NULL;
     JPy_ReturnDescriptor* returnDescriptor = NULL;
     jint paramCount;
-    JPy_JMethod* jMethod;
+    JPy_JMethod* method;
 
     paramCount = (*jenv)->GetArrayLength(jenv, paramTypes);
     if (JPy_IsDebug()) printf("JType_ProcessMethod: methodName=%s, paramCount=%d, isStatic=%d, mid=%p\n", methodName, paramCount, isStatic, mid);
@@ -499,8 +523,8 @@ int JType_ProcessMethod(JNIEnv* jenv, JPy_JType* type, PyObject* methodKey, cons
         returnDescriptor = NULL;
     }
 
-    jMethod = JMethod_New(methodKey, paramCount, paramDescriptors, returnDescriptor, isStatic, mid);
-    if (jMethod == NULL) {
+    method = JMethod_New(methodKey, paramCount, paramDescriptors, returnDescriptor, isStatic, mid);
+    if (method == NULL) {
         PyMem_Del(paramDescriptors);
         PyMem_Del(returnDescriptor);
         // todo: log problem
@@ -508,7 +532,13 @@ int JType_ProcessMethod(JNIEnv* jenv, JPy_JType* type, PyObject* methodKey, cons
         return -1;
     }
 
-    JType_AddMethod(type, methodKey, jMethod);
+    if (JType_AcceptMethod(type, method)) {
+        JType_InitMethodParamDescriptorFunctions(type, method);
+        JType_AddMethod(type, methodKey, method);
+    } else {
+        JMethod_Del(method);
+    }
+
     return 0;
 }
 
@@ -629,6 +659,15 @@ int JType_ProcessClassMethods(JNIEnv* jenv, JPy_JType* type)
     return 0;
 }
 
+
+void JType_InitMethodParamDescriptorFunctions(JPy_JType* type, JPy_JMethod* method)
+{
+    int index;
+    for (index = 0; index < method->paramCount; index++) {
+        JType_InitParamDescriptorFunctions(method->paramDescriptors + index);
+    }
+}
+
 int JType_AddMethod(JPy_JType* type, PyObject* methodKey, JPy_JMethod* method)
 {
     PyObject* typeDict;
@@ -636,6 +675,10 @@ int JType_AddMethod(JPy_JType* type, PyObject* methodKey, JPy_JMethod* method)
     JPy_JOverloadedMethod* overloadedMethod;
 
     typeDict = type->typeObj.tp_dict;
+    if (typeDict == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "internal error: missing attribute '__dict__' in JType");
+        return -1;
+    }
 
     methodValue = PyDict_GetItem(typeDict, methodKey);
     if (methodValue == NULL) {
@@ -689,7 +732,6 @@ JPy_ParamDescriptor* JType_CreateParamDescriptors(JNIEnv* jenv, int paramCount, 
         return NULL;
     }
 
-    //printf("JType_ProcessParamTypes 1; paramCount=%d\n", paramCount);
     for (i = 0; i < paramCount; i++) {
         paramClass = (*jenv)->GetObjectArrayElement(jenv, paramClasses, i);
         paramDescriptor = paramDescriptors + i;
@@ -701,17 +743,12 @@ JPy_ParamDescriptor* JType_CreateParamDescriptors(JNIEnv* jenv, int paramCount, 
 
         paramDescriptor->type = (JPy_JType*) type;
         Py_INCREF((PyObject*) paramDescriptor->type);
-
-        JType_InitParamDescriptorMethods(paramDescriptor);
-
-        // if (JPy_IsDebug()) printf("JType_ProcessParamTypes: parameters[%d]: type->tp_name='%s', type->classRef=%p\n",
-        //                            i, type->tp_name, paramDescriptor->type->classRef);
     }
 
     return paramDescriptors;
 }
 
-void JType_InitParamDescriptorMethods(JPy_ParamDescriptor* paramDescriptor)
+void JType_InitParamDescriptorFunctions(JPy_ParamDescriptor* paramDescriptor)
 {
     PyTypeObject* type = (PyTypeObject*) paramDescriptor->type;
 
@@ -749,18 +786,11 @@ void JType_InitParamDescriptorMethods(JPy_ParamDescriptor* paramDescriptor)
     //} else if (type == JPy_JList) {
     //} else if (type == JPy_JSet) {
     } else {
+        // todo: use paramDescriptor->is_mutable / is_return to select more specific functions
         paramDescriptor->assessToJValue = JType_AssessToJObject;
         paramDescriptor->convertToJValue = JType_ConvertToJObject;
     }
-
 }
-
-
-
-
-
-
-
 
 /**
  * The JType's tp_repr slot.
@@ -837,7 +867,7 @@ PyObject* JType_getattro(JPy_JType* self, PyObject* name)
 
 
 /**
- * Implements the BeamPy_JObjectType class singleton.
+ * The jpy.JType singleton.
  */
 PyTypeObject JType_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)

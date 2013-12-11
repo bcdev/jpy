@@ -3,11 +3,15 @@
 import os
 import jpy
 
+__author__ = "Norman Fomferra, Brockmann Consult GmbH"
+
+
 def _collect_classpath(path, classpath):
     for name in os.listdir(path):
         file = os.path.join(path, name)
         if name.endswith('.jar') or name.endswith('.zip') or os.path.isdir(file):
             classpath.append(file)
+
 
 def _create_classpath():
 
@@ -23,9 +27,9 @@ def _create_classpath():
     beam_lib = os.path.join(beam_home, 'lib')
     beam_mod = os.path.join(beam_home, 'modules')
 
-    print('beam_bin =', beam_bin, os.path.exists(beam_bin))
-    print('beam_lib =', beam_lib, os.path.exists(beam_lib))
-    print('beam_mod =', beam_mod, os.path.exists(beam_mod))
+    #print('beam_bin =', beam_bin, os.path.exists(beam_bin))
+    #print('beam_lib =', beam_lib, os.path.exists(beam_lib))
+    #print('beam_mod =', beam_mod, os.path.exists(beam_mod))
 
     if not (os.path.exists(beam_bin)
             and os.path.exists(beam_lib)
@@ -51,8 +55,8 @@ del _collect_classpath
 #pprint.pprint(classpath)
 
 # todo: read 'debug' and additional options from a configuration file (beampy.ini)
-#debug = True
-debug = False
+debug = True
+#debug = False
 jpy.create_jvm(options=['-Djava.class.path=' + os.pathsep.join(classpath), '-Xmx512M'], debug=debug)
 
 def callback(type, method):

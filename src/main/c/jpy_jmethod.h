@@ -66,6 +66,8 @@ JPy_JMethod* JMethod_New(PyObject* name,
                          jboolean isStatic,
                          jmethodID mid);
 
+void JMethod_Del(JPy_JMethod* method);
+
 int JMethod_ConvertToJavaValues(JPy_JMethod* jMethod, int argCount, PyObject* argTuple, jvalue* jArgs);
 
 int JMethod_CreateJArgs(JPy_JMethod* jMethod, PyObject* argTuple, jvalue** jArgs);

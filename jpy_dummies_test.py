@@ -1,7 +1,9 @@
 import unittest
 import jpy
 
-jpy.create_jvm(options=['-Djava.class.path=target/test-classes', '-Xmx512M'])
+#debug = True
+debug = False
+jpy.create_jvm(options=['-Djava.class.path=target/test-classes', '-Xmx512M'], debug=debug)
 
 class TestMethodReturnValues(unittest.TestCase):
 

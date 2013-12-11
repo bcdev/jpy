@@ -52,6 +52,12 @@ void JMethod_dealloc(JPy_JMethod* self)
     Py_TYPE(self)->tp_free((PyObject*) self);
 }
 
+void JMethod_Del(JPy_JMethod* method)
+{
+    JMethod_dealloc(method);
+}
+
+
 int JMethod_AssessConversion(JPy_JMethod* jMethod, int argCount, PyObject* argTuple)
 {
     JPy_ParamDescriptor* paramDescriptor;
@@ -541,24 +547,6 @@ JPy_JOverloadedMethod* JOverloadedMethod_New(JPy_JType* declaringClass, PyObject
 
 int JOverloadedMethod_AddMethod(JPy_JOverloadedMethod* overloadedMethod, JPy_JMethod* method)
 {
-    PyObject* callable;
-    PyObject* callableResult;
-
-    //printf("JOverloadedMethod_AddMethod: javaName='%s'\n", overloadedMethod->declaringClass->javaName);
-
-    callable = PyDict_GetItemString(JPy_Type_Callbacks, overloadedMethod->declaringClass->javaName);
-    if (callable != NULL) {
-        if (PyCallable_Check(callable)) {
-            callableResult = PyObject_CallFunction(callable, "OO", overloadedMethod->declaringClass, method);
-            if (callableResult == NULL) {
-                if (JPy_IsDebug()) printf("Warning: failed to invoke callback on method addition\n");
-            } else if (callableResult == Py_None || callableResult == Py_False) {
-                if (JPy_IsDebug()) printf("Warning: rejecting method due to callback return value\n");
-                return 0;
-            }
-        }
-    }
-
     return PyList_Append(overloadedMethod->methodList, (PyObject*) method);
 }
 
