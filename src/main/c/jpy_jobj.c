@@ -269,7 +269,7 @@ PyObject* JObj_getattro(PyObject* self, PyObject* name)
     }
     if (PyObject_TypeCheck(value, &JOverloadedMethod_Type)) {
         JPy_JOverloadedMethod* overloadedMethod = (JPy_JOverloadedMethod*) value;
-        // printf("JObj_getattro: wrapping JOverloadedMethod\n");
+        //printf("JObj_getattro: wrapping JOverloadedMethod, overloadCount=%d\n", PyList_Size(overloadedMethod->methodList));
         return PyMethod_New(value, self);
     } else {
         // printf("JObj_getattro: passing through\n");

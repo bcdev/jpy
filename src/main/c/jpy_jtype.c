@@ -745,49 +745,55 @@ int JType_ConvertToJObject(JPy_ParamDescriptor* paramDescriptor, PyObject* arg, 
     if (arg == Py_None) {
         value->l = NULL;
     } else {
-        JPy_JObj* obj = (JPy_JObj*) arg;
-        value->l = obj->objectRef;
+        if (paramDescriptor->isMutable) {
+            PyErr_SetString(PyExc_RuntimeError, "Grrrraaaaaagggnnnhh! Mutable param detected!");
+            value->l = NULL;
+            return -1;
+        } else {
+            JPy_JObj* obj = (JPy_JObj*) arg;
+            value->l = obj->objectRef;
+        }
     }
     return 0;
 }
 
 void JType_InitParamDescriptorFunctions(JPy_ParamDescriptor* paramDescriptor)
 {
-    PyTypeObject* type = (PyTypeObject*) paramDescriptor->type;
+    PyTypeObject* paramType = (PyTypeObject*) paramDescriptor->type;
 
-    if (type == JPy_JVoid) {
+    if (paramType == JPy_JVoid) {
         paramDescriptor->paramAssessor = NULL;
         paramDescriptor->paramConverter = NULL;
-    } else if (type == JPy_JBoolean) {
+    } else if (paramType == JPy_JBoolean) {
         paramDescriptor->paramAssessor = JType_AssessToJBoolean;
         paramDescriptor->paramConverter = JType_ConvertToJBoolean;
-    } else if (type == JPy_JByte) {
+    } else if (paramType == JPy_JByte) {
         paramDescriptor->paramAssessor = JType_AssessToJByte;
         paramDescriptor->paramConverter = JType_ConvertToJByte;
-    } else if (type == JPy_JChar) {
+    } else if (paramType == JPy_JChar) {
         paramDescriptor->paramAssessor = JType_AssessToJChar;
         paramDescriptor->paramConverter = JType_ConvertToJChar;
-    } else if (type == JPy_JShort) {
+    } else if (paramType == JPy_JShort) {
         paramDescriptor->paramAssessor = JType_AssessToJShort;
         paramDescriptor->paramConverter = JType_ConvertToJShort;
-    } else if (type == JPy_JInt) {
+    } else if (paramType == JPy_JInt) {
         paramDescriptor->paramAssessor = JType_AssessToJInt;
         paramDescriptor->paramConverter = JType_ConvertToJInt;
-    } else if (type == JPy_JLong) {
+    } else if (paramType == JPy_JLong) {
         paramDescriptor->paramAssessor = JType_AssessToJLong;
         paramDescriptor->paramConverter = JType_ConvertToJLong;
-    } else if (type == JPy_JFloat) {
+    } else if (paramType == JPy_JFloat) {
         paramDescriptor->paramAssessor = JType_AssessToJFloat;
         paramDescriptor->paramConverter = JType_ConvertToJFloat;
-    } else if (type == JPy_JDouble) {
+    } else if (paramType == JPy_JDouble) {
         paramDescriptor->paramAssessor = JType_AssessToJDouble;
         paramDescriptor->paramConverter = JType_ConvertToJDouble;
-    } else if (type == JPy_JString) {
+    } else if (paramType == JPy_JString) {
         paramDescriptor->paramAssessor = JType_AssessToJString;
         paramDescriptor->paramConverter = JType_ConvertToJString;
-    //} else if (type == JPy_JMap) {
-    //} else if (type == JPy_JList) {
-    //} else if (type == JPy_JSet) {
+    //} else if (paramType == JPy_JMap) {
+    //} else if (paramType == JPy_JList) {
+    //} else if (paramType == JPy_JSet) {
     } else {
         // todo: use paramDescriptor->is_mutable / is_return to select more specific functions
         paramDescriptor->paramAssessor = JType_AssessToJObject;
