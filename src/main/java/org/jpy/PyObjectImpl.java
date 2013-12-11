@@ -3,6 +3,9 @@ package org.jpy;
 /**
  * Wraps a CPython (of type <code>PyObject *</code>).
  *
+ * <p/>
+ * <i>Neither used nor implemented yet.</i>
+ *
  * @author Norman Fomferra
  */
 public class PyObjectImpl implements PyObject {
