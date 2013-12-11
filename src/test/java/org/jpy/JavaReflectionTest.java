@@ -3,6 +3,7 @@ package org.jpy;
 import org.jpy.dummies.MethodReturnValueTestDummy;
 import org.junit.Test;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
@@ -10,6 +11,7 @@ import static org.junit.Assert.assertEquals;
 
 /**
  * The tests in here are actually not tests; they are only used to clarify the reflection API and JVM properties.
+ *
  * @author Norman Fomferra
  */
 public class JavaReflectionTest {
@@ -45,6 +47,21 @@ public class JavaReflectionTest {
         assertEquals(double[].class, aClass.getComponentType().getComponentType());
         assertEquals(Double.TYPE, aClass.getComponentType().getComponentType().getComponentType());
         assertEquals(null, aClass.getComponentType().getComponentType().getComponentType().getComponentType());
+    }
+
+    @Test
+    public void testAnnotationNames() throws Exception {
+        Method method = getClass().getMethod("iHaveAnAnnotationParam", Object.class);
+        Annotation[][] parameterAnnotations = method.getParameterAnnotations();
+        assertEquals(1, parameterAnnotations.length);
+        assertEquals(2, parameterAnnotations[0].length);
+        assertEquals("@org.jpy.Return()", parameterAnnotations[0][0].toString());
+        assertEquals("@org.jpy.Mutable()", parameterAnnotations[0][1].toString());
+    }
+
+    @SuppressWarnings("UnusedDeclaration")
+    public Object iHaveAnAnnotationParam(@Return @Mutable Object x) {
+        return x;
     }
 
     public static void main(String[] args) {
