@@ -22,9 +22,7 @@ Disadvantages to the 'beampy' codegen approach:
 
 Current TODO
 ------------
-
-* Each parameter in a parameter list shall have a deallocator, so that we can release locally allocated resources
-  for parameters after the JNI call: e.g. buffers, or newly allocated Java strings
+* Support Java fields
 
 
 
@@ -60,3 +58,11 @@ if (e != NULL) {
 }
 
 Wrap Java exceptions into our Python JException_Type.
+
+
+See also
+--------
+
+* http://www.jython.org/
+* http://jyni.org/
+* https://code.google.com/p/jynx/
