@@ -54,16 +54,10 @@ if LINUX:
                     JDK_HOME + '/lib']
 
 if DARWIN:
-    include_dirs += [JDK_HOME + '/Headers']
-    libraries = ['server']
-    library_dirs = [JDK_HOME + '/Libraries']
-    extra_link_args += ['-framework JavaVM']
-    extra_compile_args += ['-framework JavaVM']
-    JDK_HOME = '/System/Library/Frameworks/JavaVM.framework'
-    # todo - adapt settings for Mac OS X, JDK_HOME dir seems to have different structure
-    # see http://docs.python.org/3.2/distutils/setupscript.html
-    # see http://docs.python.org/3.2/distutils/apiref.html?highlight=setup#distutils.core.setup
-    # sudo ln -s /System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Libraries/libclient64.dylib /usr/lib/libclient.dylib
+    include_dirs += [JDK_HOME + '/include', JDK_HOME + '/include/darwin']
+    libraries = ['jvm']
+    library_dirs = [JDK_HOME + '/jre/lib/server/',
+                    JDK_HOME + '/lib']
 
 setup(name='jpy',
       description='Java Python Bridge',
