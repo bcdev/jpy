@@ -299,7 +299,7 @@ PyObject* JObj_sq_item(JPy_JObj* self, Py_ssize_t index)
 {
     JNIEnv* jenv;
     JPy_JType* type;
-    jobject objectRef;
+    PyTypeObject* componentType;
     jsize length;
 
     JPY_GET_JENV(jenv, NULL)
@@ -307,7 +307,8 @@ PyObject* JObj_sq_item(JPy_JObj* self, Py_ssize_t index)
     //printf("JObj_sq_item: index=%d\n", index);
 
     type = (JPy_JType*) Py_TYPE(self);
-    if (type->componentType == NULL) {
+    componentType = (PyTypeObject*) type->componentType;
+    if (componentType == NULL) {
         PyErr_SetString(PyExc_RuntimeError, "internal error: object is not an array");
         return NULL;
     }
@@ -321,48 +322,110 @@ PyObject* JObj_sq_item(JPy_JObj* self, Py_ssize_t index)
         return NULL;
     }
 
-    objectRef = (*jenv)->GetObjectArrayElement(jenv, self->objectRef, (jsize) index);
-    if ((*jenv)->ExceptionCheck(jenv)) {
-        (*jenv)->ExceptionDescribe(jenv);
-        (*jenv)->ExceptionClear(jenv);
-        PyErr_SetString(PyExc_RuntimeError, "index error");
-        return NULL;
+    if (componentType == JPy_JBoolean) {
+        jboolean item;
+        (*jenv)->GetBooleanArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+        if (item) { Py_RETURN_TRUE; } else { Py_RETURN_FALSE; }
+    } else if (componentType == JPy_JByte) {
+        jbyte item;
+        (*jenv)->GetByteArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+        return PyLong_FromLong(item);
+    } else if (componentType == JPy_JChar) {
+        jchar item;
+        (*jenv)->GetCharArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+        return Py_BuildValue("C", item);
+    } else if (componentType == JPy_JShort) {
+        jshort item;
+        (*jenv)->GetShortArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+        return PyLong_FromLong(item);
+    } else if (componentType == JPy_JInt) {
+        jint item;
+        (*jenv)->GetIntArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+        return PyLong_FromLong(item);
+    } else if (componentType == JPy_JLong) {
+        jlong item;
+        (*jenv)->GetLongArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+        return PyLong_FromLongLong(item);
+    } else if (componentType == JPy_JFloat) {
+        jfloat item;
+        (*jenv)->GetFloatArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+        return PyFloat_FromDouble(item);
+    } else if (componentType == JPy_JDouble) {
+        jdouble item;
+        (*jenv)->GetDoubleArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+        return PyFloat_FromDouble(item);
+    } else {
+        jobject objectRef = (*jenv)->GetObjectArrayElement(jenv, self->objectRef, (jsize) index);
+        if ((*jenv)->ExceptionCheck(jenv)) {
+            (*jenv)->ExceptionDescribe(jenv);
+            (*jenv)->ExceptionClear(jenv);
+            PyErr_SetString(PyExc_RuntimeError, "index error");
+            return NULL;
+        }
+        return JType_ConvertJavaToPythonObject(jenv, type->componentType, objectRef);
     }
-
-    return JType_ConvertJavaToPythonObject(jenv, type->componentType, objectRef);
 }
 
 /*
  * The JObj type's sq_ass_item field of the tp_as_sequence slot. Called if 'obj[index] = item' is used.
  * Only used for array types (type->componentType != NULL).
  */
-int JObj_sq_ass_item(JPy_JObj* self, Py_ssize_t index, PyObject* item)
+int JObj_sq_ass_item(JPy_JObj* self, Py_ssize_t index, PyObject* pyItem)
 {
     JNIEnv* jenv;
     JPy_JType* type;
+    PyTypeObject* componentType;
     jobject elementRef;
 
     JPY_GET_JENV(jenv, -1)
 
     type = (JPy_JType*) Py_TYPE(self);
+    componentType = (PyTypeObject*) type->componentType;
     if (type->componentType == NULL) {
         PyErr_SetString(PyExc_RuntimeError, "internal error: object is not an array");
         return -1;
     }
 
-    if (item != Py_None) {
-        if (JType_ConvertPythonToJavaObject(jenv, type->componentType, item, &elementRef) < 0) {
+    // todo - the following item assignments are not value range checked
+    if (componentType == JPy_JBoolean) {
+        jboolean item = (jboolean)(pyItem == Py_True ? 1 : (pyItem == Py_False || pyItem == Py_None) ? 0 : PyLong_AsLong(pyItem) != 0);
+        (*jenv)->SetBooleanArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+    } else if (componentType == JPy_JByte) {
+        jbyte item = (jbyte)(pyItem == Py_None ? 0 : PyLong_AsLong(pyItem));
+        (*jenv)->SetByteArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+    } else if (componentType == JPy_JChar) {
+        jchar item = (jchar)(pyItem == Py_None ? 0 : PyLong_AsLong(pyItem));
+        (*jenv)->SetCharArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+    } else if (componentType == JPy_JShort) {
+        jshort item = (jshort)(pyItem == Py_None ? 0 : PyLong_AsLong(pyItem));
+        (*jenv)->SetShortArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+    } else if (componentType == JPy_JInt) {
+        jint item = (jint)(pyItem == Py_None ? 0 : PyLong_AsLong(pyItem));
+        (*jenv)->SetIntArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+    } else if (componentType == JPy_JLong) {
+        jlong item = (jlong)(pyItem == Py_None ? 0 : PyLong_AsLongLong(pyItem));
+        (*jenv)->SetLongArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+    } else if (componentType == JPy_JFloat) {
+        jfloat item = (jfloat)(pyItem == Py_None ? 0 : PyFloat_AsDouble(pyItem));
+        (*jenv)->SetFloatArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+    } else if (componentType == JPy_JDouble) {
+        jdouble item = (jdouble)(pyItem == Py_None ? 0 : PyFloat_AsDouble(pyItem));
+        (*jenv)->SetDoubleArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+    } else {
+        if (pyItem != Py_None) {
+            if (JType_ConvertPythonToJavaObject(jenv, type->componentType, pyItem, &elementRef) < 0) {
+                return -1;
+            }
+        } else {
+            elementRef = NULL;
+        }
+        (*jenv)->SetObjectArrayElement(jenv, self->objectRef, (jsize) index, elementRef);
+        if ((*jenv)->ExceptionCheck(jenv)) {
+            (*jenv)->ExceptionDescribe(jenv);
+            (*jenv)->ExceptionClear(jenv);
+            PyErr_SetString(PyExc_RuntimeError, "index error");
             return -1;
         }
-    } else {
-        elementRef = NULL;
-    }
-    (*jenv)->SetObjectArrayElement(jenv, self->objectRef, (jsize) index, elementRef);
-    if ((*jenv)->ExceptionCheck(jenv)) {
-        (*jenv)->ExceptionDescribe(jenv);
-        (*jenv)->ExceptionClear(jenv);
-        PyErr_SetString(PyExc_RuntimeError, "index error");
-        return -1;
     }
     return 0;
 }
