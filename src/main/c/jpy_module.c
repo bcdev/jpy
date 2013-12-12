@@ -11,20 +11,27 @@ PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds);
 PyObject* JPy_destroy_jvm(PyObject* self, PyObject* args);
 PyObject* JPy_get_class(PyObject* self, PyObject* args, PyObject* kwds);
 PyObject* JPy_cast(PyObject* self, PyObject* args);
+PyObject* JPy_array(PyObject* self, PyObject* args);
 
 static PyMethodDef JPy_Functions[] = {
 
     {"create_jvm",  (PyCFunction) JPy_create_jvm, METH_VARARGS|METH_KEYWORDS,
-                    "create_jvm(options, debug=False) - create the Java VM from the given list of options."},
+                    "create_jvm(options, debug=False) - Creates the Java VM from the given list of options."},
 
     {"destroy_jvm", JPy_destroy_jvm, METH_VARARGS,
-                    "destroy_jvm() - destroys the current Java VM."},
+                    "destroy_jvm() - Destroys the current Java VM."},
 
     {"get_class",   (PyCFunction) JPy_get_class, METH_VARARGS|METH_KEYWORDS,
-                    "get_class(name, resolve=True) - gets the Java type with the given name. Loads it if not already done. Resolves its methods."},
+                    "get_class(name, resolve=True) - Returns the Java class with the given name, e.g. 'java.io.File'. "
+                    "Loads the Java class from the JVM if not already done. Optionally avoids resolving the class' methods."},
 
     {"cast",        JPy_cast, METH_VARARGS,
-                    "cast(jobj, class_name) - casts jobj to the Java class given by class_name. Returns None if the cast is not possible"},
+                    "cast(obj, type) - Caststhe given Java object to the given Java type. "
+                    "Returns None if the cast is not possible."},
+
+    {"array",       JPy_array, METH_VARARGS,
+                    "array(name, length) - Returns a new Java array of given Java type and length. "
+                    "Possible primitive types are 'boolean', 'byte', 'char', 'short', 'int', 'long', 'float', and 'double'."},
 
     {NULL, NULL, 0, NULL} /*Sentinel*/
 };
@@ -352,7 +359,7 @@ PyObject* JPy_cast(PyObject* self, PyObject* args)
 
     JPY_GET_JENV(jenv, NULL)
 
-    if (!PyArg_ParseTuple(args, "OO", &obj, &objType)) {
+    if (!PyArg_ParseTuple(args, "OO:cast", &obj, &objType)) {
         return NULL;
     }
 
@@ -378,6 +385,62 @@ PyObject* JPy_cast(PyObject* self, PyObject* args)
     }
 }
 
+PyObject* JPy_array(PyObject* self, PyObject* args)
+{
+    JNIEnv* jenv;
+    PyTypeObject* type;
+    const char* name;
+    int length;
+    jarray arrayRef;
+    jclass classRef;
+
+    JPY_GET_JENV(jenv, NULL)
+
+    if (!PyArg_ParseTuple(args, "si:array", &name, &length)) {
+        return NULL;
+    }
+
+    if (length < 0) {
+        PyErr_SetString(PyExc_ValueError, "negative array length");
+    }
+
+    type = NULL;
+    if (strcmp(name, "boolean") == 0) {
+        arrayRef = (*jenv)->NewBooleanArray(jenv, length);
+    } else if (strcmp(name, "byte") == 0) {
+        arrayRef = (*jenv)->NewByteArray(jenv, length);
+    } else if (strcmp(name, "char") == 0) {
+        arrayRef = (*jenv)->NewCharArray(jenv, length);
+    } else if (strcmp(name, "short") == 0) {
+        arrayRef = (*jenv)->NewShortArray(jenv, length);
+    } else if (strcmp(name, "int") == 0) {
+        arrayRef = (*jenv)->NewIntArray(jenv, length);
+    } else if (strcmp(name, "long") == 0) {
+        arrayRef = (*jenv)->NewLongArray(jenv, length);
+    } else if (strcmp(name, "float") == 0) {
+        arrayRef = (*jenv)->NewFloatArray(jenv, length);
+    } else if (strcmp(name, "double") == 0) {
+        arrayRef = (*jenv)->NewDoubleArray(jenv, length);
+    } else {
+        type = JType_GetTypeForName(name, JNI_FALSE);
+        if (type == NULL) {
+            return NULL;
+        }
+        arrayRef = (*jenv)->NewObjectArray(jenv, length, ((JPy_JType*) type)->classRef, NULL);
+    }
+
+    if (arrayRef == NULL) {
+        return PyErr_NoMemory();
+    }
+
+    classRef = (*jenv)->GetObjectClass(jenv, arrayRef);
+    type = JType_GetType(classRef, JNI_FALSE);
+    if (type == NULL) {
+        return NULL;
+    }
+
+    return JObj_FromType(jenv, (JPy_JType*) type, arrayRef);
+}
 
 PyTypeObject* JPy_GetNonObjectJType(JNIEnv* jenv, const char* wrapperClassName)
 {
