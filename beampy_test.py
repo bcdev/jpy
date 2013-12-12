@@ -26,7 +26,8 @@ class TestBeamIO(unittest.TestCase):
         w = self.product.getSceneRasterWidth()
         h = self.product.getSceneRasterHeight()
         b = self.product.getBand('radiance_13')
-        data = b.readPixels(0, 0, w, h, None)
+        a = beampy.jpy.array('int', w)
+        data = b.readPixels(0, 0, w, h, a)
 
 
 if __name__ == '__main__':
