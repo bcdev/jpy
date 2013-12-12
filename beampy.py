@@ -1,24 +1,15 @@
 # Example for jpy
 
-import os
 import jpy
+import os
+import configparser
 
 __author__ = "Norman Fomferra, Brockmann Consult GmbH"
 
 
-def _collect_classpath(path, classpath):
-    for name in os.listdir(path):
-        file = os.path.join(path, name)
-        if name.endswith('.jar') or name.endswith('.zip') or os.path.isdir(file):
-            classpath.append(file)
+def _get_beam_jar_locations():
 
-
-def _create_classpath():
-
-    # todo: read 'beam_home' from a configuration file (beampy.ini)
-    beam_home = os.getenv('BEAM_HOME', os.getenv('BEAM5_HOME'))
-
-    invalid_beam_home = RuntimeError('BEAM_HOME environment variable must be set to a valid BEAM installation directors')
+    invalid_beam_home = RuntimeError('The BEAM installation directory "beam_home" environment variable must be set to a valid BEAM installation directors')
 
     if beam_home is None:
         raise invalid_beam_home
@@ -34,32 +25,46 @@ def _create_classpath():
     if not (os.path.exists(beam_bin)
             and os.path.exists(beam_lib)
             and os.path.exists(beam_mod)):
-        raise invalid_beam_home
+        raise RuntimeError('Does not seem to be a valid BEAM installation path: ' + beam_home)
 
-    os.listdir(beam_lib)
+    return [beam_bin, beam_lib, beam_mod]
+
+
+def _collect_classpath(path, classpath):
+    for name in os.listdir(path):
+        file = os.path.join(path, name)
+        if name.endswith('.jar') or name.endswith('.zip') or os.path.isdir(file):
+            classpath.append(file)
+
+
+def _create_classpath(searchpath):
 
     classpath = []
-    _collect_classpath(beam_mod, classpath)
-    _collect_classpath(beam_lib, classpath)
-    _collect_classpath(beam_bin, classpath)
-
+    for path in searchpath:
+        _collect_classpath(path, classpath)
     return classpath
 
 
-classpath = _create_classpath()
+config = configparser.ConfigParser()
+config.read(['./beampy.ini', os.path.join(__file__, 'beampy.ini')])
+beam_home = config['DEFAULT'].get('beam_home', fallback=os.getenv('BEAM_HOME', os.getenv('BEAM4_HOME', os.getenv('BEAM5_HOME'))))
 
+#import pprint
+searchpath = _get_beam_jar_locations()
+#pprint.pprint(searchpath)
+classpath = _create_classpath(searchpath)
+#pprint.pprint(classpath)
+
+# Don't need these functions anymore
+del _get_beam_jar_locations
 del _create_classpath
 del _collect_classpath
 
-#import pprint
-#pprint.pprint(classpath)
+debug = config.getboolean('DEFAULT', 'debug')
 
-# todo: read 'debug' and additional options from a configuration file (beampy.ini)
-debug = True
-#debug = False
 jpy.create_jvm(options=['-Djava.class.path=' + os.pathsep.join(classpath), '-Xmx512M'], debug=debug)
 
-def callback(type, method):
+def annotate_RasterDataNode_readPixels(type, method):
     if method.name == 'readPixels' and method.param_count >= 5:
         index = 4
         param_type_str = str(method.get_param_type(index))
@@ -72,8 +77,10 @@ def callback(type, method):
                   method.name, index, method.is_param_mutable(4), method.is_param_return(4)))
     return True
 
-jpy.type_callbacks['org.esa.beam.framework.datamodel.RasterDataNode'] = callback
-
+jpy.type_callbacks['org.esa.beam.framework.datamodel.RasterDataNode'] = annotate_RasterDataNode_readPixels
+jpy.type_callbacks['org.esa.beam.framework.datamodel.AbstractBand'] = annotate_RasterDataNode_readPixels
+jpy.type_callbacks['org.esa.beam.framework.datamodel.Band'] = annotate_RasterDataNode_readPixels
+jpy.type_callbacks['org.esa.beam.framework.datamodel.VirtualBand'] = annotate_RasterDataNode_readPixels
 
 try:
     # todo: read pre-defined types from a configuration file (beampy.ini)
