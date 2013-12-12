@@ -47,7 +47,10 @@ def _create_classpath(searchpath):
 
 config = configparser.ConfigParser()
 config.read(['./beampy.ini', os.path.join(__file__, 'beampy.ini')])
-beam_home = config['DEFAULT'].get('beam_home', fallback=os.getenv('BEAM_HOME', os.getenv('BEAM4_HOME', os.getenv('BEAM5_HOME'))))
+beam_home = config.get('DEFAULT', 'beam_home',
+                       fallback=os.getenv('BEAM_HOME',
+                                          os.getenv('BEAM4_HOME',
+                                                    os.getenv('BEAM5_HOME'))))
 
 #import pprint
 searchpath = _get_beam_jar_locations()
@@ -60,7 +63,7 @@ del _get_beam_jar_locations
 del _create_classpath
 del _collect_classpath
 
-debug = config.getboolean('DEFAULT', 'debug')
+debug = config.getboolean('DEFAULT', 'debug', fallback=False)
 
 jpy.create_jvm(options=['-Djava.class.path=' + os.pathsep.join(classpath), '-Xmx512M'], debug=debug)
 
