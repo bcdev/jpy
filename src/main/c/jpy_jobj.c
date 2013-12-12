@@ -28,6 +28,7 @@ int JObj_init(JPy_JObj* self, PyObject* args, PyObject* kwds)
     JPy_JMethod* jMethod;
     jobject objectRef;
     jvalue* jArgs;
+    JPy_ArgDisposer* jDisposers;
 
     JPY_GET_JENV(jenv, -1)
 
@@ -56,7 +57,7 @@ int JObj_init(JPy_JObj* self, PyObject* args, PyObject* kwds)
     }
 
     //printf("JObj_init 1\n");
-    if (JMethod_CreateJArgs(jMethod, args, &jArgs) < 0) {
+    if (JMethod_CreateJArgs(jMethod, args, &jArgs, &jDisposers) < 0) {
         return -1;
     }
 
@@ -66,9 +67,13 @@ int JObj_init(JPy_JObj* self, PyObject* args, PyObject* kwds)
         PyErr_SetString(PyExc_RuntimeError, "Java constructor returned null");
         return -1;
     }
+
+    if (jMethod->paramCount > 0) {
+        JMethod_DisposeJArgs(jMethod->paramCount, jArgs, jDisposers);
+    }
+
     // todo: add exception
 
-    PyMem_Del(jArgs);
 
     //printf("JObj_init 3\n");
     objectRef = (*jenv)->NewGlobalRef(jenv, objectRef);

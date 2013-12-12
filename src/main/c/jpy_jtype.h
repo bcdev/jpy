@@ -38,10 +38,25 @@ JPy_JType;
  */
 extern PyTypeObject JType_Type;
 
+typedef int (*JPy_DisposeArg)(jvalue* value, void* data);
+
+/**
+ * ArgDisposers are used to dispose arguments after invocation of Java methods.
+ * We need to dispose those arguments which have been created as local references,
+ * e.g. jenv->NewString(), jenv->NewObjectArray(), jenv->New<Type>Array().
+ */
+typedef struct JPy_ArgDisposer
+{
+    void* data;
+    JPy_DisposeArg disposeArg;
+}
+JPy_ArgDisposer;
+
+
 typedef struct JPy_ParamDescriptor;
 
 typedef int (*JPy_ParamAssessor)(struct JPy_ParamDescriptor*, PyObject*);
-typedef int (*JPy_ParamConverter)(struct JPy_ParamDescriptor*, PyObject*, jvalue*);
+typedef int (*JPy_ParamConverter)(struct JPy_ParamDescriptor*, PyObject*, jvalue*, JPy_ArgDisposer*);
 
 /**
  * Method return value descriptor.

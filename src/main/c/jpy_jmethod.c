@@ -122,49 +122,6 @@ int JMethod_AssessConversion(JPy_JMethod* method, int argCount, PyObject* argTup
     return matchValueSum;
 }
 
-int JMethod_CreateJArgs(JPy_JMethod* method, PyObject* argTuple, jvalue** jArgs)
-{
-    JPy_ParamDescriptor* paramDescriptor;
-    PyObject* arg;
-    jvalue* jValue;
-    int i, i0, argCount;
-    jvalue* jValues;
-
-    *jArgs = NULL;
-
-    if (method->paramCount == 0) {
-        return 0;
-    }
-
-    jValues = PyMem_New(jvalue, method->paramCount);
-    if (jValues == NULL) {
-        PyErr_NoMemory();
-        return -1;
-    }
-
-    argCount = PyTuple_Size(argTuple);
-
-    i0 = argCount - method->paramCount;
-    if (!(i0 == 0 || i0 == 1)) {
-        PyErr_SetString(PyExc_RuntimeError, "internal error");
-        return -1;
-    }
-
-    paramDescriptor = method->paramDescriptors;
-    jValue = jValues;
-    for (i = i0; i < argCount; i++) {
-        arg = PyTuple_GetItem(argTuple, i);
-        if (paramDescriptor->paramConverter(paramDescriptor, arg, jValue) < 0) {
-            return -1;
-        }
-        paramDescriptor++;
-        jValue++;
-    }
-
-    *jArgs = jValues;
-    return 0;
-}
-
 /**
  * Convert a Java String to Python String.
  */
@@ -214,13 +171,14 @@ PyObject* JMethod_InvokeMethod(JPy_JMethod* method, JPy_JType* type, PyObject* a
 {
     JNIEnv* jenv;
     jvalue* jArgs;
+    JPy_ArgDisposer* jDisposers;
     PyObject* returnValue;
     PyTypeObject* returnType;
 
     JPY_GET_JENV(jenv, NULL)
 
     //printf("JMethod_InvokeMethod 1: typeCode=%c\n", typeCode);
-    if (JMethod_CreateJArgs(method, argTuple, &jArgs) < 0) {
+    if (JMethod_CreateJArgs(method, argTuple, &jArgs, &jDisposers) < 0) {
         return NULL;
     }
 
@@ -310,9 +268,92 @@ PyObject* JMethod_InvokeMethod(JPy_JMethod* method, JPy_JType* type, PyObject* a
         }
     }
 
-    PyMem_Del(jArgs);
+    if (jArgs != NULL) {
+        JMethod_DisposeJArgs(method->paramCount, jArgs, jDisposers);
+    }
 
     return returnValue;
+}
+
+int JMethod_CreateJArgs(JPy_JMethod* method, PyObject* argTuple, jvalue** argValues, JPy_ArgDisposer** argDisposers)
+{
+    JPy_ParamDescriptor* paramDescriptor;
+    int i, i0, argCount;
+    PyObject* arg;
+    jvalue* jValue;
+    jvalue* jValues;
+    JPy_ArgDisposer* jDisposer;
+    JPy_ArgDisposer* jDisposers;
+
+    if (method->paramCount == 0) {
+        *argValues = NULL;
+        *argDisposers = NULL;
+        return 0;
+    }
+
+    argCount = PyTuple_Size(argTuple);
+
+    i0 = argCount - method->paramCount;
+    if (!(i0 == 0 || i0 == 1)) {
+        PyErr_SetString(PyExc_RuntimeError, "internal error");
+        return -1;
+    }
+
+    jValues = PyMem_New(jvalue, method->paramCount);
+    if (jValues == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+
+    jDisposers = PyMem_New(JPy_ArgDisposer, method->paramCount);
+    if (jDisposers == NULL) {
+        PyMem_Del(jValues);
+        PyErr_NoMemory();
+        return -1;
+    }
+
+    paramDescriptor = method->paramDescriptors;
+    jValue = jValues;
+    jDisposer = jDisposers;
+    for (i = i0; i < argCount; i++) {
+        arg = PyTuple_GetItem(argTuple, i);
+        jValue->l = 0;
+        jDisposer->data = NULL;
+        jDisposer->disposeArg = NULL;
+        if (paramDescriptor->paramConverter(paramDescriptor, arg, jValue, jDisposer) < 0) {
+            PyMem_Del(jValues);
+            PyMem_Del(jDisposers);
+            return -1;
+        }
+        paramDescriptor++;
+        jValue++;
+        jDisposer++;
+    }
+
+    *argValues = jValues;
+    *argDisposers = jDisposers;
+    return 0;
+}
+
+void JMethod_DisposeJArgs(int paramCount, jvalue* jArgs, JPy_ArgDisposer* jDisposers)
+{
+    jvalue* jArg;
+    JPy_ArgDisposer* jDisposer;
+    int index;
+
+    jArg = jArgs;
+    jDisposer = jDisposers;
+
+    for (index = 0; index < paramCount; index++) {
+        if (jDisposer->disposeArg != NULL) {
+            jDisposer->disposeArg(jArg, jDisposer->data);
+        }
+        jArg++;
+        jDisposer++;
+    }
+
+    PyMem_Del(jArgs);
+    PyMem_Del(jDisposers);
 }
 
 
