@@ -23,7 +23,7 @@ class TestMethodReturnValues(unittest.TestCase):
         self.assertEqual(dummy.getValue_short(12), 12)
         self.assertEqual(dummy.getValue_int(13), 13)
         self.assertEqual(dummy.getValue_long(14), 14)
-        self.assertEqual(round(dummy.getValue_float(15.1), 5), 15.1)   # rounding problem
+        self.assertAlmostEqual(dummy.getValue_float(15.1), 15.1, places=5)
         self.assertEqual(dummy.getValue_double(16.2), 16.2)
 
     def test_objects(self):
@@ -76,9 +76,9 @@ class TestMethodReturnValues(unittest.TestCase):
         dummy = self.Dummy()
         array = dummy.getArray1D_float(-1.01, 2.01, 3.01)
         self.assertEqual(len(array), 3)
-        self.assertEqual(round(array[0], 5), -1.01)
-        self.assertEqual(round(array[1], 5), 2.01)
-        self.assertEqual(round(array[2], 5), 3.01)
+        self.assertAlmostEqual(array[0], -1.01, places=5)
+        self.assertAlmostEqual(array[1], 2.01, places=5)
+        self.assertAlmostEqual(array[2], 3.01, places=5)
 
     def test_array1d_double(self):
         dummy = self.Dummy()
