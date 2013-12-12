@@ -14,7 +14,7 @@ extern "C" {
 /**
  * Prototype for a function that releases the CArray's internal memory.
  */
-typedef void (*JPy_CArrayFree)(void* array_elems, int array_length);
+typedef void (*JPy_FreeCArray)(void* array_elems, int array_length);
 
 
 /**
@@ -24,7 +24,7 @@ typedef void (*JPy_CArrayFree)(void* array_elems, int array_length);
  * calling Py_INCREF(obj) in the returned obj yourself
  * @param format The item type format. Must be one of "b", "B", "h", "H", "i", "I", "l", "L", "f", "d" (see Python struct module).
  */
-PyObject* CArray_FromMemory(const char* format, void* items, int length, JPy_CArrayFree free_fn);
+PyObject* CArray_FromMemory(const char* format, void* items, int length, JPy_FreeCArray freeCArray);
 
 /**
  * Factory function for a CArray used if only the number of items is known given.
@@ -55,11 +55,11 @@ typedef struct
     PyObject_HEAD
     /** must be one of "b", "B", "h", "H", "i", "I", "l", "L", "f", "d" (see Python struct module) */
     char format[2];
-    int length;
-    size_t item_size;
+    Py_ssize_t length;
+    Py_ssize_t itemSize;
     void* items;
-    JPy_CArrayFree free_fn;
-    size_t num_exports;
+    JPy_FreeCArray freeCArray;
+    size_t exportCount;
 }
 JPy_CArray;
 
