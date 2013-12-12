@@ -74,6 +74,8 @@ PyTypeObject* JType_GetType(jclass classRef, jboolean resolve);
 PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject objectRef);
 int       JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* arg, jobject* objectRef);
 
+PyObject* JType_GetOverloadedMethod(JPy_JType* type, PyObject* methodName, jboolean useSuperClass);
+
 
 // Non-API. Defined in jpy_jobj.c
 int JType_InitSlots(JPy_JType* type);

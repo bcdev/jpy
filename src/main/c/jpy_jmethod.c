@@ -57,8 +57,11 @@ void JMethod_Del(JPy_JMethod* method)
     JMethod_dealloc(method);
 }
 
-
-int JMethod_AssessConversion(JPy_JMethod* jMethod, int argCount, PyObject* argTuple)
+/**
+ * Returns the sum of the method's parameter match values.
+ * Thus, the actual match assessment is: float matchValue = (float) matchValueSum / (float) method->paramCount;
+ */
+int JMethod_AssessConversion(JPy_JMethod* method, int argCount, PyObject* argTuple)
 {
     JPy_ParamDescriptor* paramDescriptor;
     PyObject* arg;
@@ -67,9 +70,9 @@ int JMethod_AssessConversion(JPy_JMethod* jMethod, int argCount, PyObject* argTu
     int i;
     int i0;
 
-    if (jMethod->isStatic) {
-        //printf("Static! jMethod->paramCount=%d, argCount=%d\n", jMethod->paramCount, argCount);
-        if (jMethod->paramCount != argCount) {
+    if (method->isStatic) {
+        //printf("Static! method->paramCount=%d, argCount=%d\n", method->paramCount, argCount);
+        if (method->paramCount != argCount) {
             //printf("JMethod_AssessConversion 1\n");
             // argument count mismatch
             return 0;
@@ -77,8 +80,8 @@ int JMethod_AssessConversion(JPy_JMethod* jMethod, int argCount, PyObject* argTu
         i0 = 0;
     } else {
         PyObject* self;
-        //printf("Non-Static! jMethod->paramCount=%d, argCount=%d\n", jMethod->paramCount, argCount);
-        if (jMethod->paramCount != argCount - 1) {
+        //printf("Non-Static! method->paramCount=%d, argCount=%d\n", method->paramCount, argCount);
+        if (method->paramCount != argCount - 1) {
             //printf("JMethod_AssessConversion 2\n");
             // argument count mismatch
             return 0;
@@ -91,13 +94,13 @@ int JMethod_AssessConversion(JPy_JMethod* jMethod, int argCount, PyObject* argTu
         i0 = 1;
     }
 
-    if (jMethod->paramCount == 0) {
+    if (method->paramCount == 0) {
         //printf("JMethod_AssessConversion 4\n");
         // There will be no other method overloads with no parameters
         return 100;
     }
 
-    paramDescriptor = jMethod->paramDescriptors;
+    paramDescriptor = method->paramDescriptors;
     matchValueSum = 0;
     for (i = i0; i < argCount; i++) {
 
@@ -119,7 +122,7 @@ int JMethod_AssessConversion(JPy_JMethod* jMethod, int argCount, PyObject* argTu
     return matchValueSum;
 }
 
-int JMethod_CreateJArgs(JPy_JMethod* jMethod, PyObject* argTuple, jvalue** jArgs)
+int JMethod_CreateJArgs(JPy_JMethod* method, PyObject* argTuple, jvalue** jArgs)
 {
     JPy_ParamDescriptor* paramDescriptor;
     PyObject* arg;
@@ -129,11 +132,11 @@ int JMethod_CreateJArgs(JPy_JMethod* jMethod, PyObject* argTuple, jvalue** jArgs
 
     *jArgs = NULL;
 
-    if (jMethod->paramCount == 0) {
+    if (method->paramCount == 0) {
         return 0;
     }
 
-    jValues = PyMem_New(jvalue, jMethod->paramCount);
+    jValues = PyMem_New(jvalue, method->paramCount);
     if (jValues == NULL) {
         PyErr_NoMemory();
         return -1;
@@ -141,13 +144,13 @@ int JMethod_CreateJArgs(JPy_JMethod* jMethod, PyObject* argTuple, jvalue** jArgs
 
     argCount = PyTuple_Size(argTuple);
 
-    i0 = argCount - jMethod->paramCount;
+    i0 = argCount - method->paramCount;
     if (!(i0 == 0 || i0 == 1)) {
         PyErr_SetString(PyExc_RuntimeError, "internal error");
         return -1;
     }
 
-    paramDescriptor = jMethod->paramDescriptors;
+    paramDescriptor = method->paramDescriptors;
     jValue = jValues;
     for (i = i0; i < argCount; i++) {
         arg = PyTuple_GetItem(argTuple, i);
@@ -207,7 +210,7 @@ PyObject* JPy_FromJObject(JNIEnv* jenv, JPy_JType* type, jobject objectRef)
 /**
  * Invoke a method. We have already ensured that the Python arguments and expected Java parameters match.
  */
-PyObject* JMethod_InvokeMethod(JPy_JMethod* jMethod, JPy_JType* type, PyObject* argTuple)
+PyObject* JMethod_InvokeMethod(JPy_JMethod* method, JPy_JType* type, PyObject* argTuple)
 {
     JNIEnv* jenv;
     jvalue* jArgs;
@@ -217,49 +220,49 @@ PyObject* JMethod_InvokeMethod(JPy_JMethod* jMethod, JPy_JType* type, PyObject* 
     JPY_GET_JENV(jenv, NULL)
 
     //printf("JMethod_InvokeMethod 1: typeCode=%c\n", typeCode);
-    if (JMethod_CreateJArgs(jMethod, argTuple, &jArgs) < 0) {
+    if (JMethod_CreateJArgs(method, argTuple, &jArgs) < 0) {
         return NULL;
     }
 
     //printf("JMethod_InvokeMethod 2: typeCode=%c\n", typeCode);
 
-    returnType = (PyTypeObject*) jMethod->returnDescriptor->type;
+    returnType = (PyTypeObject*) method->returnDescriptor->type;
 
-    if (jMethod->isStatic) {
+    if (method->isStatic) {
         jclass classRef = type->classRef;
 
         if (returnType == JPy_JVoid) {
-            (*jenv)->CallStaticVoidMethodA(jenv, classRef, jMethod->mid, jArgs);
+            (*jenv)->CallStaticVoidMethodA(jenv, classRef, method->mid, jArgs);
             returnValue = Py_BuildValue("");
         } else if (returnType == JPy_JBoolean) {
-            jboolean v = (*jenv)->CallStaticBooleanMethodA(jenv, classRef, jMethod->mid, jArgs);
+            jboolean v = (*jenv)->CallStaticBooleanMethodA(jenv, classRef, method->mid, jArgs);
             returnValue = PyBool_FromLong(v);
         } else if (returnType == JPy_JChar) {
-            jchar v = (*jenv)->CallStaticCharMethodA(jenv, classRef, jMethod->mid, jArgs);
+            jchar v = (*jenv)->CallStaticCharMethodA(jenv, classRef, method->mid, jArgs);
             returnValue = Py_BuildValue("C", v);
         } else if (returnType == JPy_JByte) {
-            jbyte v = (*jenv)->CallStaticByteMethodA(jenv, classRef, jMethod->mid, jArgs);
+            jbyte v = (*jenv)->CallStaticByteMethodA(jenv, classRef, method->mid, jArgs);
             returnValue = PyLong_FromLong(v);
         } else if (returnType == JPy_JShort) {
-            jshort v = (*jenv)->CallStaticShortMethodA(jenv, classRef, jMethod->mid, jArgs);
+            jshort v = (*jenv)->CallStaticShortMethodA(jenv, classRef, method->mid, jArgs);
             returnValue = PyLong_FromLong(v);
         } else if (returnType == JPy_JInt) {
-            jint v = (*jenv)->CallStaticIntMethodA(jenv, classRef, jMethod->mid, jArgs);
+            jint v = (*jenv)->CallStaticIntMethodA(jenv, classRef, method->mid, jArgs);
             returnValue = PyLong_FromLong(v);
         } else if (returnType == JPy_JLong) {
-            jlong v = (*jenv)->CallStaticIntMethodA(jenv, classRef, jMethod->mid, jArgs);
+            jlong v = (*jenv)->CallStaticIntMethodA(jenv, classRef, method->mid, jArgs);
             returnValue = PyLong_FromLongLong(v);
         } else if (returnType == JPy_JFloat) {
-            jfloat v = (*jenv)->CallStaticFloatMethodA(jenv, classRef, jMethod->mid, jArgs);
+            jfloat v = (*jenv)->CallStaticFloatMethodA(jenv, classRef, method->mid, jArgs);
             returnValue = PyFloat_FromDouble(v);
         } else if (returnType == JPy_JDouble) {
-            jdouble v = (*jenv)->CallStaticDoubleMethodA(jenv, classRef, jMethod->mid, jArgs);
+            jdouble v = (*jenv)->CallStaticDoubleMethodA(jenv, classRef, method->mid, jArgs);
             returnValue = PyFloat_FromDouble(v);
         } else if (returnType == JPy_JString) {
-            jstring v = (*jenv)->CallStaticObjectMethodA(jenv, classRef, jMethod->mid, jArgs);
+            jstring v = (*jenv)->CallStaticObjectMethodA(jenv, classRef, method->mid, jArgs);
             returnValue = JPy_FromJString(jenv, (JPy_JType*) returnType, v);
         } else {
-            jobject v = (*jenv)->CallStaticObjectMethodA(jenv, classRef, jMethod->mid, jArgs);
+            jobject v = (*jenv)->CallStaticObjectMethodA(jenv, classRef, method->mid, jArgs);
             returnValue = JPy_FromJObject(jenv, (JPy_JType*) returnType, v);
         }
 
@@ -272,37 +275,37 @@ PyObject* JMethod_InvokeMethod(JPy_JMethod* jMethod, JPy_JType* type, PyObject* 
         objectRef = ((JPy_JObj*) self)->objectRef;
 
         if (returnType == JPy_JVoid) {
-            (*jenv)->CallVoidMethodA(jenv, objectRef, jMethod->mid, jArgs);
+            (*jenv)->CallVoidMethodA(jenv, objectRef, method->mid, jArgs);
             returnValue = Py_BuildValue("");
         } else if (returnType == JPy_JBoolean) {
-            jboolean v = (*jenv)->CallBooleanMethodA(jenv, objectRef, jMethod->mid, jArgs);
+            jboolean v = (*jenv)->CallBooleanMethodA(jenv, objectRef, method->mid, jArgs);
             returnValue = PyBool_FromLong(v);
         } else if (returnType == JPy_JChar) {
-            jchar v = (*jenv)->CallCharMethodA(jenv, objectRef, jMethod->mid, jArgs);
+            jchar v = (*jenv)->CallCharMethodA(jenv, objectRef, method->mid, jArgs);
             returnValue = Py_BuildValue("c", v);
         } else if (returnType == JPy_JByte) {
-            jbyte v = (*jenv)->CallByteMethodA(jenv, objectRef, jMethod->mid, jArgs);
+            jbyte v = (*jenv)->CallByteMethodA(jenv, objectRef, method->mid, jArgs);
             returnValue = PyLong_FromLong(v);
         } else if (returnType == JPy_JShort) {
-            jshort v = (*jenv)->CallShortMethodA(jenv, objectRef, jMethod->mid, jArgs);
+            jshort v = (*jenv)->CallShortMethodA(jenv, objectRef, method->mid, jArgs);
             returnValue = PyLong_FromLong(v);
         } else if (returnType == JPy_JInt) {
-            jint v = (*jenv)->CallIntMethodA(jenv, objectRef, jMethod->mid, jArgs);
+            jint v = (*jenv)->CallIntMethodA(jenv, objectRef, method->mid, jArgs);
             returnValue = PyLong_FromLong(v);
         } else if (returnType == JPy_JLong) {
-            jlong v = (*jenv)->CallIntMethodA(jenv, objectRef, jMethod->mid, jArgs);
+            jlong v = (*jenv)->CallIntMethodA(jenv, objectRef, method->mid, jArgs);
             returnValue = PyLong_FromLongLong(v);
         } else if (returnType == JPy_JFloat) {
-            jfloat v = (*jenv)->CallFloatMethodA(jenv, objectRef, jMethod->mid, jArgs);
+            jfloat v = (*jenv)->CallFloatMethodA(jenv, objectRef, method->mid, jArgs);
             returnValue = PyFloat_FromDouble(v);
         } else if (returnType == JPy_JDouble) {
-            jdouble v = (*jenv)->CallDoubleMethodA(jenv, objectRef, jMethod->mid, jArgs);
+            jdouble v = (*jenv)->CallDoubleMethodA(jenv, objectRef, method->mid, jArgs);
             returnValue = PyFloat_FromDouble(v);
         } else if (returnType == JPy_JString) {
-            jstring v = (*jenv)->CallObjectMethodA(jenv, objectRef, jMethod->mid, jArgs);
+            jstring v = (*jenv)->CallObjectMethodA(jenv, objectRef, method->mid, jArgs);
             returnValue = JPy_FromJString(jenv, (JPy_JType*) returnType, v);
         } else {
-            jobject v = (*jenv)->CallObjectMethodA(jenv, objectRef, jMethod->mid, jArgs);
+            jobject v = (*jenv)->CallObjectMethodA(jenv, objectRef, method->mid, jArgs);
             returnValue = JPy_FromJObject(jenv, (JPy_JType*) returnType, v);
         }
     }
@@ -464,8 +467,15 @@ PyTypeObject JMethod_Type = {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  JOverloadedMethod
 
+typedef struct JPy_MethodFindResult
+{
+    JPy_JMethod* method;
+    int matchValue;
+    int matchCount;
+}
+JPy_MethodFindResult;
 
-JPy_JMethod* JOverloadedMethod_FindMethod(JPy_JOverloadedMethod* overloadedMethod, PyObject* argTuple)
+JPy_JMethod* JOverloadedMethod_FindMethod0(JPy_JOverloadedMethod* overloadedMethod, PyObject* argTuple, JPy_MethodFindResult* result)
 {
     int overloadCount;
     int argCount;
@@ -476,12 +486,13 @@ JPy_JMethod* JOverloadedMethod_FindMethod(JPy_JOverloadedMethod* overloadedMetho
     JPy_JMethod* bestMethod;
     int i;
 
+    result->method = NULL;
+    result->matchValue = 0;
+    result->matchCount = 0;
+
     overloadCount = PyList_Size(overloadedMethod->methodList);
-    if (overloadCount < 0) {
-        return NULL;
-    }
-    if (overloadCount == 0) {
-        PyErr_SetString(PyExc_RuntimeError, "no method overloads available");
+    if (overloadCount <= 0) {
+        PyErr_SetString(PyExc_RuntimeError, "internal error: invalid overloadedMethod->methodList");
         return NULL;
     }
 
@@ -490,13 +501,15 @@ JPy_JMethod* JOverloadedMethod_FindMethod(JPy_JOverloadedMethod* overloadedMetho
     matchValueMax = -1;
     bestMethod = NULL;
 
-    if (JPy_IsDebug()) printf("JOverloadedMethod_FindMethod: in class '%s': overloadCount=%d\n", overloadedMethod->declaringClass->javaName, overloadCount);
+    if (JPy_IsDebug()) printf("JOverloadedMethod_FindMethod0: method '%s#%s': overloadCount=%d\n",
+                              overloadedMethod->declaringClass->javaName, PyUnicode_AsUTF8(overloadedMethod->name), overloadCount);
 
     for (i = 0; i < overloadCount; i++) {
         currMethod = (JPy_JMethod*) PyList_GetItem(overloadedMethod->methodList, i);
         matchValue = JMethod_AssessConversion(currMethod, argCount, argTuple);
 
-        if (JPy_IsDebug()) printf("JOverloadedMethod_FindMethod: methodList[%d]: matchValue=%d\n", i, matchValue);
+        if (JPy_IsDebug()) printf("JOverloadedMethod_FindMethod0: methodList[%d]: paramCount=%d, matchValue=%d\n", i,
+                                  currMethod->paramCount, matchValue);
 
         if (matchValue > 0) {
             if (matchValue > matchValueMax) {
@@ -513,17 +526,66 @@ JPy_JMethod* JOverloadedMethod_FindMethod(JPy_JOverloadedMethod* overloadedMetho
         }
     }
 
-    if (matchCount > 1) {
-        PyErr_SetString(PyExc_RuntimeError, "too many matching Java method overloads found");
-        return NULL;
-    }
-
-    if (bestMethod == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "none of the Java method overloads match given arguments");
-        return NULL;
-    }
+    result->method = bestMethod;
+    result->matchValue = matchValueMax;
+    result->matchCount = matchCount;
 
     return bestMethod;
+}
+
+JPy_JMethod* JOverloadedMethod_FindMethod(JPy_JOverloadedMethod* overloadedMethod, PyObject* argTuple)
+{
+    JPy_JOverloadedMethod* currentOM;
+    JPy_MethodFindResult result;
+    JPy_MethodFindResult bestResult;
+    JPy_JType* superClass;
+    PyObject* superOM;
+
+    bestResult.method = NULL;
+    bestResult.matchValue = 0;
+    bestResult.matchCount = 0;
+
+    currentOM = overloadedMethod;
+    while (1) {
+        if (JOverloadedMethod_FindMethod0(currentOM, argTuple, &result) < 0) {
+            // oops, error
+            return NULL;
+        }
+        if (result.method != NULL) {
+            if (result.matchValue >= 100 * result.method->paramCount) {
+                // We can't get any better.
+                return result.method;
+            } else if (result.matchValue > 0 && result.matchValue > bestResult.matchValue) {
+                // We may have better matching methods overloads in the super class (if any)
+                bestResult = result;
+            }
+        }
+
+        superClass = currentOM->declaringClass->superType;
+        superOM = JType_GetOverloadedMethod(superClass, currentOM->name, JNI_TRUE);
+        if (superOM == NULL) {
+            // oops, error
+            return NULL;
+        } else if (superOM == Py_None) {
+            // no overloaded methods found in super class, so return best result found so far
+            if (bestResult.method == NULL) {
+                PyErr_SetString(PyExc_RuntimeError, "no matching Java method overloads found");
+                return NULL;
+            } else if (bestResult.matchCount > 1) {
+                PyErr_SetString(PyExc_RuntimeError, "ambiguous Java method call, too many matching method overloads found");
+                return NULL;
+            } else {
+                return bestResult.method;
+            }
+        } else {
+            // Continue trying with overloads from super type
+            currentOM = (JPy_JOverloadedMethod*) superOM;
+        }
+    }
+
+    // Should never come here
+    PyErr_SetString(PyExc_RuntimeError, "internal error");
+    return NULL;
 }
 
 JPy_JOverloadedMethod* JOverloadedMethod_New(JPy_JType* declaringClass, PyObject* name, JPy_JMethod* method)

@@ -10,7 +10,7 @@ int JType_InitComponentType(JNIEnv* jenv, JPy_JType* type, jboolean resolve);
 int JType_InitSuperType(JNIEnv* jenv, JPy_JType* type, jboolean resolve);
 int JType_ProcessClassConstructors(JNIEnv* jenv, JPy_JType* type);
 int JType_ProcessClassMethods(JNIEnv* jenv, JPy_JType* type);
-int JType_AddMethod(JPy_JType* type, PyObject* methodKey, JPy_JMethod* method);
+int JType_AddMethod(JPy_JType* type, JPy_JMethod* method);
 JPy_ReturnDescriptor* JType_CreateReturnDescriptor(JNIEnv* jenv, jclass returnType);
 JPy_ParamDescriptor* JType_CreateParamDescriptors(JNIEnv* jenv, int paramCount, jarray paramTypes);
 void JType_InitParamDescriptorFunctions(JPy_ParamDescriptor* paramDescriptor);
@@ -296,7 +296,7 @@ jboolean JType_AcceptMethod(JPy_JType* declaringClass, JPy_JMethod* method)
     PyObject* callable;
     PyObject* callableResult;
 
-    //printf("JOverloadedMethod_AddMethod: javaName='%s'\n", overloadedMethod->declaringClass->javaName);
+    //printf("JType_AcceptMethod: javaName='%s'\n", overloadedMethod->declaringClass->javaName);
 
     callable = PyDict_GetItemString(JPy_Type_Callbacks, declaringClass->javaName);
     if (callable != NULL) {
@@ -358,7 +358,7 @@ int JType_ProcessMethod(JNIEnv* jenv, JPy_JType* type, PyObject* methodKey, cons
 
     if (JType_AcceptMethod(type, method)) {
         JType_InitMethodParamDescriptorFunctions(type, method);
-        JType_AddMethod(type, methodKey, method);
+        JType_AddMethod(type, method);
     } else {
         JMethod_Del(method);
     }
@@ -492,7 +492,7 @@ void JType_InitMethodParamDescriptorFunctions(JPy_JType* type, JPy_JMethod* meth
     }
 }
 
-int JType_AddMethod(JPy_JType* type, PyObject* methodKey, JPy_JMethod* method)
+int JType_AddMethod(JPy_JType* type, JPy_JMethod* method)
 {
     PyObject* typeDict;
     PyObject* methodValue;
@@ -504,16 +504,48 @@ int JType_AddMethod(JPy_JType* type, PyObject* methodKey, JPy_JMethod* method)
         return -1;
     }
 
-    methodValue = PyDict_GetItem(typeDict, methodKey);
+    methodValue = PyDict_GetItem(typeDict, method->name);
     if (methodValue == NULL) {
-        overloadedMethod = JOverloadedMethod_New(type, methodKey, method);
-        return PyDict_SetItem(typeDict, methodKey, (PyObject*) overloadedMethod);
+        overloadedMethod = JOverloadedMethod_New(type, method->name, method);
+        return PyDict_SetItem(typeDict, method->name, (PyObject*) overloadedMethod);
     } else if (PyObject_TypeCheck(methodValue, &JOverloadedMethod_Type)) {
         overloadedMethod = (JPy_JOverloadedMethod*) methodValue;
         return JOverloadedMethod_AddMethod(overloadedMethod, method);
+    } else {
+        PyErr_SetString(PyExc_RuntimeError, "internal error: expected type 'JOverloadedMethod' in '__dict__' of a JType");
+        return -1;
+    }
+}
+
+/**
+ * Returns NULL (error), Py_None (borrowed ref), or a JPy_JOverloadedMethod* (borrowed ref)
+ */
+PyObject* JType_GetOverloadedMethod(JPy_JType* type, PyObject* methodName, jboolean useSuperClass)
+{
+    PyObject* typeDict;
+    PyObject* methodValue;
+
+    typeDict = type->typeObj.tp_dict;
+    if (typeDict == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "internal error: missing attribute '__dict__' in JType");
+        return NULL;
     }
 
-    return -1;
+    methodValue = PyDict_GetItem(typeDict, methodName);
+    if (methodValue == NULL) {
+        if (useSuperClass && type->superType != NULL) {
+            return JType_GetOverloadedMethod(type->superType, methodName, JNI_TRUE);
+        } else {
+            return Py_None;
+        }
+    }
+
+    if (PyObject_TypeCheck(methodValue, &JOverloadedMethod_Type)) {
+        return methodValue;
+    } else {
+        PyErr_SetString(PyExc_RuntimeError, "internal error: expected type 'JOverloadedMethod' in '__dict__' of a JType");
+        return NULL;
+    }
 }
 
 JPy_ReturnDescriptor* JType_CreateReturnDescriptor(JNIEnv* jenv, jclass returnClass)
