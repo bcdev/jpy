@@ -439,7 +439,7 @@ PyObject* JPy_array(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    return JObj_FromType(jenv, (JPy_JType*) type, arrayRef);
+    return (PyObject*) JObj_FromType(jenv, (JPy_JType*) type, arrayRef);
 }
 
 PyTypeObject* JPy_GetNonObjectJType(JNIEnv* jenv, const char* wrapperClassName)

@@ -3,24 +3,17 @@
 #define CARRAY_DOC  "C-array object, a light-weight wrapper around one-dimensional C-arrays."
 #define CARRAY_FORMAT_ERROR_MSG "format must be one of (b, B, h, H, i, I, l, L, q, Q, f, d), see Python 'struct' module"
 
-/*
- * Default implementation for the 'freeCArray' field.
- */
-void CArray_FreeMemory(void* items, int length)
-{
-    PyMem_Free(items);
-}
 
 /*
  * Helper for the __init__() method for CArray_Type
  */
-static void CArray_InitInstance(JPy_CArray* self, const char* format, void* items, size_t itemSize, int length, JPy_FreeCArray freeCArray)
+static void CArray_InitInstance(JPy_CArray* self, const char* format, void* items, size_t itemSize, int itemCount, JPy_FreeCArray freeCArray)
 {
     self->format[0] = format[0];
     self->format[1] = 0;
     self->items = items;
+    self->itemCount = itemCount;
     self->itemSize = itemSize;
-    self->length = length;
     self->freeCArray = freeCArray;
     self->exportCount = 0;
 }
@@ -71,12 +64,12 @@ static int CArray_init(JPy_CArray* self, PyObject* args, PyObject* kwds)
 {
     const char* format = NULL;
     void* items = NULL;
-    int length = 0;
     size_t itemSize = 0;
+    int itemCount = 0;
 
     //printf("CArray_init\n");
 
-    if (!PyArg_ParseTuple(args, "si", &format, &length)) {
+    if (!PyArg_ParseTuple(args, "si", &format, &itemCount)) {
         return 1;
     }
 
@@ -85,19 +78,19 @@ static int CArray_init(JPy_CArray* self, PyObject* args, PyObject* kwds)
         return 2;
     }
 
-    if (length <= 0) {
-        PyErr_SetString(PyExc_ValueError, "length must be > 0");
+    if (itemCount <= 0) {
+        PyErr_SetString(PyExc_ValueError, "itemCount must be > 0");
         return 3;
     }
 
-    items = PyMem_Malloc(itemSize * length);
+    items = PyMem_Malloc(itemSize * itemCount);
     if (items == NULL) {
         PyErr_NoMemory();
         return 4;
     }
-    memset(items, 0, itemSize * length);
+    memset(items, 0, itemSize * itemCount);
 
-    CArray_InitInstance(self, format, items, itemSize, length, CArray_FreeMemory);
+    CArray_InitInstance(self, format, items, itemSize, itemCount, PyMem_Free);
     return 0;
 }
 
@@ -108,7 +101,7 @@ static void CArray_dealloc(JPy_CArray* self)
 {
     //printf("CArray_dealloc\n");
     if (self->items != NULL && self->freeCArray != NULL) {
-        self->freeCArray(self->items, self->length);
+        self->freeCArray(self->items);
         self->items = NULL;
     }
     Py_TYPE(self)->tp_free((PyObject*) self);
@@ -120,7 +113,7 @@ static void CArray_dealloc(JPy_CArray* self)
  */
 static PyObject* CArray_repr(JPy_CArray* self)
 {
-    return PyUnicode_FromFormat("jpy.CArray('%s', %d)", self->format, self->length);
+    return PyUnicode_FromFormat("jpy.CArray('%s', %d)", self->format, self->itemCount);
 }
 
 /*
@@ -175,11 +168,11 @@ int CArray_getbufferproc(JPy_CArray* self, Py_buffer* view, int flags)
 
     // Step 2/5
     view->buf = self->items;
-    view->len = self->length * self->itemSize;
+    view->len = self->itemCount * self->itemSize;
     view->itemsize = self->itemSize;
-    view->readonly = 0;
+    view->readonly = (flags & (PyBUF_WRITE | PyBUF_WRITEABLE)) == 0;
     view->ndim = 1;
-    view->shape = &self->length;
+    view->shape = &self->itemCount;
     view->strides = &self->itemSize;
     view->suboffsets = NULL;
     if ((flags & PyBUF_FORMAT) != 0) {
@@ -222,13 +215,14 @@ void CArray_releasebufferproc(JPy_CArray* self, Py_buffer* view)
 {
     // Step 1
     self->exportCount--;
-    Py_DECREF(view->obj);
     // printf("CArray_releasebufferproc: self->exportCount=%d\n", self->exportCount);
 
     // Step 2
     if (self->exportCount == 0) {
         view->buf = NULL;
     }
+
+    //Py_DECREF(view->obj);
 }
 
 /*
@@ -244,7 +238,7 @@ static PyBufferProcs CArray_as_buffer = {
  */
 Py_ssize_t CArray_sq_length(JPy_CArray* self)
 {
-    return self->length;
+    return self->itemCount;
 }
 
 /*
@@ -252,10 +246,7 @@ Py_ssize_t CArray_sq_length(JPy_CArray* self)
  */
 PyObject* CArray_sq_item(JPy_CArray* self, Py_ssize_t index)
 {
-    if (index < 0) {
-        index += self->length;
-    }
-    if (index < 0 || index >= self->length) {
+    if (index < 0 || index >= self->itemCount) {
         PyErr_SetString(PyExc_IndexError, "CArray index out of bounds");
         return NULL;
     }
@@ -289,10 +280,7 @@ PyObject* CArray_sq_item(JPy_CArray* self, Py_ssize_t index)
  */
 int CArray_sq_ass_item(JPy_CArray* self, Py_ssize_t index, PyObject* other)
 {
-    if (index < 0) {
-        index += self->length;
-    }
-    if (index < 0 || index >= self->length) {
+    if (index < 0 || index >= self->itemCount) {
         PyErr_SetString(PyExc_IndexError, "CArray index out of bounds");
         return -1;
     }
@@ -393,7 +381,7 @@ PyTypeObject CArray_Type = {
  * Note that this method does not increment the reference counter. You are responsible for 
  * calling Py_INCREF(obj) in the returned obj yourself
  */
-PyObject* CArray_FromMemory(const char* format, void* items, int length, JPy_FreeCArray freeCArray) {
+PyObject* CArray_FromMemory(const char* format, void* items, int itemCount, JPy_FreeCArray freeCArray) {
     PyTypeObject* type = &CArray_Type;
     JPy_CArray* self;
     size_t itemSize;
@@ -408,13 +396,13 @@ PyObject* CArray_FromMemory(const char* format, void* items, int length, JPy_Fre
         return NULL;
     }
 
-    if (length <= 0) {
-        PyErr_SetString(PyExc_ValueError, "length must be > 0");
+    if (itemCount <= 0) {
+        PyErr_SetString(PyExc_ValueError, "itemCount must be > 0");
         return NULL;
     }
 
     self = (JPy_CArray*) type->tp_alloc(type, 0);
-    CArray_InitInstance(self, format, items, itemSize, length, freeCArray);
+    CArray_InitInstance(self, format, items, itemSize, itemCount, freeCArray);
     return (PyObject*) self;
 }
 
@@ -424,31 +412,32 @@ PyObject* CArray_FromMemory(const char* format, void* items, int length, JPy_Fre
  * Note that this method does not increment the reference counter. You are responsible for
  * calling Py_INCREF(obj) in the returned obj yourself
  */
-PyObject* CArray_New(const char* format, int length) {
+PyObject* CArray_New(const char* format, int itemCount) {
     PyTypeObject* type = &CArray_Type;
     JPy_CArray* self;
     void* items;
     size_t itemSize;
+
+    if (itemCount <= 0) {
+        PyErr_SetString(PyExc_ValueError, "itemCount must be > 0");
+        return NULL;
+    }
 
     itemSize = CArray_ItemSize(format);
     if (itemSize <= 0) {
         return NULL;
     }
 
-    items = PyMem_Malloc(itemSize * length);
+    items = PyMem_Malloc(itemSize * itemCount);
     if (items == NULL) {
         PyErr_SetString(PyExc_MemoryError, "out of memory");
         return NULL;
     }
-    memset(items, 0, itemSize * length);
+    memset(items, 0, itemSize * itemCount);
 
-    if (length <= 0) {
-        PyErr_SetString(PyExc_ValueError, "length must be > 0");
-        return NULL;
-    }
 
     self = (JPy_CArray*) type->tp_alloc(type, 0);
-    CArray_InitInstance(self, format, items, itemSize, length, CArray_FreeMemory);
+    CArray_InitInstance(self, format, items, itemSize, itemCount, PyMem_Free);
     Py_INCREF(self);
     return (PyObject*) self;
 }
