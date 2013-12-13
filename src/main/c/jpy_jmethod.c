@@ -360,10 +360,11 @@ void JMethod_DisposeJArgs(int paramCount, jvalue* jArgs, JPy_ArgDisposer* jDispo
 PyObject* JMethod_repr(JPy_JMethod* self)
 {
     const char* name = PyUnicode_AsUTF8(self->name);
-    return PyUnicode_FromFormat("%s(name='%s', param_count=%d, mid=%p)",
+    return PyUnicode_FromFormat("%s(name='%s', param_count=%d, is_static=%d, mid=%p)",
                                 ((PyObject*)self)->ob_type->tp_name,
                                 name,
                                 self->paramCount,
+                                self->isStatic,
                                 self->mid);
 }
 

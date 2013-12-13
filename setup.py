@@ -30,6 +30,7 @@ sources = [
     'src/main/c/jpy_buffer.c',
     'src/main/c/jpy_jtype.c',
     'src/main/c/jpy_jmethod.c',
+    'src/main/c/jpy_jfield.c',
     'src/main/c/jpy_jobj.c',
 ]
 

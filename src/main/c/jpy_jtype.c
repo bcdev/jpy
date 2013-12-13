@@ -1,6 +1,7 @@
 #include "jpy_module.h"
 #include "jpy_jtype.h"
 #include "jpy_jmethod.h"
+#include "jpy_jfield.h"
 #include "jpy_jobj.h"
 #include "jpy_carray.h"
 
@@ -9,12 +10,14 @@ int JType_ResolveType(JNIEnv* jenv, JPy_JType* type);
 int JType_InitComponentType(JNIEnv* jenv, JPy_JType* type, jboolean resolve);
 int JType_InitSuperType(JNIEnv* jenv, JPy_JType* type, jboolean resolve);
 int JType_ProcessClassConstructors(JNIEnv* jenv, JPy_JType* type);
+int JType_ProcessClassFields(JNIEnv* jenv, JPy_JType* type);
 int JType_ProcessClassMethods(JNIEnv* jenv, JPy_JType* type);
 int JType_AddMethod(JPy_JType* type, JPy_JMethod* method);
 JPy_ReturnDescriptor* JType_CreateReturnDescriptor(JNIEnv* jenv, jclass returnType);
 JPy_ParamDescriptor* JType_CreateParamDescriptors(JNIEnv* jenv, int paramCount, jarray paramTypes);
 void JType_InitParamDescriptorFunctions(JPy_ParamDescriptor* paramDescriptor);
 void JType_InitMethodParamDescriptorFunctions(JPy_JType* type, JPy_JMethod* method);
+int JType_ProcessField(JNIEnv* jenv, JPy_JType* declaringType, PyObject* fieldKey, const char* fieldName, jclass fieldClassRef, jboolean isStatic, jboolean isFinal, jfieldID fid);
 
 
 PyTypeObject* JType_GetTypeForName(const char* typeName, jboolean resolve)
@@ -286,6 +289,12 @@ int JType_ResolveType(JNIEnv* jenv, JPy_JType* type)
     }
 
     //printf("JType_ResolveType 3\n");
+    if (JType_ProcessClassFields(jenv, type) < 0) {
+        type->isResolving = JNI_FALSE;
+        return -1;
+    }
+
+    //printf("JType_ResolveType 4\n");
     type->isResolving = JNI_FALSE;
     type->isResolved = JNI_TRUE;
     return 0;
@@ -437,6 +446,58 @@ int JType_ProcessClassConstructors(JNIEnv* jenv, JPy_JType* type)
 }
 
 
+int JType_ProcessClassFields(JNIEnv* jenv, JPy_JType* type)
+{
+    jclass classRef;
+    jobject fields;
+    jobject field;
+    jobject fieldNameStr;
+    jobject fieldTypeObj;
+    jint modifiers;
+    jint fieldCount;
+    jint i;
+    jboolean isStatic;
+    jboolean isPublic;
+    jboolean isFinal;
+    const char * fieldName;
+    jfieldID fid;
+    PyObject* fieldKey;
+
+    classRef = type->classRef;
+
+    fields = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetDeclaredFields_MID);
+    fieldCount = (*jenv)->GetArrayLength(jenv, fields);
+
+    if (JPy_IsDebug()) printf("JType_ProcessClassFields: fieldCount=%d\n", fieldCount);
+
+    for (i = 0; i < fieldCount; i++) {
+        field = (*jenv)->GetObjectArrayElement(jenv, fields, i);
+        modifiers = (*jenv)->CallIntMethod(jenv, field, JPy_Field_GetModifiers_MID);
+        // see http://docs.oracle.com/javase/6/docs/api/constant-values.html#java.lang.reflect.Modifier.PUBLIC
+        isPublic = (modifiers & 0x0001) != 0;
+        isStatic = (modifiers & 0x0008) != 0;
+        isFinal  = (modifiers & 0x0010) != 0;
+        if (isPublic) {
+            printf("JType_ProcessClassFields 1\n");
+
+            fieldNameStr = (*jenv)->CallObjectMethod(jenv, field, JPy_Field_GetName_MID);
+            fieldTypeObj = (*jenv)->CallObjectMethod(jenv, field, JPy_Field_GetType_MID);
+            fid = (*jenv)->FromReflectedField(jenv, field);
+
+            printf("JType_ProcessClassFields 2\n");
+
+            fieldName = (*jenv)->GetStringUTFChars(jenv, fieldNameStr, NULL);
+            fieldKey = Py_BuildValue("s", fieldName);
+            JType_ProcessField(jenv, type, fieldKey, fieldName, fieldTypeObj, isStatic, isFinal, fid);
+
+            (*jenv)->ReleaseStringUTFChars(jenv, fieldNameStr, fieldName);
+
+            printf("JType_ProcessClassFields 3\n");
+        }
+    }
+    return 0;
+}
+
 int JType_ProcessClassMethods(JNIEnv* jenv, JPy_JType* type)
 {
     jclass classRef;
@@ -480,6 +541,52 @@ int JType_ProcessClassMethods(JNIEnv* jenv, JPy_JType* type)
             (*jenv)->ReleaseStringUTFChars(jenv, methodNameStr, methodName);
         }
     }
+    return 0;
+}
+
+jboolean JType_AcceptField(JPy_JType* declaringClass, JPy_JField* field)
+{
+    return JNI_TRUE;
+}
+
+int JType_AddField(JPy_JType* declaringClass, JPy_JField* field)
+{
+    PyObject* typeDict;
+
+    typeDict = declaringClass->typeObj.tp_dict;
+    if (typeDict == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "internal error: missing attribute '__dict__' in JType");
+        return -1;
+    }
+
+    PyDict_SetItem(typeDict, field->name, (PyObject*) field);
+    return 0;
+}
+
+
+int JType_ProcessField(JNIEnv* jenv, JPy_JType* declaringClass, PyObject* fieldKey, const char* fieldName, jclass fieldClassRef, jboolean isStatic, jboolean isFinal, jfieldID fid)
+{
+    JPy_JField* field;
+    JPy_JType* fieldType;
+
+    fieldType = (JPy_JType*) JType_GetType(fieldClassRef, JNI_FALSE);
+    if (fieldType == NULL) {
+        if (JPy_IsDebug()) printf("JType_ProcessField: error: Java field %s rejected because an error occurred during type processing\n", fieldName);
+        return -1;
+    }
+
+    field = JField_New(declaringClass, fieldKey, fieldType, isStatic, isFinal, fid);
+    if (field == NULL) {
+        if (JPy_IsDebug()) printf("JType_ProcessField: error: Java field %s rejected because an error occurred during field instantiation\n", fieldName);
+        return -1;
+    }
+
+    if (JType_AcceptField(declaringClass, field)) {
+        JType_AddField(declaringClass, field);
+    } else {
+        JField_Del(field);
+    }
+
     return 0;
 }
 

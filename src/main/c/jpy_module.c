@@ -1,6 +1,7 @@
 #include "jpy_module.h"
 #include "jpy_jtype.h"
 #include "jpy_jmethod.h"
+#include "jpy_jfield.h"
 #include "jpy_jobj.h"
 #include "jpy_carray.h"
 #include <stdlib.h>
@@ -94,6 +95,7 @@ jmethodID JPy_Object_Equals_MID = NULL;
 jclass JPy_Class_JClass = NULL;
 jmethodID JPy_Class_GetName_MID = NULL;
 jmethodID JPy_Class_GetDeclaredConstructors_MID = NULL;
+jmethodID JPy_Class_GetDeclaredFields_MID = NULL;
 jmethodID JPy_Class_GetDeclaredMethods_MID = NULL;
 jmethodID JPy_Class_GetComponentType_MID = NULL;
 jmethodID JPy_Class_IsPrimitive_MID = NULL;
@@ -107,6 +109,13 @@ jmethodID JPy_Method_GetName_MID = NULL;
 jmethodID JPy_Method_GetReturnType_MID = NULL;
 jmethodID JPy_Method_GetParameterTypes_MID = NULL;
 jmethodID JPy_Method_GetModifiers_MID = NULL;
+
+// java.lang.reflect.Field
+jclass JPy_Field_JClass = NULL;
+jmethodID JPy_Field_GetName_MID = NULL;
+jmethodID JPy_Field_GetModifiers_MID = NULL;
+jmethodID JPy_Field_GetType_MID = NULL;
+
 // }}}
 
 int JPy_InitGlobalVars(JNIEnv* jenv);
@@ -185,6 +194,14 @@ PyMODINIT_FUNC PyInit_jpy(void)
     }
     Py_INCREF(&JOverloadedMethod_Type);
     PyModule_AddObject(JPy_Module, "JOverloadedMethod", (PyObject*) &JOverloadedMethod_Type);
+
+    /////////////////////////////////////////////////////////////////////////
+
+    if (PyType_Ready(&JField_Type) < 0) {
+        return NULL;
+    }
+    Py_INCREF(&JField_Type);
+    PyModule_AddObject(JPy_Module, "JField", (PyObject*) &JField_Type);
 
     /////////////////////////////////////////////////////////////////////////
 
@@ -475,12 +492,18 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     JPy_Class_GetName_MID = (*jenv)->GetMethodID(jenv, JPy_Class_JClass, "getName", "()Ljava/lang/String;");
     JPy_Class_GetDeclaredConstructors_MID = (*jenv)->GetMethodID(jenv, JPy_Class_JClass, "getDeclaredConstructors", "()[Ljava/lang/reflect/Constructor;");
     JPy_Class_GetDeclaredMethods_MID = (*jenv)->GetMethodID(jenv, JPy_Class_JClass, "getDeclaredMethods", "()[Ljava/lang/reflect/Method;");
+    JPy_Class_GetDeclaredFields_MID = (*jenv)->GetMethodID(jenv, JPy_Class_JClass, "getDeclaredFields", "()[Ljava/lang/reflect/Field;");
     JPy_Class_GetComponentType_MID = (*jenv)->GetMethodID(jenv, JPy_Class_JClass, "getComponentType", "()Ljava/lang/Class;");
     JPy_Class_IsPrimitive_MID = (*jenv)->GetMethodID(jenv, JPy_Class_JClass, "isPrimitive", "()Z");
 
     JPy_Constructor_JClass = (*jenv)->FindClass(jenv, "java/lang/reflect/Constructor");
     JPy_Constructor_GetModifiers_MID = (*jenv)->GetMethodID(jenv, JPy_Constructor_JClass, "getModifiers", "()I");
     JPy_Constructor_GetParameterTypes_MID = (*jenv)->GetMethodID(jenv, JPy_Constructor_JClass, "getParameterTypes", "()[Ljava/lang/Class;");
+
+    JPy_Field_JClass = (*jenv)->FindClass(jenv, "java/lang/reflect/Field");
+    JPy_Field_GetName_MID = (*jenv)->GetMethodID(jenv, JPy_Field_JClass, "getName", "()Ljava/lang/String;");
+    JPy_Field_GetModifiers_MID = (*jenv)->GetMethodID(jenv, JPy_Field_JClass, "getModifiers", "()I");
+    JPy_Field_GetType_MID = (*jenv)->GetMethodID(jenv, JPy_Field_JClass, "getType", "()Ljava/lang/Class;");
 
     JPy_Method_JClass = (*jenv)->FindClass(jenv, "java/lang/reflect/Method");
     JPy_Method_GetName_MID = (*jenv)->GetMethodID(jenv, JPy_Method_JClass, "getName", "()Ljava/lang/String;");

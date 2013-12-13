@@ -52,6 +52,7 @@ extern jmethodID JPy_Object_Equals_MID;
 extern jclass JPy_Class_JClass;
 extern jmethodID JPy_Class_GetName_MID;
 extern jmethodID JPy_Class_GetDeclaredConstructors_MID;
+extern jmethodID JPy_Class_GetDeclaredFields_MID;
 extern jmethodID JPy_Class_GetDeclaredMethods_MID;
 extern jmethodID JPy_Class_GetComponentType_MID;
 extern jmethodID JPy_Class_IsPrimitive_MID;
@@ -65,6 +66,12 @@ extern jmethodID JPy_Method_GetName_MID;
 extern jmethodID JPy_Method_GetModifiers_MID;
 extern jmethodID JPy_Method_GetParameterTypes_MID;
 extern jmethodID JPy_Method_GetReturnType_MID;
+// java.lang.reflect.Field
+extern jclass JPy_Field_JClass;
+extern jmethodID JPy_Field_GetName_MID;
+extern jmethodID JPy_Field_GetModifiers_MID;
+extern jmethodID JPy_Field_GetType_MID;
+
 
 
 ////////////////////////////////////////////////////////////////////
