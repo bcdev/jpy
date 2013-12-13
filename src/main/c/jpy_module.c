@@ -476,6 +476,11 @@ PyTypeObject* JPy_GetNonObjectJType(JNIEnv* jenv, const char* wrapperClassName)
     return type;
 }
 
+#define DEFINE_NON_OBJECT_TYPE(T, N) \
+    T = JPy_GetNonObjectJType(jenv, N); \
+    if (T == NULL) { \
+        return -1; \
+    }
 
 int JPy_InitGlobalVars(JNIEnv* jenv)
 {
@@ -511,6 +516,17 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     JPy_Method_GetParameterTypes_MID = (*jenv)->GetMethodID(jenv, JPy_Method_JClass, "getParameterTypes", "()[Ljava/lang/Class;");
     JPy_Method_GetReturnType_MID = (*jenv)->GetMethodID(jenv, JPy_Method_JClass, "getReturnType", "()Ljava/lang/Class;");
 
+    DEFINE_NON_OBJECT_TYPE(JPy_JBoolean, "java/lang/Boolean");
+    DEFINE_NON_OBJECT_TYPE(JPy_JByte, "java/lang/Byte");
+    DEFINE_NON_OBJECT_TYPE(JPy_JShort, "java/lang/Short");
+    DEFINE_NON_OBJECT_TYPE(JPy_JInt, "java/lang/Integer");
+    DEFINE_NON_OBJECT_TYPE(JPy_JLong, "java/lang/Long");
+    DEFINE_NON_OBJECT_TYPE(JPy_JFloat, "java/lang/Float");
+    DEFINE_NON_OBJECT_TYPE(JPy_JDouble, "java/lang/Double");
+    DEFINE_NON_OBJECT_TYPE(JPy_JChar, "java/lang/Character");
+    DEFINE_NON_OBJECT_TYPE(JPy_JVoid, "java/lang/Void");
+
+    /*
     JPy_JBoolean = JPy_GetNonObjectJType(jenv, "java/lang/Boolean");
     JPy_JByte = JPy_GetNonObjectJType(jenv, "java/lang/Byte");
     JPy_JShort = JPy_GetNonObjectJType(jenv, "java/lang/Short");
@@ -520,10 +536,13 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     JPy_JDouble = JPy_GetNonObjectJType(jenv, "java/lang/Double");
     JPy_JChar = JPy_GetNonObjectJType(jenv, "java/lang/Character");
     JPy_JVoid = JPy_GetNonObjectJType(jenv, "java/lang/Void");
-
+    */
     {
         jclass c = (*jenv)->FindClass(jenv, "java/lang/String");
         JPy_JString = JType_GetType(c, JNI_FALSE);
+        if (JPy_JString == NULL) {
+            return -1;
+        }
     }
 
     return 0;

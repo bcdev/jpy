@@ -102,7 +102,12 @@ PyTypeObject* JType_GetType(jclass classRef, jboolean resolve)
 
         // Finally we initialise the type's slots, so that our JObj instances behave pythonic.
         if (JType_InitSlots(type) < 0) {
+            if (JPy_IsDebug()) printf("JType_GetType: error: JType_InitSlots() failed for javaName='%s'\n", type->javaName);
+
             PyDict_DelItem(JPy_Types, typeKey);
+
+            printf("JType_GetType: after PyDict_DelItem\n");
+
             return NULL;
         }
 
@@ -1210,6 +1215,8 @@ void JType_dealloc(JPy_JType* self)
  */
 PyObject* JType_getattro(JPy_JType* self, PyObject* name)
 {
+    printf("JType_getattro: %s.%s\n", Py_TYPE(self)->tp_name, PyUnicode_AsUTF8(name));
+
     if (!self->isResolved && !self->isResolving) {
         JNIEnv* jenv;
         JPY_GET_JENV(jenv, NULL);

@@ -2,6 +2,7 @@
 #include "jpy_jtype.h"
 #include "jpy_jobj.h"
 #include "jpy_jmethod.h"
+#include "jpy_jfield.h"
 
 JPy_JObj* JObj_FromType(JNIEnv* jenv, JPy_JType* type, jobject objectRef)
 {
@@ -265,19 +266,27 @@ PyObject* JObj_getattro(PyObject* self, PyObject* name)
 {
     PyObject* value;
 
+    printf("JObj_getattro: %s.%s\n", Py_TYPE(self)->tp_name, PyUnicode_AsUTF8(name));
+
     // todo: implement a sepcial lookup: we need to override __getattro__ of JType (--> JType_getattro) as well so that we know if a method
     // is called on a class rather than on an instance. Using PyObject_GenericGetAttr will also call  JType_getattro,
     // but then we loose the information that a method is called on an instance and not on a class.
     value = PyObject_GenericGetAttr(self, name);
     if (value == NULL) {
+        printf("JObj_getattro: not found!\n");
         return NULL;
     }
     if (PyObject_TypeCheck(value, &JOverloadedMethod_Type)) {
         JPy_JOverloadedMethod* overloadedMethod = (JPy_JOverloadedMethod*) value;
         //printf("JObj_getattro: wrapping JOverloadedMethod, overloadCount=%d\n", PyList_Size(overloadedMethod->methodList));
         return PyMethod_New(value, self);
+    } else if (PyObject_TypeCheck(value, &JField_Type)) {
+        JPy_JField* field = (JPy_JField*) value;
+        //printf("JObj_getattro: getting value of Java field '%s', is_static=%d\n", PyUnicode_AsUTF8(field->name), field->isStatic);
+        PyErr_SetString(PyExc_RuntimeError, "not implemented yet");
+        return NULL;
     } else {
-        // printf("JObj_getattro: passing through\n");
+        printf("JObj_getattro: passing through\n");
     }
     return value;
 }
@@ -463,18 +472,20 @@ int JType_InitSlots(JPy_JType* type)
     Py_TYPE(typeObj) = NULL;
     Py_SIZE(typeObj) = 0;
     // todo: The following lines are actually correct, but setting Py_TYPE(type) = &JType_Type results in an interpreter crash. Why?
-    // This is still a problem because all the JType slots are actually never called (especially JType_getattro is needed to resolve unresolved JTypes)
+    // This is still a problem because all the JType slots are actually never called (especially JType_getattro is
+    // needed to resolve unresolved JTypes and to recognize static field and methods access)
+    //Py_INCREF(&JType_Type);
     //Py_TYPE(type) = &JType_Type;
     //Py_SIZE(type) = sizeof (JPy_JType);
-    //Py_INCREF(&JType_Type);
 
     typeObj->tp_basicsize = sizeof (JPy_JObj);
     typeObj->tp_itemsize = 0;
-    typeObj->tp_base = (PyTypeObject*) type->superType;
-    typeObj->tp_flags |= Py_TPFLAGS_DEFAULT;
-    // If I uncomment the following line, I get an interpreter crash
+    typeObj->tp_base = type->superType != NULL ? (PyTypeObject*) type->superType : &JType_Type;
+    //typeObj->tp_base = (PyTypeObject*) type->superType;
+    typeObj->tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE;
+    // If I uncomment the following line, I get (unpredictable) interpreter crashes
     // (see also http://stackoverflow.com/questions/8066438/how-to-dynamically-create-a-derived-type-in-the-python-c-api)
-    // typeObj->tp_flags |= Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HEAPTYPE;
+    //typeObj->tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HEAPTYPE;
 
     typeObj->tp_getattro = JObj_getattro;
 
@@ -504,9 +515,14 @@ int JType_InitSlots(JPy_JType* type)
     // Check if we should set type.__module__ to the to the first part (up to the last dot) of the tp_name.
     // See http://docs.python.org/3/c-api/exceptions.html?highlight=pyerr_newexception#PyErr_NewException
 
+    printf("JType_InitSlots: finalizing type...\n");
     if (PyType_Ready(typeObj) < 0) {
+        printf("JType_InitSlots: :-(\n");
         return -1;
     }
+
+    printf("JType_InitSlots: typeObj=%p, Py_TYPE(typeObj)=%p, Py_TYPE(typeObj)->tp_base=%p, &JType_Type=%p, &PyType_Type=%p\n",
+           typeObj, Py_TYPE(typeObj), Py_TYPE(typeObj)->tp_base, &JType_Type, &PyType_Type);
 
     return 0;
 }
