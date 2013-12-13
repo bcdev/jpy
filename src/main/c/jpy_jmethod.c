@@ -697,6 +697,13 @@ PyObject* JOverloadedMethod_repr(JPy_JOverloadedMethod* self)
                                 methodCount);
 }
 
+static PyMemberDef JOverloadedMethod_members[] =
+{
+    {"name",    T_OBJECT_EX, offsetof(JPy_JOverloadedMethod, name),       READONLY, "Overloaded method name"},
+    {"methods", T_OBJECT_EX, offsetof(JPy_JOverloadedMethod, methodList), READONLY, "List of methods"},
+    {NULL}  /* Sentinel */
+};
+
 /**
  * The 'JOverloadedMethod' type's tp_str slot.
  */
@@ -735,7 +742,7 @@ PyTypeObject JOverloadedMethod_Type = {
     NULL,                         /* tp_iter */
     NULL,                         /* tp_iternext */
     NULL,                         /* tp_methods */
-    NULL,                         /* tp_members */
+    JOverloadedMethod_members,    /* tp_members */
     NULL,                         /* tp_getset */
     NULL,                         /* tp_base */
     NULL,                         /* tp_dict */
