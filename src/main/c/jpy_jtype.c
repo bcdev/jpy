@@ -478,21 +478,15 @@ int JType_ProcessClassFields(JNIEnv* jenv, JPy_JType* type)
         isStatic = (modifiers & 0x0008) != 0;
         isFinal  = (modifiers & 0x0010) != 0;
         if (isPublic) {
-            printf("JType_ProcessClassFields 1\n");
-
             fieldNameStr = (*jenv)->CallObjectMethod(jenv, field, JPy_Field_GetName_MID);
             fieldTypeObj = (*jenv)->CallObjectMethod(jenv, field, JPy_Field_GetType_MID);
             fid = (*jenv)->FromReflectedField(jenv, field);
-
-            printf("JType_ProcessClassFields 2\n");
 
             fieldName = (*jenv)->GetStringUTFChars(jenv, fieldNameStr, NULL);
             fieldKey = Py_BuildValue("s", fieldName);
             JType_ProcessField(jenv, type, fieldKey, fieldName, fieldTypeObj, isStatic, isFinal, fid);
 
             (*jenv)->ReleaseStringUTFChars(jenv, fieldNameStr, fieldName);
-
-            printf("JType_ProcessClassFields 3\n");
         }
     }
     return 0;
