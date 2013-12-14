@@ -104,5 +104,62 @@ class TestMethodReturnValues(unittest.TestCase):
         self.assertEqual(array[1], self.Thing(8))
         self.assertEqual(array[2], self.Thing(9))
 
+
+class TestFields(unittest.TestCase):
+
+    def setUp(self):
+        self.Dummy = jpy.get_class('org.jpy.dummies.FieldTestDummy')
+        self.Thing = jpy.get_class('org.jpy.dummies.Thing')
+        self.assertTrue('org.jpy.dummies.FieldTestDummy' in jpy.types)
+        self.assertTrue('org.jpy.dummies.Thing' in jpy.types)
+
+    # def test_static_fields(self):
+    #     self.assertEqual(self.Dummy.z_STATIC_FIELD, True)
+    #     self.assertEqual(self.Dummy.b_STATIC_FIELD, 0)
+    #     self.assertEqual(self.Dummy.c_STATIC_FIELD, '\0')
+    #     self.assertEqual(self.Dummy.s_STATIC_FIELD, 0)
+    #     self.assertEqual(self.Dummy.i_STATIC_FIELD, 0)
+    #     self.assertEqual(self.Dummy.j_STATIC_FIELD, 0)
+    #     self.assertEqual(self.Dummy.f_STATIC_FIELD, 0)
+    #     self.assertEqual(self.Dummy.d_STATIC_FIELD, 0)
+    #     self.assertEqual(self.Dummy.S_STATIC_FIELD, None)
+    #     self.assertEqual(self.Dummy.l_STATIC_FIELD, None)
+
+    def test_instance_fields(self):
+        dummy = self.Dummy()
+        self.assertEqual(dummy.zInstField, False)
+        self.assertEqual(dummy.bInstField, 0)
+        self.assertEqual(dummy.cInstField, 0)
+        self.assertEqual(dummy.sInstField, 0)
+        self.assertEqual(dummy.iInstField, 0)
+        self.assertEqual(dummy.jInstField, 0)
+        self.assertEqual(dummy.fInstField, 0)
+        self.assertEqual(dummy.dInstField, 0)
+        self.assertEqual(dummy.SInstField, None)
+        self.assertEqual(dummy.lInstField, None)
+
+        dummy.zInstField = True
+        dummy.bInstField = 123
+        dummy.cInstField = 12345
+        dummy.sInstField = 12345
+        dummy.iInstField = 123456789
+        dummy.jInstField = 1234567890123456789
+        dummy.fInstField = 0.12345
+        dummy.dInstField = 0.123456789
+        dummy.SInstField = "ABC"
+        dummy.lInstField = self.Thing(123)
+
+        self.assertEqual(dummy.zInstField, True)
+        self.assertEqual(dummy.bInstField, 123)
+        self.assertEqual(dummy.cInstField, 12345)
+        self.assertEqual(dummy.sInstField, 12345)
+        self.assertEqual(dummy.iInstField, 123456789)
+        self.assertEqual(dummy.jInstField, 1234567890123456789)
+        self.assertAlmostEqual(dummy.fInstField, 0.12345)
+        self.assertEqual(dummy.dInstField, 0.123456789)
+        self.assertEqual(dummy.SInstField, "ABC")
+        self.assertEqual(dummy.lInstField, self.Thing(123))
+
+
 if __name__ == '__main__':
     unittest.main()

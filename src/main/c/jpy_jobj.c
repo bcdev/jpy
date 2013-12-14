@@ -257,21 +257,82 @@ PyObject* JObj_str(JPy_JObj* self)
     return JPy_ConvertJavaToStringToPythonString(jenv, self->objectRef);
 }
 
+#define TO_JBOOLEAN(pyItem)  (jboolean)(pyItem == Py_True ? 1 : (pyItem == Py_False || pyItem == Py_None) ? 0 : PyLong_AsLong(pyItem) != 0)
+#define TO_JBYTE(pyItem)     (jbyte)(pyItem == Py_None ? 0 : PyLong_AsLong(pyItem))
+#define TO_JCHAR(pyItem)     (jchar)(pyItem == Py_None ? 0 : PyLong_AsLong(pyItem))
+#define TO_JSHORT(pyItem)    (jshort)(pyItem == Py_None ? 0 : PyLong_AsLong(pyItem))
+#define TO_JINT(pyItem)      (jint)(pyItem == Py_None ? 0 : PyLong_AsLong(pyItem))
+#define TO_JLONG(pyItem)     (jlong)(pyItem == Py_None ? 0 : PyLong_AsLongLong(pyItem))
+#define TO_JFLOAT(pyItem)    (jfloat)(pyItem == Py_None ? 0 : PyFloat_AsDouble(pyItem))
+#define TO_JDOUBLE(pyItem)   (jdouble)(pyItem == Py_None ? 0 : PyFloat_AsDouble(pyItem))
+
+/**
+ * The JObj type's tp_setattro slot.
+ */
+int JObj_setattro(JPy_JObj* self, PyObject* name, PyObject* value)
+{
+    PyObject* oldValue;
+
+    printf("JObj_setattro: %s.%s\n", Py_TYPE(self)->tp_name, PyUnicode_AsUTF8(name));
+
+    oldValue = PyObject_GenericGetAttr((PyObject*) self, name);
+    if (oldValue != NULL && PyObject_TypeCheck(oldValue, &JField_Type)) {
+        JNIEnv* jenv;
+        JPy_JField* field = (JPy_JField*) oldValue;
+        PyTypeObject* type = (PyTypeObject*) field->type;
+        JPY_GET_JENV(jenv, -1)
+        if (type == JPy_JBoolean) {
+            jboolean item = TO_JBOOLEAN(value);
+            (*jenv)->SetBooleanField(jenv, self->objectRef, field->fid, item);
+        } else if (type == JPy_JByte) {
+            jbyte item = TO_JBYTE(value);
+            (*jenv)->SetByteField(jenv, self->objectRef, field->fid, item);
+        } else if (type == JPy_JChar) {
+            jchar item = TO_JCHAR(value);
+            (*jenv)->SetCharField(jenv, self->objectRef, field->fid, item);
+        } else if (type == JPy_JShort) {
+            jshort item = TO_JSHORT(value);
+            (*jenv)->SetShortField(jenv, self->objectRef, field->fid, item);
+        } else if (type == JPy_JInt) {
+            jint item = TO_JINT(value);
+            (*jenv)->SetIntField(jenv, self->objectRef, field->fid, item);
+        } else if (type == JPy_JLong) {
+            jlong item = TO_JLONG(value);
+            (*jenv)->SetLongField(jenv, self->objectRef, field->fid, item);
+        } else if (type == JPy_JFloat) {
+            jfloat item = TO_JFLOAT(value);
+            (*jenv)->SetFloatField(jenv, self->objectRef, field->fid, item);
+        } else if (type == JPy_JDouble) {
+            jdouble item = TO_JDOUBLE(value);
+            (*jenv)->SetDoubleField(jenv, self->objectRef, field->fid, item);
+        } else {
+            jobject objectRef;
+            if (JType_ConvertPythonToJavaObject(jenv, field->type, value, &objectRef) < 0) {
+                return -1;
+            }
+            (*jenv)->SetObjectField(jenv, self->objectRef, field->fid, objectRef);
+        }
+        return 0;
+    } else {
+        return PyObject_GenericSetAttr((PyObject*) self, name, value);
+    }
+}
+
 /**
  * The JObj type's tp_getattro slot.
  * This is important: wrap callable objects of type JOverloadedMethod_Type into python methods so that
  * a method call to an instance x of class X becomes: x.m() --> X.m(x)
  */
-PyObject* JObj_getattro(PyObject* self, PyObject* name)
+PyObject* JObj_getattro(JPy_JObj* self, PyObject* name)
 {
     PyObject* value;
 
-    printf("JObj_getattro: %s.%s\n", Py_TYPE(self)->tp_name, PyUnicode_AsUTF8(name));
+    //printf("JObj_getattro: %s.%s\n", Py_TYPE(self)->tp_name, PyUnicode_AsUTF8(name));
 
     // todo: implement a sepcial lookup: we need to override __getattro__ of JType (--> JType_getattro) as well so that we know if a method
     // is called on a class rather than on an instance. Using PyObject_GenericGetAttr will also call  JType_getattro,
     // but then we loose the information that a method is called on an instance and not on a class.
-    value = PyObject_GenericGetAttr(self, name);
+    value = PyObject_GenericGetAttr((PyObject*) self, name);
     if (value == NULL) {
         printf("JObj_getattro: not found!\n");
         return NULL;
@@ -279,12 +340,40 @@ PyObject* JObj_getattro(PyObject* self, PyObject* name)
     if (PyObject_TypeCheck(value, &JOverloadedMethod_Type)) {
         JPy_JOverloadedMethod* overloadedMethod = (JPy_JOverloadedMethod*) value;
         //printf("JObj_getattro: wrapping JOverloadedMethod, overloadCount=%d\n", PyList_Size(overloadedMethod->methodList));
-        return PyMethod_New(value, self);
+        return PyMethod_New(value,(PyObject*) self);
     } else if (PyObject_TypeCheck(value, &JField_Type)) {
+        JNIEnv* jenv;
         JPy_JField* field = (JPy_JField*) value;
-        //printf("JObj_getattro: getting value of Java field '%s', is_static=%d\n", PyUnicode_AsUTF8(field->name), field->isStatic);
-        PyErr_SetString(PyExc_RuntimeError, "not implemented yet");
-        return NULL;
+        PyTypeObject* type = (PyTypeObject*) field->type;
+        JPY_GET_JENV(jenv, NULL)
+        if (type == JPy_JBoolean) {
+            jboolean item = (*jenv)->GetBooleanField(jenv, self->objectRef, field->fid);
+            if (item) { Py_RETURN_TRUE; } else { Py_RETURN_FALSE; }
+        } else if (type == JPy_JByte) {
+            jbyte item = (*jenv)->GetByteField(jenv, self->objectRef, field->fid);
+            return PyLong_FromLong(item);
+        } else if (type == JPy_JChar) {
+            jchar item = (*jenv)->GetCharField(jenv, self->objectRef, field->fid);
+            return PyLong_FromLong(item);
+        } else if (type == JPy_JShort) {
+            jshort item = (*jenv)->GetShortField(jenv, self->objectRef, field->fid);
+            return PyLong_FromLong(item);
+        } else if (type == JPy_JInt) {
+            jint item = (*jenv)->GetIntField(jenv, self->objectRef, field->fid);
+            return PyLong_FromLong(item);
+        } else if (type == JPy_JLong) {
+            jlong item = (*jenv)->GetLongField(jenv, self->objectRef, field->fid);
+            return PyLong_FromLongLong(item);
+        } else if (type == JPy_JFloat) {
+            jfloat item = (*jenv)->GetFloatField(jenv, self->objectRef, field->fid);
+            return PyFloat_FromDouble(item);
+        } else if (type == JPy_JDouble) {
+            jdouble item = (*jenv)->GetDoubleField(jenv, self->objectRef, field->fid);
+            return PyFloat_FromDouble(item);
+        } else {
+            jobject objectRef = (*jenv)->GetObjectField(jenv, self->objectRef, field->fid);
+            return JType_ConvertJavaToPythonObject(jenv, field->type, objectRef);
+        }
     } else {
         printf("JObj_getattro: passing through\n");
     }
@@ -347,7 +436,7 @@ PyObject* JObj_sq_item(JPy_JObj* self, Py_ssize_t index)
     } else if (componentType == JPy_JChar) {
         jchar item;
         (*jenv)->GetCharArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
-        return Py_BuildValue("C", item);
+        return PyLong_FromLong(item);
     } else if (componentType == JPy_JShort) {
         jshort item;
         (*jenv)->GetShortArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
@@ -402,36 +491,32 @@ int JObj_sq_ass_item(JPy_JObj* self, Py_ssize_t index, PyObject* pyItem)
 
     // todo - the following item assignments are not value range checked
     if (componentType == JPy_JBoolean) {
-        jboolean item = (jboolean)(pyItem == Py_True ? 1 : (pyItem == Py_False || pyItem == Py_None) ? 0 : PyLong_AsLong(pyItem) != 0);
+        jboolean item = TO_JBOOLEAN(pyItem);
         (*jenv)->SetBooleanArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
     } else if (componentType == JPy_JByte) {
-        jbyte item = (jbyte)(pyItem == Py_None ? 0 : PyLong_AsLong(pyItem));
+        jbyte item = TO_JBYTE(pyItem);
         (*jenv)->SetByteArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
     } else if (componentType == JPy_JChar) {
-        jchar item = (jchar)(pyItem == Py_None ? 0 : PyLong_AsLong(pyItem));
+        jchar item = TO_JCHAR(pyItem);
         (*jenv)->SetCharArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
     } else if (componentType == JPy_JShort) {
-        jshort item = (jshort)(pyItem == Py_None ? 0 : PyLong_AsLong(pyItem));
+        jshort item = TO_JSHORT(pyItem);
         (*jenv)->SetShortArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
     } else if (componentType == JPy_JInt) {
-        jint item = (jint)(pyItem == Py_None ? 0 : PyLong_AsLong(pyItem));
+        jint item = TO_JINT(pyItem);
         (*jenv)->SetIntArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
     } else if (componentType == JPy_JLong) {
-        jlong item = (jlong)(pyItem == Py_None ? 0 : PyLong_AsLongLong(pyItem));
+        jlong item = TO_JLONG(pyItem);
         (*jenv)->SetLongArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
     } else if (componentType == JPy_JFloat) {
-        jfloat item = (jfloat)(pyItem == Py_None ? 0 : PyFloat_AsDouble(pyItem));
+        jfloat item = TO_JFLOAT(pyItem);
         (*jenv)->SetFloatArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
     } else if (componentType == JPy_JDouble) {
-        jdouble item = (jdouble)(pyItem == Py_None ? 0 : PyFloat_AsDouble(pyItem));
+        jdouble item = TO_JDOUBLE(pyItem);
         (*jenv)->SetDoubleArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
     } else {
-        if (pyItem != Py_None) {
-            if (JType_ConvertPythonToJavaObject(jenv, type->componentType, pyItem, &elementRef) < 0) {
-                return -1;
-            }
-        } else {
-            elementRef = NULL;
+        if (JType_ConvertPythonToJavaObject(jenv, type->componentType, pyItem, &elementRef) < 0) {
+            return -1;
         }
         (*jenv)->SetObjectArrayElement(jenv, self->objectRef, (jsize) index, elementRef);
         if ((*jenv)->ExceptionCheck(jenv)) {
@@ -487,7 +572,8 @@ int JType_InitSlots(JPy_JType* type)
     // (see also http://stackoverflow.com/questions/8066438/how-to-dynamically-create-a-derived-type-in-the-python-c-api)
     //typeObj->tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HEAPTYPE;
 
-    typeObj->tp_getattro = JObj_getattro;
+    typeObj->tp_getattro = (getattrofunc) JObj_getattro;
+    typeObj->tp_setattro = (setattrofunc) JObj_setattro;
 
     // todo: add  <sequence> protocol to 'java.lang.String' type.
     // Note that we have to do this after assigning the type to the global variable 'JPy_JString'.
@@ -515,14 +601,14 @@ int JType_InitSlots(JPy_JType* type)
     // Check if we should set type.__module__ to the to the first part (up to the last dot) of the tp_name.
     // See http://docs.python.org/3/c-api/exceptions.html?highlight=pyerr_newexception#PyErr_NewException
 
-    printf("JType_InitSlots: finalizing type...\n");
+    //printf("JType_InitSlots: finalizing type...\n");
     if (PyType_Ready(typeObj) < 0) {
-        printf("JType_InitSlots: :-(\n");
+        //printf("JType_InitSlots: :-(\n");
         return -1;
     }
 
-    printf("JType_InitSlots: typeObj=%p, Py_TYPE(typeObj)=%p, Py_TYPE(typeObj)->tp_base=%p, &JType_Type=%p, &PyType_Type=%p\n",
-           typeObj, Py_TYPE(typeObj), Py_TYPE(typeObj)->tp_base, &JType_Type, &PyType_Type);
+    //printf("JType_InitSlots: typeObj=%p, Py_TYPE(typeObj)=%p, Py_TYPE(typeObj)->tp_base=%p, &JType_Type=%p, &PyType_Type=%p\n",
+    //       typeObj, Py_TYPE(typeObj), Py_TYPE(typeObj)->tp_base, &JType_Type, &PyType_Type);
 
     return 0;
 }
