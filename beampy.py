@@ -76,8 +76,9 @@ def annotate_RasterDataNode_readPixels(type, method):
             or param_type_str == "<class '[D'>":
             method.set_param_mutable(index, True)
             method.set_param_return(index, True)
-            print('Method "{0}": modified parameter {1:d}: mutable = {2}, return = {3}'.format(
-                  method.name, index, method.is_param_mutable(4), method.is_param_return(4)))
+            if debug:
+                print('annotate_RasterDataNode_readPixels: Method "{0}": modified parameter {1:d}: mutable = {2}, return = {3}'.format(
+                                   method.name, index, method.is_param_mutable(4), method.is_param_return(4)))
     return True
 
 jpy.type_callbacks['org.esa.beam.framework.datamodel.RasterDataNode'] = annotate_RasterDataNode_readPixels
