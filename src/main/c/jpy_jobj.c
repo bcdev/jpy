@@ -273,7 +273,7 @@ int JObj_setattro(JPy_JObj* self, PyObject* name, PyObject* value)
 {
     PyObject* oldValue;
 
-    printf("JObj_setattro: %s.%s\n", Py_TYPE(self)->tp_name, PyUnicode_AsUTF8(name));
+    //printf("JObj_setattro: %s.%s\n", Py_TYPE(self)->tp_name, PyUnicode_AsUTF8(name));
 
     oldValue = PyObject_GenericGetAttr((PyObject*) self, name);
     if (oldValue != NULL && PyObject_TypeCheck(oldValue, &JField_Type)) {

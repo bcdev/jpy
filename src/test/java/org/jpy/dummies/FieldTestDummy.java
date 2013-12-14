@@ -16,8 +16,8 @@ public class FieldTestDummy {
     public static final long j_STATIC_FIELD = 1234567890123456789L;
     public static final float f_STATIC_FIELD = 0.12345F;
     public static final double d_STATIC_FIELD = 0.123456789;
-    public static final Object S_STATIC_FIELD = "ABC";
-    public static final Object l_STATIC_FIELD = new Thing();
+    public static final String S_STATIC_FIELD = "ABC";
+    public static final Thing l_STATIC_FIELD = new Thing(123);
 
     public boolean zInstField;
     public byte bInstField;
@@ -28,5 +28,5 @@ public class FieldTestDummy {
     public float fInstField;
     public double dInstField;
     public String SInstField;
-    public Object lInstField;
+    public Thing lInstField;
 }

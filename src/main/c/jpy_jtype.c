@@ -562,6 +562,51 @@ int JType_AddField(JPy_JType* declaringClass, JPy_JField* field)
     return 0;
 }
 
+int JType_AddFieldAttribute(JPy_JType* declaringClass, PyObject* fieldName, PyTypeObject* fieldType, jfieldID fid)
+{
+    PyObject* typeDict;
+    PyObject* fieldValue;
+    JNIEnv* jenv;
+
+    typeDict = declaringClass->typeObj.tp_dict;
+    if (typeDict == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "internal error: missing attribute '__dict__' in JType");
+        return -1;
+    }
+
+    JPY_GET_JENV(jenv, -1)
+
+    if (fieldType == JPy_JBoolean) {
+        jboolean item = (*jenv)->GetStaticBooleanField(jenv, declaringClass->classRef, fid);
+        fieldValue = PyBool_FromLong(item);
+    } else if (fieldType == JPy_JByte) {
+        jbyte item = (*jenv)->GetStaticByteField(jenv, declaringClass->classRef, fid);
+        fieldValue = PyLong_FromLong(item);
+    } else if (fieldType == JPy_JChar) {
+        jchar item = (*jenv)->GetStaticCharField(jenv, declaringClass->classRef, fid);
+        fieldValue = PyLong_FromLong(item);
+    } else if (fieldType == JPy_JShort) {
+        jshort item = (*jenv)->GetStaticShortField(jenv, declaringClass->classRef, fid);
+        fieldValue = PyLong_FromLong(item);
+    } else if (fieldType == JPy_JInt) {
+        jint item = (*jenv)->GetStaticIntField(jenv, declaringClass->classRef, fid);
+        fieldValue = PyLong_FromLong(item);
+    } else if (fieldType == JPy_JLong) {
+        jlong item = (*jenv)->GetStaticLongField(jenv, declaringClass->classRef, fid);
+        fieldValue = PyLong_FromLongLong(item);
+    } else if (fieldType == JPy_JFloat) {
+        jfloat item = (*jenv)->GetStaticFloatField(jenv, declaringClass->classRef, fid);
+        fieldValue = PyFloat_FromDouble(item);
+    } else if (fieldType == JPy_JDouble) {
+        jdouble item = (*jenv)->GetStaticDoubleField(jenv, declaringClass->classRef, fid);
+        fieldValue = PyFloat_FromDouble(item);
+    } else {
+        jobject objectRef = (*jenv)->GetStaticObjectField(jenv, declaringClass->classRef, fid);
+        fieldValue = JType_ConvertJavaToPythonObject(jenv, (JPy_JType*) fieldType, objectRef);
+    }
+    PyDict_SetItem(typeDict, fieldName, fieldValue);
+    return 0;
+}
 
 int JType_ProcessField(JNIEnv* jenv, JPy_JType* declaringClass, PyObject* fieldKey, const char* fieldName, jclass fieldClassRef, jboolean isStatic, jboolean isFinal, jfieldID fid)
 {
@@ -574,16 +619,27 @@ int JType_ProcessField(JNIEnv* jenv, JPy_JType* declaringClass, PyObject* fieldK
         return -1;
     }
 
-    field = JField_New(declaringClass, fieldKey, fieldType, isStatic, isFinal, fid);
-    if (field == NULL) {
-        if (JPy_IsDebug()) printf("JType_ProcessField: error: Java field %s rejected because an error occurred during field instantiation\n", fieldName);
-        return -1;
-    }
+    if (isStatic && isFinal) {
+        // Add static final values to the JPy_JType's tp_dict.
+        // todo: Note that this is a workaround only, because the JPy_JType's tp_getattro slot is not called.
+        if (JType_AddFieldAttribute(declaringClass, fieldKey, fieldType, fid) < 0) {
+            return -1;
+        }
+    } else if (!isStatic) {
+        // Add instance field accessor to the JPy_JType's tp_dict, this will be evaluated in the JPy_JType's tp_setattro and tp_getattro slots.
+        field = JField_New(declaringClass, fieldKey, fieldType, isStatic, isFinal, fid);
+        if (field == NULL) {
+            if (JPy_IsDebug()) printf("JType_ProcessField: error: Java field %s rejected because an error occurred during field instantiation\n", fieldName);
+            return -1;
+        }
 
-    if (JType_AcceptField(declaringClass, field)) {
-        JType_AddField(declaringClass, field);
+        if (JType_AcceptField(declaringClass, field)) {
+            JType_AddField(declaringClass, field);
+        } else {
+            JField_Del(field);
+        }
     } else {
-        JField_Del(field);
+        if (JPy_IsDebug()) printf("JType_ProcessField: warning: Java field %s rejected because is is static, but not final\n", fieldName);
     }
 
     return 0;
@@ -874,7 +930,7 @@ int JType_AssessToJObject(JPy_ParamDescriptor* paramDescriptor, PyObject* arg)
                 PyTypeObject* type;
                 int matchValue;
 
-                printf("buffer len=%d, itemsize=%d, format=%s\n", view.len, view.itemsize, view.format);
+                //printf("buffer len=%d, itemsize=%d, format=%s\n", view.len, view.itemsize, view.format);
 
                 type = (PyTypeObject*) paramComponentType;
                 matchValue = 0;
