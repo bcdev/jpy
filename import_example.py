@@ -8,6 +8,7 @@ def new_module(name):
     """
     Create a new module.
     """
+    print('creating module "' + name + '"')
     return type(sys)(name)
 
 
@@ -15,15 +16,15 @@ class File:
     def __init__(self, path):
         self.path = path
 
-class Float:
-    def __init__(self, num):
-        self.num = num
+class String:
+    def __init__(self, str):
+        self.str = str
 
 
 class JavaPackageImporter(importlib.abc.MetaPathFinder):
 
     def find_module(self, fullname, path):
-        print('find_module(fullname="' + str(fullname) + '", path="' + str(path) + '")')
+        #print('find_module(fullname="' + str(fullname) + '", path="' + str(path) + '")')
         if fullname == 'java' or fullname.startswith('java.'):
             return self
         return None
@@ -44,43 +45,48 @@ class JavaPackageImporter(importlib.abc.MetaPathFinder):
             module.__package__ = fullname[:dot_pos] if dot_pos > 0 else ''
             # Now, call into C-lib and load Java package or class...
             print('new module: ' + module.__name__)
-            module.File = File
-            module.Float = Float
+            if module.__name__ == 'java.io':
+                module.File = File
+            if module.__name__ == 'java.lang':
+                module.String = String
         return module
 
 
 
 sys.meta_path = [JavaPackageImporter()] + sys.meta_path
 
-import java.io
-import java.lang
+#import java.io
+#import java.lang
 #import java.util
-import numpy
-import java.wraaaw
-from java.util import File as F
+#import numpy
+#import java.wraaaw
+from java.util import String
+from java.io import File
 
-f = java.lang.Float(8)
-f = java.lang.File('x')
-f = F('y')
+s = java.lang.String('Hello')
+print(f)
 
-
-import os.path
-
-print(os.__name__)
-print(os.__package__)
-print(os.__file__)
-
-print(dir(java.io))
+f = java.io.File('x')
+print(f)
 
 
-print(os.__name__)
-print(os.__package__)
-print(os.__file__)
+#import os.path
+#
+#print(os.__name__)
+#print(os.__package__)
+#print(os.__file__)
+#
+#print(dir(java.io))
+#
+#
+#print(os.__name__)
+#print(os.__package__)
+#print(os.__file__)
 #print(list(os.__path__))
-print(os.path.__name__)
-print(os.path.__package__)
-print(os.path.__file__)
+#print(os.path.__name__)
+#print(os.path.__package__)
+#print(os.path.__file__)
 #print(list(os.path.__path__))
-
-print('java.io:', dir(java.io))
+#
+#print('java.io:', dir(java.io))
 
