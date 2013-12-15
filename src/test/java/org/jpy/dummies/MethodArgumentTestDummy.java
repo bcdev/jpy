@@ -1,7 +1,7 @@
 package org.jpy.dummies;
 
-import org.jpy.Mutable;
-import org.jpy.Return;
+import org.jpy.annotations.Mutable;
+import org.jpy.annotations.Return;
 
 /**
  * Used as a test class for the test cases in jpy_dummies_test.py
