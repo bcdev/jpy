@@ -128,10 +128,9 @@ int JPy_InitGlobalVars(JNIEnv* jenv);
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* jvm, void* reserved)
 {
     printf("jpy: JNI_OnLoad() called\n");
+
     JVM.jvm = jvm;
     (*jvm)->GetEnv(jvm, (void**) &JVM.jenv, JPY_JNI_VERSION);
-
-    // todo: initialise Python interpreter
 
     return JPY_JNI_VERSION;
 }
@@ -143,10 +142,11 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* jvm, void* reserved)
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* jvm, void* reserved)
 {
     printf("jpy: JNI_OnUnload() called\n");
+
     JVM.jvm = NULL;
     JVM.jenv = NULL;
 
-    // todo: shutdown Python interpreter
+    Py_Finalize();
 }
 
 /**
