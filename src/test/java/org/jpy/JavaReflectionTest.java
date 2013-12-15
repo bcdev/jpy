@@ -1,5 +1,7 @@
 package org.jpy;
 
+import org.jpy.annotations.Mutable;
+import org.jpy.annotations.Return;
 import org.jpy.dummies.MethodReturnValueTestDummy;
 import org.junit.Test;
 
@@ -55,8 +57,8 @@ public class JavaReflectionTest {
         Annotation[][] parameterAnnotations = method.getParameterAnnotations();
         assertEquals(1, parameterAnnotations.length);
         assertEquals(2, parameterAnnotations[0].length);
-        assertEquals("@org.jpy.Return()", parameterAnnotations[0][0].toString());
-        assertEquals("@org.jpy.Mutable()", parameterAnnotations[0][1].toString());
+        assertEquals("@org.jpy.annotations.Return()", parameterAnnotations[0][0].toString());
+        assertEquals("@org.jpy.annotations.Mutable()", parameterAnnotations[0][1].toString());
     }
 
     @SuppressWarnings("UnusedDeclaration")
