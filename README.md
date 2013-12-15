@@ -1,6 +1,41 @@
 jpy
 ===
 
+Features
+--------
+
+* 1:1 translation from public Java to Python classes
+* Bidirectional communication:
+  - embed Java VM in Python programs
+  - embed Python VM in Java programs
+* Preserves Java type hierarchy
+* Transparently handles Java method overloading 
+* Fast & efficient support of primitive Java array parameters via Python buffers.
+  E.g. use a numpy array argument, whenever a Java primitive array parameter is expected
+  Also supports Java methods that modify primitive Java array passed in as buffers 
+  (mutable arrays)
+
+
+How to build
+------------
+
+> SET JDK_HOME=%JDK32_HOME%
+> SET VS90COMNTOOLS=%VS100COMNTOOLS%
+> SET PATH=C:\Program Files (x86)\Java\jdk1.7.0_07\jre\bin\server;%PATH%
+> org.jpy.python setup.py install
+
+How to modify
+-------------
+
+After changing org.jpy.python.PyInterpreter, run
+
+> javah -d src/main/c/jni -v -classpath target/classes org.jpy.python.PyLib
+
+and adapt changes src/main/c/jni/org_jpy_PythonInterpreter.c according to newly generated
+src/main/c/jni /src/main/c/jni/org_jpy_PythonInterpreter.h
+
+
+
 Why jpy?
 --------
 
@@ -9,7 +44,7 @@ Advantages over the 'beampy' codegen approach:
 * Transparently deals with Java method overloads, instead of renaming methods
 * It is more pythonic: Real constructors instead of generated static New_<Type> methods
 * Java Class inheritance is be preserved
-* Source code is easier to understand and maintain
+* Source code is easier to understand and maintain as with the codegen approach
 * Different modes of operations can be used without static compilation (e.g. use buffers)
 * Since the binding is dynamic, it can be used with any BEAM version instead of generating code
   for a given BEAM source code version
@@ -19,6 +54,22 @@ Disadvantages to the 'beampy' codegen approach:
 * No in-built documentation for classes, fields and methods (but actually Java docs can be used instead)
 * Slower, method resolution at runtime, memory overhead
 
+
+Current limitations
+-------------------
+Non-final, static class fields are not supported. 
+Reason: In jpy, Java classes are represented in Python as (dynamically allocated) built-in 
+extension types. Built-in extension types cannot have (as of Python 3.3) static, computed 
+attributes which we would need for getting/setting Java static class fields. 
+See also
+* http://stackoverflow.com/questions/10161609/class-property-using-org.jpy.python-c-api
+* http://joyrex.spc.uchicago.edu/bookshelves/org.jpy.python/cookbook/pythoncook-CHP-16-SECT-6.html
+
+Public final static fields are represented as normal (non-computed) type attributes. Their
+values are Python representations of the final Java values. The limitation here is, that they 
+can be overwritten from Python, because Python does not know final/constant attributes. This could
+only be achieved with computed attributes, but as said before, they are not supported for 
+built-in extension types. 
 
 Current TODO
 ------------
