@@ -32,6 +32,7 @@ sources = [
     'src/main/c/jpy_jmethod.c',
     'src/main/c/jpy_jfield.c',
     'src/main/c/jpy_jobj.c',
+    'src/main/c/jni/org_jpy_python_PyLib.c',
 ]
 
 include_dirs = ['src/main/c']
@@ -82,3 +83,14 @@ setup(name='jpy',
                              define_macros=define_macros
       )]
 )
+
+import shutil
+
+src = os.path.join(sys.exec_prefix, 'Lib', 'site-packages', 'jpy.pyd')
+if WIN32:
+    dst = 'jpy.dll'
+else:
+    dst = 'libjpy.so'
+
+print('Copying', src, 'to', dst)
+shutil.copyfile(src, dst)
