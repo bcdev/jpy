@@ -8,3 +8,5 @@ beampy.ini
 *.jar
 *.war
 *.ear
+jpy.dll
+libjpy.so
