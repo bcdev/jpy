@@ -35,6 +35,17 @@ sources = [
     'src/main/c/jni/org_jpy_python_PyLib.c',
 ]
 
+headers = [
+    'src/main/c/jpy_module.h',
+    'src/main/c/jpy_carray.h',
+    'src/main/c/jpy_buffer.h',
+    'src/main/c/jpy_jtype.h',
+    'src/main/c/jpy_jmethod.h',
+    'src/main/c/jpy_jfield.h',
+    'src/main/c/jpy_jobj.h',
+    'src/main/c/jni/org_jpy_python_PyLib.h',
+]
+
 include_dirs = ['src/main/c']
 library_dirs = []
 libraries = []
@@ -82,7 +93,8 @@ setup(name='jpy',
                              libraries=libraries,
                              extra_link_args=extra_link_args,
                              extra_compile_args=extra_compile_args,
-                             define_macros=define_macros
+                             define_macros=define_macros,
+                             depends=headers
       )]
 )
 
@@ -90,17 +102,19 @@ if sys.argv[1] == 'install':
     import shutil
     import sysconfig
 
-    lib_path = os.path.join('site-packages', 'jpy' + sysconfig.get_config_var('SO'))
-    python_version = 'python' + str(sys.version_info.major) + '.' + str(sys.version_info.minor)
-
     if WIN32:
-        src = os.path.join(sys.exec_prefix, 'Lib', lib_path)
+        lib_file = 'jpy' + sysconfig.get_config_var('SO')
+        src = os.path.join(sys.exec_prefix, 'Lib', 'site-packages', lib_file)
         dst = 'jpy.dll'
     elif LINUX:
-        src = os.path.join(sys.exec_prefix, 'lib', python_version, lib_path)
+        lib_file = 'jpy.cpython-' + str(sys.version_info.major) + str(sys.version_info.minor)  + 'm.so'
+        python_version = 'python' + str(sys.version_info.major) + '.' + str(sys.version_info.minor)
+        src = os.path.join(sys.exec_prefix, 'lib', python_version, 'site-packages', lib_file)
         dst = 'libjpy.so'
     elif DARWIN:
-        src = os.path.join(sys.exec_prefix, 'lib', python_version, lib_path)
+        lib_file = 'jpy' + sysconfig.get_config_var('SO')
+        python_version = 'python' + str(sys.version_info.major) + '.' + str(sys.version_info.minor)
+        src = os.path.join(sys.exec_prefix, 'lib', python_version, 'site-packages', lib_file)
         dst = 'libjpy.dylib'
 
     print('Copying', src, 'to', dst)
