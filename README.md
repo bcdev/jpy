@@ -38,7 +38,7 @@ How to build on Unix/Darwin
 
     > export JDK_HOME=%JDK32_HOME%
     > export path=$JDK_HOME\jre\bin\server;$path
-    > python setup.py install
+    > sudo -E python3 setup.py install
 
 How to modify
 -------------
