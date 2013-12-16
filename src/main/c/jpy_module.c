@@ -552,10 +552,10 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
 }
 
 /**
- * Copies the UTF name.
- * Caller is responsible for freeing the returned string using Py_Del().
+ * Copies the UTF, zero-terminated C-string.
+ * Caller is responsible for freeing the returned string using PyMem_Del().
  */
-char* JPy_CopyUTF(const char* utfChars)
+char* JPy_CopyUTFString(const char* utfChars)
 {
     char* utfCharsCopy;
 
@@ -567,6 +567,30 @@ char* JPy_CopyUTF(const char* utfChars)
 
     strcpy(utfCharsCopy, utfChars);
     return utfCharsCopy;
+}
+
+/**
+ * Copies the given jchar string used by Java into a wchar_t string used by Python.
+ * Caller is responsible for freeing the returned string using PyMem_Del().
+ */
+wchar_t* JPy_ConvertToWCharString(const jchar* jChars, jint length)
+{
+    wchar_t* wChars;
+    jint i;
+
+    wChars = PyMem_New(wchar_t, length + 1);
+    if (wChars == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    wChars = PyMem_New(wchar_t, length);
+    for (i = 0; i < length; i++) {
+        wChars[i] = (wchar_t) jChars[i];
+    }
+    wChars[length] = 0;
+
+    return wChars;
 }
 
 /**
@@ -582,7 +606,7 @@ char* JPy_AllocTypeNameUTF(JNIEnv* jenv, jclass classRef)
     // todo: handle errors
     typeNameStr = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetName_MID);
     typeName = (*jenv)->GetStringUTFChars(jenv, typeNameStr, NULL);
-    typeNameCopy = JPy_CopyUTF(typeName);
+    typeNameCopy = JPy_CopyUTFString(typeName);
     (*jenv)->ReleaseStringUTFChars(jenv, classRef, typeName);
 
     return typeNameCopy;
@@ -627,6 +651,7 @@ PyObject* JPy_ConvertJavaToStringToPythonString(JNIEnv* jenv, jobject objectRef)
 PyObject* JPy_ConvertJavaToPythonString(JNIEnv* jenv, jstring stringRef)
 {
     PyObject* returnValue;
+    const jchar* jChars;
     jint length;
 
     if (stringRef == NULL) {
@@ -635,14 +660,26 @@ PyObject* JPy_ConvertJavaToPythonString(JNIEnv* jenv, jstring stringRef)
 
     // todo: handle errors
     length = (*jenv)->GetStringLength(jenv, stringRef);
-    if (length > 0) {
-        const jchar* chars;
-        chars = (*jenv)->GetStringChars(jenv, stringRef, NULL);
-        returnValue = PyUnicode_FromWideChar(chars, length);
-        (*jenv)->ReleaseStringChars(jenv, stringRef, chars);
-    } else {
-        returnValue = Py_BuildValue("s", "");
+    if (length == 0) {
+        return Py_BuildValue("s", "");
     }
+
+    jChars = (*jenv)->GetStringChars(jenv, stringRef, NULL);
+    if (sizeof(jchar) == sizeof(wchar_t)) {
+        returnValue = PyUnicode_FromWideChar((const wchar_t*) jChars, length);
+    } else {
+        wchar_t* wChars;
+        wChars = JPy_ConvertToWCharString(jChars, length);
+        if (wChars == NULL) {
+            returnValue = NULL;
+            goto error;
+        }
+        returnValue = PyUnicode_FromWideChar((const wchar_t*) jChars, length);
+        PyMem_Del(wChars);
+    }
+
+error:
+    (*jenv)->ReleaseStringChars(jenv, stringRef, jChars);
 
     return returnValue;
 }
