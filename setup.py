@@ -94,7 +94,7 @@ if LINUX:
     dst = 'libjpy.so'
 if DARWIN:
     src = os.path.join(sys.exec_prefix, 'lib', 'python' + str(sys.version_info.major) + '.' + str(sys.version_info.minor), 'site-packages', 'jpy.so')
-    dst = 'libjpy.so'
+    dst = 'libjpy.dylib'
 
 print('Copying', src, 'to', dst)
 shutil.copyfile(src, dst)
