@@ -127,23 +127,11 @@ int JMethod_AssessConversion(JNIEnv* jenv, JPy_JMethod* method, int argCount, Py
  */
 PyObject* JPy_FromJString(JNIEnv* jenv, JPy_JType* type, jstring stringRef)
 {
-    PyObject* returnValue;
-    jsize length;
-    const jchar* chars;
-
     if (stringRef == NULL) {
         return Py_BuildValue("");
     }
 
-    length = (*jenv)->GetStringLength(jenv, stringRef);
-    if (length == 0) {
-        return Py_BuildValue("s", "");
-    }
-
-    chars = (*jenv)->GetStringChars(jenv, stringRef, NULL);
-    returnValue = PyUnicode_FromWideChar(chars, length);
-    (*jenv)->ReleaseStringChars(jenv, stringRef, chars);
-    return returnValue;
+        return JPy_ConvertJavaToPythonString(jenv, stringRef);
 }
 
 /**

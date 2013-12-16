@@ -53,7 +53,7 @@ typedef struct JPy_ArgDisposer
 JPy_ArgDisposer;
 
 
-typedef struct JPy_ParamDescriptor;
+struct JPy_ParamDescriptor;
 
 typedef int (*JPy_ParamAssessor)(JNIEnv*, struct JPy_ParamDescriptor*, PyObject*);
 typedef int (*JPy_ParamConverter)(JNIEnv*, struct JPy_ParamDescriptor*, PyObject*, jvalue*, JPy_ArgDisposer*);
