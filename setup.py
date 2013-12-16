@@ -86,11 +86,28 @@ setup(name='jpy',
 
 import shutil
 
-src = os.path.join(sys.exec_prefix, 'Lib', 'site-packages', 'jpy.pyd')
 if WIN32:
+    src = os.path.join(sys.exec_prefix, 'Lib', 'site-packages', 'jpy.pyd')
     dst = 'jpy.dll'
-else:
+if LINUX:
+    src = os.path.join(sys.exec_prefix, 'lib', 'python' + str(sys.version_info.major) + '.' + str(sys.version_info.minor), 'site-packages', 'jpy.so')
+    dst = 'libjpy.so'
+if DARWIN:
+    src = os.path.join(sys.exec_prefix, 'lib', 'python' + str(sys.version_info.major) + '.' + str(sys.version_info.minor), 'site-packages', 'jpy.so')
     dst = 'libjpy.so'
 
 print('Copying', src, 'to', dst)
 shutil.copyfile(src, dst)
+
+
+
+cd `brew --prefix`
+rm -rf Cellar
+brew prune
+rm `git ls-files`
+rm -rf Library/Homebrew
+rm -rf Library/Aliases
+rm -rf Library/Formula
+rm -rf Library/Contributions
+rm -rf .git
+rm -rf ~/Library/Caches/Homebrew
