@@ -39,18 +39,15 @@ void JField_Del(JPy_JField* field)
 }
 
 /*
-PyObject* JMethod_GetField(JPy_JField* field)
+PyObject* JMethod_GetField(JNIEnv* jenv, JPy_JField* field)
 {
-    JNIEnv* jenv;
     jvalue* jArgs;
     JPy_ArgDisposer* jDisposers;
     PyObject* returnValue;
     PyTypeObject* returnType;
 
-    JPY_GET_JENV(jenv, NULL)
-
     //printf("JMethod_InvokeMethod 1: typeCode=%c\n", typeCode);
-    if (JMethod_CreateJArgs(method, argTuple, &jArgs, &jDisposers) < 0) {
+    if (JMethod_CreateJArgs(jenv, method, argTuple, &jArgs, &jDisposers) < 0) {
         return NULL;
     }
 

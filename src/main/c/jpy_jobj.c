@@ -31,7 +31,7 @@ int JObj_init(JPy_JObj* self, PyObject* args, PyObject* kwds)
     jvalue* jArgs;
     JPy_ArgDisposer* jDisposers;
 
-    JPY_GET_JENV(jenv, -1)
+    JPy_GET_JNI_ENV_OR_RETURN(jenv, -1)
 
     type = ((PyObject*) self)->ob_type;
 
@@ -52,13 +52,13 @@ int JObj_init(JPy_JObj* self, PyObject* args, PyObject* kwds)
         return -1;
     }
 
-    jMethod = JOverloadedMethod_FindMethod((JPy_JOverloadedMethod*) constructor, args);
+    jMethod = JOverloadedMethod_FindMethod(jenv, (JPy_JOverloadedMethod*) constructor, args);
     if (jMethod == NULL) {
         return -1;
     }
 
     //printf("JObj_init 1\n");
-    if (JMethod_CreateJArgs(jMethod, args, &jArgs, &jDisposers) < 0) {
+    if (JMethod_CreateJArgs(jenv, jMethod, args, &jArgs, &jDisposers) < 0) {
         return -1;
     }
 
@@ -70,7 +70,7 @@ int JObj_init(JPy_JObj* self, PyObject* args, PyObject* kwds)
     }
 
     if (jMethod->paramCount > 0) {
-        JMethod_DisposeJArgs(jMethod->paramCount, jArgs, jDisposers);
+        JMethod_DisposeJArgs(jenv, jMethod->paramCount, jArgs, jDisposers);
     }
 
     // todo: add exception
@@ -113,14 +113,11 @@ void JObj_dealloc(JPy_JObj* self)
     Py_TYPE(self)->tp_free((PyObject*) self);
 }
 
-int JObj_CompareTo(JPy_JObj* obj1, JPy_JObj* obj2)
+int JObj_CompareTo(JNIEnv* jenv, JPy_JObj* obj1, JPy_JObj* obj2)
 {
-    JNIEnv* jenv;
     jobject ref1;
     jobject ref2;
     int value;
-
-    JPY_GET_JENV(jenv, -2)
 
     ref1 = obj1->objectRef;
     ref2 = obj2->objectRef;
@@ -128,7 +125,7 @@ int JObj_CompareTo(JPy_JObj* obj1, JPy_JObj* obj2)
     if (ref1 == ref2 || (*jenv)->IsSameObject(jenv, ref1, ref2)) {
         return 0;
     } else if ((*jenv)->IsInstanceOf(jenv, ref1, JPy_Comparable_JClass)) {
-        // todo: optimize following code
+        // todo: optimize following code using predefined global vars, see JPy_InitGlobalVars() in jpy_module.c
         jclass classRef = (*jenv)->GetObjectClass(jenv, ref1);
         jmethodID mid = (*jenv)->GetMethodID(jenv, classRef, "compareTo", "(Ljava/lang/Object;)I");
         value = (*jenv)->CallIntMethod(jenv, ref1, mid, ref2);
@@ -139,13 +136,10 @@ int JObj_CompareTo(JPy_JObj* obj1, JPy_JObj* obj2)
     return (value == 0) ? 0 : (value < 0) ? -1 : +1;
 }
 
-int JObj_Equals(JPy_JObj* obj1, JPy_JObj* obj2)
+int JObj_Equals(JNIEnv* jenv, JPy_JObj* obj1, JPy_JObj* obj2)
 {
-    JNIEnv* jenv;
     jobject ref1;
     jobject ref2;
-
-    JPY_GET_JENV(jenv, -2)
 
     ref1 = obj1->objectRef;
     ref2 = obj2->objectRef;
@@ -162,11 +156,16 @@ int JObj_Equals(JPy_JObj* obj1, JPy_JObj* obj2)
  */
 PyObject* JObj_richcompare(PyObject* obj1, PyObject* obj2, int opid)
 {
+    JNIEnv* jenv;
+
     if (!JObj_Check(obj1) || !JObj_Check(obj2)) {
         Py_RETURN_FALSE;
     }
+
+    JPy_GET_JNI_ENV_OR_RETURN(jenv, NULL);
+
     if (opid == Py_LT) {
-        int value = JObj_CompareTo((JPy_JObj*) obj1, (JPy_JObj*) obj2);
+        int value = JObj_CompareTo(jenv, (JPy_JObj*) obj1, (JPy_JObj*) obj2);
         if (value == -2) {
             return NULL;
         } else if (value == -1) {
@@ -175,7 +174,7 @@ PyObject* JObj_richcompare(PyObject* obj1, PyObject* obj2, int opid)
             Py_RETURN_FALSE;
         }
     } else if (opid == Py_LE) {
-        int value = JObj_CompareTo((JPy_JObj*) obj1, (JPy_JObj*) obj2);
+        int value = JObj_CompareTo(jenv, (JPy_JObj*) obj1, (JPy_JObj*) obj2);
         if (value == -2) {
             return NULL;
         } else if (value == -1 || value == 0) {
@@ -184,7 +183,7 @@ PyObject* JObj_richcompare(PyObject* obj1, PyObject* obj2, int opid)
             Py_RETURN_FALSE;
         }
     } else if (opid == Py_GT) {
-        int value = JObj_CompareTo((JPy_JObj*) obj1, (JPy_JObj*) obj2);
+        int value = JObj_CompareTo(jenv, (JPy_JObj*) obj1, (JPy_JObj*) obj2);
         if (value == -2) {
             return NULL;
         } else if (value == +1) {
@@ -193,7 +192,7 @@ PyObject* JObj_richcompare(PyObject* obj1, PyObject* obj2, int opid)
             Py_RETURN_FALSE;
         }
     } else if (opid == Py_GE) {
-        int value = JObj_CompareTo((JPy_JObj*) obj1, (JPy_JObj*) obj2);
+        int value = JObj_CompareTo(jenv, (JPy_JObj*) obj1, (JPy_JObj*) obj2);
         if (value == -2) {
             return NULL;
         } else if (value == +1 || value == 0) {
@@ -202,7 +201,7 @@ PyObject* JObj_richcompare(PyObject* obj1, PyObject* obj2, int opid)
             Py_RETURN_FALSE;
         }
     } else if (opid == Py_EQ) {
-        int value = JObj_Equals((JPy_JObj*) obj1, (JPy_JObj*) obj2);
+        int value = JObj_Equals(jenv, (JPy_JObj*) obj1, (JPy_JObj*) obj2);
         if (value == -2) {
             return NULL;
         } else if (value) {
@@ -211,7 +210,7 @@ PyObject* JObj_richcompare(PyObject* obj1, PyObject* obj2, int opid)
             Py_RETURN_FALSE;
         }
     } else if (opid == Py_NE) {
-        int value = JObj_Equals((JPy_JObj*) obj1, (JPy_JObj*) obj2);
+        int value = JObj_Equals(jenv, (JPy_JObj*) obj1, (JPy_JObj*) obj2);
         if (value == -2) {
             return NULL;
         } else if (value) {
@@ -253,7 +252,7 @@ PyObject* JObj_repr(JPy_JObj* self)
 PyObject* JObj_str(JPy_JObj* self)
 {
     JNIEnv* jenv;
-    JPY_GET_JENV(jenv, NULL)
+    JPy_GET_JNI_ENV_OR_RETURN(jenv, NULL)
     return JPy_ConvertJavaToStringToPythonString(jenv, self->objectRef);
 }
 
@@ -280,7 +279,7 @@ int JObj_setattro(JPy_JObj* self, PyObject* name, PyObject* value)
         JNIEnv* jenv;
         JPy_JField* field = (JPy_JField*) oldValue;
         PyTypeObject* type = (PyTypeObject*) field->type;
-        JPY_GET_JENV(jenv, -1)
+        JPy_GET_JNI_ENV_OR_RETURN(jenv, -1)
         if (type == JPy_JBoolean) {
             jboolean item = TO_JBOOLEAN(value);
             (*jenv)->SetBooleanField(jenv, self->objectRef, field->fid, item);
@@ -334,7 +333,7 @@ PyObject* JObj_getattro(JPy_JObj* self, PyObject* name)
     // but then we loose the information that a method is called on an instance and not on a class.
     value = PyObject_GenericGetAttr((PyObject*) self, name);
     if (value == NULL) {
-        printf("JObj_getattro: not found!\n");
+        //printf("JObj_getattro: not found!\n");
         return NULL;
     }
     if (PyObject_TypeCheck(value, &JOverloadedMethod_Type)) {
@@ -343,9 +342,14 @@ PyObject* JObj_getattro(JPy_JObj* self, PyObject* name)
         return PyMethod_New(value,(PyObject*) self);
     } else if (PyObject_TypeCheck(value, &JField_Type)) {
         JNIEnv* jenv;
-        JPy_JField* field = (JPy_JField*) value;
-        PyTypeObject* type = (PyTypeObject*) field->type;
-        JPY_GET_JENV(jenv, NULL)
+        JPy_JField* field;
+        PyTypeObject* type;
+
+        field = (JPy_JField*) value;
+        type = (PyTypeObject*) field->type;
+
+        JPy_GET_JNI_ENV_OR_RETURN(jenv, NULL)
+
         if (type == JPy_JBoolean) {
             jboolean item = (*jenv)->GetBooleanField(jenv, self->objectRef, field->fid);
             if (item) { Py_RETURN_TRUE; } else { Py_RETURN_FALSE; }
@@ -375,7 +379,7 @@ PyObject* JObj_getattro(JPy_JObj* self, PyObject* name)
             return JType_ConvertJavaToPythonObject(jenv, field->type, objectRef);
         }
     } else {
-        printf("JObj_getattro: passing through\n");
+        //printf("JObj_getattro: passing through\n");
     }
     return value;
 }
@@ -388,7 +392,7 @@ Py_ssize_t JObj_sq_length(JPy_JObj* self)
 {
     JNIEnv* jenv;
     jsize length;
-    JPY_GET_JENV(jenv, -1)
+    JPy_GET_JNI_ENV_OR_RETURN(jenv, -1)
     length = (*jenv)->GetArrayLength(jenv, self->objectRef);
     //printf("JObj_sq_length: length=%d\n", length);
     return (Py_ssize_t) length;
@@ -405,7 +409,7 @@ PyObject* JObj_sq_item(JPy_JObj* self, Py_ssize_t index)
     PyTypeObject* componentType;
     jsize length;
 
-    JPY_GET_JENV(jenv, NULL)
+    JPy_GET_JNI_ENV_OR_RETURN(jenv, NULL)
 
     //printf("JObj_sq_item: index=%d\n", index);
 
@@ -480,7 +484,7 @@ int JObj_sq_ass_item(JPy_JObj* self, Py_ssize_t index, PyObject* pyItem)
     PyTypeObject* componentType;
     jobject elementRef;
 
-    JPY_GET_JENV(jenv, -1)
+    JPy_GET_JNI_ENV_OR_RETURN(jenv, -1)
 
     type = (JPy_JType*) Py_TYPE(self);
     componentType = (PyTypeObject*) type->componentType;

@@ -99,8 +99,6 @@ Current TODOs
   instead of
      `File = jpy.get_class('java.io.File')`
   This is also how it is done in Jython.
-* Instead of getting the jenv pointer from the global function JPy_GetJNIEnv(), add a JNIEnv* as first parameter to
-  all functions that require it. Only entry points from Python calls into C shall use the global retrieval function.
 * Make it fully multi-threading aware (use global switch 'multi_threaded').
 * Assert rigorously that Python reference counting is correct.
 * Assert rigorously that Java global/local references are correctly created and released.

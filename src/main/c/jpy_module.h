@@ -16,16 +16,33 @@ extern PyObject* JException_Type;
 
 #define JPy_JINIT_ATTR_NAME "__jinit__"
 
+/**
+ * Gets the current JNI environment pointer.
+ * Returns NULL, if the JVM is down.
+ *
+ * General jpy design guideline: Use the JPy_GetJNIEnv function only in entry points from Python calls into C.
+ * Add a JNIEnv* as first parameter to all functions that require it.
+ */
 JNIEnv* JPy_GetJNIEnv();
+
+/**
+ * Checks if we are in debug mode.
+ */
 int JPy_IsDebug();
 
-#define JPY_GET_JENV(JENV, RET_VALUE) \
+/**
+ * Gets the current JNI environment pointer JENV. If this is NULL, it returns the given RET_VALUE.
+ * Warning: This method may immediately return, so make sure there will be no memory leaks in this case.
+ *
+ * General jpy design guideline: Use the JPy_GET_JNI_ENV_OR_RETURN macro only in entry points from Python calls into C.
+ * Add a JNIEnv* as first parameter to all functions that require it.
+ */
+#define JPy_GET_JNI_ENV_OR_RETURN(JENV, RET_VALUE) \
     if ((JENV = JPy_GetJNIEnv()) == NULL) { \
         PyErr_SetString(PyExc_RuntimeError, "Java VM not available (use jpy.create_jvm() to create one)"); \
         return (RET_VALUE); \
     } else { \
     }
-
 
 
 extern PyTypeObject* JPy_JBoolean;

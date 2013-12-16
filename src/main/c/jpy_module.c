@@ -355,16 +355,19 @@ PyObject* JPy_destroy_jvm(PyObject* self, PyObject* args)
 
 PyObject* JPy_get_class(PyObject* self, PyObject* args, PyObject* kwds)
 {
+    JNIEnv* jenv;
     static char* keywords[] = {"name", "resolve", NULL};
     const char* className;
     int resolve;
+
+    JPy_GET_JNI_ENV_OR_RETURN(jenv, NULL)
 
     resolve = JNI_TRUE;
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|p:get_class", keywords, &className, &resolve)) {
         return NULL;
     }
 
-    return (PyObject*) JType_GetTypeForName(className, (jboolean) resolve);
+    return (PyObject*) JType_GetTypeForName(jenv, className, (jboolean) resolve);
 }
 
 PyObject* JPy_cast(PyObject* self, PyObject* args)
@@ -374,7 +377,7 @@ PyObject* JPy_cast(PyObject* self, PyObject* args)
     PyObject* objType;
     jboolean inst;
 
-    JPY_GET_JENV(jenv, NULL)
+    JPy_GET_JNI_ENV_OR_RETURN(jenv, NULL)
 
     if (!PyArg_ParseTuple(args, "OO:cast", &obj, &objType)) {
         return NULL;
@@ -411,7 +414,7 @@ PyObject* JPy_array(PyObject* self, PyObject* args)
     jarray arrayRef;
     jclass classRef;
 
-    JPY_GET_JENV(jenv, NULL)
+    JPy_GET_JNI_ENV_OR_RETURN(jenv, NULL)
 
     if (!PyArg_ParseTuple(args, "si:array", &name, &length)) {
         return NULL;
@@ -439,7 +442,7 @@ PyObject* JPy_array(PyObject* self, PyObject* args)
     } else if (strcmp(name, "double") == 0) {
         arrayRef = (*jenv)->NewDoubleArray(jenv, length);
     } else {
-        type = JType_GetTypeForName(name, JNI_FALSE);
+        type = JType_GetTypeForName(jenv, name, JNI_FALSE);
         if (type == NULL) {
             return NULL;
         }
@@ -451,7 +454,7 @@ PyObject* JPy_array(PyObject* self, PyObject* args)
     }
 
     classRef = (*jenv)->GetObjectClass(jenv, arrayRef);
-    type = JType_GetType(classRef, JNI_FALSE);
+    type = JType_GetType(jenv, classRef, JNI_FALSE);
     if (type == NULL) {
         return NULL;
     }
@@ -469,7 +472,7 @@ PyTypeObject* JPy_GetNonObjectJType(JNIEnv* jenv, const char* wrapperClassName)
     wrapperClassRef = (*jenv)->FindClass(jenv, wrapperClassName);
     fid = (*jenv)->GetStaticFieldID(jenv, wrapperClassRef, "TYPE", "Ljava/lang/Class;");
     primClassRef = (*jenv)->GetStaticObjectField(jenv, wrapperClassRef, fid);
-    type = JType_GetType(primClassRef, JNI_FALSE);
+    type = JType_GetType(jenv, primClassRef, JNI_FALSE);
     ((JPy_JType*) type)->isResolved = JNI_TRUE; // Primitive types are always resolved.
     Py_INCREF(type);
 
@@ -539,7 +542,7 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     */
     {
         jclass c = (*jenv)->FindClass(jenv, "java/lang/String");
-        JPy_JString = JType_GetType(c, JNI_FALSE);
+        JPy_JString = JType_GetType(jenv, c, JNI_FALSE);
         if (JPy_JString == NULL) {
             return -1;
         }

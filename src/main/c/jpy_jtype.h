@@ -38,7 +38,7 @@ JPy_JType;
  */
 extern PyTypeObject JType_Type;
 
-typedef int (*JPy_DisposeArg)(jvalue* value, void* data);
+typedef int (*JPy_DisposeArg)(JNIEnv*, jvalue* value, void* data);
 
 /**
  * ArgDisposers are used to dispose arguments after invocation of Java methods.
@@ -55,8 +55,8 @@ JPy_ArgDisposer;
 
 typedef struct JPy_ParamDescriptor;
 
-typedef int (*JPy_ParamAssessor)(struct JPy_ParamDescriptor*, PyObject*);
-typedef int (*JPy_ParamConverter)(struct JPy_ParamDescriptor*, PyObject*, jvalue*, JPy_ArgDisposer*);
+typedef int (*JPy_ParamAssessor)(JNIEnv*, struct JPy_ParamDescriptor*, PyObject*);
+typedef int (*JPy_ParamConverter)(JNIEnv*, struct JPy_ParamDescriptor*, PyObject*, jvalue*, JPy_ArgDisposer*);
 
 /**
  * Method return value descriptor.
@@ -83,13 +83,13 @@ JPy_ParamDescriptor;
 
 int JType_Check(PyObject* obj);
 
-PyTypeObject* JType_GetTypeForName(const char* typeName, jboolean resolve);
-PyTypeObject* JType_GetType(jclass classRef, jboolean resolve);
+PyTypeObject* JType_GetTypeForName(JNIEnv* jenv, const char* typeName, jboolean resolve);
+PyTypeObject* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve);
 
 PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject objectRef);
 int       JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* arg, jobject* objectRef);
 
-PyObject* JType_GetOverloadedMethod(JPy_JType* type, PyObject* methodName, jboolean useSuperClass);
+PyObject* JType_GetOverloadedMethod(JNIEnv* jenv, JPy_JType* type, PyObject* methodName, jboolean useSuperClass);
 
 
 // Non-API. Defined in jpy_jobj.c
