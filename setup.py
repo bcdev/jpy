@@ -52,8 +52,12 @@ if WIN32:
 if LINUX:
     include_dirs += [JDK_HOME + '/include', JDK_HOME + '/include/linux']
     libraries = ['jvm']
-    library_dirs = [JDK_HOME + '/jre/lib/i386/server',
-                    JDK_HOME + '/lib']
+    if IS64:
+        library_dirs = [JDK_HOME + '/jre/lib/amd64/server',
+                        JDK_HOME + '/lib']
+    else:
+        library_dirs = [JDK_HOME + '/jre/lib/i386/server',
+                        JDK_HOME + '/lib']
 
 if DARWIN:
     include_dirs += [JDK_HOME + '/include', JDK_HOME + '/include/darwin']
@@ -84,17 +88,18 @@ setup(name='jpy',
       )]
 )
 
-import shutil
+if sys.argv[1] == 'install':
+    import shutil
 
-if WIN32:
-    src = os.path.join(sys.exec_prefix, 'Lib', 'site-packages', 'jpy.pyd')
-    dst = 'jpy.dll'
-if LINUX:
-    src = os.path.join(sys.exec_prefix, 'lib', 'python' + str(sys.version_info.major) + '.' + str(sys.version_info.minor), 'site-packages', 'jpy.so')
-    dst = 'libjpy.so'
-if DARWIN:
-    src = os.path.join(sys.exec_prefix, 'lib', 'python' + str(sys.version_info.major) + '.' + str(sys.version_info.minor), 'site-packages', 'jpy.so')
-    dst = 'libjpy.dylib'
+    if WIN32:
+        src = os.path.join(sys.exec_prefix, 'Lib', 'site-packages', 'jpy.pyd')
+        dst = 'jpy.dll'
+    if LINUX:
+        src = os.path.join(sys.exec_prefix, 'lib', 'python' + str(sys.version_info.major) + '.' + str(sys.version_info.minor), 'site-packages', 'jpy.so')
+        dst = 'libjpy.so'
+    if DARWIN:
+        src = os.path.join(sys.exec_prefix, 'lib', 'python' + str(sys.version_info.major) + '.' + str(sys.version_info.minor), 'site-packages', 'jpy.so')
+        dst = 'libjpy.dylib'
 
-print('Copying', src, 'to', dst)
-shutil.copyfile(src, dst)
+    print('Copying', src, 'to', dst)
+    shutil.copyfile(src, dst)
