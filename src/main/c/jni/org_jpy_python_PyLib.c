@@ -78,9 +78,9 @@ JNIEXPORT jlong JNICALL Java_org_jpy_python_PyLib_importModule
     printf("Java_org_jpy_python_PyLib_getModule: name='%s'\n", nameChars);
     pName = PyUnicode_FromString(nameChars);
     pModule = PyImport_Import(pName);
+    /* pModule is a new reference */
     Py_DECREF(pName);
     (*jenv)->ReleaseStringUTFChars(jenv, name, nameChars);
-    Py_INCREF(pName);
     return (jlong) pModule;
 }
 
@@ -99,8 +99,8 @@ JNIEXPORT jlong JNICALL Java_org_jpy_python_PyLib_getAttributeValue
     nameChars = (*jenv)->GetStringUTFChars(jenv, name, NULL);
     printf("Java_org_jpy_python_PyLib_getAttributeValue: objId=%p, name='%s'\n", (PyObject*) objId, nameChars);
     pValue = PyObject_GetAttrString((PyObject*) objId, nameChars);
+    /* pValue is a new reference */
     (*jenv)->ReleaseStringUTFChars(jenv, name, nameChars);
-    Py_INCREF(pValue);
     return (jlong) pValue;
 }
 
@@ -156,11 +156,60 @@ JNIEXPORT jobject JNICALL Java_org_jpy_python_PyLib_call
   (JNIEnv* jenv, jclass pyLib, jlong objId, jboolean isMethod, jstring name, jobjectArray args)
 {
     const char* nameChars;
-
     nameChars = (*jenv)->GetStringUTFChars(jenv, name, NULL);
     printf("Java_org_jpy_python_PyLib_callWithTypeInfo: objId=%p, name='%s'\n", (PyObject*)objId, nameChars);
-    (*jenv)->ReleaseStringUTFChars(jenv, name, nameChars);
     // todo: implement Java_org_jpy_python_PyLib_call
+
+/*
+    PyObject *pName, *pModule, *pDict, *pFunc;
+    PyObject *pArgs, *pValue;
+    int argCount;
+    int i;
+
+
+    argCount = ...;
+
+    pFunc = PyObject_GetAttrString(pModule, nameChars);
+    // pFunc is a new reference
+
+    if (pFunc && PyCallable_Check(pFunc)) {
+        pArgs = PyTuple_New(argCount);
+        for (i = 0; i < argCount; i++) {
+
+            pValue = PyLong_FromLong(atoi(argv[i + 3]));
+            if (!pValue) {
+                Py_DECREF(pArgs);
+                Py_DECREF(pModule);
+                fprintf(stderr, "Cannot convert argument\n");
+                return 1;
+            }
+            // pValue reference stolen here
+            PyTuple_SetItem(pArgs, i, pValue);
+        }
+        pValue = PyObject_CallObject(pFunc, pArgs);
+        Py_DECREF(pArgs);
+        if (pValue != NULL) {
+            printf("Result of call: %ld\n", PyLong_AsLong(pValue));
+            Py_DECREF(pValue);
+        }
+        else {
+            Py_DECREF(pFunc);
+            PyErr_Print();
+            fprintf(stderr,"Call failed\n");
+            return 1;
+        }
+    }
+    else {
+        if (PyErr_Occurred())
+            PyErr_Print();
+        fprintf(stderr, "Cannot find function \"%s\"\n", argv[2]);
+    }
+    Py_XDECREF(pFunc);
+    Py_DECREF(pModule);
+
+error:
+    (*jenv)->ReleaseStringUTFChars(jenv, name, nameChars);
+*/
     return NULL;
 }
 
