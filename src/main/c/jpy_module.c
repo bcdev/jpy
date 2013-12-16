@@ -228,7 +228,7 @@ PyMODINIT_FUNC PyInit_jpy(void)
     return JPy_Module;
 }
 
-JNIEnv* JPy_GetJNIEnv()
+JNIEnv* JPy_GetJNIEnv(void)
 {
     // Currently JPy is only single threaded.
     // To make it multi-threaded we must use the following code:
@@ -236,7 +236,7 @@ JNIEnv* JPy_GetJNIEnv()
     return JVM.jenv;
 }
 
-int JPy_IsDebug()
+int JPy_IsDebug(void)
 {
     return JVM.DEBUG;
 }

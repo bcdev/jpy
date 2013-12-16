@@ -101,7 +101,7 @@ PyTypeObject* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve)
 
             PyDict_DelItem(JPy_Types, typeKey);
 
-            printf("JType_GetType: after PyDict_DelItem\n");
+            //printf("JType_GetType: after PyDict_DelItem\n");
 
             return NULL;
         }
@@ -208,7 +208,9 @@ PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject
         } else if ((PyTypeObject*) type->componentType == JPy_JDouble) {
             format = "d";
         } else {
-            // todo: raise internal error
+            (*jenv)->ReleasePrimitiveArrayCritical(jenv, objectRef, items, 0);
+            PyErr_SetString(PyExc_RuntimeError, "internal error: unknown primitive Java type");
+            return NULL;
         }
 
         array = (JPy_CArray*) CArray_New(format, length);
@@ -922,7 +924,6 @@ int JType_AssessToJObject(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, Py
                 type = (PyTypeObject*) paramComponentType;
                 matchValue = 0;
                 if (view.format == NULL) {
-                    char format = *view.format;
                     if (type == JPy_JBoolean) {
                         matchValue = view.itemsize == 1 ? 10 : 0;
                     } else if (type == JPy_JByte) {
@@ -1103,7 +1104,7 @@ int JType_ConvertToJObject(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, P
         }
 
         if (view->len != itemCount * itemSize) {
-            printf("%ld, %ld, %d, %d\n", view->len , view->itemsize, itemCount, itemSize);
+            //printf("%ld, %ld, %ld, %ld\n", view->len , view->itemsize, itemCount, itemSize);
             PyBuffer_Release(view);
             PyMem_Del(view);
             PyErr_SetString(PyExc_ValueError, "buffer length is too small");

@@ -23,12 +23,12 @@ extern PyObject* JException_Type;
  * General jpy design guideline: Use the JPy_GetJNIEnv function only in entry points from Python calls into C.
  * Add a JNIEnv* as first parameter to all functions that require it.
  */
-JNIEnv* JPy_GetJNIEnv();
+JNIEnv* JPy_GetJNIEnv(void);
 
 /**
  * Checks if we are in debug mode.
  */
-int JPy_IsDebug();
+int JPy_IsDebug(void);
 
 /**
  * Gets the current JNI environment pointer JENV. If this is NULL, it returns the given RET_VALUE.

@@ -337,7 +337,7 @@ PyObject* JObj_getattro(JPy_JObj* self, PyObject* name)
         return NULL;
     }
     if (PyObject_TypeCheck(value, &JOverloadedMethod_Type)) {
-        JPy_JOverloadedMethod* overloadedMethod = (JPy_JOverloadedMethod*) value;
+        //JPy_JOverloadedMethod* overloadedMethod = (JPy_JOverloadedMethod*) value;
         //printf("JObj_getattro: wrapping JOverloadedMethod, overloadCount=%d\n", PyList_Size(overloadedMethod->methodList));
         return PyMethod_New(value,(PyObject*) self);
     } else if (PyObject_TypeCheck(value, &JField_Type)) {
