@@ -949,9 +949,9 @@ int JType_AssessToJObject(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, Py
                     } else if (type == JPy_JChar) {
                         matchValue = format == 'u' ? 100 : format == 'H' ? 90 : format == 'h' ? 80 : 0;
                     } else if (type == JPy_JShort) {
-                        matchValue = format == format == 'h' ? 100 : format == 'H' ? 90 : 0;
+                        matchValue = format == 'h' ? 100 : format == 'H' ? 90 : 0;
                     } else if (type == JPy_JInt) {
-                        matchValue = format == format == 'i' || format == 'l' ? 100 : format == 'I' || format == 'L' ? 90 : 0;
+                        matchValue = format == 'i' || format == 'l' ? 100 : format == 'I' || format == 'L' ? 90 : 0;
                     } else if (type == JPy_JLong) {
                         matchValue = format == 'q' ? 100 : format == 'Q' ? 90 : 0;
                     } else if (type == JPy_JFloat) {
@@ -1044,10 +1044,10 @@ int JType_ConvertToJObject(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, P
     if (componentType != NULL && componentType->isPrimitive && PyObject_CheckBuffer(arg)) {
         Py_buffer* view;
         int flags;
-        int itemCount;
+        Py_ssize_t itemCount;
         jarray array;
         void* carray;
-        int itemSize;
+        jint itemSize;
         PyTypeObject* type;
 
         view = PyMem_New(Py_buffer, 1);
@@ -1103,7 +1103,7 @@ int JType_ConvertToJObject(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, P
         }
 
         if (view->len != itemCount * itemSize) {
-            printf("%d, %d, %d, %d\n",view->len , view->itemsize , itemCount , itemSize);
+            printf("%ld, %ld, %d, %d\n", view->len , view->itemsize, itemCount, itemSize);
             PyBuffer_Release(view);
             PyMem_Del(view);
             PyErr_SetString(PyExc_ValueError, "buffer length is too small");
