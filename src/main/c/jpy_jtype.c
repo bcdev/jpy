@@ -622,7 +622,7 @@ int JType_ProcessField(JNIEnv* jenv, JPy_JType* declaringClass, PyObject* fieldK
     if (isStatic && isFinal) {
         // Add static final values to the JPy_JType's tp_dict.
         // todo: Note that this is a workaround only, because the JPy_JType's tp_getattro slot is not called.
-        if (JType_AddFieldAttribute(declaringClass, fieldKey, fieldType, fid) < 0) {
+        if (JType_AddFieldAttribute(declaringClass, fieldKey, (PyTypeObject*) fieldType, fid) < 0) {
             return -1;
         }
     } else if (!isStatic) {
