@@ -28,24 +28,24 @@ How to build on Windows
 
 Currently, only 32-bit versions are supported.
 
-> SET JDK_HOME=%JDK32_HOME%
-> SET VS90COMNTOOLS=%VS100COMNTOOLS%
-> SET PATH=%JDK_HOME%\jre\bin\server;%PATH%
-> python setup.py install
+    > SET JDK_HOME=%JDK32_HOME%
+    > SET VS90COMNTOOLS=%VS100COMNTOOLS%
+    > SET PATH=%JDK_HOME%\jre\bin\server;%PATH%
+    > python setup.py install
 
 How to build on Unix/Darwin
 ---------------------------
 
-> export JDK_HOME=%JDK32_HOME%
-> export path=$JDK_HOME\jre\bin\server;$path
-> python setup.py install
+    > export JDK_HOME=%JDK32_HOME%
+    > export path=$JDK_HOME\jre\bin\server;$path
+    > python setup.py install
 
 How to modify
 -------------
 
 After changing org.jpy.python.PyInterpreter, run
 
-> javah -d src/main/c/jni -v -classpath target/classes org.jpy.python.PyLib
+    > javah -d src/main/c/jni -v -classpath target/classes org.jpy.python.PyLib
 
 and adapt changes src/main/c/jni/org_jpy_PythonInterpreter.c according to newly generated
 src/main/c/jni /src/main/c/jni/org_jpy_PythonInterpreter.h
@@ -94,6 +94,11 @@ Simply because this hasn't been implemented yet.
 Current TODOs
 -------------
 * Add unit tests to target 95% code coverage.
+* Add the possibility to let users pythonically import Java classes: e.g.
+     `from java.io import File`
+  instead of
+     `File = jpy.get_class('java.io.File')`
+  This is also how it is done in Jython.
 * Instead of getting the jenv pointer from the global function JPy_GetJNIEnv(), add a JNIEnv* as first parameter to
   all functions that require it. Only entry points from Python calls into C shall use the global retrieval function.
 * Make it fully multi-threading aware (use global switch 'multi_threaded').
@@ -103,14 +108,16 @@ Current TODOs
 * Perform rigorous JNI error checking. Wrap Java exceptions into our Python JException_Type.
   Use this ideom (but not for no-memory errors!):
 
-  jthrowable e = env->ExceptionOccurred();
-  if (e != NULL) {
-  	jenv->ExceptionClear();
-  	jstring message = (jstring) (*jenv)->CallObjectMethod(jenv, e, JPy_Object_ToString_MID);
-  	messageChars = (*jenv)->GetStringUTFChars(jenv, message, NULL);
-    PyErr_Format(JException_Type, format, messageChars)
-  	(*jenv)->ReleaseStringUTFChars(jenv, message, messageChars);
-  }
+    jthrowable e = (*jenv)->ExceptionOccurred(jenv);
+    if (e != NULL) {
+        jstring message;
+        const char* messageChars;
+        jenv->ExceptionClear();
+        message = (jstring) (*jenv)->CallObjectMethod(jenv, e, JPy_Object_ToString_MID);
+        messageChars = (*jenv)->GetStringUTFChars(jenv, message, NULL);
+        PyErr_Format(JException_Type, format, messageChars)
+        (*jenv)->ReleaseStringUTFChars(jenv, message, messageChars);
+    }
 
 
 Design Issues
