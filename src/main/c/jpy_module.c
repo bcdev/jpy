@@ -687,20 +687,7 @@ PyObject* JPy_ConvertJavaToPythonString(JNIEnv* jenv, jstring stringRef)
     }
 
     jChars = (*jenv)->GetStringChars(jenv, stringRef, NULL);
-    if (sizeof(jchar) == sizeof(wchar_t)) {
-        returnValue = PyUnicode_FromWideChar((const wchar_t*) jChars, length);
-    } else {
-        wchar_t* wChars;
-        wChars = JPy_ConvertToWCharString(jChars, length);
-        if (wChars == NULL) {
-            returnValue = NULL;
-            goto error;
-        }
-        returnValue = PyUnicode_FromWideChar((const wchar_t*) jChars, length);
-        PyMem_Del(wChars);
-    }
-
-error:
+    returnValue = PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, jChars, length);
     (*jenv)->ReleaseStringChars(jenv, stringRef, jChars);
 
     return returnValue;
