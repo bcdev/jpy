@@ -15,14 +15,30 @@ Features
   Also supports Java methods that modify primitive Java array passed in as buffers 
   (mutable arrays)
 
+System Requirements
+-------------------
+* Python 3.3
+* Python 3.3 Dev (Unix/Darwin)
+* JDK 1.7 (at build time)
+* JRE 1.7 (at runtime)
+* Microsoft Visual Studio 10 (Windows)
 
-How to build
-------------
+How to build on Windows
+-----------------------
+
+Currently, only 32-bit versions are supported.
 
 > SET JDK_HOME=%JDK32_HOME%
 > SET VS90COMNTOOLS=%VS100COMNTOOLS%
-> SET PATH=C:\Program Files (x86)\Java\jdk1.7.0_07\jre\bin\server;%PATH%
-> org.jpy.python setup.py install
+> SET PATH=%JDK_HOME%\jre\bin\server;%PATH%
+> python setup.py install
+
+How to build on Unix/Darwin
+---------------------------
+
+> export JDK_HOME=%JDK32_HOME%
+> export path=$JDK_HOME\jre\bin\server;$path
+> python setup.py install
 
 How to modify
 -------------
@@ -57,7 +73,7 @@ Disadvantages to the 'beampy' codegen approach:
 
 Current limitations
 -------------------
-Non-final, static class fields are not supported. 
+*Non-final, static class fields are not supported.*
 Reason: In jpy, Java classes are represented in Python as (dynamically allocated) built-in 
 extension types. Built-in extension types cannot have (as of Python 3.3) static, computed 
 attributes which we would need for getting/setting Java static class fields. 
@@ -65,16 +81,36 @@ See also
 * http://stackoverflow.com/questions/10161609/class-property-using-org.jpy.python-c-api
 * http://joyrex.spc.uchicago.edu/bookshelves/org.jpy.python/cookbook/pythoncook-CHP-16-SECT-6.html
 
-Public final static fields are represented as normal (non-computed) type attributes. Their
-values are Python representations of the final Java values. The limitation here is, that they 
+*Public final static fields are represented as normal (non-computed) type attributes.*
+Their values are Python representations of the final Java values. The limitation here is, that they
 can be overwritten from Python, because Python does not know final/constant attributes. This could
 only be achieved with computed attributes, but as said before, they are not supported for 
-built-in extension types. 
+built-in extension types.
 
-Current TODO
-------------
-* Support Java fields
+*Java generics are not supported.*
+Simply because this hasn't been implemented yet.
 
+
+Current TODOs
+-------------
+* Add unit tests to target 95% code coverage.
+* Instead of getting the jenv pointer from the global function JPy_GetJNIEnv(), add a JNIEnv* as first parameter to
+  all functions that require it. Only entry points from Python calls into C shall use the global retrieval function.
+* Make it fully multi-threading aware (use global switch 'multi_threaded').
+* Assert rigorously that Python reference counting is correct.
+* Assert rigorously that Java global/local references are correctly created and released.
+* Perform rigorous Python C API error checking.
+* Perform rigorous JNI error checking. Wrap Java exceptions into our Python JException_Type.
+  Use this ideom (but not for no-memory errors!):
+
+  jthrowable e = env->ExceptionOccurred();
+  if (e != NULL) {
+  	jenv->ExceptionClear();
+  	jstring message = (jstring) (*jenv)->CallObjectMethod(jenv, e, JPy_Object_ToString_MID);
+  	messageChars = (*jenv)->GetStringUTFChars(jenv, message, NULL);
+    PyErr_Format(JException_Type, format, messageChars)
+  	(*jenv)->ReleaseStringUTFChars(jenv, message, messageChars);
+  }
 
 
 Design Issues
@@ -82,33 +118,11 @@ Design Issues
 * Add a new module function 'import' which calls 'get_class' but then creates new modules up the last dot in the class name.
   E.g. java.io.File will create the module 'java', than create 'io' and add this to 'java' and then add class 'File' to 'io'.
 * Add 'get_ref' method to JObj_Type so that we can easily test for Java object identity
-* Add 'classpath' parameter to 'create_jvm' function. It is a list of path entries.
-  This is needed because using the JVM option '-Djava.class.path=<classpath>' is platform-specific due to the
-  platform-dependent path separator. (todo: are there any other platform-specific JVM options?)
-
 * If we only have one JOverloadedMethod then we should use JMethod instead. JOverloadedMethod must be a sub-type of JMethod.
 * Add various modes of operation:
   - actual_type (retrieve the actual class of a returned Java object or use the return type of the Java method declaration).
     See JPy_FromJObject() in jpy_jmethod.c
 
-* Make use of PyErr_Format()
-* Perform massive JNI error checking. Use this ideom:
-
-jthrowable e = env->ExceptionOccurred();
-if (e != NULL) {
-	env->ExceptionClear();
-
-	jmethodID toString = env->GetMethodID(env->FindClass("java/lang/Object"), "toString", "()Ljava/lang/String;");
-	jstring estring = (jstring) env->CallObjectMethod(e, toString);
-
-	jboolean isCopy;
-	message = env->GetStringUTFChars(estring, &isCopy);
-
-    PyErr_Format(format, message)
-	...
-}
-
-Wrap Java exceptions into our Python JException_Type.
 
 
 See also
