@@ -584,13 +584,35 @@ wchar_t* JPy_ConvertToWCharString(const jchar* jChars, jint length)
         return NULL;
     }
 
-    wChars = PyMem_New(wchar_t, length);
     for (i = 0; i < length; i++) {
         wChars[i] = (wchar_t) jChars[i];
     }
     wChars[length] = 0;
 
     return wChars;
+}
+
+/**
+ * Copies the given wchar_t string used by Python into a jchar string used by Python.
+ * Caller is responsible for freeing the returned string using PyMem_Del().
+ */
+jchar* JPy_ConvertToJCharString(const wchar_t* wChars, jint length)
+{
+    jchar* jChars;
+    jint i;
+
+    jChars = PyMem_New(jchar, length + 1);
+    if (jChars == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    for (i = 0; i < length; i++) {
+        jChars[i] = (jchar) wChars[i];
+    }
+    jChars[length] = (jchar) 0;
+
+    return jChars;
 }
 
 /**
@@ -690,26 +712,38 @@ error:
 int JPy_ConvertPythonToJavaString(JNIEnv* jenv, PyObject* arg, jstring* stringRef)
 {
     Py_ssize_t length;
-    wchar_t* chars;
+    wchar_t* wChars;
 
     if (arg == Py_None) {
         *stringRef = NULL;
         return 0;
     }
 
-    chars = PyUnicode_AsWideCharString(arg, &length);
-    if (chars == NULL) {
+    wChars = PyUnicode_AsWideCharString(arg, &length);
+    if (wChars == NULL) {
+        *stringRef = NULL;
         return -1;
     }
 
-    *stringRef = (*jenv)->NewString(jenv, chars, length);
+    if (sizeof(wchar_t) == sizeof(jchar)) {
+        *stringRef = (*jenv)->NewString(jenv, (const jchar*) wChars, length);
+    } else {
+        jchar* jChars;
+        jChars = JPy_ConvertToJCharString(wChars, length);
+        if (jChars == NULL) {
+            goto error;
+        }
+        *stringRef = (*jenv)->NewString(jenv, jChars, length);
+        PyMem_Del(jChars);
+    }
     if (*stringRef == NULL) {
-        PyMem_Del(chars);
+        PyMem_Del(wChars);
         PyErr_NoMemory();
         return -1;
     }
 
-    PyMem_Del(chars);
+error:
+    PyMem_Del(wChars);
 
     return 0;
 }
