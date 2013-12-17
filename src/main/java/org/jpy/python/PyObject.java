@@ -8,52 +8,83 @@ import static org.jpy.python.PyLib.assertLibInitialized;
 /**
  * Wraps a CPython (of type <code>PyObject *</code>).
  *
- * <p/>
- * <i>Neither used nor implemented yet.</i>
- *
  * @author Norman Fomferra
  */
 public class PyObject {
     public static final long NULL_POINTER = 0;
+    public static final PyObject NULL = new PyObject();
 
     private final long pointer;
 
+    private PyObject() {
+        this.pointer = NULL_POINTER;
+    }
+
     PyObject(long pointer) {
+        if (pointer == NULL_POINTER) {
+            throw new NullPointerException();
+        }
         this.pointer = pointer;
     }
 
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
-        PyLib.decref(getPointer());
+        if (PyLib.isInitialized()) {
+            PyLib.decref(getPointer());
+        }
     }
 
     public final long getPointer() {
         return pointer;
     }
 
+    public int getIntValue() {
+        assertLibInitialized();
+        return PyLib.getIntValue(getPointer());
+    }
+
+    public double getDoubleValue() {
+        assertLibInitialized();
+        return PyLib.getDoubleValue(getPointer());
+    }
+
+    public String getStringValue() {
+        assertLibInitialized();
+        return PyLib.getStringValue(getPointer());
+    }
+
+    public Object getObjectValue() {
+        assertLibInitialized();
+        return PyLib.getObjectValue(getPointer());
+    }
+
     public PyObject getAttributeValue(String name) {
         assertLibInitialized();
         long value = PyLib.getAttributeValue(getPointer(), name);
-        if (value == NULL_POINTER) {
-            throw new RuntimeException("NULL_POINTER");
-        }
         return new PyObject(value);
     }
 
-    public void setAttributeValue(String name, PyObject value) {
+    public void setAttributeValue(String name, Object value) {
         assertLibInitialized();
-        PyLib.setAttributeValue(getPointer(), name, value.getPointer());
+        PyLib.setAttributeValue(getPointer(), name, value, value != null ? value.getClass() : null);
     }
 
-    public Object callMethod(String name, Object... args) {
+    public void setAttributeValue(String name, Object value, Class<?> valueType) {
         assertLibInitialized();
-        return PyLib.call(getPointer(), true, name, args);
+        PyLib.setAttributeValue(getPointer(), name, value, valueType);
     }
 
-    public Object call(String name, Object... args) {
+    public PyObject callMethod(String name, Object... args) {
         assertLibInitialized();
-        return PyLib.call(getPointer(), false, name, args);
+        long pointer = PyLib.call(getPointer(), true, name, args.length, args, null);
+        return new PyObject(pointer);
+    }
+
+    public PyObject call(String name, Object... args) {
+        assertLibInitialized();
+        long pointer = PyLib.call(getPointer(), false, name, args.length, args, null);
+        return new PyObject(pointer);
     }
 
     public <T> T cast(Class<T> type) {

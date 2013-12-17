@@ -27,7 +27,7 @@ if WIN32 and os.environ.get('VS90COMNTOOLS', None) is None:
 sources = [
     'src/main/c/jpy_module.c',
     'src/main/c/jpy_carray.c',
-    'src/main/c/jpy_buffer.c',
+    'src/main/c/jpy_conv.c',
     'src/main/c/jpy_jtype.c',
     'src/main/c/jpy_jmethod.c',
     'src/main/c/jpy_jfield.c',
@@ -38,7 +38,7 @@ sources = [
 headers = [
     'src/main/c/jpy_module.h',
     'src/main/c/jpy_carray.h',
-    'src/main/c/jpy_buffer.h',
+    'src/main/c/jpy_conv.h',
     'src/main/c/jpy_jtype.h',
     'src/main/c/jpy_jmethod.h',
     'src/main/c/jpy_jfield.h',
@@ -99,23 +99,16 @@ setup(name='jpy',
 )
 
 if sys.argv[1] == 'install':
-    import shutil
-    import sysconfig
+    print('Importing "jpy"...');
 
-    if WIN32:
-        lib_file = 'jpy' + sysconfig.get_config_var('SO')
-        src = os.path.join(sys.exec_prefix, 'Lib', 'site-packages', lib_file)
-        dst = 'jpy.dll'
-    elif LINUX:
-        lib_file = 'jpy.cpython-' + str(sys.version_info.major) + str(sys.version_info.minor)  + 'm.so'
-        python_version = 'python' + str(sys.version_info.major) + '.' + str(sys.version_info.minor)
-        src = os.path.join(sys.exec_prefix, 'lib', python_version, 'site-packages', lib_file)
-        dst = 'libjpy.so'
-    elif DARWIN:
-        lib_file = 'jpy' + sysconfig.get_config_var('SO')
-        python_version = 'python' + str(sys.version_info.major) + '.' + str(sys.version_info.minor)
-        src = os.path.join(sys.exec_prefix, 'lib', python_version, 'site-packages', lib_file)
-        dst = 'libjpy.dylib'
+    import jpy
 
-    print('Copying', src, 'to', dst)
-    shutil.copyfile(src, dst)
+    user_home = os.path.expanduser("~")
+    user_jpy = os.path.join(user_home, '.jpy')
+
+    print('Writing file', user_jpy);
+
+    with open(user_jpy, 'w', encoding='utf-8') as f:
+        f.write('jpy.lib = ' + jpy.__file__.replace('\\', '\\\\') + '\n')
+        f.write('jpy.exec_path = ' + sys.exec_prefix.replace('\\', '\\\\') + '\n')
+

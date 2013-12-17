@@ -4,6 +4,7 @@
 #include "jpy_jfield.h"
 #include "jpy_jobj.h"
 #include "jpy_carray.h"
+#include "jpy_conv.h"
 
 
 JPy_JType* JType_New(JNIEnv* jenv, jclass classRef, jboolean resolve);
@@ -21,7 +22,7 @@ void JType_InitMethodParamDescriptorFunctions(JPy_JType* type, JPy_JMethod* meth
 int JType_ProcessField(JNIEnv* jenv, JPy_JType* declaringType, PyObject* fieldKey, const char* fieldName, jclass fieldClassRef, jboolean isStatic, jboolean isFinal, jfieldID fid);
 
 
-PyTypeObject* JType_GetTypeForName(JNIEnv* jenv, const char* typeName, jboolean resolve)
+JPy_JType* JType_GetTypeForName(JNIEnv* jenv, const char* typeName, jboolean resolve)
 {
     const char* resourceName;
     jclass classRef;
@@ -62,13 +63,17 @@ PyTypeObject* JType_GetTypeForName(JNIEnv* jenv, const char* typeName, jboolean 
 /**
  * Returns a new reference.
  */
-PyTypeObject* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve)
+JPy_JType* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve)
 {
     PyObject* typeKey;
     JPy_JType* type;
 
-    typeKey = JPy_GetTypeNameString(jenv, classRef);
+    if (JPy_Types == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "internal error: module 'jpy' not initialized");
+        return NULL;
+    }
 
+    typeKey = JPy_GetTypeNameString(jenv, classRef);
     // todo: add check, because the following is a dangerous cast: someone else could have put something else into JPy_Types
     type = (JPy_JType*) PyDict_GetItem(JPy_Types, typeKey);
     if (type == NULL) {
@@ -118,7 +123,7 @@ PyTypeObject* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve)
         }
     }
 
-    return (PyTypeObject*) type;
+    return type;
 }
 
 /**
@@ -172,7 +177,7 @@ PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject
 
     if (type->componentType == NULL) {
         // todo: check for Java wrapper types as well: java.lang.Byte, java.lang.Short, java.lang.Integer, ...
-        if ((PyTypeObject*) type == JPy_JString) {
+        if (type == JPy_JString) {
             return JPy_ConvertJavaToPythonString(jenv, objectRef);
             //return JPy_ConvertJavaToStringToPythonString(jenv, objectRef);
         } else {
@@ -191,21 +196,21 @@ PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject
             PyErr_NoMemory();
             return NULL;
         }
-        if ((PyTypeObject*) type->componentType == JPy_JBoolean) {
+        if (type->componentType == JPy_JBoolean) {
             format = "b";
-        } else if ((PyTypeObject*) type->componentType == JPy_JByte) {
+        } else if (type->componentType == JPy_JByte) {
             format = "b";
-        } else if ((PyTypeObject*) type->componentType == JPy_JChar) {
+        } else if (type->componentType == JPy_JChar) {
             format = "H";
-        } else if ((PyTypeObject*) type->componentType == JPy_JShort) {
+        } else if (type->componentType == JPy_JShort) {
             format = "h";
-        } else if ((PyTypeObject*) type->componentType == JPy_JInt) {
+        } else if (type->componentType == JPy_JInt) {
             format = "l";
-        } else if ((PyTypeObject*) type->componentType == JPy_JLong) {
+        } else if (type->componentType == JPy_JLong) {
             format = "q";
-        } else if ((PyTypeObject*) type->componentType == JPy_JFloat) {
+        } else if (type->componentType == JPy_JFloat) {
             format = "f";
-        } else if ((PyTypeObject*) type->componentType == JPy_JDouble) {
+        } else if (type->componentType == JPy_JDouble) {
             format = "d";
         } else {
             (*jenv)->ReleasePrimitiveArrayCritical(jenv, objectRef, items, 0);
@@ -236,7 +241,7 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* arg
         *objectRef = ((JPy_JObj*) arg)->objectRef;
         return 0;
     }
-    if ((PyTypeObject*) type == JPy_JString && PyUnicode_Check(arg)) {
+    if (type == JPy_JString && PyUnicode_Check(arg)) {
         // todo: problem of memory leak here: '**objectRef' escapes but we must actually must call jenv->DeleteLocalRef(*objectRef) some time later
         if (JPy_ConvertPythonToJavaString(jenv, arg, objectRef) < 0) {
             return -1;
@@ -383,7 +388,7 @@ int JType_InitComponentType(JNIEnv* jenv, JPy_JType* type, jboolean resolve)
 
     componentTypeRef = (jclass) (*jenv)->CallObjectMethod(jenv, type->classRef, JPy_Class_GetComponentType_MID);
     if (componentTypeRef != NULL) {
-        type->componentType = (JPy_JType*) JType_GetType(jenv, componentTypeRef, resolve);
+        type->componentType = JType_GetType(jenv, componentTypeRef, resolve);
         if (type->componentType == NULL) {
             return -1;
         }
@@ -401,7 +406,7 @@ int JType_InitSuperType(JNIEnv* jenv, JPy_JType* type, jboolean resolve)
 
     superClassRef = (*jenv)->GetSuperclass(jenv, type->classRef);
     if (superClassRef != NULL) {
-        type->superType = (JPy_JType*) JType_GetType(jenv, superClassRef, resolve);
+        type->superType = JType_GetType(jenv, superClassRef, resolve);
         if (type->superType == NULL) {
             return -1;
         }
@@ -559,7 +564,7 @@ int JType_AddField(JPy_JType* declaringClass, JPy_JField* field)
     return 0;
 }
 
-int JType_AddFieldAttribute(JNIEnv* jenv, JPy_JType* declaringClass, PyObject* fieldName, PyTypeObject* fieldType, jfieldID fid)
+int JType_AddFieldAttribute(JNIEnv* jenv, JPy_JType* declaringClass, PyObject* fieldName, JPy_JType* fieldType, jfieldID fid)
 {
     PyObject* typeDict;
     PyObject* fieldValue;
@@ -607,7 +612,7 @@ int JType_ProcessField(JNIEnv* jenv, JPy_JType* declaringClass, PyObject* fieldK
     JPy_JField* field;
     JPy_JType* fieldType;
 
-    fieldType = (JPy_JType*) JType_GetType(jenv, fieldClassRef, JNI_FALSE);
+    fieldType = JType_GetType(jenv, fieldClassRef, JNI_FALSE);
     if (fieldType == NULL) {
         if (JPy_IsDebug()) printf("JType_ProcessField: error: Java field %s rejected because an error occurred during type processing\n", fieldName);
         return -1;
@@ -616,7 +621,7 @@ int JType_ProcessField(JNIEnv* jenv, JPy_JType* declaringClass, PyObject* fieldK
     if (isStatic && isFinal) {
         // Add static final values to the JPy_JType's tp_dict.
         // todo: Note that this is a workaround only, because the JPy_JType's tp_getattro slot is not called.
-        if (JType_AddFieldAttribute(jenv, declaringClass, fieldKey, (PyTypeObject*) fieldType, fid) < 0) {
+        if (JType_AddFieldAttribute(jenv, declaringClass, fieldKey, fieldType, fid) < 0) {
             return -1;
         }
     } else if (!isStatic) {
@@ -707,7 +712,7 @@ PyObject* JType_GetOverloadedMethod(JNIEnv* jenv, JPy_JType* type, PyObject* met
 JPy_ReturnDescriptor* JType_CreateReturnDescriptor(JNIEnv* jenv, jclass returnClass)
 {
     JPy_ReturnDescriptor* returnDescriptor;
-    PyTypeObject* type;
+    JPy_JType* type;
 
     returnDescriptor = PyMem_New(JPy_ReturnDescriptor, 1);
     if (returnDescriptor == NULL) {
@@ -720,7 +725,7 @@ JPy_ReturnDescriptor* JType_CreateReturnDescriptor(JNIEnv* jenv, jclass returnCl
         return NULL;
     }
 
-    returnDescriptor->type = (JPy_JType*) type;
+    returnDescriptor->type = type;
     Py_INCREF((PyObject*) type);
 
     // if (JPy_IsDebug()) printf("JType_ProcessReturnType: type->tp_name='%s',
@@ -734,7 +739,7 @@ JPy_ParamDescriptor* JType_CreateParamDescriptors(JNIEnv* jenv, int paramCount, 
 {
     JPy_ParamDescriptor* paramDescriptors;
     JPy_ParamDescriptor* paramDescriptor;
-    PyTypeObject* type;
+    JPy_JType* type;
     jclass paramClass;
     int i;
 
@@ -753,7 +758,7 @@ JPy_ParamDescriptor* JType_CreateParamDescriptors(JNIEnv* jenv, int paramCount, 
             return NULL;
         }
 
-        paramDescriptor->type = (JPy_JType*) type;
+        paramDescriptor->type = type;
         Py_INCREF((PyObject*) paramDescriptor->type);
     }
 
@@ -916,12 +921,12 @@ int JType_AssessToJObject(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, Py
             Py_buffer view;
 
             if (PyObject_GetBuffer(arg, &view, PyBUF_FORMAT) == 0) {
-                PyTypeObject* type;
+                JPy_JType* type;
                 int matchValue;
 
                 //printf("buffer len=%d, itemsize=%d, format=%s\n", view.len, view.itemsize, view.format);
 
-                type = (PyTypeObject*) paramComponentType;
+                type = paramComponentType;
                 matchValue = 0;
                 if (view.format == NULL) {
                     if (type == JPy_JBoolean) {
@@ -1049,7 +1054,7 @@ int JType_ConvertToJObject(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, P
         jarray array;
         void* carray;
         jint itemSize;
-        PyTypeObject* type;
+        JPy_JType* type;
 
         view = PyMem_New(Py_buffer, 1);
         if (view == NULL) {
@@ -1071,7 +1076,7 @@ int JType_ConvertToJObject(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, P
             return -1;
         }
 
-        type = (PyTypeObject*) componentType;
+        type = componentType;
         if (type == JPy_JBoolean) {
             array = (*jenv)->NewBooleanArray(jenv, itemCount);
             itemSize = sizeof(jboolean);
@@ -1142,7 +1147,7 @@ int JType_ConvertToJObject(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, P
 
 void JType_InitParamDescriptorFunctions(JPy_ParamDescriptor* paramDescriptor)
 {
-    PyTypeObject* paramType = (PyTypeObject*) paramDescriptor->type;
+    JPy_JType* paramType = paramDescriptor->type;
 
     if (paramType == JPy_JVoid) {
         paramDescriptor->paramAssessor = NULL;

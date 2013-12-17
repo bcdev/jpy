@@ -1,7 +1,6 @@
 package org.jpy.python;
 
 import static org.jpy.python.PyLib.assertLibInitialized;
-import static org.jpy.python.PyObject.NULL_POINTER;
 
 /**
  * Represents the CPython interpreter.
@@ -24,18 +23,12 @@ public class PyInterpreter {
     public PyModule importModule(String name) {
         assertLibInitialized();
         long modulePointer = PyLib.importModule(name);
-        if (modulePointer == NULL_POINTER) {
-            throw new RuntimeException("NULL_POINTER");
-        }
         return new PyModule(name, modulePointer);
     }
 
     public PyObject getObject(PyModule module, String name) {
         assertLibInitialized();
         long objectPointer = PyLib.getAttributeValue(module.getPointer(), name);
-        if (objectPointer == NULL_POINTER) {
-            throw new RuntimeException("NULL_POINTER");
-        }
         return new PyObject(objectPointer);
     }
 

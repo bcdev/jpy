@@ -26,11 +26,6 @@ extern PyObject* JException_Type;
 JNIEnv* JPy_GetJNIEnv(void);
 
 /**
- * Checks if we are in debug mode.
- */
-int JPy_IsDebug(void);
-
-/**
  * Gets the current JNI environment pointer JENV. If this is NULL, it returns the given RET_VALUE.
  * Warning: This method may immediately return, so make sure there will be no memory leaks in this case.
  *
@@ -44,18 +39,28 @@ int JPy_IsDebug(void);
     } else { \
     }
 
+/**
+ * Checks if we are in debug mode.
+ */
+jboolean JPy_IsDebug(void);
 
-extern PyTypeObject* JPy_JBoolean;
-extern PyTypeObject* JPy_JByte;
-extern PyTypeObject* JPy_JShort;
-extern PyTypeObject* JPy_JInt;
-extern PyTypeObject* JPy_JLong;
-extern PyTypeObject* JPy_JFloat;
-extern PyTypeObject* JPy_JDouble;
-extern PyTypeObject* JPy_JChar;
-extern PyTypeObject* JPy_JVoid;
-extern PyTypeObject* JPy_JString;
+/**
+ * Sets if we are in debug mode.
+ */
+void JPy_SetDebug(jboolean debug);
 
+struct JPy_JType;
+
+extern struct JPy_JType* JPy_JBoolean;
+extern struct JPy_JType* JPy_JByte;
+extern struct JPy_JType* JPy_JShort;
+extern struct JPy_JType* JPy_JInt;
+extern struct JPy_JType* JPy_JLong;
+extern struct JPy_JType* JPy_JFloat;
+extern struct JPy_JType* JPy_JDouble;
+extern struct JPy_JType* JPy_JChar;
+extern struct JPy_JType* JPy_JVoid;
+extern struct JPy_JType* JPy_JString;
 
 
 // java.lang.Comparable
@@ -89,35 +94,6 @@ extern jmethodID JPy_Field_GetName_MID;
 extern jmethodID JPy_Field_GetModifiers_MID;
 extern jmethodID JPy_Field_GetType_MID;
 
-
-
-////////////////////////////////////////////////////////////////////
-// Helpers
-
-
-/**
- * Copies the UTF name.
- * Caller is responsible for freeing the returned string using Py_Del().
- */
-char* JPy_CopyUTF(const char* utfChars);
-
-/**
- * Gets the UTF name of thie given class.
- * Caller is responsible for freeing the returned string using Py_Del().
- */
-char* JPy_AllocTypeNameUTF(JNIEnv* jenv, jclass classRef);
-
-/**
- * Gets a string object representing the name of the given class.
- * Returns a new reference.
- */
-PyObject* JPy_GetTypeNameString(JNIEnv* jenv, jclass classRef);
-
-PyObject* JPy_ConvertJavaToPythonString(JNIEnv* jenv, jstring stringRef);
-
-PyObject* JPy_ConvertJavaToStringToPythonString(JNIEnv* jenv, jobject objectRef);
-
-int JPy_ConvertPythonToJavaString(JNIEnv* jenv, PyObject* arg, jstring* stringRef);
 
 #ifdef __cplusplus
 } /* extern "C" */

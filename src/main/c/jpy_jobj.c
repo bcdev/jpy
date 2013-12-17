@@ -3,6 +3,8 @@
 #include "jpy_jobj.h"
 #include "jpy_jmethod.h"
 #include "jpy_jfield.h"
+#include "jpy_conv.h"
+
 
 JPy_JObj* JObj_FromType(JNIEnv* jenv, JPy_JType* type, jobject objectRef)
 {
@@ -277,9 +279,14 @@ int JObj_setattro(JPy_JObj* self, PyObject* name, PyObject* value)
     oldValue = PyObject_GenericGetAttr((PyObject*) self, name);
     if (oldValue != NULL && PyObject_TypeCheck(oldValue, &JField_Type)) {
         JNIEnv* jenv;
-        JPy_JField* field = (JPy_JField*) oldValue;
-        PyTypeObject* type = (PyTypeObject*) field->type;
+        JPy_JField* field;
+        JPy_JType* type;
+
+        field = (JPy_JField*) oldValue;
+        type = field->type;
+
         JPy_GET_JNI_ENV_OR_RETURN(jenv, -1)
+
         if (type == JPy_JBoolean) {
             jboolean item = TO_JBOOLEAN(value);
             (*jenv)->SetBooleanField(jenv, self->objectRef, field->fid, item);
@@ -343,10 +350,10 @@ PyObject* JObj_getattro(JPy_JObj* self, PyObject* name)
     } else if (PyObject_TypeCheck(value, &JField_Type)) {
         JNIEnv* jenv;
         JPy_JField* field;
-        PyTypeObject* type;
+        JPy_JType* type;
 
         field = (JPy_JField*) value;
-        type = (PyTypeObject*) field->type;
+        type = field->type;
 
         JPy_GET_JNI_ENV_OR_RETURN(jenv, NULL)
 
@@ -406,7 +413,7 @@ PyObject* JObj_sq_item(JPy_JObj* self, Py_ssize_t index)
 {
     JNIEnv* jenv;
     JPy_JType* type;
-    PyTypeObject* componentType;
+    JPy_JType* componentType;
     jsize length;
 
     JPy_GET_JNI_ENV_OR_RETURN(jenv, NULL)
@@ -414,7 +421,7 @@ PyObject* JObj_sq_item(JPy_JObj* self, Py_ssize_t index)
     //printf("JObj_sq_item: index=%d\n", index);
 
     type = (JPy_JType*) Py_TYPE(self);
-    componentType = (PyTypeObject*) type->componentType;
+    componentType = type->componentType;
     if (componentType == NULL) {
         PyErr_SetString(PyExc_RuntimeError, "internal error: object is not an array");
         return NULL;
@@ -481,13 +488,13 @@ int JObj_sq_ass_item(JPy_JObj* self, Py_ssize_t index, PyObject* pyItem)
 {
     JNIEnv* jenv;
     JPy_JType* type;
-    PyTypeObject* componentType;
+    JPy_JType* componentType;
     jobject elementRef;
 
     JPy_GET_JNI_ENV_OR_RETURN(jenv, -1)
 
     type = (JPy_JType*) Py_TYPE(self);
-    componentType = (PyTypeObject*) type->componentType;
+    componentType = type->componentType;
     if (type->componentType == NULL) {
         PyErr_SetString(PyExc_RuntimeError, "internal error: object is not an array");
         return -1;

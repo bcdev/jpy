@@ -83,8 +83,8 @@ JPy_ParamDescriptor;
 
 int JType_Check(PyObject* obj);
 
-PyTypeObject* JType_GetTypeForName(JNIEnv* jenv, const char* typeName, jboolean resolve);
-PyTypeObject* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve);
+JPy_JType* JType_GetTypeForName(JNIEnv* jenv, const char* typeName, jboolean resolve);
+JPy_JType* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve);
 
 PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject objectRef);
 int       JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* arg, jobject* objectRef);

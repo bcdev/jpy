@@ -3,9 +3,6 @@ package org.jpy.python;
 /**
  * Represents a CPython object (of type <code>PyObject *</code>).
  *
- * <p/>
- * <i>Neither used nor implemented yet.</i>
- *
  * @author Norman Fomferra
  */
 public class PyModule extends PyObject {
@@ -18,6 +15,12 @@ public class PyModule extends PyObject {
 
     public String getName() {
         return name;
+    }
+
+    public static PyModule importModule(String name) {
+        PyLib.assertLibInitialized();
+        long pointer = PyLib.importModule(name);
+        return new PyModule(name, pointer);
     }
 
     @Override

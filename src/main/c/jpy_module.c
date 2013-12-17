@@ -4,10 +4,13 @@
 #include "jpy_jfield.h"
 #include "jpy_jobj.h"
 #include "jpy_carray.h"
+#include "jpy_conv.h"
+
 #include <stdlib.h>
 #include <string.h>
 
 
+PyObject* JPy_has_jvm(PyObject* self);
 PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds);
 PyObject* JPy_destroy_jvm(PyObject* self, PyObject* args);
 PyObject* JPy_get_class(PyObject* self, PyObject* args, PyObject* kwds);
@@ -15,6 +18,9 @@ PyObject* JPy_cast(PyObject* self, PyObject* args);
 PyObject* JPy_array(PyObject* self, PyObject* args);
 
 static PyMethodDef JPy_Functions[] = {
+
+    {"has_jvm",     (PyCFunction) JPy_has_jvm, METH_NOARGS,
+                    "has_jvm() - Checks if the a JVM is available."},
 
     {"create_jvm",  (PyCFunction) JPy_create_jvm, METH_VARARGS|METH_KEYWORDS,
                     "create_jvm(options, debug=False) - Creates the Java VM from the given list of options."},
@@ -60,30 +66,31 @@ typedef struct {
     JavaVM* jvm;
     // The current JNI interface.
     JNIEnv* jenv;
+    // If true, this JVM structure has been created from Python jpy.create_jvm()
+    jboolean mustDestroy;
     // Used for switching debug prints in this module
-    int DEBUG;
+    jboolean debug;
 } JPy_JVM;
 
-static JPy_JVM JVM = {NULL, NULL, 0};
+static JPy_JVM JVM = {NULL};
 
 #define JPY_JNI_VERSION JNI_VERSION_1_6
 
 
-
-PyTypeObject* JPy_JBoolean = NULL;
-PyTypeObject* JPy_JByte = NULL;
-PyTypeObject* JPy_JShort = NULL;
-PyTypeObject* JPy_JInt = NULL;
-PyTypeObject* JPy_JLong = NULL;
-PyTypeObject* JPy_JFloat = NULL;
-PyTypeObject* JPy_JDouble = NULL;
-PyTypeObject* JPy_JChar = NULL;
-PyTypeObject* JPy_JVoid = NULL;
-PyTypeObject* JPy_JString = NULL;
-
-
 // Global VM Information (todo: put this into JPy_JVM structure)
 // {{{
+
+JPy_JType* JPy_JBoolean = NULL;
+JPy_JType* JPy_JByte = NULL;
+JPy_JType* JPy_JShort = NULL;
+JPy_JType* JPy_JInt = NULL;
+JPy_JType* JPy_JLong = NULL;
+JPy_JType* JPy_JFloat = NULL;
+JPy_JType* JPy_JDouble = NULL;
+JPy_JType* JPy_JChar = NULL;
+JPy_JType* JPy_JVoid = NULL;
+JPy_JType* JPy_JString = NULL;
+
 
 jclass JPy_Comparable_JClass = NULL;
 
@@ -118,7 +125,9 @@ jmethodID JPy_Field_GetType_MID = NULL;
 
 // }}}
 
+
 int JPy_InitGlobalVars(JNIEnv* jenv);
+void JPy_ClearGlobalVars(void);
 
 
 /**
@@ -127,10 +136,22 @@ int JPy_InitGlobalVars(JNIEnv* jenv);
  */
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* jvm, void* reserved)
 {
-    printf("jpy: JNI_OnLoad() called\n");
+    JNIEnv* jenv = NULL;
 
-    JVM.jvm = jvm;
-    (*jvm)->GetEnv(jvm, (void**) &JVM.jenv, JPY_JNI_VERSION);
+    if (JVM.jvm == NULL) {
+        (*jvm)->GetEnv(jvm, (void**) &jenv, JPY_JNI_VERSION);
+        JVM.jvm = jvm;
+        JVM.jenv = jenv;
+        JVM.mustDestroy = JNI_FALSE;
+    } else if (JVM.jvm == jvm) {
+        //if (JVM.debug)
+            printf("jpy: JNI_OnLoad: same JVM already running\n");
+    } else {
+        //if (JVM.debug)
+            printf("jpy: JNI_OnLoad: different JVM already running (expect weird things!)\n");
+    }
+
+    printf("jpy: JNI_OnLoad: JVM.jvm=%p, JVM.jenv=%p, JVM.mustDestroy=%d, JVM.debug=%d\n", JVM.jvm, JVM.jenv, JVM.mustDestroy, JVM.debug);
 
     return JPY_JNI_VERSION;
 }
@@ -141,20 +162,40 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* jvm, void* reserved)
  */
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* jvm, void* reserved)
 {
-    printf("jpy: JNI_OnUnload() called\n");
+    printf("jpy: JNI_OnUnload: JVM.jvm=%p, JVM.jenv=%p, JVM.mustDestroy=%d, JVM.debug=%d\n", JVM.jvm, JVM.jenv, JVM.mustDestroy, JVM.debug);
 
-    JVM.jvm = NULL;
-    JVM.jenv = NULL;
-
-    Py_Finalize();
+    if (!JVM.mustDestroy) {
+        JVM.jvm = NULL;
+        JVM.jenv = NULL;
+        JPy_ClearGlobalVars();
+    }
 }
+
+JNIEnv* JPy_GetJNIEnv(void)
+{
+    // Currently JPy is only single threaded.
+    // To make it multi-threaded we must use the following code:
+    // (*JVM.jvm)->AttachCurrentThread(JVM.jvm, &JVM.jenv, NULL);
+    return JVM.jenv;
+}
+
+jboolean JPy_IsDebug(void)
+{
+    return JVM.debug;
+}
+
+void JPy_SetDebug(jboolean debug)
+{
+    JVM.debug = debug;
+}
+
 
 /**
  * Called by the Python interpreter's import machinery, e.g. using 'import jpy'.
  */
 PyMODINIT_FUNC PyInit_jpy(void)
 {
-    //printf("PyInit_jpy: enter\n");
+    printf("PyInit_jpy: JVM.jvm=%p, JVM.jenv=%p, JVM.debug=%d\n", JVM.jvm, JVM.jenv, JVM.debug);
 
     /////////////////////////////////////////////////////////////////////////
 
@@ -223,43 +264,49 @@ PyMODINIT_FUNC PyInit_jpy(void)
 
     /////////////////////////////////////////////////////////////////////////
 
+    if (JVM.jenv != NULL) {
+        // If we have already a running VM, initialize global variables
+        if (JPy_InitGlobalVars(JVM.jenv) < 0) {
+            return NULL;
+        }
+    }
+
+    /////////////////////////////////////////////////////////////////////////
+
     //printf("PyInit_jpy: exit\n");
 
     return JPy_Module;
 }
 
-JNIEnv* JPy_GetJNIEnv(void)
+PyObject* JPy_has_jvm(PyObject* self)
 {
-    // Currently JPy is only single threaded.
-    // To make it multi-threaded we must use the following code:
-    // (*JVM.jvm)->AttachCurrentThread(JVM.jvm, &JVM.jenv, NULL);
-    return JVM.jenv;
-}
-
-int JPy_IsDebug(void)
-{
-    return JVM.DEBUG;
+    return PyBool_FromLong(JVM.jvm != NULL);
 }
 
 PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds)
 {
     static char* keywords[] = {"options", "debug", NULL};
-    PyObject*   options = NULL;
+    PyObject*   options;
     Py_ssize_t  optionCount;
     PyObject*   option;
     JavaVMOption* jvmOptions;
     JavaVMInitArgs jvmInitArgs;
     Py_ssize_t  i;
     jint        res;
+    int         debug;
 
-    if (JVM.jvm != NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "only a single Java VM can be instantiated (use jpy.destroy_jvm() first)");
+    //printf("JPy_create_jvm: JVM.jvm=%p, JVM.jenv=%p, JVM.debug=%d\n", JVM.jvm, JVM.jenv, JVM.debug);
+
+    options = NULL;
+    debug = 0;
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|p:create_jvm", keywords, &options, &debug)) {
         return NULL;
     }
 
-    JVM.DEBUG = JNI_FALSE;
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|p:create_jvm", keywords, &options, &JVM.DEBUG)) {
-        return NULL;
+    if (JVM.jvm != NULL) {
+        if (debug) printf("jpy: Java VM is already running.\n");
+        Py_DECREF(options);
+        return Py_BuildValue("");
     }
 
     if (!PySequence_Check(options)) {
@@ -298,8 +345,10 @@ PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds)
     jvmInitArgs.nOptions = (size_t) optionCount;
     jvmInitArgs.ignoreUnrecognized = 0;
     res = JNI_CreateJavaVM(&JVM.jvm, (void**) &JVM.jenv, &jvmInitArgs);
+    JVM.mustDestroy = JNI_TRUE;
+    JVM.debug = debug;
 
-    if (JPy_IsDebug()) printf("JPy_create_jvm: res=%d, JVM.jvm=%p, JVM.jenv=%p, JVM.DEBUG=%d\n", res, JVM.jvm, JVM.jenv, JVM.DEBUG);
+    if (JPy_IsDebug()) printf("JPy_create_jvm: res=%d, JVM.jvm=%p, JVM.jenv=%p\n", res, JVM.jvm, JVM.jenv);
 
     PyMem_Del(jvmOptions);
 
@@ -323,32 +372,12 @@ PyObject* JPy_destroy_jvm(PyObject* self, PyObject* args)
 {
     if (JPy_IsDebug()) printf("JPy_destroy_jvm: JVM.jvm=%p, JVM.jenv=%p\n", JVM.jvm, JVM.jenv);
 
-    if (JVM.jvm != NULL) {
+    if (JVM.jvm != NULL && JVM.mustDestroy) {
         (*JVM.jvm)->DestroyJavaVM(JVM.jvm);
+        JVM.jvm = NULL;
+        JVM.jenv = NULL;
+        JPy_ClearGlobalVars();
     }
-
-    JVM.jvm = NULL;
-    JVM.jenv = NULL;
-
-    Py_DECREF(JPy_JBoolean);
-    Py_DECREF(JPy_JByte);
-    Py_DECREF(JPy_JShort);
-    Py_DECREF(JPy_JInt);
-    Py_DECREF(JPy_JLong);
-    Py_DECREF(JPy_JFloat);
-    Py_DECREF(JPy_JDouble);
-    Py_DECREF(JPy_JChar);
-    Py_DECREF(JPy_JVoid);
-
-    JPy_JBoolean = NULL;
-    JPy_JByte = NULL;
-    JPy_JShort = NULL;
-    JPy_JInt = NULL;
-    JPy_JLong = NULL;
-    JPy_JFloat = NULL;
-    JPy_JDouble = NULL;
-    JPy_JChar = NULL;
-    JPy_JVoid = NULL;
 
     return Py_BuildValue("");
 }
@@ -408,7 +437,7 @@ PyObject* JPy_cast(PyObject* self, PyObject* args)
 PyObject* JPy_array(PyObject* self, PyObject* args)
 {
     JNIEnv* jenv;
-    PyTypeObject* type;
+    JPy_JType* type;
     const char* name;
     int length;
     jarray arrayRef;
@@ -459,22 +488,22 @@ PyObject* JPy_array(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    return (PyObject*) JObj_FromType(jenv, (JPy_JType*) type, arrayRef);
+    return (PyObject*) JObj_FromType(jenv, type, arrayRef);
 }
 
-PyTypeObject* JPy_GetNonObjectJType(JNIEnv* jenv, const char* wrapperClassName)
+JPy_JType* JPy_GetNonObjectJType(JNIEnv* jenv, const char* wrapperClassName)
 {
     jclass wrapperClassRef;
     jclass primClassRef;
     jfieldID fid;
-    PyTypeObject* type;
+    JPy_JType* type;
 
     wrapperClassRef = (*jenv)->FindClass(jenv, wrapperClassName);
     fid = (*jenv)->GetStaticFieldID(jenv, wrapperClassRef, "TYPE", "Ljava/lang/Class;");
     primClassRef = (*jenv)->GetStaticObjectField(jenv, wrapperClassRef, fid);
     type = JType_GetType(jenv, primClassRef, JNI_FALSE);
-    ((JPy_JType*) type)->isResolved = JNI_TRUE; // Primitive types are always resolved.
-    Py_INCREF(type);
+    type->isResolved = JNI_TRUE; // Primitive types are always resolved.
+    Py_INCREF((PyObject*) type);
 
     return type;
 }
@@ -487,6 +516,10 @@ PyTypeObject* JPy_GetNonObjectJType(JNIEnv* jenv, const char* wrapperClassName)
 
 int JPy_InitGlobalVars(JNIEnv* jenv)
 {
+    if (JPy_Comparable_JClass != NULL) {
+        return 0;
+    }
+
     // todo: check, if we need to convert all jclass types using NewGlobalReference()
 
     JPy_Comparable_JClass = (*jenv)->FindClass(jenv, "java/lang/Comparable");
@@ -551,186 +584,56 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     return 0;
 }
 
-/**
- * Copies the UTF, zero-terminated C-string.
- * Caller is responsible for freeing the returned string using PyMem_Del().
- */
-char* JPy_CopyUTFString(const char* utfChars)
+void JPy_ClearGlobalVars(void)
 {
-    char* utfCharsCopy;
+    Py_DECREF(JPy_JBoolean);
+    Py_DECREF(JPy_JByte);
+    Py_DECREF(JPy_JShort);
+    Py_DECREF(JPy_JInt);
+    Py_DECREF(JPy_JLong);
+    Py_DECREF(JPy_JFloat);
+    Py_DECREF(JPy_JDouble);
+    Py_DECREF(JPy_JChar);
+    Py_DECREF(JPy_JVoid);
 
-    utfCharsCopy = PyMem_New(char, strlen(utfChars) + 1);
-    if (utfCharsCopy == NULL) {
-        PyErr_NoMemory();
-        return NULL;
-    }
+    JPy_JBoolean = NULL;
+    JPy_JByte = NULL;
+    JPy_JShort = NULL;
+    JPy_JInt = NULL;
+    JPy_JLong = NULL;
+    JPy_JFloat = NULL;
+    JPy_JDouble = NULL;
+    JPy_JChar = NULL;
+    JPy_JVoid = NULL;
 
-    strcpy(utfCharsCopy, utfChars);
-    return utfCharsCopy;
-}
+    JPy_Comparable_JClass = NULL;
 
-/**
- * Copies the given jchar string used by Java into a wchar_t string used by Python.
- * Caller is responsible for freeing the returned string using PyMem_Del().
- */
-wchar_t* JPy_ConvertToWCharString(const jchar* jChars, jint length)
-{
-    wchar_t* wChars;
-    jint i;
+    JPy_Object_JClass = NULL;
+    JPy_Object_ToString_MID = NULL;
+    JPy_Object_HashCode_MID = NULL;
+    JPy_Object_Equals_MID = NULL;
 
-    wChars = PyMem_New(wchar_t, length + 1);
-    if (wChars == NULL) {
-        PyErr_NoMemory();
-        return NULL;
-    }
+    JPy_Class_JClass = NULL;
+    JPy_Class_GetName_MID = NULL;
+    JPy_Class_GetDeclaredConstructors_MID = NULL;
+    JPy_Class_GetDeclaredFields_MID = NULL;
+    JPy_Class_GetDeclaredMethods_MID = NULL;
+    JPy_Class_GetComponentType_MID = NULL;
+    JPy_Class_IsPrimitive_MID = NULL;
 
-    for (i = 0; i < length; i++) {
-        wChars[i] = (wchar_t) jChars[i];
-    }
-    wChars[length] = 0;
+    JPy_Constructor_JClass = NULL;
+    JPy_Constructor_GetModifiers_MID = NULL;
+    JPy_Constructor_GetParameterTypes_MID = NULL;
 
-    return wChars;
-}
+    JPy_Method_JClass = NULL;
+    JPy_Method_GetName_MID = NULL;
+    JPy_Method_GetReturnType_MID = NULL;
+    JPy_Method_GetParameterTypes_MID = NULL;
+    JPy_Method_GetModifiers_MID = NULL;
 
-/**
- * Copies the given wchar_t string used by Python into a jchar string used by Python.
- * Caller is responsible for freeing the returned string using PyMem_Del().
- */
-jchar* JPy_ConvertToJCharString(const wchar_t* wChars, jint length)
-{
-    jchar* jChars;
-    jint i;
-
-    jChars = PyMem_New(jchar, length + 1);
-    if (jChars == NULL) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-
-    for (i = 0; i < length; i++) {
-        jChars[i] = (jchar) wChars[i];
-    }
-    jChars[length] = (jchar) 0;
-
-    return jChars;
-}
-
-/**
- * Gets the UTF name of thie given class.
- * Caller is responsible for freeing the returned string using Py_Del().
- */
-char* JPy_AllocTypeNameUTF(JNIEnv* jenv, jclass classRef)
-{
-    jstring typeNameStr;
-    const char* typeName;
-    char* typeNameCopy;
-
-    // todo: handle errors
-    typeNameStr = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetName_MID);
-    typeName = (*jenv)->GetStringUTFChars(jenv, typeNameStr, NULL);
-    typeNameCopy = JPy_CopyUTFString(typeName);
-    (*jenv)->ReleaseStringUTFChars(jenv, classRef, typeName);
-
-    return typeNameCopy;
-}
-
-/**
- * Gets a string object representing the name of the given class.
- * Returns a new reference.
- */
-PyObject* JPy_GetTypeNameString(JNIEnv* jenv, jclass classRef)
-{
-    PyObject* typeString;
-    jclass typeNameObj;
-    const char* typeName;
-
-    // todo: handle errors
-    typeNameObj = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetName_MID);
-    typeName = (*jenv)->GetStringUTFChars(jenv, typeNameObj, NULL);
-    typeString = Py_BuildValue("s", typeName);
-    (*jenv)->ReleaseStringUTFChars(jenv, typeNameObj, typeName);
-
-    return typeString;
-}
-
-PyObject* JPy_ConvertJavaToStringToPythonString(JNIEnv* jenv, jobject objectRef)
-{
-    jstring stringRef;
-    PyObject* returnValue;
-
-    if (objectRef == NULL) {
-        return Py_BuildValue("");
-    }
-
-    // todo: handle errors
-    stringRef = (*jenv)->CallObjectMethod(jenv, objectRef, JPy_Object_ToString_MID);
-    returnValue = JPy_ConvertJavaToPythonString(jenv, stringRef);
-    (*jenv)->DeleteLocalRef(jenv, stringRef);
-
-    return returnValue;
-}
-
-PyObject* JPy_ConvertJavaToPythonString(JNIEnv* jenv, jstring stringRef)
-{
-    PyObject* returnValue;
-    const jchar* jChars;
-    jint length;
-
-    if (stringRef == NULL) {
-        return Py_BuildValue("");
-    }
-
-    // todo: handle errors
-    length = (*jenv)->GetStringLength(jenv, stringRef);
-    if (length == 0) {
-        return Py_BuildValue("s", "");
-    }
-
-    jChars = (*jenv)->GetStringChars(jenv, stringRef, NULL);
-    returnValue = PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, jChars, length);
-    (*jenv)->ReleaseStringChars(jenv, stringRef, jChars);
-
-    return returnValue;
-}
-
-/**
- * Returns a new Java string (a local reference).
- */
-int JPy_ConvertPythonToJavaString(JNIEnv* jenv, PyObject* arg, jstring* stringRef)
-{
-    Py_ssize_t length;
-    wchar_t* wChars;
-
-    if (arg == Py_None) {
-        *stringRef = NULL;
-        return 0;
-    }
-
-    wChars = PyUnicode_AsWideCharString(arg, &length);
-    if (wChars == NULL) {
-        *stringRef = NULL;
-        return -1;
-    }
-
-    if (sizeof(wchar_t) == sizeof(jchar)) {
-        *stringRef = (*jenv)->NewString(jenv, (const jchar*) wChars, length);
-    } else {
-        jchar* jChars;
-        jChars = JPy_ConvertToJCharString(wChars, length);
-        if (jChars == NULL) {
-            goto error;
-        }
-        *stringRef = (*jenv)->NewString(jenv, jChars, length);
-        PyMem_Del(jChars);
-    }
-    if (*stringRef == NULL) {
-        PyMem_Del(wChars);
-        PyErr_NoMemory();
-        return -1;
-    }
-
-error:
-    PyMem_Del(wChars);
-
-    return 0;
+    // java.lang.reflect.Field
+    JPy_Field_JClass = NULL;
+    JPy_Field_GetName_MID = NULL;
+    JPy_Field_GetModifiers_MID = NULL;
+    JPy_Field_GetType_MID = NULL;
 }

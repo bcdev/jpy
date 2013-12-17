@@ -2,6 +2,8 @@
 #include "jpy_jtype.h"
 #include "jpy_jobj.h"
 #include "jpy_jfield.h"
+#include "jpy_conv.h"
+
 
 
 JPy_JField* JField_New(JPy_JType* declaringClass, PyObject* fieldName, JPy_JType* fieldType, jboolean isStatic, jboolean isFinal, jfieldID fid)

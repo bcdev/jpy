@@ -2,6 +2,8 @@
 #include "jpy_jtype.h"
 #include "jpy_jobj.h"
 #include "jpy_jmethod.h"
+#include "jpy_conv.h"
+
 
 
 JPy_JMethod* JMethod_New(PyObject* name,
@@ -160,7 +162,7 @@ PyObject* JMethod_InvokeMethod(JNIEnv* jenv, JPy_JMethod* method, JPy_JType* typ
     jvalue* jArgs;
     JPy_ArgDisposer* jDisposers;
     PyObject* returnValue;
-    PyTypeObject* returnType;
+    JPy_JType* returnType;
 
     //printf("JMethod_InvokeMethod 1: typeCode=%c\n", typeCode);
     if (JMethod_CreateJArgs(jenv, method, argTuple, &jArgs, &jDisposers) < 0) {
@@ -169,7 +171,7 @@ PyObject* JMethod_InvokeMethod(JNIEnv* jenv, JPy_JMethod* method, JPy_JType* typ
 
     //printf("JMethod_InvokeMethod 2: typeCode=%c\n", typeCode);
 
-    returnType = (PyTypeObject*) method->returnDescriptor->type;
+    returnType = method->returnDescriptor->type;
 
     if (method->isStatic) {
         jclass classRef = type->classRef;

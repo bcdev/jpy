@@ -23,12 +23,19 @@ class PyInvocationHandler implements InvocationHandler {
     public Object invoke(Object proxyObject, Method method, Object[] args) throws Throwable {
         System.out.println("method = " + method.getName());
         assertLibInitialized();
-        return PyLib.callWithTypeInfo(
-                this.pyObject.getPointer(),
-                isMethod,
-                method.getName(),
-                method.getParameterTypes(),
-                method.getReturnType().equals(Void.TYPE) ? null : method.getReturnType(),
-                args);
+        long pointer = PyLib.call(this.pyObject.getPointer(),
+                                  isMethod,
+                                  method.getName(),
+                                  args.length,
+                                  args,
+                                  method.getParameterTypes());
+        if (method.getReturnType().equals(Void.TYPE)) {
+            if (pointer != 0) {
+                PyLib.decref(pointer);
+            }
+            return null;
+        } else {
+            return new PyObject(pointer);
+        }
     }
 }
