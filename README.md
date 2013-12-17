@@ -9,11 +9,12 @@ Features
   - embed Java VM in Python programs
   - embed Python VM in Java programs
 * Preserves Java type hierarchy
+* Exposes Java objects by corresponding Python interfaces (list, dict, set) (TODO!)
 * Transparently handles Java method overloading 
 * Fast & efficient support of primitive Java array parameters via Python buffers.
   E.g. use a numpy array argument, whenever a Java primitive array parameter is expected
   Also supports Java methods that modify primitive Java array passed in as buffers 
-  (mutable arrays)
+  (mutable array parameters)
 
 System Requirements
 -------------------
@@ -100,6 +101,8 @@ Current TODOs
      `File = jpy.get_class('java.io.File')`
   This is also how it is done in Jython.
 * Make it fully multi-threading aware (use global switch 'multi_threaded').
+* Allow to pass Python a list, dict, or set where a Java method expects a List or array, a Map, or a Set.
+* Implement the Python list, dict, and set protocols where a Java method returns a List, a Map, or a Set.
 * Assert rigorously that Python reference counting is correct.
 * Assert rigorously that Java global/local references are correctly created and released.
 * Perform rigorous Python C API error checking.
