@@ -20,7 +20,9 @@ public class PyConfig {
         if (proFile.exists()) {
             Properties properties = new Properties();
             try {
-                properties.load(new FileReader(proFile));
+                try (FileReader reader = new FileReader(proFile)) {
+                    properties.load(reader);
+                }
             } catch (IOException e) {
                 // ignore silently
             }
