@@ -3,7 +3,7 @@ package org.jpy.python;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
-import static org.jpy.python.PyLib.assertLibInitialized;
+import static org.jpy.python.PyLib.assertInterpreterInitialized;
 
 /**
  * InvocationHandler for the PyInterpreter.
@@ -22,7 +22,7 @@ class PyInvocationHandler implements InvocationHandler {
     @Override
     public Object invoke(Object proxyObject, Method method, Object[] args) throws Throwable {
         System.out.println("method = " + method.getName());
-        assertLibInitialized();
+        assertInterpreterInitialized();
         long pointer = PyLib.call(this.pyObject.getPointer(),
                                   isMethod,
                                   method.getName(),

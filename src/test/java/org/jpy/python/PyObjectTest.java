@@ -15,16 +15,16 @@ import static org.junit.Assert.assertNotNull;
 public class PyObjectTest {
     @BeforeClass
     public static void setUp() throws Exception {
-        assertEquals(false, PyLib.isInitialized());
-        PyLib.initialize(new String[0], false);
-        assertEquals(true, PyLib.isInitialized());
+        assertEquals(false, PyLib.isInterpreterInitialized());
+        PyLib.initializeInterpreter(new String[0], false);
+        assertEquals(true, PyLib.isInterpreterInitialized());
     }
 
     @AfterClass
     public static void tearDown() throws Exception {
-        assertEquals(true, PyLib.isInitialized());
-        PyLib.destroy();
-        assertEquals(false, PyLib.isInitialized());
+        assertEquals(true, PyLib.isInterpreterInitialized());
+        PyLib.destroyInterpreter();
+        assertEquals(false, PyLib.isInterpreterInitialized());
     }
 
     @Test(expected = NullPointerException.class)

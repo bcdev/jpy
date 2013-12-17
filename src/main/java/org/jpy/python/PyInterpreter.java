@@ -1,6 +1,6 @@
 package org.jpy.python;
 
-import static org.jpy.python.PyLib.assertLibInitialized;
+import static org.jpy.python.PyLib.assertInterpreterInitialized;
 
 /**
  * Represents the CPython interpreter.
@@ -10,30 +10,30 @@ import static org.jpy.python.PyLib.assertLibInitialized;
 public class PyInterpreter {
 
     public static void initialize(String[] options, boolean debug) {
-        if (PyLib.isInitialized()) {
+        if (PyLib.isInterpreterInitialized()) {
             throw new RuntimeException();
         }
-        PyLib.initialize(options, debug);
+        PyLib.initializeInterpreter(options, debug);
     }
 
     public static void destroy() {
-        PyLib.destroy();
+        PyLib.destroyInterpreter();
     }
 
     public PyModule importModule(String name) {
-        assertLibInitialized();
+        assertInterpreterInitialized();
         long modulePointer = PyLib.importModule(name);
         return new PyModule(name, modulePointer);
     }
 
     public PyObject getObject(PyModule module, String name) {
-        assertLibInitialized();
+        assertInterpreterInitialized();
         long objectPointer = PyLib.getAttributeValue(module.getPointer(), name);
         return new PyObject(objectPointer);
     }
 
     public void execScript(String script) {
-        assertLibInitialized();
+        assertInterpreterInitialized();
         PyLib.execScript(script);
     }
 }

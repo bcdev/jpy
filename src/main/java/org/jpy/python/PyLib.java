@@ -6,23 +6,33 @@ package org.jpy.python;
  * @author Norman Fomferra
  */
 public class PyLib {
+    private static Throwable problem;
+
     static {
-        String sharedLibPath = PyConfig.getSharedLibPath();
-        //System.out.println("sharedLibPath = " + sharedLibPath);
-        System.load(sharedLibPath);
+        try {
+            String sharedLibPath = PyConfig.getSharedLibPath();
+            System.load(sharedLibPath);
+            problem = null;
+        } catch (Throwable t) {
+            problem = t;
+            //throw t;
+        }
     }
 
-    public static void assertLibInitialized() {
-        if (!isInitialized()) {
+    public static void assertInterpreterInitialized() {
+        if (problem != null) {
+            throw new RuntimeException("PyLib not initialized", problem);
+        }
+        if (!isInterpreterInitialized()) {
             throw new RuntimeException("Python interpreter not initialized");
         }
     }
 
-    public static native boolean isInitialized();
+    public static native boolean isInterpreterInitialized();
 
-    public static native boolean initialize(String[] options, boolean debug);
+    public static native boolean initializeInterpreter(String[] options, boolean debug);
 
-    public static native void destroy();
+    public static native void destroyInterpreter();
 
     public static native void execScript(String script);
 

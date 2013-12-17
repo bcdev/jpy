@@ -3,7 +3,7 @@ package org.jpy.python;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 
-import static org.jpy.python.PyLib.assertLibInitialized;
+import static org.jpy.python.PyLib.assertInterpreterInitialized;
 
 /**
  * Wraps a CPython (of type <code>PyObject *</code>).
@@ -30,7 +30,7 @@ public class PyObject {
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
-        if (PyLib.isInitialized()) {
+        if (PyLib.isInterpreterInitialized()) {
             PyLib.decref(getPointer());
         }
     }
@@ -40,49 +40,49 @@ public class PyObject {
     }
 
     public int getIntValue() {
-        assertLibInitialized();
+        assertInterpreterInitialized();
         return PyLib.getIntValue(getPointer());
     }
 
     public double getDoubleValue() {
-        assertLibInitialized();
+        assertInterpreterInitialized();
         return PyLib.getDoubleValue(getPointer());
     }
 
     public String getStringValue() {
-        assertLibInitialized();
+        assertInterpreterInitialized();
         return PyLib.getStringValue(getPointer());
     }
 
     public Object getObjectValue() {
-        assertLibInitialized();
+        assertInterpreterInitialized();
         return PyLib.getObjectValue(getPointer());
     }
 
     public PyObject getAttributeValue(String name) {
-        assertLibInitialized();
+        assertInterpreterInitialized();
         long value = PyLib.getAttributeValue(getPointer(), name);
         return new PyObject(value);
     }
 
     public void setAttributeValue(String name, Object value) {
-        assertLibInitialized();
+        assertInterpreterInitialized();
         PyLib.setAttributeValue(getPointer(), name, value, value != null ? value.getClass() : null);
     }
 
     public void setAttributeValue(String name, Object value, Class<?> valueType) {
-        assertLibInitialized();
+        assertInterpreterInitialized();
         PyLib.setAttributeValue(getPointer(), name, value, valueType);
     }
 
     public PyObject callMethod(String name, Object... args) {
-        assertLibInitialized();
+        assertInterpreterInitialized();
         long pointer = PyLib.call(getPointer(), true, name, args.length, args, null);
         return new PyObject(pointer);
     }
 
     public PyObject call(String name, Object... args) {
-        assertLibInitialized();
+        assertInterpreterInitialized();
         long pointer = PyLib.call(getPointer(), false, name, args.length, args, null);
         return new PyObject(pointer);
     }

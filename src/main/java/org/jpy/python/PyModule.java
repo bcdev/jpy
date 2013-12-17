@@ -18,7 +18,7 @@ public class PyModule extends PyObject {
     }
 
     public static PyModule importModule(String name) {
-        PyLib.assertLibInitialized();
+        PyLib.assertInterpreterInitialized();
         long pointer = PyLib.importModule(name);
         return new PyModule(name, pointer);
     }

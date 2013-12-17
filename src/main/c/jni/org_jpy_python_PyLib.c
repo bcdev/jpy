@@ -16,12 +16,12 @@
  * Method:    isInitialized
  * Signature: ()Z
  */
-JNIEXPORT jboolean JNICALL Java_org_jpy_python_PyLib_isInitialized
+JNIEXPORT jboolean JNICALL Java_org_jpy_python_PyLib_isInterpreterInitialized
   (JNIEnv* jenv, jclass jLibClass)
 {
     int retCode;
     retCode = Py_IsInitialized();
-    printf("Java_org_jpy_python_PyLib_isInitialized: retCode=%d\n", retCode);
+    printf("Java_org_jpy_python_PyLib_isInterpreterInitialized: retCode=%d\n", retCode);
     return retCode != 0;
 }
 
@@ -30,10 +30,10 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_python_PyLib_isInitialized
  * Method:    initialize
  * Signature: ([Ljava/lang/String;Z)Z
  */
-JNIEXPORT jboolean JNICALL Java_org_jpy_python_PyLib_initialize
+JNIEXPORT jboolean JNICALL Java_org_jpy_python_PyLib_initializeInterpreter
   (JNIEnv* jenv, jclass jLibClass, jobjectArray jOptions, jboolean debug)
 {
-    printf("Java_org_jpy_python_PyLib_initialize: debug=%d\n", debug);
+    printf("Java_org_jpy_python_PyLib_initializeInterpreter: debug=%d\n", debug);
     if (!Py_IsInitialized()) {
         //Py_SetProgramName("java");
         Py_Initialize();
@@ -44,7 +44,7 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_python_PyLib_initialize
 
         pyModule = PyImport_ImportModule("jpy");
         if (pyModule == NULL) {
-            printf("Java_org_jpy_python_PyLib_initialize: pyModule == NULL :-(\n");
+            printf("Java_org_jpy_python_PyLib_initializeInterpreter: pyModule == NULL :-(\n");
             // todo: throw exception from last python error
             return JNI_FALSE;
         }
@@ -58,10 +58,10 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_python_PyLib_initialize
  * Method:    destroy
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_org_jpy_python_PyLib_destroy
+JNIEXPORT void JNICALL Java_org_jpy_python_PyLib_destroyInterpreter
   (JNIEnv* jenv, jclass jLibClass)
 {
-    printf("Java_org_jpy_python_PyLib_destroy called\n");
+    printf("Java_org_jpy_python_PyLib_destroyInterpreter called\n");
     if (Py_IsInitialized()) {
         Py_Finalize();
     }
