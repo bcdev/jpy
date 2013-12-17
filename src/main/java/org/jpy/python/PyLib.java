@@ -7,15 +7,9 @@ package org.jpy.python;
  */
 public class PyLib {
     static {
-/*
-        // todo:find the 'jpy' shared library file in the Python installation and load it via System.load(file)
-        File[] pythonHomes = PyConfig.findPythonHomes();
-        for (File pythonHome : pythonHomes) {
-            System.out.println("pythonHome = " + pythonHome);
-        }
-*/
-        //System.loadLibrary("jpy");
-        System.load("C:\\Python33\\Lib\\site-packages\\jpy.pyd");
+        String sharedLibPath = PyConfig.getSharedLibPath();
+        //System.out.println("sharedLibPath = " + sharedLibPath);
+        System.load(sharedLibPath);
     }
 
     public static void assertLibInitialized() {
