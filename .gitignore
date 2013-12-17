@@ -10,3 +10,4 @@ beampy.ini
 *.ear
 jpy.dll
 libjpy.so
+hs_err_pid*
