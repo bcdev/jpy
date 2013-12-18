@@ -52,17 +52,17 @@ void JPy_SetDebug(jboolean debug);
 struct JPy_JType;
 
 extern struct JPy_JType* JPy_JBoolean;
+extern struct JPy_JType* JPy_JChar;
 extern struct JPy_JType* JPy_JByte;
 extern struct JPy_JType* JPy_JShort;
 extern struct JPy_JType* JPy_JInt;
 extern struct JPy_JType* JPy_JLong;
 extern struct JPy_JType* JPy_JFloat;
 extern struct JPy_JType* JPy_JDouble;
-extern struct JPy_JType* JPy_JChar;
 extern struct JPy_JType* JPy_JVoid;
 extern struct JPy_JType* JPy_JBooleanObj;
-extern struct JPy_JType* JPy_JByteObj;
 extern struct JPy_JType* JPy_JCharacterObj;
+extern struct JPy_JType* JPy_JByteObj;
 extern struct JPy_JType* JPy_JShortObj;
 extern struct JPy_JType* JPy_JIntegerObj;
 extern struct JPy_JType* JPy_JLongObj;
@@ -102,12 +102,36 @@ extern jmethodID JPy_Field_GetModifiers_MID;
 extern jmethodID JPy_Field_GetType_MID;
 
 extern jclass JPy_Boolean_JClass;
+extern jmethodID JPy_Boolean_Init_MID;
 extern jmethodID JPy_Boolean_BooleanValue_MID;
+
+extern jclass JPy_Character_JClass;
+extern jmethodID JPy_Character_Init_MID;
+extern jmethodID JPy_Character_CharValue_MID;
+
+extern jclass JPy_Byte_JClass;
+extern jmethodID JPy_Byte_Init_MID;
+
+extern jclass JPy_Short_JClass;
+extern jmethodID JPy_Short_Init_MID;
+
+extern jclass JPy_Integer_JClass;
+extern jmethodID JPy_Integer_Init_MID;
+
+extern jclass JPy_Long_JClass;
+extern jmethodID JPy_Long_Init_MID;
+
+extern jclass JPy_Float_JClass;
+extern jmethodID JPy_Float_Init_MID;
+
+extern jclass JPy_Double_JClass;
+extern jmethodID JPy_Double_Init_MID;
 
 extern jclass JPy_Number_JClass;
 extern jmethodID JPy_Number_IntValue_MID;
 extern jmethodID JPy_Number_LongValue_MID;
 extern jmethodID JPy_Number_DoubleValue_MID;
+
 
 #ifdef __cplusplus
 } /* extern "C" */

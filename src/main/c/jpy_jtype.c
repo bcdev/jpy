@@ -176,14 +176,29 @@ PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject
     }
 
     if (type->componentType == NULL) {
-        // todo: check for Java wrapper types as well: java.lang.Byte, java.lang.Short, java.lang.Integer, ...
-        if (type == JPy_JString) {
+        // Scalar type, not an array
+        if (type == JPy_JBooleanObj) {
+            jboolean value = (*jenv)->CallBooleanMethod(jenv, objectRef, JPy_Boolean_BooleanValue_MID);
+            return PyBool_FromLong(value);
+        } else if (type == JPy_JCharacterObj) {
+            jchar value = (*jenv)->CallCharMethod(jenv, objectRef, JPy_Character_CharValue_MID);
+            return PyLong_FromLong(value);
+        } else if (type == JPy_JByteObj || type == JPy_JShortObj || type == JPy_JIntegerObj) {
+            jint value = (*jenv)->CallIntMethod(jenv, objectRef, JPy_Number_IntValue_MID);
+            return PyLong_FromLong(value);
+        } else if (type == JPy_JLongObj) {
+            jlong value = (*jenv)->CallLongMethod(jenv, objectRef, JPy_Number_LongValue_MID);
+            return PyLong_FromLongLong(value);
+        } else if (type == JPy_JFloatObj || type == JPy_JDoubleObj) {
+            jdouble value = (*jenv)->CallDoubleMethod(jenv, objectRef, JPy_Number_DoubleValue_MID);
+            return PyFloat_FromDouble(value);
+        } else if (type == JPy_JString) {
             return JPy_ConvertJavaToPythonString(jenv, objectRef);
-            //return JPy_ConvertJavaToStringToPythonString(jenv, objectRef);
         } else {
             return (PyObject*) JObj_FromType(jenv, type, objectRef);
         }
     } else if (type->componentType->isPrimitive) {
+        // Primitive array
         JPy_CArray* array;
         const char* format;
         jint length;
@@ -198,10 +213,10 @@ PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject
         }
         if (type->componentType == JPy_JBoolean) {
             format = "b";
-        } else if (type->componentType == JPy_JByte) {
-            format = "b";
         } else if (type->componentType == JPy_JChar) {
             format = "H";
+        } else if (type->componentType == JPy_JByte) {
+            format = "b";
         } else if (type->componentType == JPy_JShort) {
             format = "h";
         } else if (type->componentType == JPy_JInt) {
@@ -227,27 +242,101 @@ PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject
 
         return (PyObject*) array;
     } else {
+        // Object array
+        // todo: we may convert the Java array into a list here
         return (PyObject*) JObj_FromType(jenv, type, objectRef);
     }
 }
 
-int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* arg, jobject* objectRef)
+int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
 {
-    if (arg == Py_None) {
+    if (pyArg == Py_None) {
+        // None converts into NULL
         *objectRef = NULL;
         return 0;
     }
-    if (JObj_Check(arg)) {
-        *objectRef = ((JPy_JObj*) arg)->objectRef;
+
+    if (JObj_Check(pyArg)) {
+        // If it is already a Java object wrapper JObj, then we are done
+        *objectRef = ((JPy_JObj*) pyArg)->objectRef;
         return 0;
     }
-    if (type == JPy_JString && PyUnicode_Check(arg)) {
-        // todo: problem of memory leak here: '**objectRef' escapes but we must actually must call jenv->DeleteLocalRef(*objectRef) some time later
-        if (JPy_ConvertPythonToJavaString(jenv, arg, objectRef) < 0) {
-            return -1;
+
+    // todo: problem of memory leak here: '**objectRef' escapes but we must actually must call jenv->DeleteLocalRef(*objectRef) some time later
+    if (type == JPy_JBoolean || type == JPy_JBooleanObj) {
+        jvalue value;
+        if (!(PyBool_Check(pyArg) || PyLong_Check(pyArg))) {
+            goto error;
+        }
+        value.z = (jboolean)(PyLong_AsLong(pyArg) != 0);
+        *objectRef = (*jenv)->NewObjectA(jenv, JPy_Boolean_JClass, JPy_Boolean_Init_MID, &value);
+        return 0;
+    } else if (type == JPy_JChar || type == JPy_JCharacterObj) {
+        jvalue value;
+        if (!PyLong_Check(pyArg)) {
+            goto error;
+        }
+        value.c = (jchar) PyLong_AsLong(pyArg);
+        *objectRef = (*jenv)->NewObjectA(jenv, JPy_Character_JClass, JPy_Character_Init_MID, &value);
+        return 0;
+    } else if (type == JPy_JByte || type == JPy_JByteObj) {
+        jvalue value;
+        if (!PyLong_Check(pyArg)) {
+            goto error;
+        }
+        value.b = (jbyte) PyLong_AsLong(pyArg);
+        *objectRef = (*jenv)->NewObjectA(jenv, JPy_Byte_JClass, JPy_Byte_Init_MID, &value);
+        return 0;
+    } else if (type == JPy_JShort || type == JPy_JShortObj) {
+        jvalue value;
+        if (!PyLong_Check(pyArg)) {
+            goto error;
+        }
+        value.s = (jshort) PyLong_AsLong(pyArg);
+        *objectRef = (*jenv)->NewObjectA(jenv, JPy_Short_JClass, JPy_Short_Init_MID, &value);
+        return 0;
+    } else if (type == JPy_JInt || type == JPy_JIntegerObj) {
+        jvalue value;
+        if (!PyLong_Check(pyArg)) {
+            goto error;
+        }
+        value.i = (jint) PyLong_AsLong(pyArg);
+        *objectRef = (*jenv)->NewObjectA(jenv, JPy_Integer_JClass, JPy_Integer_Init_MID, &value);
+        return 0;
+    } else if (type == JPy_JLong || type == JPy_JLongObj) {
+        jvalue value;
+        if (!PyLong_Check(pyArg)) {
+            goto error;
+        }
+        value.j = (jlong) PyLong_AsLongLong(pyArg);
+        *objectRef = (*jenv)->NewObjectA(jenv, JPy_Long_JClass, JPy_Long_Init_MID, &value);
+        return 0;
+    } else if (type == JPy_JFloat || type == JPy_JFloatObj) {
+        jvalue value;
+        if (!PyFloat_Check(pyArg)) {
+            goto error;
+        }
+        value.f = (jfloat) PyFloat_AsDouble(pyArg);
+        *objectRef = (*jenv)->NewObjectA(jenv, JPy_Float_JClass, JPy_Float_Init_MID, &value);
+        return 0;
+    } else if (type == JPy_JDouble || type == JPy_JDoubleObj) {
+        jvalue value;
+        if (!PyFloat_Check(pyArg)) {
+            goto error;
+        }
+        value.d = (jdouble) PyFloat_AsDouble(pyArg);
+        *objectRef = (*jenv)->NewObjectA(jenv, JPy_Double_JClass, JPy_Double_Init_MID, &value);
+        return 0;
+    } else if (type == JPy_JString) {
+        if (!PyUnicode_Check(pyArg)) {
+            goto error;
+        }
+        if (JPy_ConvertPythonToJavaString(jenv, pyArg, objectRef) < 0) {
+            goto error;
         }
         return 0;
     }
+error:
     PyErr_SetString(PyExc_RuntimeError, "failed to convert Python to Java object");
     return -1;
 }
@@ -578,11 +667,11 @@ int JType_AddFieldAttribute(JNIEnv* jenv, JPy_JType* declaringClass, PyObject* f
     if (fieldType == JPy_JBoolean) {
         jboolean item = (*jenv)->GetStaticBooleanField(jenv, declaringClass->classRef, fid);
         fieldValue = PyBool_FromLong(item);
-    } else if (fieldType == JPy_JByte) {
-        jbyte item = (*jenv)->GetStaticByteField(jenv, declaringClass->classRef, fid);
-        fieldValue = PyLong_FromLong(item);
     } else if (fieldType == JPy_JChar) {
         jchar item = (*jenv)->GetStaticCharField(jenv, declaringClass->classRef, fid);
+        fieldValue = PyLong_FromLong(item);
+    } else if (fieldType == JPy_JByte) {
+        jbyte item = (*jenv)->GetStaticByteField(jenv, declaringClass->classRef, fid);
         fieldValue = PyLong_FromLong(item);
     } else if (fieldType == JPy_JShort) {
         jshort item = (*jenv)->GetStaticShortField(jenv, declaringClass->classRef, fid);

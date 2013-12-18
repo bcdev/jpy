@@ -139,11 +139,12 @@ class TestFields(unittest.TestCase):
         self.assertEqual(self.Dummy.j_STATIC_FIELD, 1234567890123456789)
         self.assertAlmostEqual(self.Dummy.f_STATIC_FIELD, 0.12345, places=5)
         self.assertAlmostEqual(self.Dummy.d_STATIC_FIELD, 0.123456789)
-        self.assertEqual(self.Dummy.S_STATIC_FIELD, 'ABC')
-        self.assertEqual(self.Dummy.l_STATIC_FIELD, self.Thing(123))
+
+        self.assertEqual(self.Dummy.S_OBJ_STATIC_FIELD, 'ABC')
+        self.assertEqual(self.Dummy.l_OBJ_STATIC_FIELD, self.Thing(123))
 
 
-    def test_instance_fields(self):
+    def test_primitive_instance_fields(self):
         dummy = self.Dummy()
         self.assertEqual(dummy.zInstField, False)
         self.assertEqual(dummy.bInstField, 0)
@@ -153,8 +154,6 @@ class TestFields(unittest.TestCase):
         self.assertEqual(dummy.jInstField, 0)
         self.assertEqual(dummy.fInstField, 0)
         self.assertEqual(dummy.dInstField, 0)
-        self.assertEqual(dummy.SInstField, None)
-        self.assertEqual(dummy.lInstField, None)
 
         dummy.zInstField = True
         dummy.bInstField = 123
@@ -164,8 +163,6 @@ class TestFields(unittest.TestCase):
         dummy.jInstField = 1234567890123456789
         dummy.fInstField = 0.12345
         dummy.dInstField = 0.123456789
-        dummy.SInstField = 'ABC'
-        dummy.lInstField = self.Thing(123)
 
         self.assertEqual(dummy.zInstField, True)
         self.assertEqual(dummy.bInstField, 123)
@@ -175,9 +172,41 @@ class TestFields(unittest.TestCase):
         self.assertEqual(dummy.jInstField, 1234567890123456789)
         self.assertAlmostEqual(dummy.fInstField, 0.12345, places=5)
         self.assertAlmostEqual(dummy.dInstField, 0.123456789)
-        self.assertEqual(dummy.SInstField, 'ABC')
-        self.assertEqual(dummy.lInstField, self.Thing(123))
 
+    def test_object_instance_fields(self):
+        dummy = self.Dummy()
+        self.assertEqual(dummy.zObjInstField, None)
+        self.assertEqual(dummy.bObjInstField, None)
+        self.assertEqual(dummy.cObjInstField, None)
+        self.assertEqual(dummy.sObjInstField, None)
+        self.assertEqual(dummy.iObjInstField, None)
+        self.assertEqual(dummy.jObjInstField, None)
+        self.assertEqual(dummy.fObjInstField, None)
+        self.assertEqual(dummy.dObjInstField, None)
+        self.assertEqual(dummy.SObjInstField, None)
+        self.assertEqual(dummy.lObjInstField, None)
+
+        dummy.zObjInstField = True
+        dummy.bObjInstField = 123
+        dummy.cObjInstField = 65
+        dummy.sObjInstField = 12345
+        dummy.iObjInstField = 123456789
+        dummy.jObjInstField = 1234567890123456789
+        dummy.fObjInstField = 0.12345
+        dummy.dObjInstField = 0.123456789
+        dummy.SObjInstField = 'ABC'
+        dummy.lObjInstField = self.Thing(123)
+
+        self.assertEqual(dummy.zObjInstField, True)
+        self.assertEqual(dummy.bObjInstField, 123)
+        self.assertEqual(dummy.cObjInstField, 65)
+        self.assertEqual(dummy.sObjInstField, 12345)
+        self.assertEqual(dummy.iObjInstField, 123456789)
+        self.assertEqual(dummy.jObjInstField, 1234567890123456789)
+        self.assertAlmostEqual(dummy.fObjInstField, 0.12345, places=5)
+        self.assertAlmostEqual(dummy.dObjInstField, 0.123456789)
+        self.assertEqual(dummy.SObjInstField, 'ABC')
+        self.assertEqual(dummy.lObjInstField, self.Thing(123))
 
 if __name__ == '__main__':
     unittest.main()

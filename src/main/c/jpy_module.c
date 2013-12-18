@@ -81,17 +81,17 @@ static JPy_JVM JVM = {NULL};
 // {{{
 
 JPy_JType* JPy_JBoolean = NULL;
+JPy_JType* JPy_JChar = NULL;
 JPy_JType* JPy_JByte = NULL;
 JPy_JType* JPy_JShort = NULL;
 JPy_JType* JPy_JInt = NULL;
 JPy_JType* JPy_JLong = NULL;
 JPy_JType* JPy_JFloat = NULL;
 JPy_JType* JPy_JDouble = NULL;
-JPy_JType* JPy_JChar = NULL;
 JPy_JType* JPy_JVoid = NULL;
 JPy_JType* JPy_JBooleanObj = NULL;
-JPy_JType* JPy_JByteObj = NULL;
 JPy_JType* JPy_JCharacterObj = NULL;
+JPy_JType* JPy_JByteObj = NULL;
 JPy_JType* JPy_JShortObj = NULL;
 JPy_JType* JPy_JIntegerObj = NULL;
 JPy_JType* JPy_JLongObj = NULL;
@@ -140,6 +140,9 @@ jmethodID JPy_Field_GetType_MID = NULL;
 // java.lang.Boolean
 jclass JPy_Boolean_JClass = NULL;
 jmethodID JPy_Boolean_BooleanValue_MID = NULL;
+
+jclass JPy_Character_JClass = NULL;
+jmethodID JPy_Character_CharValue_MID = NULL;
 
 // java.lang.Number
 jclass JPy_Number_JClass = NULL;
@@ -603,6 +606,10 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     JPy_Number_IntValue_MID = (*jenv)->GetMethodID(jenv, JPy_Number_JClass, "intValue", "()I");
     JPy_Number_LongValue_MID  = (*jenv)->GetMethodID(jenv, JPy_Number_JClass, "longValue", "()J");
     JPy_Number_DoubleValue_MID  = (*jenv)->GetMethodID(jenv, JPy_Number_JClass, "doubleValue", "()D");
+
+    JPy_Character_JClass = (*jenv)->FindClass(jenv, "java/lang/Character");
+    JPy_Character_CharValue_MID = (*jenv)->GetMethodID(jenv, JPy_Character_JClass, "charValue", "()C");
+
 
     DEFINE_NON_OBJECT_TYPE(JPy_JBoolean, "java/lang/Boolean");
     DEFINE_NON_OBJECT_TYPE(JPy_JByte, "java/lang/Byte");

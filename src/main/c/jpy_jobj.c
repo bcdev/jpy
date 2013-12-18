@@ -360,11 +360,11 @@ PyObject* JObj_getattro(JPy_JObj* self, PyObject* name)
         if (type == JPy_JBoolean) {
             jboolean item = (*jenv)->GetBooleanField(jenv, self->objectRef, field->fid);
             if (item) { Py_RETURN_TRUE; } else { Py_RETURN_FALSE; }
-        } else if (type == JPy_JByte) {
-            jbyte item = (*jenv)->GetByteField(jenv, self->objectRef, field->fid);
-            return PyLong_FromLong(item);
         } else if (type == JPy_JChar) {
             jchar item = (*jenv)->GetCharField(jenv, self->objectRef, field->fid);
+            return PyLong_FromLong(item);
+        } else if (type == JPy_JByte) {
+            jbyte item = (*jenv)->GetByteField(jenv, self->objectRef, field->fid);
             return PyLong_FromLong(item);
         } else if (type == JPy_JShort) {
             jshort item = (*jenv)->GetShortField(jenv, self->objectRef, field->fid);
@@ -440,13 +440,13 @@ PyObject* JObj_sq_item(JPy_JObj* self, Py_ssize_t index)
         jboolean item;
         (*jenv)->GetBooleanArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
         if (item) { Py_RETURN_TRUE; } else { Py_RETURN_FALSE; }
-    } else if (componentType == JPy_JByte) {
-        jbyte item;
-        (*jenv)->GetByteArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
-        return PyLong_FromLong(item);
     } else if (componentType == JPy_JChar) {
         jchar item;
         (*jenv)->GetCharArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+        return PyLong_FromLong(item);
+    } else if (componentType == JPy_JByte) {
+        jbyte item;
+        (*jenv)->GetByteArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
         return PyLong_FromLong(item);
     } else if (componentType == JPy_JShort) {
         jshort item;
