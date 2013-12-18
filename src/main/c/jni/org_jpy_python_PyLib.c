@@ -310,6 +310,7 @@ JNIEXPORT jlong JNICALL Java_org_jpy_python_PyLib_call
     JPy_JType* paramType;
 
     pyObject = (PyObject*) objId;
+    pyReturnValue = NULL;
 
     nameChars = (*jenv)->GetStringUTFChars(jenv, jName, NULL);
 
