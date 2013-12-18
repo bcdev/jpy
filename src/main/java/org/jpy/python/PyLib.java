@@ -10,8 +10,14 @@ public class PyLib {
 
     static {
         try {
+            if (PyConfig.getOS() == PyConfig.OS.UNIX) {
+                // Even loading the Python shared lib does not solve our current problem on Unix:
+                // java.lang.UnsatisfiedLinkError: /usr/local/lib/python3.3/dist-packages/jpy.cpython-33m.so:
+                //      /usr/local/lib/python3.3/dist-packages/jpy.cpython-33m.so: undefined symbol: PyFloat_Type
+                System.load("/usr/lib/libpython3.3m.so");
+            }
+
             String sharedLibPath = PyConfig.getSharedLibPath();
-            System.load("/usr/lib/libpython3.3m.so");
             System.load(sharedLibPath);
             problem = null;
         } catch (Throwable t) {
