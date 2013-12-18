@@ -39,7 +39,7 @@ How to build on Unix/Darwin
 
     > export JDK_HOME=%JDK32_HOME%
     > export path=$JDK_HOME\jre\bin\server;$path
-    > sudo -E python3 setup.py install
+    > python3.3 setup.py install --home=~
 
 How to modify
 -------------
@@ -50,6 +50,16 @@ After changing org.jpy.python.PyInterpreter, run
 
 and adapt changes src/main/c/jni/org_jpy_PythonInterpreter.c according to newly generated
 src/main/c/jni /src/main/c/jni/org_jpy_PythonInterpreter.h
+
+
+C programming guideline
+-----------------------
+
+* Follow style used in Python itself
+* Usually functions shall indicate errors by returning NULL or -1 on error.
+  Callers can expect that the PyErr_SetError has been set correctly and thus simply
+  return NULL or -1 again.
+  Exception: very simple functions, e.g. JPyObj_Check(), can go without error status indication.
 
 
 
