@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import sysconfig
 import os
 import platform
 from distutils.core import setup
@@ -61,7 +62,7 @@ if WIN32:
                     JDK_HOME + '/lib']
 elif LINUX:
     include_dirs += [JDK_HOME + '/include', JDK_HOME + '/include/linux']
-    libraries = ['jvm']
+    libraries = [ 'python' + sysconfig.get_config_var('VERSION') + sys.abiflags, 'jvm']
     if IS64:
         library_dirs = [JDK_HOME + '/jre/lib/amd64/server',
                         JDK_HOME + '/lib']
