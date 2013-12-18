@@ -103,7 +103,8 @@ setup(name='jpy',
 )
 
 if sys.argv[1] == 'install':
-    print("Importing module 'jpy' in order get its shared library location...");
+
+    print("Importing module 'jpy' in order get its shared library location...")
 
     import jpy
 
@@ -116,7 +117,7 @@ if sys.argv[1] == 'install':
 
     from datetime import datetime
 
-    print('Writing this information to file:', user_jpy);
+    print('Writing this information to file:', user_jpy)
     with open(user_jpy, 'w', encoding='utf-8') as f:
         f.write('# Created by jpy/setup.py on ' + str(datetime.now()) + '\n')
         f.write('jpy.lib = ' + jpy_lib_path.replace('\\', '\\\\') + '\n')
