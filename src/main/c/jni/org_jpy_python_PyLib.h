@@ -34,9 +34,9 @@ JNIEXPORT void JNICALL Java_org_jpy_python_PyLib_destroyInterpreter
 /*
  * Class:     org_jpy_python_PyLib
  * Method:    execScript
- * Signature: (Ljava/lang/String;)V
+ * Signature: (Ljava/lang/String;)I
  */
-JNIEXPORT void JNICALL Java_org_jpy_python_PyLib_execScript
+JNIEXPORT jint JNICALL Java_org_jpy_python_PyLib_execScript
   (JNIEnv *, jclass, jstring);
 
 /*

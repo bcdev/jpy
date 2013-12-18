@@ -41,7 +41,7 @@ public class PyLib {
 
     public static native void destroyInterpreter();
 
-    public static native void execScript(String script);
+    public static native int execScript(String script);
 
     public static native void decref(long pointer);
 
