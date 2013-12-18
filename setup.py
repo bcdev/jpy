@@ -71,9 +71,11 @@ elif LINUX:
 elif DARWIN:
     include_dirs += [JDK_HOME + '/include', JDK_HOME + '/include/darwin']
     libraries = ['jvm', 'python3.3']
-    library_dirs = [JDK_HOME + '/jre/lib/server/',
-                    JDK_HOME + '/lib',
-                    '/usr/local/Cellar/python3/3.3.3/Frameworks/Python.framework/Versions/3.3/lib/'] # TODO - make configurable
+    library_dirs = [
+        JDK_HOME + '/jre/lib/server',
+        JDK_HOME + '/lib',
+        '/usr/local/Cellar/python3/3.3.3/Frameworks/Python.framework/Versions/3.3/lib'
+    ]
 
 setup(name='jpy',
       description='Java Python Bridge',
@@ -100,7 +102,6 @@ setup(name='jpy',
 )
 
 if sys.argv[1] == 'install':
-
     print("Importing module 'jpy' in order get its shared library location...");
 
     import jpy
