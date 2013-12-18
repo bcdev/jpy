@@ -72,7 +72,7 @@ JNIEXPORT void JNICALL Java_org_jpy_python_PyLib_destroyInterpreter
  * Method:    execScript
  * Signature: (Ljava/lang/String;)J
  */
-JNIEXPORT void JNICALL Java_org_jpy_python_PyLib_execScript
+JNIEXPORT jint JNICALL Java_org_jpy_python_PyLib_execScript
   (JNIEnv* jenv, jclass jLibClass, jstring jScript)
 {
     const char* scriptChars;
@@ -82,9 +82,7 @@ JNIEXPORT void JNICALL Java_org_jpy_python_PyLib_execScript
     printf("Java_org_jpy_python_PyLib_execScript: script='%s'\n", scriptChars);
     retCode = PyRun_SimpleString(scriptChars);
     (*jenv)->ReleaseStringUTFChars(jenv, jScript, scriptChars);
-    if (retCode < 0) {
-        // todo: throw
-    }
+    return retCode;
 }
 
 
@@ -111,7 +109,7 @@ JNIEXPORT jint JNICALL Java_org_jpy_python_PyLib_getIntValue
 {
     PyObject* pyObject;
     pyObject = (PyObject*) objId;
-    return PyLong_AsLong(pyObject);
+    return (jint) PyLong_AsLong(pyObject);
 }
 
 /*
@@ -124,7 +122,7 @@ JNIEXPORT jdouble JNICALL Java_org_jpy_python_PyLib_getDoubleValue
 {
     PyObject* pyObject;
     pyObject = (PyObject*) objId;
-    return PyFloat_AsDouble(pyObject);
+    return (jdouble) PyFloat_AsDouble(pyObject);
 }
 
 /*
@@ -141,7 +139,8 @@ JNIEXPORT jstring JNICALL Java_org_jpy_python_PyLib_getStringValue
     pyObject = (PyObject*) objId;
 
     if (JPy_ConvertPythonToJavaString(jenv, pyObject, &jString) < 0) {
-        // todo throw exception from last error...
+        // todo: create exception
+        printf("Java_org_jpy_python_PyLib_getStringValue: error: failed to convert Python object to Java String\n");
         return NULL;
     }
 
@@ -165,7 +164,8 @@ JNIEXPORT jobject JNICALL Java_org_jpy_python_PyLib_getObjectValue
         jObject = ((JPy_JObj*) pyObject)->objectRef;
     } else {
         if (JPy_ConvertPythonToJavaObject(jenv, pyObject, &jObject) < 0) {
-            // todo throw exception from last error...
+            // todo: create exception
+            printf("Java_org_jpy_python_PyLib_getObjectValue: error: failed to convert Python object to Java Object\n");
             return NULL;
         }
     }
@@ -187,10 +187,17 @@ JNIEXPORT jlong JNICALL Java_org_jpy_python_PyLib_importModule
     const char* nameChars;
 
     nameChars = (*jenv)->GetStringUTFChars(jenv, jName, NULL);
-    printf("Java_org_jpy_python_PyLib_getModule: name='%s'\n", nameChars);
+    printf("Java_org_jpy_python_PyLib_importModule: name='%s'\n", nameChars);
+    /* Note: pyName is a new reference */
     pyName = PyUnicode_FromString(nameChars);
+    /* Note: pyModule is a new reference */
     pyModule = PyImport_Import(pyName);
-    /* pModule is a new reference */
+    if (pyModule == NULL) {
+        // todo: create exception
+        printf("Java_org_jpy_python_PyLib_importModule: error: module not found '%s'\n", nameChars);
+        goto error;
+    }
+error:
     Py_DECREF(pyName);
     (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
     return (jlong) pyModule;
@@ -213,8 +220,14 @@ JNIEXPORT jlong JNICALL Java_org_jpy_python_PyLib_getAttributeValue
 
     nameChars = (*jenv)->GetStringUTFChars(jenv, name, NULL);
     printf("Java_org_jpy_python_PyLib_getAttributeValue: objId=%p, name='%s'\n", pyObject, nameChars);
+    /* Note: pyValue is a new reference */
     pyValue = PyObject_GetAttrString(pyObject, nameChars);
-    /* pyValue is a new reference */
+    if (pyValue == NULL) {
+        // todo: create exception
+        printf("Java_org_jpy_python_PyLib_getAttributeValue: error: attribute not found '%s'\n", nameChars);
+        goto error;
+    }
+error:
     (*jenv)->ReleaseStringUTFChars(jenv, name, nameChars);
     return (jlong) pyValue;
 }
@@ -242,40 +255,35 @@ JNIEXPORT void JNICALL Java_org_jpy_python_PyLib_setAttributeValue
         jValueClass = (*jenv)->GetObjectClass(jenv, jValue);
     }
 
-    printf("Java_org_jpy_python_PyLib_setAttributeValue: 1\n");
-
     if (jValueClass != NULL) {
         valueType = JType_GetType(jenv, jValueClass, JNI_FALSE);
         if (valueType == NULL) {
-            printf("Java_org_jpy_python_PyLib_setAttributeValue: 1a\n");
-            // todo: create exception from last error
+            // todo: create exception
+            printf("Java_org_jpy_python_PyLib_setAttributeValue: error: no type found for attribute '%s'\n", nameChars);
             goto error;
         }
     } else {
-            printf("Java_org_jpy_python_PyLib_setAttributeValue: 1b\n");
         valueType = NULL;
     }
-            printf("Java_org_jpy_python_PyLib_setAttributeValue: 2\n");
 
     if (jValue != NULL && valueType != NULL) {
         pyValue = JType_ConvertJavaToPythonObject(jenv, valueType, jValue);
-            printf("Java_org_jpy_python_PyLib_setAttributeValue: 2a\n");
         if (pyValue == NULL) {
-            // todo: create exception "Java object not convertible: "  + last Python error msg
+            // todo: create exception
+            printf("Java_org_jpy_python_PyLib_setAttributeValue: error: attribute '%s': Java object not convertible\n", nameChars);
             goto error;
         }
     } else {
-            printf("Java_org_jpy_python_PyLib_setAttributeValue: 2b\n");
         pyValue = Py_BuildValue("");
     }
 
-            printf("Java_org_jpy_python_PyLib_setAttributeValue: 3\n");
     if (PyObject_SetAttrString(pyObject, nameChars, pyValue) < 0) {
-        // todo: create exception from last error
+        // todo: create exception
+        printf("Java_org_jpy_python_PyLib_setAttributeValue: error: PyObject_SetAttrString failed on attribute '%s'\n", nameChars);
+        goto error;
     }
 
 error:
-            printf("Java_org_jpy_python_PyLib_setAttributeValue: 4\n");
     (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
     // todo: on error, throw Java exception
 }
@@ -312,14 +320,14 @@ JNIEXPORT jlong JNICALL Java_org_jpy_python_PyLib_call
     // Note: pyCallable is a new reference
     pyCallable = PyObject_GetAttrString(pyObject, nameChars);
     if (pyCallable == NULL) {
-        // todo: create Java exception "function or method not found: " + nameChars
-        printf("Java_org_jpy_python_PyLib_call: function or method not found: '%s'\n", nameChars);
+        // todo: create exception
+        printf("Java_org_jpy_python_PyLib_call: error: function or method not found: '%s'\n", nameChars);
         goto error;
     }
 
     if (!PyCallable_Check(pyCallable)) {
-        // todo: create exception "object is not callable: " + nameChars
-        printf("Java_org_jpy_python_PyLib_call: object is not callable: '%s'\n", nameChars);
+        // todo: create exception
+        printf("Java_org_jpy_python_PyLib_call: error: object is not callable: '%s'\n", nameChars);
         goto error;
     }
 
@@ -333,23 +341,19 @@ JNIEXPORT jlong JNICALL Java_org_jpy_python_PyLib_call
             jParamClass = (*jenv)->GetObjectClass(jenv, jArg);
         }
 
-        printf("Java_org_jpy_python_PyLib_call: 1 i=%d\n", i);
-
         paramType = JType_GetType(jenv, jParamClass, JNI_FALSE);
         if (paramType == NULL) {
-            // todo: create exception from last error
+            // todo: create exception
+            printf("Java_org_jpy_python_PyLib_call: error: callable '%s': argument %d: no type found\n", nameChars, i);
             goto error;
         }
-
-        printf("Java_org_jpy_python_PyLib_call: 2 i=%d\n", i);
 
         pyArg = JType_ConvertJavaToPythonObject(jenv, paramType, jArg);
         if (pyArg == NULL) {
-            // todo: create exception "argument "+(i+1)+" not convertible: "  + last Python error msg
+            // todo: create exception
+            printf("Java_org_jpy_python_PyLib_call: error: callable '%s': argument %d: can't convert Java to Python object\n", nameChars, i);
             goto error;
         }
-
-        printf("Java_org_jpy_python_PyLib_call: 3 i=%d\n", i);
 
         // pyArg reference stolen here
         PyTuple_SetItem(pyArgs, i, pyArg);
@@ -359,25 +363,23 @@ JNIEXPORT jlong JNICALL Java_org_jpy_python_PyLib_call
         pyMethod = PyMethod_New(pyCallable, pyObject);
         if (pyMethod == NULL) {
             // todo: create out of memory exception
+            printf("Java_org_jpy_python_PyLib_call: error: callable '%s': no memory\n", nameChars);
             goto error;
         }
         Py_DECREF(pyCallable);
         pyCallable = pyMethod;
     }
 
-    printf("Java_org_jpy_python_PyLib_call: 4\n");
     pyReturnValue = PyObject_CallObject(pyCallable, pyArgs);
     if (pyReturnValue == NULL) {
-    printf("Java_org_jpy_python_PyLib_call: 4a\n");
-        // todo: create exception "argument "+(i+1)+" not convertible: "  + last Python error msg
+        // todo: create exception
+        printf("Java_org_jpy_python_PyLib_call: error: callable '%s': call returned NULL\n", nameChars);
         goto error;
     }
-    printf("Java_org_jpy_python_PyLib_call: 4b\n");
 
     Py_INCREF(pyReturnValue);
 
 error:
-    printf("Java_org_jpy_python_PyLib_call: 5\n");
     (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
     Py_DECREF(pyCallable);
     Py_DECREF(pyArgs);
