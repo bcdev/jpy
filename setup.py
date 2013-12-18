@@ -99,19 +99,23 @@ setup(name='jpy',
 )
 
 if sys.argv[1] == 'install':
+
     print("Importing module 'jpy' in order get its shared library location...");
 
     import jpy
 
-    jpy_lib_path = jpy.__file__.replace('\\', '\\\\')
-    jpy_exec_path = sys.exec_prefix.replace('\\', '\\\\')
+    jpy_lib_path = jpy.__file__
+    jpy_exec_path = sys.exec_prefix
     print("Its location is: " + jpy_lib_path)
 
     user_home = os.path.expanduser("~")
     user_jpy = os.path.join(user_home, '.jpy')
 
+    from datetime import datetime
+
     print('Writing this information to file:', user_jpy);
     with open(user_jpy, 'w', encoding='utf-8') as f:
-        f.write('jpy.lib = ' + jpy_lib_path + '\n')
-        f.write('jpy.exec_path = ' + jpy_exec_path + '\n')
+        f.write('# Created by jpy/setup.py on ' + str(datetime.now()) + '\n')
+        f.write('jpy.lib = ' + jpy_lib_path.replace('\\', '\\\\') + '\n')
+        f.write('jpy.exec_path = ' + jpy_exec_path.replace('\\', '\\\\') + '\n')
 
