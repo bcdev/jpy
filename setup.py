@@ -62,7 +62,7 @@ if WIN32:
                     JDK_HOME + '/lib']
 elif LINUX:
     include_dirs += [JDK_HOME + '/include', JDK_HOME + '/include/linux']
-    libraries = [ 'python' + sysconfig.get_config_var('VERSION') + sys.abiflags, 'jvm']
+    libraries = ['jvm', 'python' + sysconfig.get_config_var('VERSION') + sys.abiflags]
     if IS64:
         library_dirs = [JDK_HOME + '/jre/lib/amd64/server',
                         JDK_HOME + '/lib']
