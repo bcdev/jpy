@@ -70,9 +70,10 @@ elif LINUX:
                         JDK_HOME + '/lib']
 elif DARWIN:
     include_dirs += [JDK_HOME + '/include', JDK_HOME + '/include/darwin']
-    libraries = ['jvm']
+    libraries = ['jvm', 'python3.3']
     library_dirs = [JDK_HOME + '/jre/lib/server/',
-                    JDK_HOME + '/lib']
+                    JDK_HOME + '/lib',
+                    '/usr/local/Cellar/python3/3.3.3/Frameworks/Python.framework/Versions/3.3/lib/'] # TODO - make configurable
 
 setup(name='jpy',
       description='Java Python Bridge',
