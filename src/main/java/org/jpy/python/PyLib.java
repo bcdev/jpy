@@ -11,11 +11,12 @@ public class PyLib {
     static {
         try {
             String sharedLibPath = PyConfig.getSharedLibPath();
+            System.load("/usr/lib/libpython3.3m.so");
             System.load(sharedLibPath);
             problem = null;
         } catch (Throwable t) {
             problem = t;
-            //throw t;
+            throw t;
         }
     }
 
