@@ -71,12 +71,10 @@ elif LINUX:
                         JDK_HOME + '/lib']
 elif DARWIN:
     include_dirs += [JDK_HOME + '/include', JDK_HOME + '/include/darwin']
-    libraries = ['jvm', 'python' + str(sys.version_info.major) + '.' + str(sys.version_info.minor)]
-    library_dirs = [
-        JDK_HOME + '/jre/lib/server',
-        JDK_HOME + '/lib',
-        os.path.join(sys.exec_prefix, 'lib')
-    ]
+    libraries = ['jvm', 'python' + sysconfig.get_config_var('VERSION') + sys.abiflags]
+    library_dirs = [JDK_HOME + '/jre/lib/server',
+                    JDK_HOME + '/lib',
+                    os.path.join(sys.exec_prefix, 'lib')]
 
 setup(name='jpy',
       description='Java Python Bridge',
