@@ -329,9 +329,11 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
         return 0;
     } else if (type == JPy_JString) {
         if (!PyUnicode_Check(pyArg)) {
+printf("---->>> 1 type=%p, JPy_JString=%p\n", type, JPy_JString);
             goto error;
         }
         if (JPy_AsJString(jenv, pyArg, objectRef) < 0) {
+printf("---->>> 2 type=%p, JPy_JString=%p\n", type, JPy_JString);
             goto error;
         }
         return 0;

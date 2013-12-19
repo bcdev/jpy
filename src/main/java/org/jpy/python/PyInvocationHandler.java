@@ -2,6 +2,7 @@ package org.jpy.python;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 import static org.jpy.python.PyLib.assertInterpreterInitialized;
 
@@ -11,31 +12,28 @@ import static org.jpy.python.PyLib.assertInterpreterInitialized;
  * @author Norman Fomferra
  */
 class PyInvocationHandler implements InvocationHandler {
-    private PyObject pyObject;
-    private boolean isMethod;
+    private final PyObject pyObject;
+    private final boolean methodCall;
 
-    public PyInvocationHandler(PyObject pyObject, boolean isMethod) {
+    public PyInvocationHandler(PyObject pyObject, boolean methodCall) {
+        if (pyObject == null) {
+            throw new NullPointerException("pyObject");
+        }
         this.pyObject = pyObject;
-        this.isMethod = isMethod;
+        this.methodCall = methodCall;
     }
 
     @Override
     public Object invoke(Object proxyObject, Method method, Object[] args) throws Throwable {
-        System.out.println("method = " + method.getName());
+        System.out.printf("invoke: %s(%s)\n", method.getName(), Arrays.toString(args));
         assertInterpreterInitialized();
-        long pointer = PyLib.call(this.pyObject.getPointer(),
-                                  isMethod,
-                                  method.getName(),
-                                  args.length,
-                                  args,
-                                  method.getParameterTypes());
-        if (method.getReturnType().equals(Void.TYPE)) {
-            if (pointer != 0) {
-                PyLib.decref(pointer);
-            }
-            return null;
-        } else {
-            return new PyObject(pointer);
-        }
+        return PyLib.callAndReturnValue(
+                this.pyObject.getPointer(),
+                methodCall,
+                method.getName(),
+                args != null ? args.length : 0,
+                args,
+                method.getParameterTypes(),
+                method.getReturnType());
     }
 }

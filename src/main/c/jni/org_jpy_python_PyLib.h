@@ -89,11 +89,19 @@ JNIEXPORT jlong JNICALL Java_org_jpy_python_PyLib_importModule
 
 /*
  * Class:     org_jpy_python_PyLib
- * Method:    getAttributeValue
+ * Method:    getAttributeObject
  * Signature: (JLjava/lang/String;)J
  */
-JNIEXPORT jlong JNICALL Java_org_jpy_python_PyLib_getAttributeValue
+JNIEXPORT jlong JNICALL Java_org_jpy_python_PyLib_getAttributeObject
   (JNIEnv *, jclass, jlong, jstring);
+
+/*
+ * Class:     org_jpy_python_PyLib
+ * Method:    getAttributeValue
+ * Signature: (JLjava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;
+ */
+JNIEXPORT jobject JNICALL Java_org_jpy_python_PyLib_getAttributeValue
+  (JNIEnv *, jclass, jlong, jstring, jclass);
 
 /*
  * Class:     org_jpy_python_PyLib
@@ -105,11 +113,19 @@ JNIEXPORT void JNICALL Java_org_jpy_python_PyLib_setAttributeValue
 
 /*
  * Class:     org_jpy_python_PyLib
- * Method:    call
+ * Method:    callAndReturnObject
  * Signature: (JZLjava/lang/String;I[Ljava/lang/Object;[Ljava/lang/Class;)J
  */
-JNIEXPORT jlong JNICALL Java_org_jpy_python_PyLib_call
+JNIEXPORT jlong JNICALL Java_org_jpy_python_PyLib_callAndReturnObject
   (JNIEnv *, jclass, jlong, jboolean, jstring, jint, jobjectArray, jobjectArray);
+
+/*
+ * Class:     org_jpy_python_PyLib
+ * Method:    callAndReturnValue
+ * Signature: (JZLjava/lang/String;I[Ljava/lang/Object;[Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/Object;
+ */
+JNIEXPORT jobject JNICALL Java_org_jpy_python_PyLib_callAndReturnValue
+  (JNIEnv *, jclass, jlong, jboolean, jstring, jint, jobjectArray, jobjectArray, jclass);
 
 #ifdef __cplusplus
 }

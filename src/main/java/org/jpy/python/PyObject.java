@@ -59,31 +59,36 @@ public class PyObject {
         return PyLib.getObjectValue(getPointer());
     }
 
-    public PyObject getAttributeValue(String name) {
+    public PyObject getAttributeObject(String name) {
         assertInterpreterInitialized();
-        long value = PyLib.getAttributeValue(getPointer(), name);
+        long value = PyLib.getAttributeObject(getPointer(), name);
         return new PyObject(value);
+    }
+
+    public <T> T getAttributeValue(String name, Class<T> valueType) {
+        assertInterpreterInitialized();
+        return PyLib.getAttributeValue(getPointer(), name, valueType);
     }
 
     public void setAttributeValue(String name, Object value) {
         assertInterpreterInitialized();
-        PyLib.setAttributeValue(getPointer(), name, value, value != null ? value.getClass() : null);
+        PyLib.setAttributeValue(getPointer(), name, value, value != null ? value.getClass() : (Class) null);
     }
 
-    public void setAttributeValue(String name, Object value, Class<?> valueType) {
+    public <T> void setAttributeValue(String name, T value, Class<T> valueType) {
         assertInterpreterInitialized();
         PyLib.setAttributeValue(getPointer(), name, value, valueType);
     }
 
     public PyObject callMethod(String name, Object... args) {
         assertInterpreterInitialized();
-        long pointer = PyLib.call(getPointer(), true, name, args.length, args, null);
+        long pointer = PyLib.callAndReturnObject(getPointer(), true, name, args.length, args, null);
         return new PyObject(pointer);
     }
 
     public PyObject call(String name, Object... args) {
         assertInterpreterInitialized();
-        long pointer = PyLib.call(getPointer(), false, name, args.length, args, null);
+        long pointer = PyLib.callAndReturnObject(getPointer(), false, name, args.length, args, null);
         return new PyObject(pointer);
     }
 

@@ -473,14 +473,14 @@ PyObject* JObj_sq_item(JPy_JObj* self, Py_ssize_t index)
         (*jenv)->GetDoubleArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
         return JPy_FROM_JDOUBLE(item);
     } else {
-        jobject objectRef = (*jenv)->GetObjectArrayElement(jenv, self->objectRef, (jsize) index);
+        jobject item = (*jenv)->GetObjectArrayElement(jenv, self->objectRef, (jsize) index);
         if ((*jenv)->ExceptionCheck(jenv)) {
             (*jenv)->ExceptionDescribe(jenv);
             (*jenv)->ExceptionClear(jenv);
             PyErr_SetString(PyExc_RuntimeError, "index error");
             return NULL;
         }
-        return JPy_FromJObjectWithType(jenv, objectRef, type->componentType);
+        return JPy_FromJObjectWithType(jenv, item, type->componentType);
     }
 }
 
@@ -493,7 +493,6 @@ int JObj_sq_ass_item(JPy_JObj* self, Py_ssize_t index, PyObject* pyItem)
     JNIEnv* jenv;
     JPy_JType* type;
     JPy_JType* componentType;
-    jobject elementRef;
 
     JPy_GET_JNI_ENV_OR_RETURN(jenv, -1)
 
@@ -530,10 +529,11 @@ int JObj_sq_ass_item(JPy_JObj* self, Py_ssize_t index, PyObject* pyItem)
         jdouble item = JPy_AS_JDOUBLE(pyItem);
         (*jenv)->SetDoubleArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
     } else {
-        if (JPy_AsJObjectWithType(jenv, pyItem, &elementRef, type->componentType) < 0) {
+        jobject item;
+        if (JPy_AsJObjectWithType(jenv, pyItem, &item, type->componentType) < 0) {
             return -1;
         }
-        (*jenv)->SetObjectArrayElement(jenv, self->objectRef, (jsize) index, elementRef);
+        (*jenv)->SetObjectArrayElement(jenv, self->objectRef, (jsize) index, item);
         if ((*jenv)->ExceptionCheck(jenv)) {
             (*jenv)->ExceptionDescribe(jenv);
             (*jenv)->ExceptionClear(jenv);

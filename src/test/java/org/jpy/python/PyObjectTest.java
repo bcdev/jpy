@@ -22,9 +22,7 @@ public class PyObjectTest {
 
     @AfterClass
     public static void tearDown() throws Exception {
-        assertEquals(true, PyLib.isInterpreterInitialized());
         PyLib.destroyInterpreter();
-        assertEquals(false, PyLib.isInterpreterInitialized());
     }
 
     @Test(expected = NullPointerException.class)
@@ -62,6 +60,12 @@ public class PyObjectTest {
 
     @Test
     public void testCall() throws Exception {
+        // Python equivalent:
+        //
+        // >>> import builtins
+        // >>> builtins.max('A', 'Z')
+        // 'Z'
+        //
         PyModule builtins = PyModule.importModule("builtins");
         PyObject value = builtins.call("max", "A", "Z");
         Assert.assertEquals("Z", value.getStringValue());
@@ -69,31 +73,41 @@ public class PyObjectTest {
 
     @Test
     public void testGetSetAttributes() throws Exception {
+        // Python equivalent:
+        //
+        // >>> import imp
+        // >>> myobj = imp.new_module('myobj')
+        // >>> myobj.a = 'Tut tut!'
+        // >>> myobj.a
+        // 'Tut tut!'
+        //
         PyModule imp = PyModule.importModule("imp");
+        // Call imp.new_module('') module
         PyObject myobj = imp.call("new_module", "myobj");
         myobj.setAttributeValue("a", "Tut tut!");
-        PyObject a = myobj.getAttributeValue("a");
+        Assert.assertEquals("Tut tut!", myobj.getAttributeValue("a", String.class));
+        PyObject a = myobj.getAttributeObject("a");
         Assert.assertEquals("Tut tut!", a.getStringValue());
     }
 
 
     @Test
-    @Ignore
     public void testCast() throws Exception {
-        PyModule jpyModule = PyModule.importModule("imp");
-        Wraw wraw = jpyModule.cast(Wraw.class);
-        wraw.initialize();
-        wraw.computeTile(100, 100, new float[100 * 100]);
-        wraw.computeTile(100, 100, new float[100 * 100]);
-        wraw.computeTile(100, 100, new float[100 * 100]);
-        wraw.dispose();
-    }
+        PyModule procModule = PyModule.importModule("proc_class");
 
-    public static interface Wraw {
-        void initialize();
-
-        void computeTile(int w, int h, float[] data);
-
-        void dispose();
+        PyObject procObj = procModule.call("Proc");
+        Proc proc = procObj.cast(Proc.class);
+        assertNotNull(proc);
+        String result;
+        result = proc.initialize();
+        assertEquals("initialize-1", result);
+        result = proc.computeTile(100, 100, new float[100 * 100]);
+        assertEquals("computeTile-2", result);
+        result = proc.computeTile(200, 100, new float[100 * 100]);
+        assertEquals("computeTile-3", result);
+        result = proc.computeTile(300, 100, new float[100 * 100]);
+        assertEquals("computeTile-4", result);
+        result = proc.dispose();
+        assertEquals("dispose-5", result);
     }
 }

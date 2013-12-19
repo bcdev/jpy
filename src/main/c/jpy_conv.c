@@ -34,6 +34,34 @@ int JPy_AsJObjectWithType(JNIEnv* jenv, PyObject* pyObj, jobject* objectRef, JPy
     return JType_ConvertPythonToJavaObject(jenv, type, pyObj, objectRef);
 }
 
+int JPy_AsJObjectWithClass(JNIEnv* jenv, PyObject* pyObj, jobject* objectRef, jclass classRef)
+{
+    *objectRef = NULL;
+
+    if (pyObj == Py_None) {
+        return 0;
+    }
+
+    if (classRef != NULL) {
+        JPy_JType* valueType;
+
+        valueType = JType_GetType(jenv, classRef, JNI_FALSE);
+        if (valueType == NULL) {
+            return -1;
+        }
+        if (JPy_AsJObjectWithType(jenv, pyObj, objectRef, valueType) < 0) {
+            return -1;
+        }
+    } else {
+        if (JPy_AsJObject(jenv, pyObj, objectRef) < 0) {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+
 
 PyObject* JPy_FromJObject(JNIEnv* jenv, jobject objectRef)
 {
@@ -173,8 +201,8 @@ PyObject* JPy_FromJString(JNIEnv* jenv, jstring stringRef)
 
     jChars = (*jenv)->GetStringChars(jenv, stringRef, NULL);
     returnValue = PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, jChars, length);
+    //printf("--> Generated a %p from %ls, is unicode: %d\n",returnValue, jChars, PyUnicode_Check(returnValue));
     (*jenv)->ReleaseStringChars(jenv, stringRef, jChars);
-
     return returnValue;
 }
 

@@ -2,7 +2,6 @@ package org.jpy.python;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -49,42 +48,39 @@ public class PyLibTest {
         pyModule = PyLib.importModule("jpy");
         assertTrue(pyModule != 0);
 
-        long pyObj = PyLib.getAttributeValue(pyModule, "JType");
+        long pyObj = PyLib.getAttributeObject(pyModule, "JType");
         assertTrue(pyObj != 0);
 
         PyLib.setAttributeValue(pyModule, "_hello", "Hello Python!", String.class);
+        assertEquals("Hello Python!", PyLib.getAttributeValue(pyModule, "_hello", String.class));
 
-        pyObject = PyLib.getAttributeValue(pyModule, "_hello");
+        pyObject = PyLib.getAttributeObject(pyModule, "_hello");
         assertTrue(pyObject != 0);
     }
 
     @Test
-    public void testCallWithParamTypes() throws Exception {
+    public void testCallAndReturnValue() throws Exception {
         long builtins;
-        long result;
 
         builtins = PyLib.importModule("builtins");
         assertTrue(builtins != 0);
 
-        result = PyLib.call(builtins, false, "min", 2,
-                            new Object[]{"A", "Z"},
-                            new Class[] {String.class, String.class});
+        String result = PyLib.callAndReturnValue(builtins, false, "max", 2, new Object[]{"A", "Z"}, new Class[]{String.class, String.class}, String.class);
 
-        assertTrue(result != 0);
+        assertEquals("Z", result);
     }
 
     @Test
-    public void testCallWithoutParamTypes() throws Exception {
+    public void testCallAndReturnObject() throws Exception {
         long builtins;
-        long result;
+        long pyObject;
 
         builtins = PyLib.importModule("builtins");
         assertTrue(builtins != 0);
 
-        result = PyLib.call(builtins, false, "min", 2,
-                            new Object[]{"A", "Z"},
-                            null);
+        pyObject = PyLib.callAndReturnObject(builtins, false, "max", 2, new Object[]{"A", "Z"}, null);
+        assertTrue(pyObject != 0);
 
-        assertTrue(result != 0);
+        assertEquals("Z", new PyObject(pyObject).getStringValue());
     }
 }

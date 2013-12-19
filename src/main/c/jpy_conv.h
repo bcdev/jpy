@@ -61,6 +61,12 @@ int JPy_AsJObject(JNIEnv* jenv, PyObject* pyObj, jobject* objectRef);
 int JPy_AsJObjectWithType(JNIEnv* jenv, PyObject* pyObj, jobject* objectRef, JPy_JType* type);
 
 /**
+ * Convert Python objects to Java object with known type.
+ */
+int JPy_AsJObjectWithClass(JNIEnv* jenv, PyObject* pyObj, jobject* objectRef, jclass classRef);
+
+
+/**
  * Creates a Python unicode object representing the name of the given class.
  * Returns a new reference.
  */

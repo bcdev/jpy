@@ -245,7 +245,7 @@ void JPy_SetDebug(jboolean debug)
  */
 PyMODINIT_FUNC PyInit_jpy(void)
 {
-    printf("PyInit_jpy: JVM.jvm=%p, JVM.jenv=%p, JVM.debug=%d\n", JVM.jvm, JVM.jenv, JVM.debug);
+    //printf("PyInit_jpy: JVM.jvm=%p, JVM.jenv=%p, JVM.debug=%d\n", JVM.jvm, JVM.jenv, JVM.debug);
 
     /////////////////////////////////////////////////////////////////////////
 

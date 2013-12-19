@@ -28,7 +28,7 @@ public class PyInterpreter {
 
     public PyObject getObject(PyModule module, String name) {
         assertInterpreterInitialized();
-        long objectPointer = PyLib.getAttributeValue(module.getPointer(), name);
+        long objectPointer = PyLib.getAttributeObject(module.getPointer(), name);
         return new PyObject(objectPointer);
     }
 
