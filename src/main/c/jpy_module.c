@@ -720,8 +720,6 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     DEFINE_OBJECT_TYPE(JPy_JDoubleObj, JPy_Double_JClass);
     DEFINE_OBJECT_TYPE(JPy_JString, JPy_String_JClass);
 
-    printf("JPy_JString=%p\n",JPy_JString);
-
     return 0;
 }
 
