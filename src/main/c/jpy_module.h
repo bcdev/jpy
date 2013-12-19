@@ -132,6 +132,9 @@ extern jmethodID JPy_Number_IntValue_MID;
 extern jmethodID JPy_Number_LongValue_MID;
 extern jmethodID JPy_Number_DoubleValue_MID;
 
+extern jclass JPy_String_JClass;
+extern jclass JPy_Void_JClass;
+
 
 #ifdef __cplusplus
 } /* extern "C" */
