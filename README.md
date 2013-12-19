@@ -60,6 +60,27 @@ C programming guideline
   Callers can expect that the PyErr_SetError has been set correctly and thus simply
   return NULL or -1 again.
   Exception: very simple functions, e.g. JPyObj_Check(), can go without error status indication.
+* Naming conventions:
+
+    jpy_jtype.h/c - The Java Meta-Type
+        JPy_JType type
+        JType_xxx() functions
+    jpy_jobj.h/c  - The Java Object Wrapper
+        JPy_JObj type
+        JObj_xxx() functions
+    jpy_jmethod.h/c - The Java Method Wrapper
+        JPy_JMethod type
+        JPy_JOverloadedMethod type
+        JMethod_xxx() functions
+        JOverloadedMethod_xxx() functions
+    jpy_jfield.h/c - The Java Field Wrapper
+        JPy_JField type
+        JField_xxx() functions
+    jpy_conv.h/c - Conversion of Python objects from/to Java values
+        JPy_From<JType> functions / JPy_FROM_<JTYPE> macros create Python objects (new references!) from Java types
+        JPy_As<JType> functions / JPy_AS_<JTYPE> macros convert from Python objects to Java types
+    jpy_module.h/c - The 'jpy' module definition
+        JPy_xxx() functions
 
 
 
