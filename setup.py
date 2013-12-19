@@ -121,3 +121,6 @@ if sys.argv[1] == 'install':
         f.write('jpy.lib = ' + jpy_lib_path.replace('\\', '\\\\') + '\n')
         f.write('jpy.exec_path = ' + jpy_exec_path.replace('\\', '\\\\') + '\n')
 
+    os.system(sys.executable + ' jpy_dummies_test.py')
+    os.system(sys.executable + ' jpy_array_test.py')
+    os.system(sys.executable + ' jpy_rt_test.py')
