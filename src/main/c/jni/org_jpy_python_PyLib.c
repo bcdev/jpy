@@ -251,6 +251,12 @@ JNIEXPORT void JNICALL Java_org_jpy_python_PyLib_setAttributeValue
     nameChars = (*jenv)->GetStringUTFChars(jenv, jName, NULL);
     printf("Java_org_jpy_python_PyLib_setAttributeValue: objId=%p, name='%s', jValue=%p, jValueClass=%p\n", pyObject, nameChars, jValue, jValueClass);
 
+    if (jValueClass != NULL) {
+        valueType = JType_GetType(jenv, jValueClass, JNI_FALSE);
+    } else {
+        valueType = NULL;
+    }
+
     if (valueType != NULL) {
         pyValue = JPy_FromJObjectWithType(jenv, jValue, valueType);
     } else {
