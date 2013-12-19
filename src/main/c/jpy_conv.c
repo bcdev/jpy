@@ -1,5 +1,56 @@
 #include "jpy_module.h"
+#include "jpy_jtype.h"
+#include "jpy_jobj.h"
 #include "jpy_conv.h"
+
+
+
+int JPy_AsJObject(JNIEnv* jenv, PyObject* pyObj, jobject* objectRef)
+{
+    if (pyObj == Py_None) {
+        *objectRef = NULL;
+        return 0;
+    } else if (JObj_Check(pyObj)) {
+        *objectRef = ((JPy_JObj*) pyObj)->objectRef;
+        return 0;
+    } else if (PyBool_Check(pyObj)) {
+        return JPy_AsJObjectWithType(jenv, pyObj, objectRef, JPy_JBooleanObj);
+    } else if (PyLong_Check(pyObj)) {
+        return JPy_AsJObjectWithType(jenv, pyObj, objectRef, JPy_JIntegerObj);
+    } else if (PyFloat_Check(pyObj)) {
+        return JPy_AsJObjectWithType(jenv, pyObj, objectRef, JPy_JDoubleObj);
+    } else if (PyUnicode_Check(pyObj)) {
+        return JPy_AsJObjectWithType(jenv, pyObj, objectRef, JPy_JString);
+    } else {
+        // todo: print Python type(pyObj) info here
+        PyErr_SetString(PyExc_RuntimeError, "don't know how to convert Python to Java object");
+        *objectRef = NULL;
+        return -1;
+    }
+}
+
+int JPy_AsJObjectWithType(JNIEnv* jenv, PyObject* pyObj, jobject* objectRef, JPy_JType* type)
+{
+    return JType_ConvertPythonToJavaObject(jenv, type, pyObj, objectRef);
+}
+
+
+PyObject* JPy_FromJObject(JNIEnv* jenv, jobject objectRef)
+{
+    jclass classRef;
+    JPy_JType* type;
+
+    classRef = (*jenv)->GetObjectClass(jenv, objectRef);
+    type = JType_GetType(jenv, classRef, JNI_FALSE);
+
+    return JPy_FromJObjectWithType(jenv, objectRef, type);
+}
+
+PyObject* JPy_FromJObjectWithType(JNIEnv* jenv, jobject objectRef, JPy_JType* type)
+{
+    return JType_ConvertJavaToPythonObject(jenv, type, objectRef);
+}
+
 
 /**
  * Copies the UTF, zero-terminated C-string.
@@ -69,7 +120,7 @@ jchar* JPy_ConvertToJCharString(const wchar_t* wChars, jint length)
  * Gets the UTF name of thie given class.
  * Caller is responsible for freeing the returned string using Py_Del().
  */
-char* JPy_AllocTypeNameUTF(JNIEnv* jenv, jclass classRef)
+char* JPy_GetTypeName(JNIEnv* jenv, jclass classRef)
 {
     jstring typeNameStr;
     const char* typeName;
@@ -88,7 +139,7 @@ char* JPy_AllocTypeNameUTF(JNIEnv* jenv, jclass classRef)
  * Gets a string object representing the name of the given class.
  * Returns a new reference.
  */
-PyObject* JPy_GetTypeNameString(JNIEnv* jenv, jclass classRef)
+PyObject* JPy_FromTypeName(JNIEnv* jenv, jclass classRef)
 {
     PyObject* typeString;
     jclass typeNameObj;
@@ -103,24 +154,8 @@ PyObject* JPy_GetTypeNameString(JNIEnv* jenv, jclass classRef)
     return typeString;
 }
 
-PyObject* JPy_ConvertJavaToStringToPythonString(JNIEnv* jenv, jobject objectRef)
-{
-    jstring stringRef;
-    PyObject* returnValue;
 
-    if (objectRef == NULL) {
-        return Py_BuildValue("");
-    }
-
-    // todo: handle errors
-    stringRef = (*jenv)->CallObjectMethod(jenv, objectRef, JPy_Object_ToString_MID);
-    returnValue = JPy_ConvertJavaToPythonString(jenv, stringRef);
-    (*jenv)->DeleteLocalRef(jenv, stringRef);
-
-    return returnValue;
-}
-
-PyObject* JPy_ConvertJavaToPythonString(JNIEnv* jenv, jstring stringRef)
+PyObject* JPy_FromJString(JNIEnv* jenv, jstring stringRef)
 {
     PyObject* returnValue;
     const jchar* jChars;
@@ -146,7 +181,7 @@ PyObject* JPy_ConvertJavaToPythonString(JNIEnv* jenv, jstring stringRef)
 /**
  * Returns a new Java string (a local reference).
  */
-int JPy_ConvertPythonToJavaString(JNIEnv* jenv, PyObject* arg, jstring* stringRef)
+int JPy_AsJString(JNIEnv* jenv, PyObject* arg, jstring* stringRef)
 {
     Py_ssize_t length;
     wchar_t* wChars;
@@ -185,11 +220,3 @@ error:
     return 0;
 }
 
-
-int JPy_ConvertPythonToJavaObject(JNIEnv* jenv, PyObject* pyObj, jobject* objectRef)
-{
-    // todo: implement JPy_ConvertPythonToJavaObject
-    printf("JPy_ConvertPythonToJavaObject: pyObj=%p (NOT IMPLEMENTED!)\n", pyObj);
-    PyErr_SetString(PyExc_RuntimeError, "NOT IMPLEMENTED");
-    return -1;
-}

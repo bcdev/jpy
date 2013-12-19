@@ -73,7 +73,7 @@ JPy_JType* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve)
         return NULL;
     }
 
-    typeKey = JPy_GetTypeNameString(jenv, classRef);
+    typeKey = JPy_FromTypeName(jenv, classRef);
     // todo: add check, because the following is a dangerous cast: someone else could have put something else into JPy_Types
     type = (JPy_JType*) PyDict_GetItem(JPy_Types, typeKey);
     if (type == NULL) {
@@ -146,7 +146,7 @@ JPy_JType* JType_New(JNIEnv* jenv, jclass classRef, jboolean resolve)
     type->isResolved = JNI_FALSE;
     type->isResolving = JNI_FALSE;
 
-    type->javaName = JPy_AllocTypeNameUTF(jenv, classRef);
+    type->javaName = JPy_GetTypeName(jenv, classRef);
     if (type->javaName == NULL) {
         metaType->tp_free(type);
         return NULL;
@@ -172,28 +172,28 @@ JPy_JType* JType_New(JNIEnv* jenv, jclass classRef, jboolean resolve)
 PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject objectRef)
 {
     if (objectRef == NULL) {
-        return Py_BuildValue("");
+        return JPy_FROM_JNULL();
     }
 
     if (type->componentType == NULL) {
         // Scalar type, not an array
         if (type == JPy_JBooleanObj) {
             jboolean value = (*jenv)->CallBooleanMethod(jenv, objectRef, JPy_Boolean_BooleanValue_MID);
-            return PyBool_FromLong(value);
+            return JPy_FROM_JBOOLEAN(value);
         } else if (type == JPy_JCharacterObj) {
             jchar value = (*jenv)->CallCharMethod(jenv, objectRef, JPy_Character_CharValue_MID);
-            return PyLong_FromLong(value);
+            return JPy_FROM_JCHAR(value);
         } else if (type == JPy_JByteObj || type == JPy_JShortObj || type == JPy_JIntegerObj) {
             jint value = (*jenv)->CallIntMethod(jenv, objectRef, JPy_Number_IntValue_MID);
-            return PyLong_FromLong(value);
+            return JPy_FROM_JINT(value);
         } else if (type == JPy_JLongObj) {
             jlong value = (*jenv)->CallLongMethod(jenv, objectRef, JPy_Number_LongValue_MID);
-            return PyLong_FromLongLong(value);
+            return JPy_FROM_JLONG(value);
         } else if (type == JPy_JFloatObj || type == JPy_JDoubleObj) {
             jdouble value = (*jenv)->CallDoubleMethod(jenv, objectRef, JPy_Number_DoubleValue_MID);
-            return PyFloat_FromDouble(value);
+            return JPy_FROM_JDOUBLE(value);
         } else if (type == JPy_JString) {
-            return JPy_ConvertJavaToPythonString(jenv, objectRef);
+            return JPy_FromJString(jenv, objectRef);
         } else {
             return (PyObject*) JObj_FromType(jenv, type, objectRef);
         }
@@ -268,7 +268,7 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
         if (!(PyBool_Check(pyArg) || PyLong_Check(pyArg))) {
             goto error;
         }
-        value.z = (jboolean)(PyLong_AsLong(pyArg) != 0);
+        value.z = JPy_AS_JBOOLEAN(pyArg);
         *objectRef = (*jenv)->NewObjectA(jenv, JPy_Boolean_JClass, JPy_Boolean_Init_MID, &value);
         return 0;
     } else if (type == JPy_JChar || type == JPy_JCharacterObj) {
@@ -276,7 +276,7 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
         if (!PyLong_Check(pyArg)) {
             goto error;
         }
-        value.c = (jchar) PyLong_AsLong(pyArg);
+        value.c = JPy_AS_JCHAR(pyArg);
         *objectRef = (*jenv)->NewObjectA(jenv, JPy_Character_JClass, JPy_Character_Init_MID, &value);
         return 0;
     } else if (type == JPy_JByte || type == JPy_JByteObj) {
@@ -284,7 +284,7 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
         if (!PyLong_Check(pyArg)) {
             goto error;
         }
-        value.b = (jbyte) PyLong_AsLong(pyArg);
+        value.b = JPy_AS_JBYTE(pyArg);
         *objectRef = (*jenv)->NewObjectA(jenv, JPy_Byte_JClass, JPy_Byte_Init_MID, &value);
         return 0;
     } else if (type == JPy_JShort || type == JPy_JShortObj) {
@@ -292,7 +292,7 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
         if (!PyLong_Check(pyArg)) {
             goto error;
         }
-        value.s = (jshort) PyLong_AsLong(pyArg);
+        value.s = JPy_AS_JSHORT(pyArg);
         *objectRef = (*jenv)->NewObjectA(jenv, JPy_Short_JClass, JPy_Short_Init_MID, &value);
         return 0;
     } else if (type == JPy_JInt || type == JPy_JIntegerObj) {
@@ -300,7 +300,7 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
         if (!PyLong_Check(pyArg)) {
             goto error;
         }
-        value.i = (jint) PyLong_AsLong(pyArg);
+        value.i = JPy_AS_JINT(pyArg);
         *objectRef = (*jenv)->NewObjectA(jenv, JPy_Integer_JClass, JPy_Integer_Init_MID, &value);
         return 0;
     } else if (type == JPy_JLong || type == JPy_JLongObj) {
@@ -308,7 +308,7 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
         if (!PyLong_Check(pyArg)) {
             goto error;
         }
-        value.j = (jlong) PyLong_AsLongLong(pyArg);
+        value.j = JPy_AS_JLONG(pyArg);
         *objectRef = (*jenv)->NewObjectA(jenv, JPy_Long_JClass, JPy_Long_Init_MID, &value);
         return 0;
     } else if (type == JPy_JFloat || type == JPy_JFloatObj) {
@@ -316,7 +316,7 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
         if (!PyFloat_Check(pyArg)) {
             goto error;
         }
-        value.f = (jfloat) PyFloat_AsDouble(pyArg);
+        value.f = JPy_AS_JFLOAT(pyArg);
         *objectRef = (*jenv)->NewObjectA(jenv, JPy_Float_JClass, JPy_Float_Init_MID, &value);
         return 0;
     } else if (type == JPy_JDouble || type == JPy_JDoubleObj) {
@@ -324,20 +324,20 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
         if (!PyFloat_Check(pyArg)) {
             goto error;
         }
-        value.d = (jdouble) PyFloat_AsDouble(pyArg);
+        value.d = JPy_AS_JDOUBLE(pyArg);
         *objectRef = (*jenv)->NewObjectA(jenv, JPy_Double_JClass, JPy_Double_Init_MID, &value);
         return 0;
     } else if (type == JPy_JString) {
         if (!PyUnicode_Check(pyArg)) {
             goto error;
         }
-        if (JPy_ConvertPythonToJavaString(jenv, pyArg, objectRef) < 0) {
+        if (JPy_AsJString(jenv, pyArg, objectRef) < 0) {
             goto error;
         }
         return 0;
     }
 error:
-    PyErr_SetString(PyExc_RuntimeError, "failed to convert Python to Java object");
+    PyErr_SetString(PyExc_RuntimeError, "failed to convert Python object to Java object");
     return -1;
 }
 
@@ -666,31 +666,34 @@ int JType_AddFieldAttribute(JNIEnv* jenv, JPy_JType* declaringClass, PyObject* f
 
     if (fieldType == JPy_JBoolean) {
         jboolean item = (*jenv)->GetStaticBooleanField(jenv, declaringClass->classRef, fid);
-        fieldValue = PyBool_FromLong(item);
+        fieldValue = JPy_FROM_JBOOLEAN(item);
     } else if (fieldType == JPy_JChar) {
         jchar item = (*jenv)->GetStaticCharField(jenv, declaringClass->classRef, fid);
-        fieldValue = PyLong_FromLong(item);
+        fieldValue = JPy_FROM_JCHAR(item);
     } else if (fieldType == JPy_JByte) {
         jbyte item = (*jenv)->GetStaticByteField(jenv, declaringClass->classRef, fid);
-        fieldValue = PyLong_FromLong(item);
+        fieldValue = JPy_FROM_JBYTE(item);
     } else if (fieldType == JPy_JShort) {
         jshort item = (*jenv)->GetStaticShortField(jenv, declaringClass->classRef, fid);
-        fieldValue = PyLong_FromLong(item);
+        fieldValue = JPy_FROM_JSHORT(item);
     } else if (fieldType == JPy_JInt) {
         jint item = (*jenv)->GetStaticIntField(jenv, declaringClass->classRef, fid);
-        fieldValue = PyLong_FromLong(item);
+        fieldValue = JPy_FROM_JINT(item);
     } else if (fieldType == JPy_JLong) {
         jlong item = (*jenv)->GetStaticLongField(jenv, declaringClass->classRef, fid);
-        fieldValue = PyLong_FromLongLong(item);
+        fieldValue = JPy_FROM_JLONG(item);
     } else if (fieldType == JPy_JFloat) {
         jfloat item = (*jenv)->GetStaticFloatField(jenv, declaringClass->classRef, fid);
-        fieldValue = PyFloat_FromDouble(item);
+        fieldValue = JPy_FROM_JFLOAT(item);
     } else if (fieldType == JPy_JDouble) {
         jdouble item = (*jenv)->GetStaticDoubleField(jenv, declaringClass->classRef, fid);
-        fieldValue = PyFloat_FromDouble(item);
+        fieldValue = JPy_FROM_JDOUBLE(item);
+    } else if (fieldType == JPy_JString) {
+        jobject objectRef = (*jenv)->GetStaticObjectField(jenv, declaringClass->classRef, fid);
+        fieldValue = JPy_FromJString(jenv, objectRef);
     } else {
         jobject objectRef = (*jenv)->GetStaticObjectField(jenv, declaringClass->classRef, fid);
-        fieldValue = JType_ConvertJavaToPythonObject(jenv, (JPy_JType*) fieldType, objectRef);
+        fieldValue = JPy_FromJObjectWithType(jenv, objectRef, (JPy_JType*) fieldType);
     }
     PyDict_SetItem(typeDict, fieldName, fieldValue);
     return 0;
@@ -854,121 +857,121 @@ JPy_ParamDescriptor* JType_CreateParamDescriptors(JNIEnv* jenv, int paramCount, 
     return paramDescriptors;
 }
 
-int JType_AssessToJBoolean(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* arg)
+int JType_AssessToJBoolean(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
-    if (PyBool_Check(arg)) return 100;
-    else if (PyLong_Check(arg)) return 10;
+    if (PyBool_Check(pyArg)) return 100;
+    else if (PyLong_Check(pyArg)) return 10;
     else return 0;
 }
 
-int JType_ConvertToJBoolean(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* arg, jvalue* value, JPy_ArgDisposer* disposer)
+int JType_ConvertToJBoolean(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg, jvalue* value, JPy_ArgDisposer* disposer)
 {
-    value->z = (jboolean) (PyLong_AsLong(arg) != 0);
+    value->z = JPy_AS_JBOOLEAN(pyArg);
     return 0;
 }
 
-int JType_AssessToJByte(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* arg)
+int JType_AssessToJByte(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
-    if (PyLong_Check(arg)) return 100;
-    else if (PyBool_Check(arg)) return 10;
+    if (PyLong_Check(pyArg)) return 100;
+    else if (PyBool_Check(pyArg)) return 10;
     else return 0;
 }
 
-int JType_ConvertToJByte(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* arg, jvalue* value, JPy_ArgDisposer* disposer)
+int JType_ConvertToJByte(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg, jvalue* value, JPy_ArgDisposer* disposer)
 {
-    value->b = (jbyte) PyLong_AsLong(arg);
+    value->b = JPy_AS_JBYTE(pyArg);
     return 0;
 }
 
-int JType_AssessToJChar(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* arg)
+int JType_AssessToJChar(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
-    if (PyLong_Check(arg)) return 100;
-    else if (PyBool_Check(arg)) return 10;
+    if (PyLong_Check(pyArg)) return 100;
+    else if (PyBool_Check(pyArg)) return 10;
     else return 0;
 }
 
-int JType_ConvertToJChar(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* arg, jvalue* value, JPy_ArgDisposer* disposer)
+int JType_ConvertToJChar(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg, jvalue* value, JPy_ArgDisposer* disposer)
 {
-    value->c = (jchar) PyLong_AsLong(arg);
+    value->c = JPy_AS_JCHAR(pyArg);
     return 0;
 }
 
-int JType_AssessToJShort(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* arg)
+int JType_AssessToJShort(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
-    if (PyLong_Check(arg)) return 100;
-    else if (PyBool_Check(arg)) return 10;
+    if (PyLong_Check(pyArg)) return 100;
+    else if (PyBool_Check(pyArg)) return 10;
     else return 0;
 }
 
-int JType_ConvertToJShort(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* arg, jvalue* value, JPy_ArgDisposer* disposer)
+int JType_ConvertToJShort(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg, jvalue* value, JPy_ArgDisposer* disposer)
 {
-    value->s = (jshort) PyLong_AsLong(arg);
+    value->s = JPy_AS_JSHORT(pyArg);
     return 0;
 }
 
-int JType_AssessToJInt(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* arg)
+int JType_AssessToJInt(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
-    if (PyLong_Check(arg)) return 100;
-    else if (PyBool_Check(arg)) return 10;
+    if (PyLong_Check(pyArg)) return 100;
+    else if (PyBool_Check(pyArg)) return 10;
     else return 0;
 }
 
-int JType_ConvertToJInt(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* arg, jvalue* value, JPy_ArgDisposer* disposer)
+int JType_ConvertToJInt(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg, jvalue* value, JPy_ArgDisposer* disposer)
 {
-    value->i = (jint) PyLong_AsLong(arg);
+    value->i = JPy_AS_JINT(pyArg);
     return 0;
 }
 
-int JType_AssessToJLong(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* arg)
+int JType_AssessToJLong(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
-    if (PyLong_Check(arg)) return 100;
-    else if (PyBool_Check(arg)) return 10;
+    if (PyLong_Check(pyArg)) return 100;
+    else if (PyBool_Check(pyArg)) return 10;
     else return 0;
 }
 
-int JType_ConvertToJLong(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* arg, jvalue* value, JPy_ArgDisposer* disposer)
+int JType_ConvertToJLong(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg, jvalue* value, JPy_ArgDisposer* disposer)
 {
-    value->j = (jlong) PyLong_AsLongLong(arg);
+    value->j = JPy_AS_JLONG(pyArg);
     return 0;
 }
 
-int JType_AssessToJFloat(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* arg)
+int JType_AssessToJFloat(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
-    if (PyFloat_Check(arg)) return 90; // not 100, in order to give 'double' a chance
-    else if (PyNumber_Check(arg)) return 50;
-    else if (PyLong_Check(arg)) return 10;
-    else if (PyBool_Check(arg)) return 1;
+    if (PyFloat_Check(pyArg)) return 90; // not 100, in order to give 'double' a chance
+    else if (PyNumber_Check(pyArg)) return 50;
+    else if (PyLong_Check(pyArg)) return 10;
+    else if (PyBool_Check(pyArg)) return 1;
     else return 0;
 }
 
-int JType_ConvertToJFloat(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* arg, jvalue* value, JPy_ArgDisposer* disposer)
+int JType_ConvertToJFloat(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg, jvalue* value, JPy_ArgDisposer* disposer)
 {
-    value->f = (jfloat) PyFloat_AsDouble(arg);
+    value->f = JPy_AS_JFLOAT(pyArg);
     return 0;
 }
 
-int JType_AssessToJDouble(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* arg)
+int JType_AssessToJDouble(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
-    if (PyFloat_Check(arg)) return 100;
-    else if (PyNumber_Check(arg)) return 50;
-    else if (PyLong_Check(arg)) return 10;
-    else if (PyBool_Check(arg)) return 1;
+    if (PyFloat_Check(pyArg)) return 100;
+    else if (PyNumber_Check(pyArg)) return 50;
+    else if (PyLong_Check(pyArg)) return 10;
+    else if (PyBool_Check(pyArg)) return 1;
     else return 0;
 }
 
-int JType_ConvertToJDouble(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* arg, jvalue* value, JPy_ArgDisposer* disposer)
+int JType_ConvertToJDouble(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg, jvalue* value, JPy_ArgDisposer* disposer)
 {
-    value->d = (jdouble) PyFloat_AsDouble(arg);
+    value->d = JPy_AS_JDOUBLE(pyArg);
     return 0;
 }
 
-int JType_AssessToJString(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* arg)
+int JType_AssessToJString(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
-    if (arg == Py_None) {
+    if (pyArg == Py_None) {
         // Signal it is possible, but give low priority since we cannot perform any type checks on 'None'
         return 1;
     }
-    if (PyUnicode_Check(arg)) {
+    if (PyUnicode_Check(pyArg)) {
         return 100;
     }
     return 0;
@@ -982,14 +985,14 @@ int JType_DisposeLocalObjectRef(JNIEnv* jenv, jvalue* value, void* data)
     return 0;
 }
 
-int JType_ConvertToJString(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* arg, jvalue* value, JPy_ArgDisposer* disposer)
+int JType_ConvertToJString(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg, jvalue* value, JPy_ArgDisposer* disposer)
 {
     disposer->data = NULL;
     disposer->disposeArg = JType_DisposeLocalObjectRef;
-    return JPy_ConvertPythonToJavaString(jenv, arg, &value->l);
+    return JPy_AsJString(jenv, pyArg, &value->l);
 }
 
-int JType_AssessToJObject(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* arg)
+int JType_AssessToJObject(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
     JPy_JType* paramType;
     JPy_JType* argType;
@@ -997,7 +1000,7 @@ int JType_AssessToJObject(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, Py
     JPy_JType* argComponentType;
     JPy_JObj* argValue;
 
-    if (arg == Py_None) {
+    if (pyArg == Py_None) {
         // Signal it is possible, but give low priority since we cannot perform any type checks on 'None'
         return 1;
     }
@@ -1005,11 +1008,11 @@ int JType_AssessToJObject(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, Py
     paramType = paramDescriptor->type;
     paramComponentType = paramType->componentType;
 
-    if (!JObj_Check(arg)) {
-        if (paramComponentType != NULL && paramComponentType->isPrimitive && PyObject_CheckBuffer(arg)) {
+    if (!JObj_Check(pyArg)) {
+        if (paramComponentType != NULL && paramComponentType->isPrimitive && PyObject_CheckBuffer(pyArg)) {
             Py_buffer view;
 
-            if (PyObject_GetBuffer(arg, &view, PyBUF_FORMAT) == 0) {
+            if (PyObject_GetBuffer(pyArg, &view, PyBUF_FORMAT) == 0) {
                 JPy_JType* type;
                 int matchValue;
 
@@ -1063,12 +1066,12 @@ int JType_AssessToJObject(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, Py
         return 0;
     }
 
-    argType = (JPy_JType*) Py_TYPE(arg);
+    argType = (JPy_JType*) Py_TYPE(pyArg);
     if (argType == paramType) {
         return 100;
     }
 
-    argValue = (JPy_JObj*) arg;
+    argValue = (JPy_JObj*) pyArg;
     if ((*jenv)->IsInstanceOf(jenv, argValue->objectRef, paramType->classRef)) {
         argComponentType = argType->componentType;
         if (argComponentType == paramComponentType) {
@@ -1124,19 +1127,19 @@ int JType_DisposeWritableBuffer(JNIEnv* jenv, jvalue* value, void* data)
 }
 
 
-int JType_ConvertToJObject(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* arg, jvalue* value, JPy_ArgDisposer* disposer)
+int JType_ConvertToJObject(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg, jvalue* value, JPy_ArgDisposer* disposer)
 {
     JPy_JType* paramType;
     JPy_JType* componentType;
 
-    if (arg == Py_None) {
+    if (pyArg == Py_None) {
         value->l = NULL;
         return 0;
     }
 
     paramType = paramDescriptor->type;
     componentType = paramType->componentType;
-    if (componentType != NULL && componentType->isPrimitive && PyObject_CheckBuffer(arg)) {
+    if (componentType != NULL && componentType->isPrimitive && PyObject_CheckBuffer(pyArg)) {
         Py_buffer* view;
         int flags;
         Py_ssize_t itemCount;
@@ -1152,7 +1155,7 @@ int JType_ConvertToJObject(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, P
         }
 
         flags = paramDescriptor->isMutable ? PyBUF_WRITABLE : PyBUF_SIMPLE;
-        if (PyObject_GetBuffer(arg, view, flags) < 0) {
+        if (PyObject_GetBuffer(pyArg, view, flags) < 0) {
             PyMem_Del(view);
             return -1;
         }
@@ -1226,7 +1229,7 @@ int JType_ConvertToJObject(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, P
         disposer->data = view;
         disposer->disposeArg = paramDescriptor->isMutable ? JType_DisposeWritableBuffer : JType_DisposeReadOnlyBuffer;
     } else {
-        JPy_JObj* obj = (JPy_JObj*) arg;
+        JPy_JObj* obj = (JPy_JObj*) pyArg;
         value->l = obj->objectRef;
         disposer->data = NULL;
         disposer->disposeArg = NULL;

@@ -249,23 +249,27 @@ PyObject* JObj_repr(JPy_JObj* self)
 }
 
 /**
- * The JObj type's tp_str slot. Python: str(obj)
+ * The JObj type's tp_str slot. Calls Object.toString() on Java Objects. Python: str(obj)
  */
 PyObject* JObj_str(JPy_JObj* self)
 {
     JNIEnv* jenv;
+    jstring stringRef;
+    PyObject* returnValue;
+
     JPy_GET_JNI_ENV_OR_RETURN(jenv, NULL)
-    return JPy_ConvertJavaToStringToPythonString(jenv, self->objectRef);
+
+    if (self->objectRef == NULL) {
+        return Py_BuildValue("");
+    }
+
+    stringRef = (*jenv)->CallObjectMethod(jenv, self->objectRef, JPy_Object_ToString_MID);
+    returnValue = JPy_FromJString(jenv, stringRef);
+    (*jenv)->DeleteLocalRef(jenv, stringRef);
+
+    return returnValue;
 }
 
-#define TO_JBOOLEAN(pyItem)  (jboolean)(pyItem == Py_True ? 1 : (pyItem == Py_False || pyItem == Py_None) ? 0 : PyLong_AsLong(pyItem) != 0)
-#define TO_JBYTE(pyItem)     (jbyte)(pyItem == Py_None ? 0 : PyLong_AsLong(pyItem))
-#define TO_JCHAR(pyItem)     (jchar)(pyItem == Py_None ? 0 : PyLong_AsLong(pyItem))
-#define TO_JSHORT(pyItem)    (jshort)(pyItem == Py_None ? 0 : PyLong_AsLong(pyItem))
-#define TO_JINT(pyItem)      (jint)(pyItem == Py_None ? 0 : PyLong_AsLong(pyItem))
-#define TO_JLONG(pyItem)     (jlong)(pyItem == Py_None ? 0 : PyLong_AsLongLong(pyItem))
-#define TO_JFLOAT(pyItem)    (jfloat)(pyItem == Py_None ? 0 : PyFloat_AsDouble(pyItem))
-#define TO_JDOUBLE(pyItem)   (jdouble)(pyItem == Py_None ? 0 : PyFloat_AsDouble(pyItem))
 
 /**
  * The JObj type's tp_setattro slot.
@@ -288,32 +292,32 @@ int JObj_setattro(JPy_JObj* self, PyObject* name, PyObject* value)
         JPy_GET_JNI_ENV_OR_RETURN(jenv, -1)
 
         if (type == JPy_JBoolean) {
-            jboolean item = TO_JBOOLEAN(value);
+            jboolean item = JPy_AS_JBOOLEAN(value);
             (*jenv)->SetBooleanField(jenv, self->objectRef, field->fid, item);
-        } else if (type == JPy_JByte) {
-            jbyte item = TO_JBYTE(value);
-            (*jenv)->SetByteField(jenv, self->objectRef, field->fid, item);
         } else if (type == JPy_JChar) {
-            jchar item = TO_JCHAR(value);
+            jchar item = JPy_AS_JCHAR(value);
             (*jenv)->SetCharField(jenv, self->objectRef, field->fid, item);
+        } else if (type == JPy_JByte) {
+            jbyte item = JPy_AS_JBYTE(value);
+            (*jenv)->SetByteField(jenv, self->objectRef, field->fid, item);
         } else if (type == JPy_JShort) {
-            jshort item = TO_JSHORT(value);
+            jshort item = JPy_AS_JSHORT(value);
             (*jenv)->SetShortField(jenv, self->objectRef, field->fid, item);
         } else if (type == JPy_JInt) {
-            jint item = TO_JINT(value);
+            jint item = JPy_AS_JINT(value);
             (*jenv)->SetIntField(jenv, self->objectRef, field->fid, item);
         } else if (type == JPy_JLong) {
-            jlong item = TO_JLONG(value);
+            jlong item = JPy_AS_JLONG(value);
             (*jenv)->SetLongField(jenv, self->objectRef, field->fid, item);
         } else if (type == JPy_JFloat) {
-            jfloat item = TO_JFLOAT(value);
+            jfloat item = JPy_AS_JFLOAT(value);
             (*jenv)->SetFloatField(jenv, self->objectRef, field->fid, item);
         } else if (type == JPy_JDouble) {
-            jdouble item = TO_JDOUBLE(value);
+            jdouble item = JPy_AS_JDOUBLE(value);
             (*jenv)->SetDoubleField(jenv, self->objectRef, field->fid, item);
         } else {
             jobject objectRef;
-            if (JType_ConvertPythonToJavaObject(jenv, field->type, value, &objectRef) < 0) {
+            if (JPy_AsJObjectWithType(jenv, value, &objectRef, field->type) < 0) {
                 return -1;
             }
             (*jenv)->SetObjectField(jenv, self->objectRef, field->fid, objectRef);
@@ -359,31 +363,31 @@ PyObject* JObj_getattro(JPy_JObj* self, PyObject* name)
 
         if (type == JPy_JBoolean) {
             jboolean item = (*jenv)->GetBooleanField(jenv, self->objectRef, field->fid);
-            if (item) { Py_RETURN_TRUE; } else { Py_RETURN_FALSE; }
+            return JPy_FROM_JBOOLEAN(item);
         } else if (type == JPy_JChar) {
             jchar item = (*jenv)->GetCharField(jenv, self->objectRef, field->fid);
-            return PyLong_FromLong(item);
+            return JPy_FROM_JCHAR(item);
         } else if (type == JPy_JByte) {
             jbyte item = (*jenv)->GetByteField(jenv, self->objectRef, field->fid);
-            return PyLong_FromLong(item);
+            return JPy_FROM_JBYTE(item);
         } else if (type == JPy_JShort) {
             jshort item = (*jenv)->GetShortField(jenv, self->objectRef, field->fid);
-            return PyLong_FromLong(item);
+            return JPy_FROM_JSHORT(item);
         } else if (type == JPy_JInt) {
             jint item = (*jenv)->GetIntField(jenv, self->objectRef, field->fid);
-            return PyLong_FromLong(item);
+            return JPy_FROM_JINT(item);
         } else if (type == JPy_JLong) {
             jlong item = (*jenv)->GetLongField(jenv, self->objectRef, field->fid);
-            return PyLong_FromLongLong(item);
+            return JPy_FROM_JLONG(item);
         } else if (type == JPy_JFloat) {
             jfloat item = (*jenv)->GetFloatField(jenv, self->objectRef, field->fid);
-            return PyFloat_FromDouble(item);
+            return JPy_FROM_JFLOAT(item);
         } else if (type == JPy_JDouble) {
             jdouble item = (*jenv)->GetDoubleField(jenv, self->objectRef, field->fid);
-            return PyFloat_FromDouble(item);
+            return JPy_FROM_JDOUBLE(item);
         } else {
             jobject objectRef = (*jenv)->GetObjectField(jenv, self->objectRef, field->fid);
-            return JType_ConvertJavaToPythonObject(jenv, field->type, objectRef);
+            return JPy_FromJObjectWithType(jenv, objectRef, field->type);
         }
     } else {
         //printf("JObj_getattro: passing through\n");
@@ -439,35 +443,35 @@ PyObject* JObj_sq_item(JPy_JObj* self, Py_ssize_t index)
     if (componentType == JPy_JBoolean) {
         jboolean item;
         (*jenv)->GetBooleanArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
-        if (item) { Py_RETURN_TRUE; } else { Py_RETURN_FALSE; }
+        return JPy_FROM_JBOOLEAN(item);
     } else if (componentType == JPy_JChar) {
         jchar item;
         (*jenv)->GetCharArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
-        return PyLong_FromLong(item);
+        return JPy_FROM_JCHAR(item);
     } else if (componentType == JPy_JByte) {
         jbyte item;
         (*jenv)->GetByteArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
-        return PyLong_FromLong(item);
+        return JPy_FROM_JBYTE(item);
     } else if (componentType == JPy_JShort) {
         jshort item;
         (*jenv)->GetShortArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
-        return PyLong_FromLong(item);
+        return JPy_FROM_JSHORT(item);
     } else if (componentType == JPy_JInt) {
         jint item;
         (*jenv)->GetIntArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
-        return PyLong_FromLong(item);
+        return JPy_FROM_JINT(item);
     } else if (componentType == JPy_JLong) {
         jlong item;
         (*jenv)->GetLongArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
-        return PyLong_FromLongLong(item);
+        return JPy_FROM_JLONG(item);
     } else if (componentType == JPy_JFloat) {
         jfloat item;
         (*jenv)->GetFloatArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
-        return PyFloat_FromDouble(item);
+        return JPy_FROM_JFLOAT(item);
     } else if (componentType == JPy_JDouble) {
         jdouble item;
         (*jenv)->GetDoubleArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
-        return PyFloat_FromDouble(item);
+        return JPy_FROM_JDOUBLE(item);
     } else {
         jobject objectRef = (*jenv)->GetObjectArrayElement(jenv, self->objectRef, (jsize) index);
         if ((*jenv)->ExceptionCheck(jenv)) {
@@ -476,7 +480,7 @@ PyObject* JObj_sq_item(JPy_JObj* self, Py_ssize_t index)
             PyErr_SetString(PyExc_RuntimeError, "index error");
             return NULL;
         }
-        return JType_ConvertJavaToPythonObject(jenv, type->componentType, objectRef);
+        return JPy_FromJObjectWithType(jenv, objectRef, type->componentType);
     }
 }
 
@@ -502,31 +506,31 @@ int JObj_sq_ass_item(JPy_JObj* self, Py_ssize_t index, PyObject* pyItem)
 
     // todo - the following item assignments are not value range checked
     if (componentType == JPy_JBoolean) {
-        jboolean item = TO_JBOOLEAN(pyItem);
+        jboolean item = JPy_AS_JBOOLEAN(pyItem);
         (*jenv)->SetBooleanArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
-    } else if (componentType == JPy_JByte) {
-        jbyte item = TO_JBYTE(pyItem);
-        (*jenv)->SetByteArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
     } else if (componentType == JPy_JChar) {
-        jchar item = TO_JCHAR(pyItem);
+        jchar item = JPy_AS_JCHAR(pyItem);
         (*jenv)->SetCharArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+    } else if (componentType == JPy_JByte) {
+        jbyte item = JPy_AS_JBYTE(pyItem);
+        (*jenv)->SetByteArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
     } else if (componentType == JPy_JShort) {
-        jshort item = TO_JSHORT(pyItem);
+        jshort item = JPy_AS_JSHORT(pyItem);
         (*jenv)->SetShortArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
     } else if (componentType == JPy_JInt) {
-        jint item = TO_JINT(pyItem);
+        jint item = JPy_AS_JINT(pyItem);
         (*jenv)->SetIntArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
     } else if (componentType == JPy_JLong) {
-        jlong item = TO_JLONG(pyItem);
+        jlong item = JPy_AS_JLONG(pyItem);
         (*jenv)->SetLongArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
     } else if (componentType == JPy_JFloat) {
-        jfloat item = TO_JFLOAT(pyItem);
+        jfloat item = JPy_AS_JFLOAT(pyItem);
         (*jenv)->SetFloatArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
     } else if (componentType == JPy_JDouble) {
-        jdouble item = TO_JDOUBLE(pyItem);
+        jdouble item = JPy_AS_JDOUBLE(pyItem);
         (*jenv)->SetDoubleArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
     } else {
-        if (JType_ConvertPythonToJavaObject(jenv, type->componentType, pyItem, &elementRef) < 0) {
+        if (JPy_AsJObjectWithType(jenv, pyItem, &elementRef, type->componentType) < 0) {
             return -1;
         }
         (*jenv)->SetObjectArrayElement(jenv, self->objectRef, (jsize) index, elementRef);

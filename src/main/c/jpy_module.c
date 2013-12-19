@@ -664,7 +664,6 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     DEFINE_METHOD(JPy_Method_GetParameterTypes_MID, JPy_Method_JClass, "getParameterTypes", "()[Ljava/lang/Class;");
     DEFINE_METHOD(JPy_Method_GetReturnType_MID, JPy_Method_JClass, "getReturnType", "()Ljava/lang/Class;");
 
-    // java.lang.Boolean
     DEFINE_CLASS(JPy_Boolean_JClass, "java/lang/Boolean");
     DEFINE_METHOD(JPy_Boolean_Init_MID, JPy_Boolean_JClass, "<init>", "(Z)V");
     DEFINE_METHOD(JPy_Boolean_BooleanValue_MID, JPy_Boolean_JClass, "booleanValue", "()Z");
@@ -691,15 +690,16 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     DEFINE_CLASS(JPy_Double_JClass, "java/lang/Double");
     DEFINE_METHOD(JPy_Double_Init_MID, JPy_Double_JClass, "<init>", "(D)V");
 
-    // java.lang.Number
     DEFINE_CLASS(JPy_Number_JClass, "java/lang/Number");
     DEFINE_METHOD(JPy_Number_IntValue_MID, JPy_Number_JClass, "intValue", "()I");
     DEFINE_METHOD(JPy_Number_LongValue_MID , JPy_Number_JClass, "longValue", "()J");
     DEFINE_METHOD(JPy_Number_DoubleValue_MID, JPy_Number_JClass, "doubleValue", "()D");
 
     DEFINE_CLASS(JPy_Void_JClass, "java/lang/Void");
+
     DEFINE_CLASS(JPy_String_JClass, "java/lang/String");
 
+    // Non-Object types: Primitive types and void.
     DEFINE_NON_OBJECT_TYPE(JPy_JBoolean, JPy_Boolean_JClass);
     DEFINE_NON_OBJECT_TYPE(JPy_JChar, JPy_Character_JClass);
     DEFINE_NON_OBJECT_TYPE(JPy_JByte, JPy_Byte_JClass);
@@ -709,7 +709,7 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     DEFINE_NON_OBJECT_TYPE(JPy_JFloat, JPy_Float_JClass);
     DEFINE_NON_OBJECT_TYPE(JPy_JDouble, JPy_Double_JClass);
     DEFINE_NON_OBJECT_TYPE(JPy_JVoid, JPy_Void_JClass);
-
+    // Primitive-Wrapper Objects.
     DEFINE_OBJECT_TYPE(JPy_JBooleanObj, JPy_Boolean_JClass);
     DEFINE_OBJECT_TYPE(JPy_JCharacterObj, JPy_Character_JClass);
     DEFINE_OBJECT_TYPE(JPy_JByteObj, JPy_Byte_JClass);
@@ -718,6 +718,7 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     DEFINE_OBJECT_TYPE(JPy_JLongObj, JPy_Long_JClass);
     DEFINE_OBJECT_TYPE(JPy_JFloatObj, JPy_Float_JClass);
     DEFINE_OBJECT_TYPE(JPy_JDoubleObj, JPy_Double_JClass);
+    // String Object.
     DEFINE_OBJECT_TYPE(JPy_JString, JPy_String_JClass);
 
     return 0;

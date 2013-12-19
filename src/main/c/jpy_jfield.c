@@ -40,113 +40,10 @@ void JField_Del(JPy_JField* field)
     JField_dealloc(field);
 }
 
-/*
-PyObject* JMethod_GetField(JNIEnv* jenv, JPy_JField* field)
-{
-    jvalue* jArgs;
-    JPy_ArgDisposer* jDisposers;
-    PyObject* returnValue;
-    PyTypeObject* returnType;
 
-    //printf("JMethod_InvokeMethod 1: typeCode=%c\n", typeCode);
-    if (JMethod_CreateJArgs(jenv, method, argTuple, &jArgs, &jDisposers) < 0) {
-        return NULL;
-    }
-
-    //printf("JMethod_InvokeMethod 2: typeCode=%c\n", typeCode);
-
-    returnType = (PyTypeObject*) method->returnDescriptor->type;
-
-    if (method->isStatic) {
-        jclass classRef = type->classRef;
-
-        if (returnType == JPy_JVoid) {
-            (*jenv)->CallStaticVoidMethodA(jenv, classRef, method->mid, jArgs);
-            returnValue = Py_BuildValue("");
-        } else if (returnType == JPy_JBoolean) {
-            jboolean v = (*jenv)->CallStaticBooleanMethodA(jenv, classRef, method->mid, jArgs);
-            returnValue = PyBool_FromLong(v);
-        } else if (returnType == JPy_JChar) {
-            jchar v = (*jenv)->CallStaticCharMethodA(jenv, classRef, method->mid, jArgs);
-            returnValue = Py_BuildValue("C", v);
-        } else if (returnType == JPy_JByte) {
-            jbyte v = (*jenv)->CallStaticByteMethodA(jenv, classRef, method->mid, jArgs);
-            returnValue = PyLong_FromLong(v);
-        } else if (returnType == JPy_JShort) {
-            jshort v = (*jenv)->CallStaticShortMethodA(jenv, classRef, method->mid, jArgs);
-            returnValue = PyLong_FromLong(v);
-        } else if (returnType == JPy_JInt) {
-            jint v = (*jenv)->CallStaticIntMethodA(jenv, classRef, method->mid, jArgs);
-            returnValue = PyLong_FromLong(v);
-        } else if (returnType == JPy_JLong) {
-            jlong v = (*jenv)->CallStaticIntMethodA(jenv, classRef, method->mid, jArgs);
-            returnValue = PyLong_FromLongLong(v);
-        } else if (returnType == JPy_JFloat) {
-            jfloat v = (*jenv)->CallStaticFloatMethodA(jenv, classRef, method->mid, jArgs);
-            returnValue = PyFloat_FromDouble(v);
-        } else if (returnType == JPy_JDouble) {
-            jdouble v = (*jenv)->CallStaticDoubleMethodA(jenv, classRef, method->mid, jArgs);
-            returnValue = PyFloat_FromDouble(v);
-        } else if (returnType == JPy_JString) {
-            jstring v = (*jenv)->CallStaticObjectMethodA(jenv, classRef, method->mid, jArgs);
-            returnValue = JPy_FromJString(jenv, (JPy_JType*) returnType, v);
-        } else {
-            jobject v = (*jenv)->CallStaticObjectMethodA(jenv, classRef, method->mid, jArgs);
-            returnValue = JPy_FromJObject(jenv, (JPy_JType*) returnType, v);
-        }
-
-    } else {
-        jobject objectRef;
-        PyObject* self;
-
-        self = PyTuple_GetItem(argTuple, 0);
-        // Note it is already ensured that self is a JPy_JObj*
-        objectRef = ((JPy_JObj*) self)->objectRef;
-
-        if (returnType == JPy_JVoid) {
-            (*jenv)->CallVoidMethodA(jenv, objectRef, method->mid, jArgs);
-            returnValue = Py_BuildValue("");
-        } else if (returnType == JPy_JBoolean) {
-            jboolean v = (*jenv)->CallBooleanMethodA(jenv, objectRef, method->mid, jArgs);
-            returnValue = PyBool_FromLong(v);
-        } else if (returnType == JPy_JChar) {
-            jchar v = (*jenv)->CallCharMethodA(jenv, objectRef, method->mid, jArgs);
-            returnValue = Py_BuildValue("c", v);
-        } else if (returnType == JPy_JByte) {
-            jbyte v = (*jenv)->CallByteMethodA(jenv, objectRef, method->mid, jArgs);
-            returnValue = PyLong_FromLong(v);
-        } else if (returnType == JPy_JShort) {
-            jshort v = (*jenv)->CallShortMethodA(jenv, objectRef, method->mid, jArgs);
-            returnValue = PyLong_FromLong(v);
-        } else if (returnType == JPy_JInt) {
-            jint v = (*jenv)->CallIntMethodA(jenv, objectRef, method->mid, jArgs);
-            returnValue = PyLong_FromLong(v);
-        } else if (returnType == JPy_JLong) {
-            jlong v = (*jenv)->CallIntMethodA(jenv, objectRef, method->mid, jArgs);
-            returnValue = PyLong_FromLongLong(v);
-        } else if (returnType == JPy_JFloat) {
-            jfloat v = (*jenv)->CallFloatMethodA(jenv, objectRef, method->mid, jArgs);
-            returnValue = PyFloat_FromDouble(v);
-        } else if (returnType == JPy_JDouble) {
-            jdouble v = (*jenv)->CallDoubleMethodA(jenv, objectRef, method->mid, jArgs);
-            returnValue = PyFloat_FromDouble(v);
-        } else if (returnType == JPy_JString) {
-            jstring v = (*jenv)->CallObjectMethodA(jenv, objectRef, method->mid, jArgs);
-            returnValue = JPy_FromJString(jenv, (JPy_JType*) returnType, v);
-        } else {
-            jobject v = (*jenv)->CallObjectMethodA(jenv, objectRef, method->mid, jArgs);
-            returnValue = JPy_FromJObject(jenv, (JPy_JType*) returnType, v);
-        }
-    }
-
-    if (jArgs != NULL) {
-        JMethod_DisposeJArgs(method->paramCount, jArgs, jDisposers);
-    }
-
-    return returnValue;
-}
-*/
-
+/**
+ * The JField type's tp_repr slot.
+ */
 PyObject* JField_repr(JPy_JField* self)
 {
     const char* name = PyUnicode_AsUTF8(self->name);
@@ -158,6 +55,9 @@ PyObject* JField_repr(JPy_JField* self)
                                 self->fid);
 }
 
+/**
+ * The JField type's tp_str slot.
+ */
 PyObject* JField_str(JPy_JField* self)
 {
     Py_INCREF(self->name);

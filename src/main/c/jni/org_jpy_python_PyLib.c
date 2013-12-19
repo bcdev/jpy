@@ -138,7 +138,7 @@ JNIEXPORT jstring JNICALL Java_org_jpy_python_PyLib_getStringValue
 
     pyObject = (PyObject*) objId;
 
-    if (JPy_ConvertPythonToJavaString(jenv, pyObject, &jString) < 0) {
+    if (JPy_AsJString(jenv, pyObject, &jString) < 0) {
         // todo: create exception
         printf("Java_org_jpy_python_PyLib_getStringValue: error: failed to convert Python object to Java String\n");
         return NULL;
@@ -163,7 +163,7 @@ JNIEXPORT jobject JNICALL Java_org_jpy_python_PyLib_getObjectValue
     if (JObj_Check(pyObject)) {
         jObject = ((JPy_JObj*) pyObject)->objectRef;
     } else {
-        if (JPy_ConvertPythonToJavaObject(jenv, pyObject, &jObject) < 0) {
+        if (JPy_AsJObject(jenv, pyObject, &jObject) < 0) {
             // todo: create exception
             printf("Java_org_jpy_python_PyLib_getObjectValue: error: failed to convert Python object to Java Object\n");
             return NULL;
@@ -251,30 +251,16 @@ JNIEXPORT void JNICALL Java_org_jpy_python_PyLib_setAttributeValue
     nameChars = (*jenv)->GetStringUTFChars(jenv, jName, NULL);
     printf("Java_org_jpy_python_PyLib_setAttributeValue: objId=%p, name='%s', jValue=%p, jValueClass=%p\n", pyObject, nameChars, jValue, jValueClass);
 
-    if (jValue != NULL && jValueClass == NULL) {
-        jValueClass = (*jenv)->GetObjectClass(jenv, jValue);
+    if (valueType != NULL) {
+        pyValue = JPy_FromJObjectWithType(jenv, jValue, valueType);
+    } else {
+        pyValue = JPy_FromJObject(jenv, jValue);
     }
 
-    if (jValueClass != NULL) {
-        valueType = JType_GetType(jenv, jValueClass, JNI_FALSE);
-        if (valueType == NULL) {
-            // todo: create exception
-            printf("Java_org_jpy_python_PyLib_setAttributeValue: error: no type found for attribute '%s'\n", nameChars);
-            goto error;
-        }
-    } else {
-        valueType = NULL;
-    }
-
-    if (jValue != NULL && valueType != NULL) {
-        pyValue = JType_ConvertJavaToPythonObject(jenv, valueType, jValue);
-        if (pyValue == NULL) {
-            // todo: create exception
-            printf("Java_org_jpy_python_PyLib_setAttributeValue: error: attribute '%s': Java object not convertible\n", nameChars);
-            goto error;
-        }
-    } else {
-        pyValue = Py_BuildValue("");
+    if (pyValue == NULL) {
+        // todo: create exception
+        printf("Java_org_jpy_python_PyLib_setAttributeValue: error: attribute '%s': Java object not convertible\n", nameChars);
+        goto error;
     }
 
     if (PyObject_SetAttrString(pyObject, nameChars, pyValue) < 0) {
@@ -339,20 +325,24 @@ JNIEXPORT jlong JNICALL Java_org_jpy_python_PyLib_call
         if (jParamClasses != NULL) {
             jParamClass = (*jenv)->GetObjectArrayElement(jenv, jParamClasses, i);
         } else {
-            jParamClass = (*jenv)->GetObjectClass(jenv, jArg);
+            jParamClass = NULL;
         }
 
-        paramType = JType_GetType(jenv, jParamClass, JNI_FALSE);
-        if (paramType == NULL) {
-            // todo: create exception
-            printf("Java_org_jpy_python_PyLib_call: error: callable '%s': argument %d: no type found\n", nameChars, i);
-            goto error;
+        if (jParamClass != NULL) {
+            paramType = JType_GetType(jenv, jParamClass, JNI_FALSE);
+            if (paramType == NULL) {
+                // todo: create exception
+                printf("Java_org_jpy_python_PyLib_call: error: callable '%s': argument %d: failed to retrieve type\n", nameChars, i);
+                goto error;
+            }
+            pyArg = JPy_FromJObjectWithType(jenv, jArg, paramType);
+        } else {
+            pyArg = JPy_FromJObject(jenv, jArg);
         }
 
-        pyArg = JType_ConvertJavaToPythonObject(jenv, paramType, jArg);
         if (pyArg == NULL) {
             // todo: create exception
-            printf("Java_org_jpy_python_PyLib_call: error: callable '%s': argument %d: can't convert Java to Python object\n", nameChars, i);
+            printf("Java_org_jpy_python_PyLib_call: error: callable '%s': argument %d: failed to convert Java into Python object\n", nameChars, i);
             goto error;
         }
 
