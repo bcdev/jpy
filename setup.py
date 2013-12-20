@@ -124,3 +124,5 @@ if sys.argv[1] == 'install':
     os.system(sys.executable + ' jpy_dummies_test.py')
     os.system(sys.executable + ' jpy_array_test.py')
     os.system(sys.executable + ' jpy_rt_test.py')
+
+    print('Note: if one of the above tests fail, make sure to compile Java test sources first.')
