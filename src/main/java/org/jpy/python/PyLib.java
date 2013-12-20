@@ -1,7 +1,9 @@
 package org.jpy.python;
 
+import static org.jpy.python.PyConfig.*;
+
 /**
- * Native interface for the CPython interpreter.
+ * Native interface for the CPython library.
  * <p/>
  * IMPORTANT NOTE: If you change the interface of this class, you will need to run {@code javah}, and then adapt {@code jni/org_jpy_python_PyLib.c}.
  *
@@ -12,15 +14,25 @@ public class PyLib {
 
     static {
         try {
-            if (PyConfig.getOS() == PyConfig.OS.UNIX) {
-                // Even loading the Python shared lib does not solve our current problem on Unix:
+            if (getOS() != OS.WINDOWS) {
+                // For PyLib, we load the shared library that was generated for the Python extension module 'jpy'.
+                // However, to use 'jpy' from Java we also need the Python shared library to be loaded as well.
+                // On Windows, this is done auto-magically, on Linux and Darwin we have to either change 'setup.py'
+                // to also include a dependency to the Python shared lib or, as done here, explicitly load it.
+                //
+                // If the Python shared lib is not found, we get error messages similar to the following:
                 // java.lang.UnsatisfiedLinkError: /usr/local/lib/python3.3/dist-packages/jpy.cpython-33m.so:
                 //      /usr/local/lib/python3.3/dist-packages/jpy.cpython-33m.so: undefined symbol: PyFloat_Type
-                System.load("/usr/lib/libpython3.3m.so");
+                String libPath = getProperty(PYTHON_LIB_KEY, false);
+                if (libPath != null) {
+                    // E.g. libPath = "/usr/lib/libpython3.3m.so";
+                    System.load(libPath);
+                }
             }
 
-            String sharedLibPath = PyConfig.getSharedLibPath();
-            System.load(sharedLibPath);
+            String libPath = getProperty(JPY_LIB_KEY, true);
+            // E.g. libPath = "/usr/local/lib/python3.3/dist-packages/jpy.cpython-33m.so";
+            System.load(libPath);
             problem = null;
         } catch (Throwable t) {
             problem = t;
