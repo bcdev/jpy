@@ -1,6 +1,8 @@
-package org.jpy.dummies;
+package org.jpy.fixtures;
 
 /**
+ * Stands for any Java object.
+ *
  * @author Norman Fomferra
  */
 public class Thing {

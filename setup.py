@@ -118,10 +118,12 @@ if sys.argv[1] == 'install':
     print('Writing this information to file:', user_jpy)
     with open(user_jpy, 'w', encoding='utf-8') as f:
         f.write('# Created by jpy/setup.py on ' + str(datetime.now()) + '\n')
+        f.write('# python.lib = \n')
         f.write('jpy.lib = ' + jpy_lib_path.replace('\\', '\\\\') + '\n')
         f.write('jpy.exec_path = ' + jpy_exec_path.replace('\\', '\\\\') + '\n')
 
-    os.system(sys.executable + ' jpy_dummies_test.py')
+    os.system(sys.executable + ' jpy_field_test.py')
+    os.system(sys.executable + ' jpy_retval_test.py')
     os.system(sys.executable + ' jpy_array_test.py')
     os.system(sys.executable + ' jpy_rt_test.py')
 

@@ -2,7 +2,7 @@ package org.jpy;
 
 import org.jpy.annotations.Mutable;
 import org.jpy.annotations.Return;
-import org.jpy.dummies.MethodReturnValueTestDummy;
+import org.jpy.fixtures.MethodReturnValueTestFixture;
 import org.junit.Test;
 
 import java.lang.annotation.Annotation;
@@ -69,7 +69,7 @@ public class JavaReflectionTest {
     public static void main(String[] args) {
         dumpTypeInfo(double[].class);
         dumpTypeInfo(String.class);
-        dumpTypeInfo(MethodReturnValueTestDummy.class);
+        dumpTypeInfo(MethodReturnValueTestFixture.class);
     }
 
     private static void dumpTypeInfo(Class<?> type) {

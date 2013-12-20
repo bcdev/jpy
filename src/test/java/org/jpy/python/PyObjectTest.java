@@ -1,9 +1,9 @@
 package org.jpy.python;
 
 import junit.framework.Assert;
+import org.jpy.fixtures.Processor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -95,19 +95,19 @@ public class PyObjectTest {
     public void testCast() throws Exception {
         PyModule procModule = PyModule.importModule("proc_class");
 
-        PyObject procObj = procModule.call("Proc");
-        Proc proc = procObj.cast(Proc.class);
-        assertNotNull(proc);
+        PyObject procObj = procModule.call("Processor");
+        Processor processor = procObj.cast(Processor.class);
+        assertNotNull(processor);
         String result;
-        result = proc.initialize();
+        result = processor.initialize();
         assertEquals("initialize-1", result);
-        result = proc.computeTile(100, 100, new float[100 * 100]);
+        result = processor.computeTile(100, 100, new float[100 * 100]);
         assertEquals("computeTile-2", result);
-        result = proc.computeTile(200, 100, new float[100 * 100]);
+        result = processor.computeTile(200, 100, new float[100 * 100]);
         assertEquals("computeTile-3", result);
-        result = proc.computeTile(300, 100, new float[100 * 100]);
+        result = processor.computeTile(300, 100, new float[100 * 100]);
         assertEquals("computeTile-4", result);
-        result = proc.dispose();
+        result = processor.dispose();
         assertEquals("dispose-5", result);
     }
 }

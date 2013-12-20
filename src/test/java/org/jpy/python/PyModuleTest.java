@@ -1,5 +1,6 @@
 package org.jpy.python;
 
+import org.jpy.fixtures.Processor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -27,18 +28,18 @@ public class PyModuleTest {
     @Test
     public void testCast() throws Exception {
         PyModule procModule = PyModule.importModule("proc_module");
-        Proc proc = procModule.cast(Proc.class);
-        assertNotNull(proc);
+        Processor processor = procModule.cast(Processor.class);
+        assertNotNull(processor);
         String result;
-        result = proc.initialize();
+        result = processor.initialize();
         assertEquals("initialize-1", result);
-        result = proc.computeTile(100, 100, new float[100 * 100]);
+        result = processor.computeTile(100, 100, new float[100 * 100]);
         assertEquals("computeTile-2", result);
-        result = proc.computeTile(100, 100, new float[100 * 100]);
+        result = processor.computeTile(100, 100, new float[100 * 100]);
         assertEquals("computeTile-3", result);
-        result = proc.computeTile(100, 100, new float[100 * 100]);
+        result = processor.computeTile(100, 100, new float[100 * 100]);
         assertEquals("computeTile-4", result);
-        result = proc.dispose();
+        result = processor.dispose();
         assertEquals("dispose-5", result);
     }
 

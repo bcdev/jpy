@@ -1,4 +1,4 @@
-package org.jpy.dummies;
+package org.jpy.fixtures;
 
 /**
  * Used as a test class for the test cases in jpy_dummies_test.py
@@ -6,7 +6,7 @@ package org.jpy.dummies;
  * @author Norman Fomferra
  */
 @SuppressWarnings("UnusedDeclaration")
-public class FieldTestDummy {
+public class FieldTestFixture {
 
     public static final boolean z_STATIC_FIELD = true;
     public static final char c_STATIC_FIELD = 'A';

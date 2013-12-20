@@ -1,14 +1,14 @@
-package org.jpy.dummies;
+package org.jpy.fixtures;
 
 /**
  * Used as dummy to test various return value types and variants.
  * Note: Please make sure to not add any method overloads to this class.
- * This is done in {@link MethodOverloadTestDummy}.
+ * This is done in {@link MethodOverloadTestFixture}.
  *
  * @author Norman Fomferra
  */
 @SuppressWarnings("UnusedDeclaration")
-public class MethodReturnValueTestDummy {
+public class MethodReturnValueTestFixture {
 
     public void getVoid() {
     }

@@ -39,14 +39,13 @@ class TestJavaArrays(unittest.TestCase):
         self.do_test_array_protocol('boolean', [False, False, False], [True, False, True])
 
 
+    def test_array_char(self):
+        self.do_test_array_protocol('char', [0, 0, 0], [0, 100, 32767])
+
+
     def test_array_byte(self):
         self.do_test_array_protocol('byte', [0, 0, 0], [-128, 100, 127])
 
-
-    def test_array_char(self):
-        # todo - fixme
-        #self.do_test_array('char', [0, 0, 0], [-32768, 100, 32767])
-        pass
 
     def test_array_short(self):
         self.do_test_array_protocol('short', [0, 0, 0], [-32768, 100, 32767])

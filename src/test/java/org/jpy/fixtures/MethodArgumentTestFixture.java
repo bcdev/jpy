@@ -1,4 +1,4 @@
-package org.jpy.dummies;
+package org.jpy.fixtures;
 
 import org.jpy.annotations.Mutable;
 import org.jpy.annotations.Return;
@@ -9,7 +9,7 @@ import org.jpy.annotations.Return;
  * @author Norman Fomferra
  */
 @SuppressWarnings("UnusedDeclaration")
-public class MethodArgumentTestDummy {
+public class MethodArgumentTestFixture {
 
     public void modifyObject(@Mutable Thing object, int value) {
         object.setValue(value);
