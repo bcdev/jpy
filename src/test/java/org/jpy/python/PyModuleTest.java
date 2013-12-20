@@ -29,10 +29,12 @@ public class PyModuleTest {
 
     @Test
     public void testCast() throws Exception {
-        // On Unix, we must add current working dir to sys.path in order to import file './proc_module.py'
-        PyLib.execScript(String.format("import sys; sys.path.append('%s'); print('sys.path =', sys.path)", new File(".").getCanonicalPath()));
+        // Add module dir to sys.path in order to import file 'proc_module.py'
+        String importPath = new File("src/test/python/fixtures").getCanonicalPath();
+        //System.out.println("importPath = " + importPath);
+        PyLib.execScript(String.format("import sys; sys.path.append('%s'); print('sys.path =', sys.path)", importPath));
 
-        // import module './proc_module.py'
+        // import module 'proc_module.py'
         PyModule procModule = PyModule.importModule("proc_module");
         // Cast the Python module to a Java object of type 'Processor'
         Processor processor = procModule.cast(Processor.class);

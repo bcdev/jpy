@@ -95,10 +95,12 @@ public class PyObjectTest {
 
     @Test
     public void testCast() throws Exception {
-        // On Unix, we must add current working dir to sys.path in order to import file './proc_class.py'
-        PyLib.execScript(String.format("import sys; sys.path.append('%s'); print('sys.path =', sys.path)", new File(".").getCanonicalPath()));
+        // Add module dir to sys.path in order to import file 'proc_class.py'
+        String importPath = new File("src/test/python/fixtures").getCanonicalPath();
+        //System.out.println("importPath = " + importPath);
+        PyLib.execScript(String.format("import sys; sys.path.append('%s'); print('sys.path =', sys.path)", importPath));
 
-        // import module './proc_class.py'
+        // import module 'proc_class.py'
         PyModule procModule = PyModule.importModule("proc_class");
         // Instantiate Python object of type 'Processor'
         PyObject procObj = procModule.call("Processor");

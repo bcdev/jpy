@@ -1,4 +1,4 @@
-class Proc:
+class Processor:
     def __init__(self):
         self.n = 0
 
@@ -8,7 +8,7 @@ class Proc:
 
     def computeTile(self, x, y, array):
         self.n += 1
-        return 'computeTile-' + str(n) + '-' + str(x) + ',' + str(y)
+        return 'computeTile-' + str(self.n) + '-' + str(x) + ',' + str(y)
 
     def dispose(self):
         self.n += 1
