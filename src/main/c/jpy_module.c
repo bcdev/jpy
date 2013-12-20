@@ -796,3 +796,37 @@ void JPy_ClearGlobalVars(void)
     JPy_JDoubleObj = NULL;
 
 }
+
+jboolean JPy_CheckJniErrorOccurred(JNIEnv* jenv) {
+    if ((*jenv)->ExceptionCheck(jenv)) {
+        jthrowable error = (*jenv)->ExceptionOccurred(jenv);
+        if (error != NULL) {
+            jstring message;
+
+            if (JPy_IsDebug()) {
+                (*jenv)->ExceptionDescribe(jenv);
+            }
+
+            message = (jstring) (*jenv)->CallObjectMethod(jenv, error, JPy_Object_ToString_MID);
+            if (message != NULL) {
+                const char* messageChars;
+
+                messageChars = (*jenv)->GetStringUTFChars(jenv, message, NULL);
+                if (messageChars != NULL) {
+                    PyErr_Format(PyExc_RuntimeError, "Java exception caught: %s", messageChars);
+                    (*jenv)->ReleaseStringUTFChars(jenv, message, messageChars);
+                } else {
+                    PyErr_SetString(PyExc_RuntimeError, "Java exception caught, but failed to allocate message text");
+                }
+            } else {
+                PyErr_SetString(PyExc_RuntimeError, "Java exception caught, no message");
+            }
+
+            (*jenv)->DeleteLocalRef(jenv, error);
+            (*jenv)->ExceptionClear(jenv);
+
+            return JNI_TRUE;
+        }
+    }
+    return JNI_FALSE;
+}

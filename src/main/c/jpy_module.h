@@ -49,6 +49,12 @@ jboolean JPy_IsDebug(void);
  */
 void JPy_SetDebug(jboolean debug);
 
+/**
+ * Returns true, if a Java exception has occurred. If so, sets a Python error message accordingly.
+ */
+jboolean JPy_CheckJniErrorOccurred(JNIEnv* jenv);
+
+
 struct JPy_JType;
 
 extern struct JPy_JType* JPy_JBoolean;
