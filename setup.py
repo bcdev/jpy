@@ -122,9 +122,9 @@ if sys.argv[1] == 'install':
         f.write('jpy.lib = ' + jpy_lib_path.replace('\\', '\\\\') + '\n')
         f.write('jpy.exec_path = ' + jpy_exec_path.replace('\\', '\\\\') + '\n')
 
-    os.system(sys.executable + ' jpy_field_test.py')
-    os.system(sys.executable + ' jpy_retval_test.py')
-    os.system(sys.executable + ' jpy_array_test.py')
-    os.system(sys.executable + ' jpy_rt_test.py')
+    os.system(sys.executable + ' src/test/python/jpy_field_test.py')
+    os.system(sys.executable + ' src/test/python/jpy_retval_test.py')
+    os.system(sys.executable + ' src/test/python/jpy_array_test.py')
+    os.system(sys.executable + ' src/test/python/jpy_rt_test.py')
 
     print('Note: if one of the above tests fail, make sure to compile Java test sources first.')
