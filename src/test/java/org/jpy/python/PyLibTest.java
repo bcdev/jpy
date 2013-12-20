@@ -25,7 +25,7 @@ public class PyLibTest {
     @Test
     public void testExecScript() throws Exception {
         // Just call, no special test
-        PyLib.execScript("print('Hello Python!')");
+        PyLib.execScript(String.format("print('%s says: \"Hello Python!\"')", PyLibTest.class.getName()));
     }
 
     @Test

@@ -6,6 +6,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.File;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -93,20 +95,25 @@ public class PyObjectTest {
 
     @Test
     public void testCast() throws Exception {
-        PyModule procModule = PyModule.importModule("proc_class");
+        // On Unix, we must add current working dir to sys.path in order to import file './proc_class.py'
+        PyLib.execScript(String.format("import sys; sys.path.append('%s'); print('sys.path =', sys.path)", new File(".").getCanonicalPath()));
 
+        // import module './proc_class.py'
+        PyModule procModule = PyModule.importModule("proc_class");
+        // Instantiate Python object of type 'Processor'
         PyObject procObj = procModule.call("Processor");
+        // Cast the Python object to a Java object of type 'Processor'
         Processor processor = procObj.cast(Processor.class);
         assertNotNull(processor);
         String result;
         result = processor.initialize();
         assertEquals("initialize-1", result);
         result = processor.computeTile(100, 100, new float[100 * 100]);
-        assertEquals("computeTile-2", result);
-        result = processor.computeTile(200, 100, new float[100 * 100]);
-        assertEquals("computeTile-3", result);
-        result = processor.computeTile(300, 100, new float[100 * 100]);
-        assertEquals("computeTile-4", result);
+        assertEquals("computeTile-2-100,100", result);
+        result = processor.computeTile(200, 400, new float[100 * 100]);
+        assertEquals("computeTile-3-200,400", result);
+        result = processor.computeTile(300, 200, new float[100 * 100]);
+        assertEquals("computeTile-4-300,200", result);
         result = processor.dispose();
         assertEquals("dispose-5", result);
     }

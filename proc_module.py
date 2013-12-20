@@ -8,7 +8,7 @@ def initialize():
 def computeTile(x, y, array):
     global n
     n += 1
-    return 'computeTile-' + str(n)
+    return 'computeTile-' + str(n) + '-' + str(x) + ',' + str(y)
 
 def dispose():
     global n
