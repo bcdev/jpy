@@ -164,6 +164,13 @@ Design Issues
 * Add various modes of operation:
   - actual_type (retrieve the actual class of a returned Java object or use the return type of the Java method declaration).
     See JPy_FromJObject() in jpy_jmethod.c
+* In order to achieve backward compatibility with Python 3.2 use this
+           PyObject* pyUTF8 = PyUnicode_AsEncodedString(pyUnicode, "utf-8", "replace");
+           char* chars = PyBytes_AsString(pyUTF8);
+           ...
+           Py_DECREF(pyUTF8);
+
+
 
 
 
