@@ -50,9 +50,41 @@ jboolean JPy_IsDebug(void);
 void JPy_SetDebug(jboolean debug);
 
 /**
- * Returns true, if a Java exception has occurred. If so, sets a Python error message accordingly.
+ * Fetches the last Java exception occurred and raises a new Python exception.
  */
-jboolean JPy_CheckJniErrorOccurred(JNIEnv* jenv);
+void JPy_HandleJavaException(JNIEnv* jenv);
+
+
+#define JPy_ON_JAVA_EXCEPTION_GOTO(LABEL) \
+    if ((*jenv)->ExceptionCheck(jenv)) { \
+        JPy_HandleJavaException(jenv); \
+        goto LABEL; \
+    }
+
+#define JPy_ON_JAVA_EXCEPTION_RETURN(VALUE) \
+    if ((*jenv)->ExceptionCheck(jenv)) { \
+        JPy_HandleJavaException(jenv); \
+        return VALUE; \
+    }
+
+
+/**
+ * Fetches the last Python exception occurred and raises a new Java exception.
+ */
+void JPy_HandlePythonException();
+
+
+#define JPy_ON_PYTHON_EXCEPTION_GOTO(LABEL) \
+    if (PyErr_Occurred()) { \
+        JPy_HandlePythonException(); \
+        goto LABEL; \
+    }
+
+#define JPy_ON_PYTHON_EXCEPTION_RETURN(VALUE) \
+    if (PyErr_Occurred()) { \
+        JPy_HandlePythonException(); \
+        return VALUE; \
+    }
 
 
 struct JPy_JType;

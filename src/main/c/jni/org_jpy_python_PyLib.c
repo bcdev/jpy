@@ -384,7 +384,6 @@ PyObject* PyLib_callAndReturnObject(JNIEnv *jenv, PyObject* pyObject, jboolean i
     PyObject* pyArgs;
     PyObject* pyArg;
     PyObject* pyReturnValue;
-    PyObject* pyMethod;
     const char* nameChars;
     jint i;
     jobject jArg;
@@ -445,8 +444,11 @@ PyObject* PyLib_callAndReturnObject(JNIEnv *jenv, PyObject* pyObject, jboolean i
         PyTuple_SetItem(pyArgs, i, pyArg);
     }
 
+    // Check why: for some reason, we don't need the following code to invoke object methods.
     /*
     if (isMethodCall) {
+        PyObject* pyMethod;
+
         pyMethod = PyMethod_New(pyCallable, pyObject);
         if (pyMethod == NULL) {
             // todo: create out of memory exception

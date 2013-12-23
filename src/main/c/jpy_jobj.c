@@ -66,6 +66,8 @@ int JObj_init(JPy_JObj* self, PyObject* args, PyObject* kwds)
 
     //printf("JObj_init 2 jType->classRef=%p\n", jType->classRef);
     objectRef = (*jenv)->NewObjectA(jenv, jType->classRef, jMethod->mid, jArgs);
+    JPy_ON_JAVA_EXCEPTION_RETURN(-1);
+
     if (objectRef == NULL) {
         PyErr_SetString(PyExc_RuntimeError, "Java constructor returned null");
         return -1;
@@ -131,6 +133,7 @@ int JObj_CompareTo(JNIEnv* jenv, JPy_JObj* obj1, JPy_JObj* obj2)
         jclass classRef = (*jenv)->GetObjectClass(jenv, ref1);
         jmethodID mid = (*jenv)->GetMethodID(jenv, classRef, "compareTo", "(Ljava/lang/Object;)I");
         value = (*jenv)->CallIntMethod(jenv, ref1, mid, ref2);
+        (*jenv)->ExceptionClear(jenv); // we can't deal with exceptions here, so clear any
     } else {
         value = (char*) ref1 - (char*) ref2;
     }
@@ -142,15 +145,18 @@ int JObj_Equals(JNIEnv* jenv, JPy_JObj* obj1, JPy_JObj* obj2)
 {
     jobject ref1;
     jobject ref2;
+    int returnValue;
 
     ref1 = obj1->objectRef;
     ref2 = obj2->objectRef;
 
     if ((*jenv)->IsSameObject(jenv, ref1, ref2)) {
-        return 1;
+        returnValue = 1;
     } else {
-        return (*jenv)->CallIntMethod(jenv, ref1, JPy_Object_Equals_MID, ref2);
+        returnValue = (*jenv)->CallIntMethod(jenv, ref1, JPy_Object_Equals_MID, ref2);
     }
+    (*jenv)->ExceptionClear(jenv); // we can't deal with exceptions here, so clear any
+    return returnValue;
 }
 
 /**
@@ -234,7 +240,9 @@ long JObj_hash(JPy_JObj* self)
     JNIEnv* jenv;
     jenv = JPy_GetJNIEnv();
     if (jenv != NULL) {
-        return (*jenv)->CallIntMethod(jenv, self->objectRef, JPy_Object_HashCode_MID);
+        int returnValue = (*jenv)->CallIntMethod(jenv, self->objectRef, JPy_Object_HashCode_MID);
+        (*jenv)->ExceptionClear(jenv); // we can't deal with exceptions here, so clear any
+        return returnValue;
     }
     return -1;
 }
@@ -263,8 +271,12 @@ PyObject* JObj_str(JPy_JObj* self)
         return Py_BuildValue("");
     }
 
+    returnValue = NULL;
     stringRef = (*jenv)->CallObjectMethod(jenv, self->objectRef, JPy_Object_ToString_MID);
+    JPy_ON_JAVA_EXCEPTION_GOTO(error);
     returnValue = JPy_FromJString(jenv, stringRef);
+
+error:
     (*jenv)->DeleteLocalRef(jenv, stringRef);
 
     return returnValue;
@@ -294,33 +306,42 @@ int JObj_setattro(JPy_JObj* self, PyObject* name, PyObject* value)
         if (type == JPy_JBoolean) {
             jboolean item = JPy_AS_JBOOLEAN(value);
             (*jenv)->SetBooleanField(jenv, self->objectRef, field->fid, item);
+            JPy_ON_JAVA_EXCEPTION_RETURN(-1);
         } else if (type == JPy_JChar) {
             jchar item = JPy_AS_JCHAR(value);
             (*jenv)->SetCharField(jenv, self->objectRef, field->fid, item);
+            JPy_ON_JAVA_EXCEPTION_RETURN(-1);
         } else if (type == JPy_JByte) {
             jbyte item = JPy_AS_JBYTE(value);
             (*jenv)->SetByteField(jenv, self->objectRef, field->fid, item);
+            JPy_ON_JAVA_EXCEPTION_RETURN(-1);
         } else if (type == JPy_JShort) {
             jshort item = JPy_AS_JSHORT(value);
             (*jenv)->SetShortField(jenv, self->objectRef, field->fid, item);
+            JPy_ON_JAVA_EXCEPTION_RETURN(-1);
         } else if (type == JPy_JInt) {
             jint item = JPy_AS_JINT(value);
             (*jenv)->SetIntField(jenv, self->objectRef, field->fid, item);
+            JPy_ON_JAVA_EXCEPTION_RETURN(-1);
         } else if (type == JPy_JLong) {
             jlong item = JPy_AS_JLONG(value);
             (*jenv)->SetLongField(jenv, self->objectRef, field->fid, item);
+            JPy_ON_JAVA_EXCEPTION_RETURN(-1);
         } else if (type == JPy_JFloat) {
             jfloat item = JPy_AS_JFLOAT(value);
             (*jenv)->SetFloatField(jenv, self->objectRef, field->fid, item);
+            JPy_ON_JAVA_EXCEPTION_RETURN(-1);
         } else if (type == JPy_JDouble) {
             jdouble item = JPy_AS_JDOUBLE(value);
             (*jenv)->SetDoubleField(jenv, self->objectRef, field->fid, item);
+            JPy_ON_JAVA_EXCEPTION_RETURN(-1);
         } else {
             jobject objectRef;
             if (JPy_AsJObjectWithType(jenv, value, &objectRef, field->type) < 0) {
                 return -1;
             }
             (*jenv)->SetObjectField(jenv, self->objectRef, field->fid, objectRef);
+            JPy_ON_JAVA_EXCEPTION_RETURN(-1);
         }
         return 0;
     } else {
@@ -363,30 +384,39 @@ PyObject* JObj_getattro(JPy_JObj* self, PyObject* name)
 
         if (type == JPy_JBoolean) {
             jboolean item = (*jenv)->GetBooleanField(jenv, self->objectRef, field->fid);
+            JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
             return JPy_FROM_JBOOLEAN(item);
         } else if (type == JPy_JChar) {
             jchar item = (*jenv)->GetCharField(jenv, self->objectRef, field->fid);
+            JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
             return JPy_FROM_JCHAR(item);
         } else if (type == JPy_JByte) {
             jbyte item = (*jenv)->GetByteField(jenv, self->objectRef, field->fid);
+            JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
             return JPy_FROM_JBYTE(item);
         } else if (type == JPy_JShort) {
             jshort item = (*jenv)->GetShortField(jenv, self->objectRef, field->fid);
+            JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
             return JPy_FROM_JSHORT(item);
         } else if (type == JPy_JInt) {
             jint item = (*jenv)->GetIntField(jenv, self->objectRef, field->fid);
+            JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
             return JPy_FROM_JINT(item);
         } else if (type == JPy_JLong) {
             jlong item = (*jenv)->GetLongField(jenv, self->objectRef, field->fid);
+            JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
             return JPy_FROM_JLONG(item);
         } else if (type == JPy_JFloat) {
             jfloat item = (*jenv)->GetFloatField(jenv, self->objectRef, field->fid);
+            JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
             return JPy_FROM_JFLOAT(item);
         } else if (type == JPy_JDouble) {
             jdouble item = (*jenv)->GetDoubleField(jenv, self->objectRef, field->fid);
+            JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
             return JPy_FROM_JDOUBLE(item);
         } else {
             jobject objectRef = (*jenv)->GetObjectField(jenv, self->objectRef, field->fid);
+            JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
             return JPy_FromJObjectWithType(jenv, objectRef, field->type);
         }
     } else {
@@ -443,43 +473,46 @@ PyObject* JObj_sq_item(JPy_JObj* self, Py_ssize_t index)
     if (componentType == JPy_JBoolean) {
         jboolean item;
         (*jenv)->GetBooleanArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+        JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
         return JPy_FROM_JBOOLEAN(item);
     } else if (componentType == JPy_JChar) {
         jchar item;
         (*jenv)->GetCharArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+        JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
         return JPy_FROM_JCHAR(item);
     } else if (componentType == JPy_JByte) {
         jbyte item;
         (*jenv)->GetByteArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+        JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
         return JPy_FROM_JBYTE(item);
     } else if (componentType == JPy_JShort) {
         jshort item;
         (*jenv)->GetShortArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+        JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
         return JPy_FROM_JSHORT(item);
     } else if (componentType == JPy_JInt) {
         jint item;
         (*jenv)->GetIntArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+        JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
         return JPy_FROM_JINT(item);
     } else if (componentType == JPy_JLong) {
         jlong item;
         (*jenv)->GetLongArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+        JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
         return JPy_FROM_JLONG(item);
     } else if (componentType == JPy_JFloat) {
         jfloat item;
         (*jenv)->GetFloatArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+        JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
         return JPy_FROM_JFLOAT(item);
     } else if (componentType == JPy_JDouble) {
         jdouble item;
         (*jenv)->GetDoubleArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+        JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
         return JPy_FROM_JDOUBLE(item);
     } else {
         jobject item = (*jenv)->GetObjectArrayElement(jenv, self->objectRef, (jsize) index);
-        if ((*jenv)->ExceptionCheck(jenv)) {
-            (*jenv)->ExceptionDescribe(jenv);
-            (*jenv)->ExceptionClear(jenv);
-            PyErr_SetString(PyExc_RuntimeError, "index error");
-            return NULL;
-        }
+        JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
         return JPy_FromJObjectWithType(jenv, item, type->componentType);
     }
 }
@@ -507,39 +540,42 @@ int JObj_sq_ass_item(JPy_JObj* self, Py_ssize_t index, PyObject* pyItem)
     if (componentType == JPy_JBoolean) {
         jboolean item = JPy_AS_JBOOLEAN(pyItem);
         (*jenv)->SetBooleanArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+        JPy_ON_JAVA_EXCEPTION_RETURN(-1);
     } else if (componentType == JPy_JChar) {
         jchar item = JPy_AS_JCHAR(pyItem);
         (*jenv)->SetCharArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+        JPy_ON_JAVA_EXCEPTION_RETURN(-1);
     } else if (componentType == JPy_JByte) {
         jbyte item = JPy_AS_JBYTE(pyItem);
         (*jenv)->SetByteArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+        JPy_ON_JAVA_EXCEPTION_RETURN(-1);
     } else if (componentType == JPy_JShort) {
         jshort item = JPy_AS_JSHORT(pyItem);
         (*jenv)->SetShortArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+        JPy_ON_JAVA_EXCEPTION_RETURN(-1);
     } else if (componentType == JPy_JInt) {
         jint item = JPy_AS_JINT(pyItem);
         (*jenv)->SetIntArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+        JPy_ON_JAVA_EXCEPTION_RETURN(-1);
     } else if (componentType == JPy_JLong) {
         jlong item = JPy_AS_JLONG(pyItem);
         (*jenv)->SetLongArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+        JPy_ON_JAVA_EXCEPTION_RETURN(-1);
     } else if (componentType == JPy_JFloat) {
         jfloat item = JPy_AS_JFLOAT(pyItem);
         (*jenv)->SetFloatArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+        JPy_ON_JAVA_EXCEPTION_RETURN(-1);
     } else if (componentType == JPy_JDouble) {
         jdouble item = JPy_AS_JDOUBLE(pyItem);
         (*jenv)->SetDoubleArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
+        JPy_ON_JAVA_EXCEPTION_RETURN(-1);
     } else {
         jobject item;
         if (JPy_AsJObjectWithType(jenv, pyItem, &item, type->componentType) < 0) {
             return -1;
         }
         (*jenv)->SetObjectArrayElement(jenv, self->objectRef, (jsize) index, item);
-        if ((*jenv)->ExceptionCheck(jenv)) {
-            (*jenv)->ExceptionDescribe(jenv);
-            (*jenv)->ExceptionClear(jenv);
-            PyErr_SetString(PyExc_RuntimeError, "index error");
-            return -1;
-        }
+        JPy_ON_JAVA_EXCEPTION_RETURN(-1);
     }
     return 0;
 }

@@ -179,18 +179,23 @@ PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject
         // Scalar type, not an array
         if (type == JPy_JBooleanObj) {
             jboolean value = (*jenv)->CallBooleanMethod(jenv, objectRef, JPy_Boolean_BooleanValue_MID);
+            JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
             return JPy_FROM_JBOOLEAN(value);
         } else if (type == JPy_JCharacterObj) {
             jchar value = (*jenv)->CallCharMethod(jenv, objectRef, JPy_Character_CharValue_MID);
+            JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
             return JPy_FROM_JCHAR(value);
         } else if (type == JPy_JByteObj || type == JPy_JShortObj || type == JPy_JIntegerObj) {
             jint value = (*jenv)->CallIntMethod(jenv, objectRef, JPy_Number_IntValue_MID);
+            JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
             return JPy_FROM_JINT(value);
         } else if (type == JPy_JLongObj) {
             jlong value = (*jenv)->CallLongMethod(jenv, objectRef, JPy_Number_LongValue_MID);
+            JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
             return JPy_FROM_JLONG(value);
         } else if (type == JPy_JFloatObj || type == JPy_JDoubleObj) {
             jdouble value = (*jenv)->CallDoubleMethod(jenv, objectRef, JPy_Number_DoubleValue_MID);
+            JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
             return JPy_FROM_JDOUBLE(value);
         } else if (type == JPy_JString) {
             return JPy_FromJString(jenv, objectRef);
@@ -270,6 +275,7 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
         }
         value.z = JPy_AS_JBOOLEAN(pyArg);
         *objectRef = (*jenv)->NewObjectA(jenv, JPy_Boolean_JClass, JPy_Boolean_Init_MID, &value);
+        JPy_ON_JAVA_EXCEPTION_RETURN(-1);
         return 0;
     } else if (type == JPy_JChar || type == JPy_JCharacterObj) {
         jvalue value;
@@ -278,6 +284,7 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
         }
         value.c = JPy_AS_JCHAR(pyArg);
         *objectRef = (*jenv)->NewObjectA(jenv, JPy_Character_JClass, JPy_Character_Init_MID, &value);
+        JPy_ON_JAVA_EXCEPTION_RETURN(-1);
         return 0;
     } else if (type == JPy_JByte || type == JPy_JByteObj) {
         jvalue value;
@@ -286,6 +293,7 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
         }
         value.b = JPy_AS_JBYTE(pyArg);
         *objectRef = (*jenv)->NewObjectA(jenv, JPy_Byte_JClass, JPy_Byte_Init_MID, &value);
+        JPy_ON_JAVA_EXCEPTION_RETURN(-1);
         return 0;
     } else if (type == JPy_JShort || type == JPy_JShortObj) {
         jvalue value;
@@ -294,6 +302,7 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
         }
         value.s = JPy_AS_JSHORT(pyArg);
         *objectRef = (*jenv)->NewObjectA(jenv, JPy_Short_JClass, JPy_Short_Init_MID, &value);
+        JPy_ON_JAVA_EXCEPTION_RETURN(-1);
         return 0;
     } else if (type == JPy_JInt || type == JPy_JIntegerObj) {
         jvalue value;
@@ -302,6 +311,7 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
         }
         value.i = JPy_AS_JINT(pyArg);
         *objectRef = (*jenv)->NewObjectA(jenv, JPy_Integer_JClass, JPy_Integer_Init_MID, &value);
+        JPy_ON_JAVA_EXCEPTION_RETURN(-1);
         return 0;
     } else if (type == JPy_JLong || type == JPy_JLongObj) {
         jvalue value;
@@ -310,6 +320,7 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
         }
         value.j = JPy_AS_JLONG(pyArg);
         *objectRef = (*jenv)->NewObjectA(jenv, JPy_Long_JClass, JPy_Long_Init_MID, &value);
+        JPy_ON_JAVA_EXCEPTION_RETURN(-1);
         return 0;
     } else if (type == JPy_JFloat || type == JPy_JFloatObj) {
         jvalue value;
@@ -318,6 +329,7 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
         }
         value.f = JPy_AS_JFLOAT(pyArg);
         *objectRef = (*jenv)->NewObjectA(jenv, JPy_Float_JClass, JPy_Float_Init_MID, &value);
+        JPy_ON_JAVA_EXCEPTION_RETURN(-1);
         return 0;
     } else if (type == JPy_JDouble || type == JPy_JDoubleObj) {
         jvalue value;
@@ -326,14 +338,13 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
         }
         value.d = JPy_AS_JDOUBLE(pyArg);
         *objectRef = (*jenv)->NewObjectA(jenv, JPy_Double_JClass, JPy_Double_Init_MID, &value);
+        JPy_ON_JAVA_EXCEPTION_RETURN(-1);
         return 0;
     } else if (type == JPy_JString) {
         if (!PyUnicode_Check(pyArg)) {
-printf("---->>> 1 type=%p, JPy_JString=%p\n", type, JPy_JString);
             goto error;
         }
         if (JPy_AsJString(jenv, pyArg, objectRef) < 0) {
-printf("---->>> 2 type=%p, JPy_JString=%p\n", type, JPy_JString);
             goto error;
         }
         return 0;
