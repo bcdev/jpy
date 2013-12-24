@@ -85,7 +85,8 @@ JNIEXPORT jint JNICALL Java_org_jpy_python_PyLib_execScript
     JPy_DEBUG_PRINTF("Java_org_jpy_python_PyLib_execScript: script='%s'\n", scriptChars);
     retCode = PyRun_SimpleString(scriptChars);
     if (retCode < 0) {
-        JPy_HandlePythonException();
+        JPy_DEBUG_PRINTF("Java_org_jpy_python_PyLib_execScript: error: PyRun_SimpleString(\"%s\") returned %d\n", scriptChars, retCode);
+        // Note that we cannot retrieve last Python exception after a calling PyRun_SimpleString, see documentation of PyRun_SimpleString.
     }
     (*jenv)->ReleaseStringUTFChars(jenv, jScript, scriptChars);
     return retCode;
