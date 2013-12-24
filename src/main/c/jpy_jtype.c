@@ -833,8 +833,7 @@ JPy_ReturnDescriptor* JType_CreateReturnDescriptor(JNIEnv* jenv, jclass returnCl
     returnDescriptor->type = type;
     Py_INCREF((PyObject*) type);
 
-    // if (JPy_IsDebug()) printf("JType_ProcessReturnType: type->tp_name='%s',
-    //                           type=%p\n", type->tp_name, type);
+    if (JPy_IsDebug()) printf("JType_ProcessReturnType: type->tp_name='%s', type=%p\n", type->tp_name, type);
 
     return returnDescriptor;
 }

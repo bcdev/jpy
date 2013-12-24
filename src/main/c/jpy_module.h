@@ -49,6 +49,7 @@ jboolean JPy_IsDebug(void);
  */
 void JPy_SetDebug(jboolean debug);
 
+
 /**
  * Fetches the last Java exception occurred and raises a new Python exception.
  */
@@ -75,14 +76,14 @@ void JPy_HandlePythonException();
 
 
 #define JPy_ON_PYTHON_EXCEPTION_GOTO(LABEL) \
-    if (PyErr_Occurred()) { \
-        JPy_HandlePythonException(); \
+    if (PyErr_Occurred() != NULL) { \
+        JPy_HandlePythonException(jenv); \
         goto LABEL; \
     }
 
 #define JPy_ON_PYTHON_EXCEPTION_RETURN(VALUE) \
-    if (PyErr_Occurred()) { \
-        JPy_HandlePythonException(); \
+    if (PyErr_Occurred() != NULL) { \
+        JPy_HandlePythonException(jenv); \
         return VALUE; \
     }
 
@@ -138,6 +139,10 @@ extern jclass JPy_Field_JClass;
 extern jmethodID JPy_Field_GetName_MID;
 extern jmethodID JPy_Field_GetModifiers_MID;
 extern jmethodID JPy_Field_GetType_MID;
+
+
+extern jclass JPy_RuntimeException_JClass;
+
 
 extern jclass JPy_Boolean_JClass;
 extern jmethodID JPy_Boolean_Init_MID;

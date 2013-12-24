@@ -137,6 +137,8 @@ jmethodID JPy_Field_GetName_MID = NULL;
 jmethodID JPy_Field_GetModifiers_MID = NULL;
 jmethodID JPy_Field_GetType_MID = NULL;
 
+jclass JPy_RuntimeException_JClass = NULL;
+
 // java.lang.Boolean
 jclass JPy_Boolean_JClass = NULL;
 jmethodID JPy_Boolean_Init_MID = NULL;
@@ -664,6 +666,10 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     DEFINE_METHOD(JPy_Method_GetParameterTypes_MID, JPy_Method_JClass, "getParameterTypes", "()[Ljava/lang/Class;");
     DEFINE_METHOD(JPy_Method_GetReturnType_MID, JPy_Method_JClass, "getReturnType", "()Ljava/lang/Class;");
 
+
+    DEFINE_CLASS(JPy_RuntimeException_JClass, "java/lang/RuntimeException");
+
+
     DEFINE_CLASS(JPy_Boolean_JClass, "java/lang/Boolean");
     DEFINE_METHOD(JPy_Boolean_Init_MID, JPy_Boolean_JClass, "<init>", "(Z)V");
     DEFINE_METHOD(JPy_Boolean_BooleanValue_MID, JPy_Boolean_JClass, "booleanValue", "()Z");
@@ -756,6 +762,8 @@ void JPy_ClearGlobalVars(void)
     JPy_Field_GetModifiers_MID = NULL;
     JPy_Field_GetType_MID = NULL;
 
+    JPy_RuntimeException_JClass = NULL;
+
 
 
     Py_DECREF(JPy_JBoolean);
@@ -794,7 +802,6 @@ void JPy_ClearGlobalVars(void)
     JPy_JLongObj = NULL;
     JPy_JFloatObj = NULL;
     JPy_JDoubleObj = NULL;
-
 }
 
 
@@ -826,4 +833,63 @@ void JPy_HandleJavaException(JNIEnv* jenv)
         (*jenv)->DeleteLocalRef(jenv, error);
         (*jenv)->ExceptionClear(jenv);
     }
+}
+
+void JPy_HandlePythonException(JNIEnv* jenv)
+{
+    PyObject* pyType;
+    PyObject* pyValue;
+    PyObject* pyTraceback;
+
+    PyObject* pyTypeStr;
+    PyObject* pyValueStr;
+    PyObject* pyTracebackStr;
+
+    PyObject* pyTypeUtf8;
+    PyObject* pyValueUtf8;
+    PyObject* pyTracebackUtf8;
+
+    char* typeChars;
+    char* valueChars;
+    char* tracebackChars;
+    char* javaMessage;
+
+    jint ret;
+
+    PyErr_Fetch(&pyType, &pyValue, &pyTraceback);
+    PyErr_NormalizeException(&pyType, &pyValue, &pyTraceback);
+
+    pyTypeStr = PyObject_Str(pyType);
+    pyValueStr = PyObject_Str(pyValue);
+    pyTracebackStr = PyObject_Str(pyTraceback);
+
+    pyTypeUtf8 = PyUnicode_AsEncodedString(pyTypeStr, "utf-8", "replace");
+    pyValueUtf8 = PyUnicode_AsEncodedString(pyValueStr, "utf-8", "replace");
+    pyTracebackUtf8 = PyUnicode_AsEncodedString(pyTracebackStr, "utf-8", "replace");
+
+    typeChars = PyBytes_AsString(pyTypeUtf8);
+    valueChars = PyBytes_AsString(pyValueUtf8);
+    tracebackChars = PyBytes_AsString(pyTracebackUtf8);
+
+    javaMessage = PyMem_New(char, strlen(typeChars) + strlen(valueChars) + strlen(tracebackChars) + 80);
+    if (javaMessage != NULL) {
+        sprintf(javaMessage, "An error occurred in the Python interpreter:\n%s: %s\n%s", typeChars, valueChars, tracebackChars);
+        ret = (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, javaMessage);
+    } else {
+        ret = (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, valueChars);
+    }
+
+    PyMem_Del(javaMessage);
+
+    Py_DECREF(pyType);
+    Py_DECREF(pyValue);
+    Py_DECREF(pyTraceback);
+
+    Py_DECREF(pyTypeStr);
+    Py_DECREF(pyValueStr);
+    Py_DECREF(pyTracebackStr);
+
+    Py_DECREF(pyTypeUtf8);
+    Py_DECREF(pyValueUtf8);
+    Py_DECREF(pyTracebackUtf8);
 }
