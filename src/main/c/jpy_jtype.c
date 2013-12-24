@@ -44,7 +44,7 @@ JPy_JType* JType_GetTypeForName(JNIEnv* jenv, const char* typeName, jboolean res
         resourceName = typeName;
     }
 
-    if (JPy_IsDebug()) printf("JType_GetTypeForName: typeName='%s', resourceName='%s'\n", typeName, resourceName);
+    JPy_DEBUG_PRINTF("JType_GetTypeForName: typeName='%s', resourceName='%s'\n", typeName, resourceName);
 
     classRef = (*jenv)->FindClass(jenv, resourceName);
 
@@ -102,7 +102,7 @@ JPy_JType* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve)
 
         // Finally we initialise the type's slots, so that our JObj instances behave pythonic.
         if (JType_InitSlots(type) < 0) {
-            if (JPy_IsDebug()) printf("JType_GetType: error: JType_InitSlots() failed for javaName='%s'\n", type->javaName);
+            JPy_DEBUG_PRINTF("JType_GetType: error: JType_InitSlots() failed for javaName='%s'\n", type->javaName);
 
             PyDict_DelItem(JPy_Types, typeKey);
 
@@ -115,7 +115,7 @@ JPy_JType* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve)
         Py_DECREF(typeKey);
     }
 
-    if (JPy_IsDebug()) printf("JType_GetType: javaName='%s', resolve=%d, resolved=%d, type=%p\n", type->javaName, resolve, type->isResolved, type);
+    JPy_DEBUG_PRINTF("JType_GetType: javaName='%s', resolve=%d, resolved=%d, type=%p\n", type->javaName, resolve, type->isResolved, type);
 
     if (!type->isResolved && resolve) {
         if (JType_ResolveType(jenv, type) < 0) {
@@ -164,7 +164,7 @@ JPy_JType* JType_New(JNIEnv* jenv, jclass classRef, jboolean resolve)
 
     type->isPrimitive = (*jenv)->CallBooleanMethod(jenv, type->classRef, JPy_Class_IsPrimitive_MID);
 
-    if (JPy_IsDebug()) printf("JType_New: javaName='%s', resolve=%d, type=%p\n", type->javaName, resolve, type);
+    JPy_DEBUG_PRINTF("JType_New: javaName='%s', resolve=%d, type=%p\n", type->javaName, resolve, type);
 
     return type;
 }
@@ -423,7 +423,7 @@ jboolean JType_AcceptMethod(JPy_JType* declaringClass, JPy_JMethod* method)
             if (callableResult == Py_None || callableResult == Py_False) {
                 return JNI_FALSE;
             } else if (callableResult == NULL) {
-                if (JPy_IsDebug()) printf("JType_AcceptMethod: warning: failed to invoke callback on method addition\n");
+                JPy_DEBUG_PRINTF("JType_AcceptMethod: warning: failed to invoke callback on method addition\n");
                 // Ignore this problem and continue
             }
         }
@@ -441,12 +441,12 @@ int JType_ProcessMethod(JNIEnv* jenv, JPy_JType* type, PyObject* methodKey, cons
     JPy_JMethod* method;
 
     paramCount = (*jenv)->GetArrayLength(jenv, paramTypes);
-    if (JPy_IsDebug()) printf("JType_ProcessMethod: methodName=%s, paramCount=%d, isStatic=%d, mid=%p\n", methodName, paramCount, isStatic, mid);
+    JPy_DEBUG_PRINTF("JType_ProcessMethod: methodName=%s, paramCount=%d, isStatic=%d, mid=%p\n", methodName, paramCount, isStatic, mid);
     if (paramCount > 0) {
         paramDescriptors = JType_CreateParamDescriptors(jenv, paramCount, paramTypes);
         if (paramDescriptors == NULL) {
             // todo: log problem
-            if (JPy_IsDebug()) printf("JType_ProcessMethod: error: Java method %s rejected because an error occurred during parameter type processing\n", methodName);
+            JPy_DEBUG_PRINTF("JType_ProcessMethod: error: Java method %s rejected because an error occurred during parameter type processing\n", methodName);
             return -1;
         }
     } else {
@@ -458,7 +458,7 @@ int JType_ProcessMethod(JNIEnv* jenv, JPy_JType* type, PyObject* methodKey, cons
         if (returnDescriptor == NULL) {
             PyMem_Del(paramDescriptors);
             // todo: log problem
-            if (JPy_IsDebug()) printf("JType_ProcessMethod: error: Java method %s rejected because an error occurred during return type processing\n", methodName);
+            JPy_DEBUG_PRINTF("JType_ProcessMethod: error: Java method %s rejected because an error occurred during return type processing\n", methodName);
             return -1;
         }
     } else {
@@ -470,7 +470,7 @@ int JType_ProcessMethod(JNIEnv* jenv, JPy_JType* type, PyObject* methodKey, cons
         PyMem_Del(paramDescriptors);
         PyMem_Del(returnDescriptor);
         // todo: log problem
-        if (JPy_IsDebug()) printf("JType_ProcessMethod: error: Java method %s rejected because an error occurred during method instantiation\n", methodName);
+        JPy_DEBUG_PRINTF("JType_ProcessMethod: error: Java method %s rejected because an error occurred during method instantiation\n", methodName);
         return -1;
     }
 
@@ -539,7 +539,7 @@ int JType_ProcessClassConstructors(JNIEnv* jenv, JPy_JType* type)
     constructors = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetDeclaredConstructors_MID);
     constrCount = (*jenv)->GetArrayLength(jenv, constructors);
 
-    if (JPy_IsDebug()) printf("JType_ProcessClassConstructors: constrCount=%d\n", constrCount);
+    JPy_DEBUG_PRINTF("JType_ProcessClassConstructors: constrCount=%d\n", constrCount);
 
     for (i = 0; i < constrCount; i++) {
         constructor = (*jenv)->GetObjectArrayElement(jenv, constructors, i);
@@ -577,7 +577,7 @@ int JType_ProcessClassFields(JNIEnv* jenv, JPy_JType* type)
     fields = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetDeclaredFields_MID);
     fieldCount = (*jenv)->GetArrayLength(jenv, fields);
 
-    if (JPy_IsDebug()) printf("JType_ProcessClassFields: fieldCount=%d\n", fieldCount);
+    JPy_DEBUG_PRINTF("JType_ProcessClassFields: fieldCount=%d\n", fieldCount);
 
     for (i = 0; i < fieldCount; i++) {
         field = (*jenv)->GetObjectArrayElement(jenv, fields, i);
@@ -623,7 +623,7 @@ int JType_ProcessClassMethods(JNIEnv* jenv, JPy_JType* type)
     methods = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetDeclaredMethods_MID);
     methodCount = (*jenv)->GetArrayLength(jenv, methods);
 
-    if (JPy_IsDebug()) printf("JType_ProcessClassMethods: methodCount=%d\n", methodCount);
+    JPy_DEBUG_PRINTF("JType_ProcessClassMethods: methodCount=%d\n", methodCount);
 
     for (i = 0; i < methodCount; i++) {
         method = (*jenv)->GetObjectArrayElement(jenv, methods, i);
@@ -719,7 +719,7 @@ int JType_ProcessField(JNIEnv* jenv, JPy_JType* declaringClass, PyObject* fieldK
 
     fieldType = JType_GetType(jenv, fieldClassRef, JNI_FALSE);
     if (fieldType == NULL) {
-        if (JPy_IsDebug()) printf("JType_ProcessField: error: Java field %s rejected because an error occurred during type processing\n", fieldName);
+        JPy_DEBUG_PRINTF("JType_ProcessField: error: Java field %s rejected because an error occurred during type processing\n", fieldName);
         return -1;
     }
 
@@ -733,7 +733,7 @@ int JType_ProcessField(JNIEnv* jenv, JPy_JType* declaringClass, PyObject* fieldK
         // Add instance field accessor to the JPy_JType's tp_dict, this will be evaluated in the JPy_JType's tp_setattro and tp_getattro slots.
         field = JField_New(declaringClass, fieldKey, fieldType, isStatic, isFinal, fid);
         if (field == NULL) {
-            if (JPy_IsDebug()) printf("JType_ProcessField: error: Java field %s rejected because an error occurred during field instantiation\n", fieldName);
+            JPy_DEBUG_PRINTF("JType_ProcessField: error: Java field %s rejected because an error occurred during field instantiation\n", fieldName);
             return -1;
         }
 
@@ -743,7 +743,7 @@ int JType_ProcessField(JNIEnv* jenv, JPy_JType* declaringClass, PyObject* fieldK
             JField_Del(field);
         }
     } else {
-        if (JPy_IsDebug()) printf("JType_ProcessField: warning: Java field %s rejected because is is static, but not final\n", fieldName);
+        JPy_DEBUG_PRINTF("JType_ProcessField: warning: Java field %s rejected because is is static, but not final\n", fieldName);
     }
 
     return 0;
@@ -833,7 +833,7 @@ JPy_ReturnDescriptor* JType_CreateReturnDescriptor(JNIEnv* jenv, jclass returnCl
     returnDescriptor->type = type;
     Py_INCREF((PyObject*) type);
 
-    if (JPy_IsDebug()) printf("JType_ProcessReturnType: type->tp_name='%s', type=%p\n", type->tp_name, type);
+    JPy_DEBUG_PRINTF("JType_ProcessReturnType: type->tp_name='%s', type=%p\n", Py_TYPE(type)->tp_name, type);
 
     return returnDescriptor;
 }

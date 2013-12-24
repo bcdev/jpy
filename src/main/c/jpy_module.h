@@ -50,6 +50,9 @@ jboolean JPy_IsDebug(void);
 void JPy_SetDebug(jboolean debug);
 
 
+#define JPy_DEBUG_PRINTF if (JPy_IsDebug()) printf
+
+
 /**
  * Fetches the last Java exception occurred and raises a new Python exception.
  */

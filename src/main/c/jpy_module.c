@@ -400,7 +400,7 @@ PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds)
     JVM.mustDestroy = JNI_TRUE;
     JVM.debug = debug;
 
-    if (JPy_IsDebug()) printf("JPy_create_jvm: res=%d, JVM.jvm=%p, JVM.jenv=%p\n", res, JVM.jvm, JVM.jenv);
+    JPy_DEBUG_PRINTF("JPy_create_jvm: res=%d, JVM.jvm=%p, JVM.jenv=%p\n", res, JVM.jvm, JVM.jenv);
 
     PyMem_Del(jvmOptions);
 
@@ -422,7 +422,7 @@ PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds)
 
 PyObject* JPy_destroy_jvm(PyObject* self, PyObject* args)
 {
-    if (JPy_IsDebug()) printf("JPy_destroy_jvm: JVM.jvm=%p, JVM.jenv=%p\n", JVM.jvm, JVM.jenv);
+    JPy_DEBUG_PRINTF("JPy_destroy_jvm: JVM.jvm=%p, JVM.jenv=%p\n", JVM.jvm, JVM.jenv);
 
     if (JVM.jvm != NULL && JVM.mustDestroy) {
         (*JVM.jvm)->DestroyJavaVM(JVM.jvm);

@@ -105,7 +105,7 @@ void JObj_dealloc(JPy_JObj* self)
 {
     JNIEnv* jenv;
 
-    if (JPy_IsDebug()) printf("JObj_dealloc: self->objectRef=%p\n", self->objectRef);
+    JPy_DEBUG_PRINTF("JObj_dealloc: self->objectRef=%p\n", self->objectRef);
 
     jenv = JPy_GetJNIEnv();
     if (jenv != NULL) {

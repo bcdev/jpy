@@ -117,7 +117,7 @@ int JMethod_AssessConversion(JNIEnv* jenv, JPy_JMethod* method, int argCount, Py
         matchValueSum += matchValue;
         paramDescriptor++;
 
-        if (JPy_IsDebug()) printf("JMethod_AssessConversion: argTuple[%d]: v=%d, valueSum=%d\n", i, matchValue, matchValueSum);
+        JPy_DEBUG_PRINTF("JMethod_AssessConversion: argTuple[%d]: v=%d, valueSum=%d\n", i, matchValue, matchValueSum);
     }
 
     //printf("JMethod_AssessConversion 7\n");
@@ -525,14 +525,14 @@ JPy_JMethod* JOverloadedMethod_FindMethod0(JNIEnv* jenv, JPy_JOverloadedMethod* 
     matchValueMax = -1;
     bestMethod = NULL;
 
-    if (JPy_IsDebug()) printf("JOverloadedMethod_FindMethod0: method '%s#%s': overloadCount=%d\n",
+    JPy_DEBUG_PRINTF("JOverloadedMethod_FindMethod0: method '%s#%s': overloadCount=%d\n",
                               overloadedMethod->declaringClass->javaName, PyUnicode_AsUTF8(overloadedMethod->name), overloadCount);
 
     for (i = 0; i < overloadCount; i++) {
         currMethod = (JPy_JMethod*) PyList_GetItem(overloadedMethod->methodList, i);
         matchValue = JMethod_AssessConversion(jenv, currMethod, argCount, argTuple);
 
-        if (JPy_IsDebug()) printf("JOverloadedMethod_FindMethod0: methodList[%d]: paramCount=%d, matchValue=%d\n", i,
+        JPy_DEBUG_PRINTF("JOverloadedMethod_FindMethod0: methodList[%d]: paramCount=%d, matchValue=%d\n", i,
                                   currMethod->paramCount, matchValue);
 
         if (matchValue > 0) {
