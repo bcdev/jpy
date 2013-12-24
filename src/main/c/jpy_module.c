@@ -103,6 +103,7 @@ JPy_JType* JPy_JString = NULL;
 
 // java.lang.Comparable
 jclass JPy_Comparable_JClass = NULL;
+jmethodID JPy_Comparable_CompareTo_MID = NULL;
 
 // java.lang.Object
 jclass JPy_Object_JClass = NULL;
@@ -637,6 +638,7 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     // todo: check, if we need to convert all jclass types using NewGlobalReference()
 
     DEFINE_CLASS(JPy_Comparable_JClass, "java/lang/Comparable");
+    DEFINE_METHOD(JPy_Comparable_CompareTo_MID, JPy_Comparable_JClass, "compareTo", "(Ljava/lang/Object;)I");
 
     DEFINE_CLASS(JPy_Object_JClass, "java/lang/Object");
     DEFINE_METHOD(JPy_Object_ToString_MID, JPy_Object_JClass, "toString", "()Ljava/lang/String;");

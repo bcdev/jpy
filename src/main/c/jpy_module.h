@@ -114,6 +114,7 @@ extern struct JPy_JType* JPy_JString;
 
 // java.lang.Comparable
 extern jclass JPy_Comparable_JClass;
+extern jmethodID JPy_Comparable_CompareTo_MID;
 // java.lang.Object
 extern jclass JPy_Object_JClass;
 extern jmethodID JPy_Object_ToString_MID;

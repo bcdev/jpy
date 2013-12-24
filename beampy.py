@@ -87,7 +87,7 @@ jpy.type_callbacks['org.esa.beam.framework.datamodel.Band'] = annotate_RasterDat
 jpy.type_callbacks['org.esa.beam.framework.datamodel.VirtualBand'] = annotate_RasterDataNode_readPixels
 
 try:
-    # todo: read pre-defined types from a configuration file (beampy.ini)
+    # Note we may later want to read pre-defined types from a configuration file (beampy.ini)
     ProductIO = jpy.get_class('org.esa.beam.framework.dataio.ProductIO')
     Product = jpy.get_class('org.esa.beam.framework.datamodel.Product')
     Band = jpy.get_class('org.esa.beam.framework.datamodel.Band')

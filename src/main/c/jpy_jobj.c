@@ -59,12 +59,10 @@ int JObj_init(JPy_JObj* self, PyObject* args, PyObject* kwds)
         return -1;
     }
 
-    //printf("JObj_init 1\n");
     if (JMethod_CreateJArgs(jenv, jMethod, args, &jArgs, &jDisposers) < 0) {
         return -1;
     }
 
-    //printf("JObj_init 2 jType->classRef=%p\n", jType->classRef);
     objectRef = (*jenv)->NewObjectA(jenv, jType->classRef, jMethod->mid, jArgs);
     JPy_ON_JAVA_EXCEPTION_RETURN(-1);
 
@@ -77,24 +75,19 @@ int JObj_init(JPy_JObj* self, PyObject* args, PyObject* kwds)
         JMethod_DisposeJArgs(jenv, jMethod->paramCount, jArgs, jDisposers);
     }
 
-    // todo: add exception
-
-
-    //printf("JObj_init 3\n");
     objectRef = (*jenv)->NewGlobalRef(jenv, objectRef);
     if (objectRef == NULL) {
         PyErr_NoMemory();
         return -1;
     }
 
-    // Dont't forget that __init__ may be called multiple times
+    // Note:  __init__ may be called multiple times, so we have to release the old objectRef
     if (self->objectRef != NULL) {
         (*jenv)->DeleteGlobalRef(jenv, self->objectRef);
     }
 
     self->objectRef = objectRef;
 
-    //printf("JObj_init 4\n");
     return 0;
 }
 
@@ -129,10 +122,7 @@ int JObj_CompareTo(JNIEnv* jenv, JPy_JObj* obj1, JPy_JObj* obj2)
     if (ref1 == ref2 || (*jenv)->IsSameObject(jenv, ref1, ref2)) {
         return 0;
     } else if ((*jenv)->IsInstanceOf(jenv, ref1, JPy_Comparable_JClass)) {
-        // todo: optimize following code using predefined global vars, see JPy_InitGlobalVars() in jpy_module.c
-        jclass classRef = (*jenv)->GetObjectClass(jenv, ref1);
-        jmethodID mid = (*jenv)->GetMethodID(jenv, classRef, "compareTo", "(Ljava/lang/Object;)I");
-        value = (*jenv)->CallIntMethod(jenv, ref1, mid, ref2);
+        value = (*jenv)->CallIntMethod(jenv, ref1, JPy_Comparable_CompareTo_MID, ref2);
         (*jenv)->ExceptionClear(jenv); // we can't deal with exceptions here, so clear any
     } else {
         value = (char*) ref1 - (char*) ref2;
@@ -536,7 +526,7 @@ int JObj_sq_ass_item(JPy_JObj* self, Py_ssize_t index, PyObject* pyItem)
         return -1;
     }
 
-    // todo - the following item assignments are not value range checked
+    // Note: the following item assignments are not value range checked
     if (componentType == JPy_JBoolean) {
         jboolean item = JPy_AS_JBOOLEAN(pyItem);
         (*jenv)->SetBooleanArrayRegion(jenv, self->objectRef, (jsize) index, 1, &item);
@@ -626,10 +616,13 @@ int JType_InitSlots(JPy_JType* type)
     typeObj->tp_getattro = (getattrofunc) JObj_getattro;
     typeObj->tp_setattro = (setattrofunc) JObj_setattro;
 
-    // todo: add  <sequence> protocol to 'java.lang.String' type.
-    // Note that we have to do this after assigning the type to the global variable 'JPy_JString'.
-    // However, this function (JType_InitSlots) is called *while* assigning the value 'JPy_JString'
-    // so we cannot use to test against it here.
+    // Note: we may later want to add  <sequence> protocol to 'java.lang.String' and 'java.util.List' types.
+    // However, we cannot check directly against these global variable 'JPy_JString' and 'JPy_JList' here because
+    // the current function (JType_InitSlots) is called to compute the actual values for the global
+    // 'JPy_JString' and 'JPy_JList' variables!
+    // So we actually have to check against the Java Object types in order to create and assign slots for the
+    // Python protocols: java.lang.String --> sequence, java.util.Map --> dict, java.util.List --> list, java.util.Set --> set.
+
 
     // If this type is an array type, add support for the <sequence> protocol
     if (type->componentType != NULL) {
@@ -637,8 +630,6 @@ int JType_InitSlots(JPy_JType* type)
     } else {
         typeObj->tp_as_sequence = NULL;
     }
-
-    // todo: check Java Object type and create python protocols: Map/dict, List/list, Set/set
 
     typeObj->tp_alloc = PyType_GenericAlloc;
     typeObj->tp_new = PyType_GenericNew;

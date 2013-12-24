@@ -22,7 +22,7 @@ int JPy_AsJObject(JNIEnv* jenv, PyObject* pyObj, jobject* objectRef)
     } else if (PyUnicode_Check(pyObj)) {
         return JPy_AsJObjectWithType(jenv, pyObj, objectRef, JPy_JString);
     } else {
-        // todo: print Python type(pyObj) info here
+        // todo: print Python type(pyObj) info here, otherwise users don't know what went wrong
         PyErr_SetString(PyExc_RuntimeError, "don't know how to convert Python to Java object");
         *objectRef = NULL;
         return -1;
@@ -150,16 +150,22 @@ jchar* JPy_ConvertToJCharString(const wchar_t* wChars, jint length)
  */
 char* JPy_GetTypeName(JNIEnv* jenv, jclass classRef)
 {
-    jstring typeNameStr;
-    const char* typeName;
+    jstring jTypeName;
+    const char* jTypeNameChars;
     char* typeNameCopy;
 
-    // todo: handle errors
-    typeNameStr = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetName_MID);
-    typeName = (*jenv)->GetStringUTFChars(jenv, typeNameStr, NULL);
-    typeNameCopy = JPy_CopyUTFString(typeName);
-    (*jenv)->ReleaseStringUTFChars(jenv, classRef, typeName);
+    jTypeName = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetName_MID);
+    JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
 
+    jTypeNameChars = (*jenv)->GetStringUTFChars(jenv, jTypeName, NULL);
+    if (jTypeNameChars == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+    typeNameCopy = JPy_CopyUTFString(jTypeNameChars);
+    (*jenv)->ReleaseStringUTFChars(jenv, jTypeName, jTypeNameChars);
+error:
+    (*jenv)->DeleteLocalRef(jenv, jTypeName);
     return typeNameCopy;
 }
 
@@ -169,17 +175,23 @@ char* JPy_GetTypeName(JNIEnv* jenv, jclass classRef)
  */
 PyObject* JPy_FromTypeName(JNIEnv* jenv, jclass classRef)
 {
-    PyObject* typeString;
-    jclass typeNameObj;
-    const char* typeName;
+    PyObject* pyTypeName;
+    jstring jTypeName;
+    const char* jTypeNameChars;
 
-    // todo: handle errors
-    typeNameObj = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetName_MID);
-    typeName = (*jenv)->GetStringUTFChars(jenv, typeNameObj, NULL);
-    typeString = Py_BuildValue("s", typeName);
-    (*jenv)->ReleaseStringUTFChars(jenv, typeNameObj, typeName);
+    jTypeName = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetName_MID);
+    JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
 
-    return typeString;
+    jTypeNameChars = (*jenv)->GetStringUTFChars(jenv, jTypeName, NULL);
+    if (jTypeNameChars == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+    pyTypeName = Py_BuildValue("s", jTypeNameChars);
+    (*jenv)->ReleaseStringUTFChars(jenv, jTypeName, jTypeNameChars);
+error:
+    (*jenv)->DeleteLocalRef(jenv, jTypeName);
+    return pyTypeName;
 }
 
 
@@ -193,15 +205,18 @@ PyObject* JPy_FromJString(JNIEnv* jenv, jstring stringRef)
         return Py_BuildValue("");
     }
 
-    // todo: handle errors
     length = (*jenv)->GetStringLength(jenv, stringRef);
     if (length == 0) {
         return Py_BuildValue("s", "");
     }
 
     jChars = (*jenv)->GetStringChars(jenv, stringRef, NULL);
+    if (jChars == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
     returnValue = PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, jChars, length);
-    //printf("--> Generated a %p from %ls, is unicode: %d\n",returnValue, jChars, PyUnicode_Check(returnValue));
     (*jenv)->ReleaseStringChars(jenv, stringRef, jChars);
     return returnValue;
 }

@@ -248,7 +248,7 @@ PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject
         return (PyObject*) array;
     } else {
         // Object array
-        // todo: we may convert the Java array into a list here
+        // Note: we may convert the Java array into a list here
         return (PyObject*) JObj_FromType(jenv, type, objectRef);
     }
 }
@@ -445,7 +445,6 @@ int JType_ProcessMethod(JNIEnv* jenv, JPy_JType* type, PyObject* methodKey, cons
     if (paramCount > 0) {
         paramDescriptors = JType_CreateParamDescriptors(jenv, paramCount, paramTypes);
         if (paramDescriptors == NULL) {
-            // todo: log problem
             JPy_DEBUG_PRINTF("JType_ProcessMethod: error: Java method %s rejected because an error occurred during parameter type processing\n", methodName);
             return -1;
         }
@@ -457,7 +456,6 @@ int JType_ProcessMethod(JNIEnv* jenv, JPy_JType* type, PyObject* methodKey, cons
         returnDescriptor = JType_CreateReturnDescriptor(jenv, returnType);
         if (returnDescriptor == NULL) {
             PyMem_Del(paramDescriptors);
-            // todo: log problem
             JPy_DEBUG_PRINTF("JType_ProcessMethod: error: Java method %s rejected because an error occurred during return type processing\n", methodName);
             return -1;
         }
@@ -469,7 +467,6 @@ int JType_ProcessMethod(JNIEnv* jenv, JPy_JType* type, PyObject* methodKey, cons
     if (method == NULL) {
         PyMem_Del(paramDescriptors);
         PyMem_Del(returnDescriptor);
-        // todo: log problem
         JPy_DEBUG_PRINTF("JType_ProcessMethod: error: Java method %s rejected because an error occurred during method instantiation\n", methodName);
         return -1;
     }
@@ -1287,7 +1284,6 @@ void JType_InitParamDescriptorFunctions(JPy_ParamDescriptor* paramDescriptor)
     //} else if (paramType == JPy_JList) {
     //} else if (paramType == JPy_JSet) {
     } else {
-        // todo: use paramDescriptor->is_mutable / is_return to select more specific functions
         paramDescriptor->paramAssessor = JType_AssessToJObject;
         paramDescriptor->paramConverter = JType_ConvertToJObject;
     }
