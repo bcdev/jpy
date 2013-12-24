@@ -98,7 +98,7 @@ public class PyObjectTest {
         // Add module dir to sys.path in order to import file 'proc_class.py'
         String importPath = new File("src/test/python/fixtures").getCanonicalPath();
         //System.out.println("importPath = " + importPath);
-        PyLib.execScript(String.format("import sys; sys.path.append('%s'); print('sys.path =', sys.path)", importPath));
+        PyLib.execScript(String.format("import sys; sys.path.append('%s'); print('sys.path =', sys.path)", importPath.replace("\\", "\\\\")));
 
         // import module 'proc_class.py'
         PyModule procModule = PyModule.importModule("proc_class");

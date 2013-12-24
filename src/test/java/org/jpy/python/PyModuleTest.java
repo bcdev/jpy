@@ -18,7 +18,7 @@ public class PyModuleTest {
     @BeforeClass
     public static void setUp() throws Exception {
         assertEquals(false, PyLib.isInterpreterInitialized());
-        PyLib.initializeInterpreter(new String[0], false);
+        PyLib.initializeInterpreter(new String[0], true);
         assertEquals(true, PyLib.isInterpreterInitialized());
     }
 
@@ -32,7 +32,7 @@ public class PyModuleTest {
         // Add module dir to sys.path in order to import file 'proc_module.py'
         String importPath = new File("src/test/python/fixtures").getCanonicalPath();
         //System.out.println("importPath = " + importPath);
-        PyLib.execScript(String.format("import sys; sys.path.append('%s'); print('sys.path =', sys.path)", importPath));
+        PyLib.execScript(String.format("import sys; sys.path.append('%s'); print('sys.path =', sys.path)", importPath.replace("\\", "\\\\")));
 
         // import module 'proc_module.py'
         PyModule procModule = PyModule.importModule("proc_module");
