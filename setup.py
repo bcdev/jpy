@@ -77,11 +77,11 @@ elif DARWIN:
                     os.path.join(sys.exec_prefix, 'lib')]
 
 setup(name='jpy',
-      description='Java Python Bridge',
-      long_description='A bridge from Python to Java',
+      description='Python/Java Bridge',
+      long_description='A bidirectional Python/Java bridge',
       version='0.1',
       platforms='Python 3, Java 1.7',
-      author='Brockmann Consult GmbH',
+      author='Norman Fomferra, Brockmann Consult GmbH',
       author_email='beam@brockmann-consult.de',
       maintainer='Brockmann Consult GmbH',
       maintainer_email='beam@brockmann-consult.de',
