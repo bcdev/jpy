@@ -1,7 +1,7 @@
 package org.jpy.fixtures;
 
 /**
- * Used as a test class for the test cases in jpy_dummies_test.py
+ * Used as a test class for the test cases in jpy_field_test.py
  *
  * @author Norman Fomferra
  */

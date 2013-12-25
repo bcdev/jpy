@@ -823,13 +823,13 @@ void JPy_HandleJavaException(JNIEnv* jenv)
 
             messageChars = (*jenv)->GetStringUTFChars(jenv, message, NULL);
             if (messageChars != NULL) {
-                PyErr_Format(PyExc_RuntimeError, "Java exception caught: %s", messageChars);
+                PyErr_Format(PyExc_RuntimeError, "%s", messageChars);
                 (*jenv)->ReleaseStringUTFChars(jenv, message, messageChars);
             } else {
-                PyErr_SetString(PyExc_RuntimeError, "Java exception caught, but failed to allocate message text");
+                PyErr_SetString(PyExc_RuntimeError, "An exception occurred in the Java VM, but failed to allocate message text");
             }
         } else {
-            PyErr_SetString(PyExc_RuntimeError, "Java exception caught, no message");
+            PyErr_SetString(PyExc_RuntimeError, "An exception occurred in the Java VM, no message");
         }
 
         (*jenv)->DeleteLocalRef(jenv, error);
