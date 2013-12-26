@@ -4,7 +4,7 @@ import org.jpy.annotations.Mutable;
 import org.jpy.annotations.Return;
 
 /**
- * Used as a test class for the test cases in jpy_dummies_test.py
+ * todo - write a Python test case for me!
  *
  * @author Norman Fomferra
  */
