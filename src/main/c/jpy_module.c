@@ -33,7 +33,7 @@ static PyMethodDef JPy_Functions[] = {
                     "Loads the Java class from the JVM if not already done. Optionally avoids resolving the class' methods."},
 
     {"cast",        JPy_cast, METH_VARARGS,
-                    "cast(obj, type) - Caststhe given Java object to the given Java type. "
+                    "cast(obj, type) - Casts the given Java object to the given Java type. "
                     "Returns None if the cast is not possible."},
 
     {"array",       JPy_array, METH_VARARGS,
