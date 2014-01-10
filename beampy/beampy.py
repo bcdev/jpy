@@ -1,4 +1,16 @@
-# Example for jpy
+"""
+This module represents the BEAM Python API.
+
+In order to use beampy the module jpy must be installed first.
+
+You can configure beampy by using a file named beampy.ini as follows:
+
+    [DEFAULT]
+    beam_home: C:\Program Files\beam-4.11
+    extra_classpath: target/classes
+    debug: False
+
+"""
 
 import jpy
 import os
@@ -56,6 +68,10 @@ beam_home = config.get('DEFAULT', 'beam_home',
 searchpath = _get_beam_jar_locations()
 #pprint.pprint(searchpath)
 classpath = _create_classpath(searchpath)
+
+extra_classpath = config.get('DEFAULT', 'extra_classpath', fallback=[])
+classpath.append(extra_classpath)
+
 #pprint.pprint(classpath)
 
 # Don't need these functions anymore
