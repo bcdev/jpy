@@ -20,19 +20,19 @@ public class PyInterpreter {
         PyLib.destroyInterpreter();
     }
 
-    public PyModule importModule(String name) {
+    public static PyModule importModule(String name) {
         assertInterpreterInitialized();
         long modulePointer = PyLib.importModule(name);
         return new PyModule(name, modulePointer);
     }
 
-    public PyObject getObject(PyModule module, String name) {
+    public static PyObject getObject(PyModule module, String name) {
         assertInterpreterInitialized();
         long objectPointer = PyLib.getAttributeObject(module.getPointer(), name);
         return new PyObject(objectPointer);
     }
 
-    public void execScript(String script) {
+    public static void execScript(String script) {
         assertInterpreterInitialized();
         PyLib.execScript(script);
     }
