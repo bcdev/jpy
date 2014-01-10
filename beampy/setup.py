@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='beampy',
-      version='0.1',
+      version='0.2',
       description='BEAM Python API',
       author='Norman Fomferra, Brockmann Consult GmbH',
       py_modules=['beampy'],

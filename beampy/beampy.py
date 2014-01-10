@@ -57,8 +57,10 @@ def _create_classpath(searchpath):
     return classpath
 
 
+module_dir = os.path.dirname(os.path.realpath(__file__))
+
 config = configparser.ConfigParser()
-config.read(['./beampy.ini', os.path.join(__file__, 'beampy.ini')])
+config.read(['./beampy.ini', os.path.join(module_dir, 'beampy.ini')])
 beam_home = config.get('DEFAULT', 'beam_home',
                        fallback=os.getenv('BEAM_HOME',
                                           os.getenv('BEAM4_HOME',
@@ -70,7 +72,7 @@ searchpath = _get_beam_jar_locations()
 classpath = _create_classpath(searchpath)
 
 extra_classpath = config.get('DEFAULT', 'extra_classpath', fallback=[])
-classpath.append(extra_classpath)
+classpath += extra_classpath
 
 #pprint.pprint(classpath)
 
@@ -120,6 +122,8 @@ try:
     Band = jpy.get_class('org.esa.beam.framework.datamodel.Band')
     VirtualBand = jpy.get_class('org.esa.beam.framework.datamodel.VirtualBand')
     GeoCoding = jpy.get_class('org.esa.beam.framework.datamodel.GeoCoding')
+    GeoPos = jpy.get_class('org.esa.beam.framework.datamodel.GeoPos')
+    PixelPos = jpy.get_class('org.esa.beam.framework.datamodel.PixelPos')
 
 except Exception:
     jpy.destroy_jvm()
