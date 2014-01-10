@@ -24,22 +24,24 @@ print("Product:     %s, %s" % (name, description))
 print("Raster size: %d x %d pixels" % (width, height))
 print("Start time:  " + str(product.getStartTime()))
 print("End time:    " + str(product.getEndTime()))
-print("Bands:       %s" % (band_names))
-sys.exit(0)
+print("Bands:       %s" % (list(band_names)))
+
 
 b7 = product.getBand('radiance_7')
 b10 = product.getBand('radiance_10')
-ndviProduct = Product.newProduct('NDVI', 'NDVI', width, height)
-ndviBand = ndviProduct.addNewBand('ndvi', ProductData.TYPE_FLOAT32)
-ndviFlagsBand = ndviProduct.addNewBand('ndvi_flags', ProductData.TYPE_UINT8)
+ndviProduct = Product('NDVI', 'NDVI', width, height)
+ndviBand = ndviProduct.addBand('ndvi', ProductData.TYPE_FLOAT32)
+ndviFlagsBand = ndviProduct.addBand('ndvi_flags', ProductData.TYPE_UINT8)
 writer = ProductIO.getProductWriter('BEAM-DIMAP')
 
 ProductUtils.copyGeoCoding(product, ndviProduct)
 
-ndviFlagCoding = FlagCoding.newFlagCoding('ndvi_flags')
+ndviFlagCoding = FlagCoding('ndvi_flags')
 ndviFlagCoding.addFlag("NDVI_LOW", 1, "NDVI below 0")
 ndviFlagCoding.addFlag("NDVI_HIGH", 2, "NDVI above 1")
-ndviProduct.getFlagCodingGroup().add(ndviFlagCoding)
+group = ndviProduct.getFlagCodingGroup()
+#print(dir(group))
+group.add(ndviFlagCoding)
 
 ndviFlagsBand.setSampleCoding(ndviFlagCoding)
 

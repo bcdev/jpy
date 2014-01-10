@@ -124,6 +124,10 @@ try:
     GeoCoding = jpy.get_class('org.esa.beam.framework.datamodel.GeoCoding')
     GeoPos = jpy.get_class('org.esa.beam.framework.datamodel.GeoPos')
     PixelPos = jpy.get_class('org.esa.beam.framework.datamodel.PixelPos')
+    FlagCoding = jpy.get_class('org.esa.beam.framework.datamodel.FlagCoding')
+    ProductNodeGroup = jpy.get_class('org.esa.beam.framework.datamodel.ProductNodeGroup')
+    #SubsetOp = jpy.get_class('org.esa.beam.gpf.operators.standard.SubsetOp')
+    #JtsGeometryConverter = jpy.get_class('org.esa.beam.util.converters.JtsGeometryConverter')
 
 except Exception:
     jpy.destroy_jvm()
