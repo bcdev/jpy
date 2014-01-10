@@ -37,7 +37,7 @@ for y in range(height):
     b2.readPixelsFloat(0, y, width, 1, r2)
     b2.readPixelsFloat(0, y, width, 1, r3)
     print("processing line ", y, " of ", height)
-    FLH = r2 – k * (r1 + a * (r3 – r1))
+    FLH = r2 - k * (r1 + a * (r3 - r1))
     targetBand.writePixelsFloat(0, y, width, 1, FLH)
 
 targetProduct.closeIO()
