@@ -34,6 +34,10 @@ Currently, only 32-bit versions are supported.
     > SET PATH=%JDK_HOME%\jre\bin\server;%PATH%
     > python setup.py install
 
+To create a Windows executable installer, use
+
+    > python setup.py bdist_wininst
+
 How to build on Unix/Darwin
 ---------------------------
 
