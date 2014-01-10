@@ -9,7 +9,7 @@ Features
   - embed Java VM in Python programs
   - embed Python VM in Java programs
 * Preserves Java type hierarchy
-* Exposes Java objects by corresponding Python interfaces (list, dict, set) (TODO!)
+* Planned: Exposes Java objects by corresponding Python interfaces (list, dict, set) (TODO!)
 * Transparently handles Java method overloading 
 * Fast & efficient support of primitive Java array parameters via Python buffers.
   E.g. use a numpy array argument, whenever a Java primitive array parameter is expected
