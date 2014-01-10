@@ -9,49 +9,49 @@ package org.jpy.fixtures;
 public class MethodOverloadTestFixture {
 
     public String join(int a, int b) {
-        return "I" + a + " I" + b;
+        return stringifyArgs(a, b);
     }
 
     public String join(int a, double b) {
-        return "I" + a + " D" + b;
+        return stringifyArgs(a, b);
     }
 
     public String join(int a, String b) {
-        return "I" + a + " S" + b;
+        return stringifyArgs(a, b);
     }
 
     public String join(double a, int b) {
-        return "D" + a + " I" + b;
+        return stringifyArgs(a, b);
     }
 
     public String join(double a, double b) {
-        return "D" + a + " D" + b;
+        return stringifyArgs(a, b);
     }
 
     public String join(double a, String b) {
-        return "D" + a + " S" + b;
+        return stringifyArgs(a, b);
     }
 
     public String join(String a, int b) {
-        return "S" + a + " I" + b;
+        return stringifyArgs(a, b);
     }
 
     public String join(String a, double b) {
-        return "S" + a + " D" + b;
+        return stringifyArgs(a, b);
     }
 
     public String join(String a, String b) {
-        return "S" + a + " S" + b;
+        return stringifyArgs(a, b);
     }
 
     //////////////////////////////////////////////
 
     public String join(String a) {
-        return "S" + a;
+        return stringifyArgs(a);
     }
 
     public String join(String a, String b, String c) {
-        return "S" + a + " S" + b + " S" + c;
+        return stringifyArgs(a, b, c);
     }
 
     /**
@@ -60,7 +60,7 @@ public class MethodOverloadTestFixture {
     public static class MethodOverloadTestFixture2 extends MethodOverloadTestFixture {
 
         public String join(String a, String b, String c, String d) {
-            return "S" + a + " S" + b + " S" + c + " S" + d;
+            return stringifyArgs(a, b, c, d);
         }
     }
 
@@ -68,7 +68,27 @@ public class MethodOverloadTestFixture {
 
     // Should never been found, since 'float' is not present in Python
     public String join(int a, float b) {
-        return "I" + a + " F" + b;
+        return stringifyArgs(a, b);
     }
+
+    static String stringifyArgs(Object... args) {
+        StringBuilder argString = new StringBuilder();
+        for (int i = 0; i < args.length; i++) {
+            if (i > 0) {
+                argString.append(",");
+            }
+            Object arg = args[i];
+            if (arg != null) {
+                argString.append(arg.getClass().getSimpleName());
+                argString.append('(');
+                argString.append(String.valueOf(arg));
+                argString.append(')');
+            } else {
+                argString.append("null");
+            }
+        }
+        return argString.toString();
+    }
+
 
 }

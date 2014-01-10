@@ -54,7 +54,7 @@ int JObj_init(JPy_JObj* self, PyObject* args, PyObject* kwds)
         return -1;
     }
 
-    jMethod = JOverloadedMethod_FindMethod(jenv, (JPy_JOverloadedMethod*) constructor, args);
+    jMethod = JOverloadedMethod_FindMethod(jenv, (JPy_JOverloadedMethod*) constructor, args, JNI_FALSE);
     if (jMethod == NULL) {
         return -1;
     }

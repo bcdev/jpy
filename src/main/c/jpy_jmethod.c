@@ -75,7 +75,7 @@ int JMethod_AssessConversion(JNIEnv* jenv, JPy_JMethod* method, int argCount, Py
     if (method->isStatic) {
         //printf("Static! method->paramCount=%d, argCount=%d\n", method->paramCount, argCount);
         if (method->paramCount != argCount) {
-            //printf("JMethod_AssessConversion 1\n");
+            JPy_DEBUG_PRINTF("JMethod_AssessConversion: argument count mismatch (matchValue=0)\n");
             // argument count mismatch
             return 0;
         }
@@ -84,21 +84,21 @@ int JMethod_AssessConversion(JNIEnv* jenv, JPy_JMethod* method, int argCount, Py
         PyObject* self;
         //printf("Non-Static! method->paramCount=%d, argCount=%d\n", method->paramCount, argCount);
         if (method->paramCount != argCount - 1) {
-            //printf("JMethod_AssessConversion 2\n");
+            JPy_DEBUG_PRINTF("JMethod_AssessConversion: argument count mismatch (matchValue=0)\n");
             // argument count mismatch
             return 0;
         }
         self = PyTuple_GetItem(argTuple, 0);
         if (!JObj_Check(self)) {
-            //printf("JMethod_AssessConversion 3\n");
+            JPy_DEBUG_PRINTF("JMethod_AssessConversion: self argument is not a Java object (matchValue=0)\n");
             return 0;
         }
         i0 = 1;
     }
 
     if (method->paramCount == 0) {
-        //printf("JMethod_AssessConversion 4\n");
-        // There will be no other method overloads with no parameters
+        JPy_DEBUG_PRINTF("JMethod_AssessConversion: no-argument method (matchValue=100)\n");
+        // There can't be any other method overloads with no parameters
         return 100;
     }
 
@@ -108,6 +108,9 @@ int JMethod_AssessConversion(JNIEnv* jenv, JPy_JMethod* method, int argCount, Py
 
         arg = PyTuple_GetItem(argTuple, i);
         matchValue = paramDescriptor->paramAssessor(jenv, paramDescriptor, arg);
+
+        JPy_DEBUG_PRINTF("JMethod_AssessConversion: argTuple[%d]: matchValue=%d\n", i, matchValue);
+
         if (matchValue == 0) {
             //printf("JMethod_AssessConversion 6\n");
             // current arg does not match parameter type at all
@@ -116,8 +119,6 @@ int JMethod_AssessConversion(JNIEnv* jenv, JPy_JMethod* method, int argCount, Py
 
         matchValueSum += matchValue;
         paramDescriptor++;
-
-        JPy_DEBUG_PRINTF("JMethod_AssessConversion: argTuple[%d]: v=%d, valueSum=%d\n", i, matchValue, matchValueSum);
     }
 
     //printf("JMethod_AssessConversion 7\n");
@@ -550,6 +551,11 @@ JPy_JMethod* JOverloadedMethod_FindMethod0(JNIEnv* jenv, JPy_JOverloadedMethod* 
         }
     }
 
+    if (bestMethod == NULL) {
+        matchValueMax = 0;
+        matchCount = 0;
+    }
+
     result->method = bestMethod;
     result->matchValue = matchValueMax;
     result->matchCount = matchCount;
@@ -557,13 +563,22 @@ JPy_JMethod* JOverloadedMethod_FindMethod0(JNIEnv* jenv, JPy_JOverloadedMethod* 
     return bestMethod;
 }
 
-JPy_JMethod* JOverloadedMethod_FindMethod(JNIEnv* jenv, JPy_JOverloadedMethod* overloadedMethod, PyObject* argTuple)
+JPy_JMethod* JOverloadedMethod_FindMethod(JNIEnv* jenv, JPy_JOverloadedMethod* overloadedMethod, PyObject* argTuple, jboolean visitSuperClass)
 {
     JPy_JOverloadedMethod* currentOM;
     JPy_MethodFindResult result;
     JPy_MethodFindResult bestResult;
     JPy_JType* superClass;
     PyObject* superOM;
+
+    if (JPy_IsDebug()) {
+        int i, argCount = PyTuple_Size(argTuple);
+        printf("JOverloadedMethod_FindMethod: argCount=%d, visitSuperClass=%d\n", argCount, visitSuperClass);
+        for (i = 0; i < argCount; i++) {
+            PyObject* arg = PyTuple_GetItem(argTuple, i);
+            printf("\tPy_TYPE(argTuple[%d])->tp_name = %s\n", i, Py_TYPE(arg)->tp_name);
+        }
+    }
 
     bestResult.method = NULL;
     bestResult.matchValue = 0;
@@ -585,8 +600,17 @@ JPy_JMethod* JOverloadedMethod_FindMethod(JNIEnv* jenv, JPy_JOverloadedMethod* o
             }
         }
 
-        superClass = currentOM->declaringClass->superType;
-        superOM = JType_GetOverloadedMethod(jenv, superClass, currentOM->name, JNI_TRUE);
+        if (visitSuperClass) {
+            superClass = currentOM->declaringClass->superType;
+            if (superClass != NULL) {
+                superOM = JType_GetOverloadedMethod(jenv, superClass, currentOM->name, JNI_TRUE);
+            } else {
+                superOM = Py_None;
+            }
+        } else {
+            superOM = Py_None;
+        }
+
         if (superOM == NULL) {
             // oops, error
             return NULL;
@@ -648,7 +672,7 @@ void JOverloadedMethod_dealloc(JPy_JOverloadedMethod* self)
 }
 
 /**
- * The 'JOverloadedMethod' type's tp_call slot. Makes instances of the type callable.
+ * The 'JOverloadedMethod' type's tp_call slot. Makes instances of the 'JOverloadedMethod' type callable.
  */
 PyObject* JOverloadedMethod_call(JPy_JOverloadedMethod* self, PyObject *args, PyObject *kw)
 {
@@ -659,7 +683,7 @@ PyObject* JOverloadedMethod_call(JPy_JOverloadedMethod* self, PyObject *args, Py
 
     //printf("JOverloadedMethod_call 1: self=%p\n", self);
 
-    method = JOverloadedMethod_FindMethod(jenv, self, args);
+    method = JOverloadedMethod_FindMethod(jenv, self, args, JNI_TRUE);
     if (method == NULL) {
         return NULL;
     }
