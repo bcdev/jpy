@@ -128,5 +128,6 @@ if sys.argv[1] == 'install':
     os.system(sys.executable + ' src/test/python/jpy_rt_test.py')
     os.system(sys.executable + ' src/test/python/jpy_exception_test.py')
     os.system(sys.executable + ' src/test/python/jpy_overload_test.py')
+    os.system(sys.executable + ' src/test/python/jpy_constructor_test.py')
 
-    print('Note: if one of the above tests fail, make sure to compile Java test sources first.')
+    print('Note: if any of the above tests fails, make sure to compile Java test sources first.')
