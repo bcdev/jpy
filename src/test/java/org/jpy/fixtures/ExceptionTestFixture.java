@@ -7,6 +7,7 @@ import java.io.IOException;
  *
  * @author Norman Fomferra
  */
+@SuppressWarnings("UnusedDeclaration")
 public class ExceptionTestFixture {
     public int throwNpeIfArgIsNull(String arg) {
         return arg.length();
