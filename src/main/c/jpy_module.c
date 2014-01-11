@@ -97,6 +97,7 @@ JPy_JType* JPy_JIntegerObj = NULL;
 JPy_JType* JPy_JLongObj = NULL;
 JPy_JType* JPy_JFloatObj = NULL;
 JPy_JType* JPy_JDoubleObj = NULL;
+JPy_JType* JPy_JObject = NULL;
 JPy_JType* JPy_JString = NULL;
 
 
@@ -717,6 +718,8 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     DEFINE_NON_OBJECT_TYPE(JPy_JFloat, JPy_Float_JClass);
     DEFINE_NON_OBJECT_TYPE(JPy_JDouble, JPy_Double_JClass);
     DEFINE_NON_OBJECT_TYPE(JPy_JVoid, JPy_Void_JClass);
+    // The Java root object.
+    DEFINE_OBJECT_TYPE(JPy_JObject, JPy_Object_JClass);
     // Primitive-Wrapper Objects.
     DEFINE_OBJECT_TYPE(JPy_JBooleanObj, JPy_Boolean_JClass);
     DEFINE_OBJECT_TYPE(JPy_JCharacterObj, JPy_Character_JClass);
@@ -726,7 +729,7 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     DEFINE_OBJECT_TYPE(JPy_JLongObj, JPy_Long_JClass);
     DEFINE_OBJECT_TYPE(JPy_JFloatObj, JPy_Float_JClass);
     DEFINE_OBJECT_TYPE(JPy_JDoubleObj, JPy_Double_JClass);
-    // String Object.
+    // Other objects.
     DEFINE_OBJECT_TYPE(JPy_JString, JPy_String_JClass);
 
     return 0;

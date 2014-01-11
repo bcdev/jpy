@@ -20,7 +20,8 @@ JPy_ParamDescriptor* JType_CreateParamDescriptors(JNIEnv* jenv, int paramCount, 
 void JType_InitParamDescriptorFunctions(JPy_ParamDescriptor* paramDescriptor);
 void JType_InitMethodParamDescriptorFunctions(JPy_JType* type, JPy_JMethod* method);
 int JType_ProcessField(JNIEnv* jenv, JPy_JType* declaringType, PyObject* fieldKey, const char* fieldName, jclass fieldClassRef, jboolean isStatic, jboolean isFinal, jfieldID fid);
-
+int JType_DisposeReadOnlyBuffer(JNIEnv* jenv, jvalue* value, void* data);
+int JType_DisposeWritableBuffer(JNIEnv* jenv, jvalue* value, void* data);
 
 JPy_JType* JType_GetTypeForName(JNIEnv* jenv, const char* typeName, jboolean resolve)
 {
@@ -253,6 +254,153 @@ PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject
     }
 }
 
+int JType_PythonToJavaConversionError(JPy_JType* type, PyObject* pyArg)
+{
+    PyErr_Format(PyExc_ValueError, "cannot convert a Python %s to a Java %s", Py_TYPE(pyArg)->tp_name, type->javaName);
+    return -1;
+}
+
+int JType_CreateJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jclass classRef, jmethodID initMID, jvalue value, jobject* objectRef)
+{
+    *objectRef = (*jenv)->NewObjectA(jenv, classRef, initMID, &value);
+    if (*objectRef == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+    JPy_ON_JAVA_EXCEPTION_RETURN(-1);
+    return 0;
+}
+
+int JType_CreateJavaBooleanObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
+{
+    jvalue value;
+    if (PyBool_Check(pyArg) || PyLong_Check(pyArg)) {
+        value.z = JPy_AS_JBOOLEAN(pyArg);
+    } else {
+        return JType_PythonToJavaConversionError(type, pyArg);
+    }
+    return JType_CreateJavaObject(jenv, type, pyArg, JPy_Boolean_JClass, JPy_Boolean_Init_MID, value, objectRef);
+}
+
+int JType_CreateJavaCharacterObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
+{
+    jvalue value;
+    if (PyLong_Check(pyArg)) {
+        value.c = JPy_AS_JCHAR(pyArg);
+    } else {
+        return JType_PythonToJavaConversionError(type, pyArg);
+    }
+    return JType_CreateJavaObject(jenv, type, pyArg, JPy_Character_JClass, JPy_Character_Init_MID, value, objectRef);
+}
+
+int JType_CreateJavaByteObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
+{
+    jvalue value;
+    if (PyLong_Check(pyArg)) {
+        value.b = JPy_AS_JBYTE(pyArg);
+    } else {
+        return JType_PythonToJavaConversionError(type, pyArg);
+    }
+    return JType_CreateJavaObject(jenv, type, pyArg, JPy_Byte_JClass, JPy_Byte_Init_MID, value, objectRef);
+}
+
+int JType_CreateJavaShortObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
+{
+    jvalue value;
+    if (PyLong_Check(pyArg)) {
+        value.s = JPy_AS_JSHORT(pyArg);
+    } else {
+        return JType_PythonToJavaConversionError(type, pyArg);
+    }
+    return JType_CreateJavaObject(jenv, type, pyArg, JPy_Short_JClass, JPy_Short_Init_MID, value, objectRef);
+}
+
+int JType_CreateJavaIntegerObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
+{
+    jvalue value;
+    if (PyLong_Check(pyArg)) {
+        value.i = JPy_AS_JINT(pyArg);
+    } else {
+        return JType_PythonToJavaConversionError(type, pyArg);
+    }
+    return JType_CreateJavaObject(jenv, type, pyArg, JPy_Integer_JClass, JPy_Integer_Init_MID, value, objectRef);
+}
+
+int JType_CreateJavaLongObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
+{
+    jvalue value;
+    if (PyLong_Check(pyArg)) {
+        value.j = JPy_AS_JLONG(pyArg);
+    } else {
+        return JType_PythonToJavaConversionError(type, pyArg);
+    }
+    return JType_CreateJavaObject(jenv, type, pyArg, JPy_Long_JClass, JPy_Long_Init_MID, value, objectRef);
+}
+
+int JType_CreateJavaFloatObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
+{
+    jvalue value;
+    if (PyLong_Check(pyArg)) {
+        value.f = (jfloat) JPy_AS_JLONG(pyArg);
+    } else if (PyFloat_Check(pyArg)) {
+        value.f = JPy_AS_JFLOAT(pyArg);
+    } else {
+        return JType_PythonToJavaConversionError(type, pyArg);
+    }
+    return JType_CreateJavaObject(jenv, type, pyArg, JPy_Float_JClass, JPy_Float_Init_MID, value, objectRef);
+}
+
+int JType_CreateJavaDoubleObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
+{
+    jvalue value;
+    if (PyLong_Check(pyArg)) {
+        value.d = (jdouble) JPy_AS_JLONG(pyArg);
+    } else if (PyFloat_Check(pyArg)) {
+        value.d = JPy_AS_JDOUBLE(pyArg);
+    } else {
+        return JType_PythonToJavaConversionError(type, pyArg);
+    }
+    return JType_CreateJavaObject(jenv, type, pyArg, JPy_Double_JClass, JPy_Double_Init_MID, value, objectRef);
+}
+
+int JType_CreateNewJavaObjectReference(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
+{
+    if (type == JPy_JBoolean || type == JPy_JBooleanObj) {
+        return JType_CreateJavaBooleanObject(jenv, type, pyArg, objectRef);
+    } else if (type == JPy_JChar || type == JPy_JCharacterObj) {
+        return JType_CreateJavaCharacterObject(jenv, type, pyArg, objectRef);
+    } else if (type == JPy_JByte || type == JPy_JByteObj) {
+        return JType_CreateJavaByteObject(jenv, type, pyArg, objectRef);
+    } else if (type == JPy_JShort || type == JPy_JShortObj) {
+        return JType_CreateJavaShortObject(jenv, type, pyArg, objectRef);
+    } else if (type == JPy_JInt || type == JPy_JIntegerObj) {
+        return JType_CreateJavaIntegerObject(jenv, type, pyArg, objectRef);
+    } else if (type == JPy_JLong || type == JPy_JLongObj) {
+        return JType_CreateJavaLongObject(jenv, type, pyArg, objectRef);
+    } else if (type == JPy_JFloat || type == JPy_JFloatObj) {
+        return JType_CreateJavaFloatObject(jenv, type, pyArg, objectRef);
+    } else if (type == JPy_JDouble || type == JPy_JDoubleObj) {
+        return JType_CreateJavaDoubleObject(jenv, type, pyArg, objectRef);
+    } else if (type == JPy_JObject) {
+        if (PyBool_Check(pyArg)) {
+            return JType_CreateJavaBooleanObject(jenv, type, pyArg, objectRef);
+        } else if (PyLong_Check(pyArg)) {
+            return JType_CreateJavaIntegerObject(jenv, type, pyArg, objectRef);
+        } else if (PyFloat_Check(pyArg)) {
+            return JType_CreateJavaDoubleObject(jenv, type, pyArg, objectRef);
+        } else if (PyUnicode_Check(pyArg)) {
+            return JPy_AsJString(jenv, pyArg, objectRef);
+        }
+    } else if (type == JPy_JString) {
+        if (PyUnicode_Check(pyArg)) {
+            return JPy_AsJString(jenv, pyArg, objectRef);
+        }
+    }
+
+    return JType_PythonToJavaConversionError(type, pyArg);
+}
+
+
 int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
 {
     if (pyArg == Py_None) {
@@ -268,90 +416,7 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
     }
 
     // todo: problem of memory leak here: '**objectRef' escapes but we must actually must call jenv->DeleteLocalRef(*objectRef) some time later
-    if (type == JPy_JBoolean || type == JPy_JBooleanObj) {
-        jvalue value;
-        if (!(PyBool_Check(pyArg) || PyLong_Check(pyArg))) {
-            goto error;
-        }
-        value.z = JPy_AS_JBOOLEAN(pyArg);
-        *objectRef = (*jenv)->NewObjectA(jenv, JPy_Boolean_JClass, JPy_Boolean_Init_MID, &value);
-        JPy_ON_JAVA_EXCEPTION_RETURN(-1);
-        return 0;
-    } else if (type == JPy_JChar || type == JPy_JCharacterObj) {
-        jvalue value;
-        if (!PyLong_Check(pyArg)) {
-            goto error;
-        }
-        value.c = JPy_AS_JCHAR(pyArg);
-        *objectRef = (*jenv)->NewObjectA(jenv, JPy_Character_JClass, JPy_Character_Init_MID, &value);
-        JPy_ON_JAVA_EXCEPTION_RETURN(-1);
-        return 0;
-    } else if (type == JPy_JByte || type == JPy_JByteObj) {
-        jvalue value;
-        if (!PyLong_Check(pyArg)) {
-            goto error;
-        }
-        value.b = JPy_AS_JBYTE(pyArg);
-        *objectRef = (*jenv)->NewObjectA(jenv, JPy_Byte_JClass, JPy_Byte_Init_MID, &value);
-        JPy_ON_JAVA_EXCEPTION_RETURN(-1);
-        return 0;
-    } else if (type == JPy_JShort || type == JPy_JShortObj) {
-        jvalue value;
-        if (!PyLong_Check(pyArg)) {
-            goto error;
-        }
-        value.s = JPy_AS_JSHORT(pyArg);
-        *objectRef = (*jenv)->NewObjectA(jenv, JPy_Short_JClass, JPy_Short_Init_MID, &value);
-        JPy_ON_JAVA_EXCEPTION_RETURN(-1);
-        return 0;
-    } else if (type == JPy_JInt || type == JPy_JIntegerObj) {
-        jvalue value;
-        if (!PyLong_Check(pyArg)) {
-            goto error;
-        }
-        value.i = JPy_AS_JINT(pyArg);
-        *objectRef = (*jenv)->NewObjectA(jenv, JPy_Integer_JClass, JPy_Integer_Init_MID, &value);
-        JPy_ON_JAVA_EXCEPTION_RETURN(-1);
-        return 0;
-    } else if (type == JPy_JLong || type == JPy_JLongObj) {
-        jvalue value;
-        if (!PyLong_Check(pyArg)) {
-            goto error;
-        }
-        value.j = JPy_AS_JLONG(pyArg);
-        *objectRef = (*jenv)->NewObjectA(jenv, JPy_Long_JClass, JPy_Long_Init_MID, &value);
-        JPy_ON_JAVA_EXCEPTION_RETURN(-1);
-        return 0;
-    } else if (type == JPy_JFloat || type == JPy_JFloatObj) {
-        jvalue value;
-        if (!PyFloat_Check(pyArg)) {
-            goto error;
-        }
-        value.f = JPy_AS_JFLOAT(pyArg);
-        *objectRef = (*jenv)->NewObjectA(jenv, JPy_Float_JClass, JPy_Float_Init_MID, &value);
-        JPy_ON_JAVA_EXCEPTION_RETURN(-1);
-        return 0;
-    } else if (type == JPy_JDouble || type == JPy_JDoubleObj) {
-        jvalue value;
-        if (!PyFloat_Check(pyArg)) {
-            goto error;
-        }
-        value.d = JPy_AS_JDOUBLE(pyArg);
-        *objectRef = (*jenv)->NewObjectA(jenv, JPy_Double_JClass, JPy_Double_Init_MID, &value);
-        JPy_ON_JAVA_EXCEPTION_RETURN(-1);
-        return 0;
-    } else if (type == JPy_JString) {
-        if (!PyUnicode_Check(pyArg)) {
-            goto error;
-        }
-        if (JPy_AsJString(jenv, pyArg, objectRef) < 0) {
-            goto error;
-        }
-        return 0;
-    }
-error:
-    PyErr_SetString(PyExc_RuntimeError, "failed to convert Python object to Java object");
-    return -1;
+    return JType_CreateNewJavaObjectReference(jenv, type, pyArg, objectRef);
 }
 
 
@@ -1017,9 +1082,44 @@ int JType_AssessToJObject(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, Py
     paramType = paramDescriptor->type;
     paramComponentType = paramType->componentType;
 
-    if (!JObj_Check(pyArg)) {
-        if (paramComponentType != NULL && paramComponentType->isPrimitive && PyObject_CheckBuffer(pyArg)) {
+    if (JObj_Check(pyArg)) {
+        // pyArg is a Java object
+
+        argType = (JPy_JType*) Py_TYPE(pyArg);
+        if (argType == paramType) {
+            // pyArg has same type as the parameter
+            return 100;
+        }
+
+        argValue = (JPy_JObj*) pyArg;
+        if ((*jenv)->IsInstanceOf(jenv, argValue->objectRef, paramType->classRef)) {
+            argComponentType = argType->componentType;
+            if (argComponentType == paramComponentType) {
+                // pyArg is an instance of parameter type, and they both have the same component types (which may be null)
+                return 90;
+            }
+            if (argComponentType != NULL && paramComponentType != NULL) {
+                // Determines whether an object of clazz1 can be safely cast to clazz2.
+                if ((*jenv)->IsAssignableFrom(jenv, argComponentType->classRef, paramComponentType->classRef)) {
+                    // pyArg is an instance of parameter array type, and component types are compatible
+                    return 80;
+                }
+            }
+        }
+
+        // pyArg type does not match parameter type
+        return 0;
+    }
+
+    // pyArg is not a Java object
+
+    if (paramComponentType != NULL) {
+        // The parameter type is an array type
+
+        if (paramComponentType->isPrimitive && PyObject_CheckBuffer(pyArg)) {
             Py_buffer view;
+
+            // The parameter type is a primitive array type, pyArg is a Python buffer object
 
             if (PyObject_GetBuffer(pyArg, &view, PyBUF_FORMAT) == 0) {
                 JPy_JType* type;
@@ -1029,25 +1129,7 @@ int JType_AssessToJObject(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, Py
 
                 type = paramComponentType;
                 matchValue = 0;
-                if (view.format == NULL) {
-                    if (type == JPy_JBoolean) {
-                        matchValue = view.itemsize == 1 ? 10 : 0;
-                    } else if (type == JPy_JByte) {
-                        matchValue = view.itemsize == 1 ? 10 : 0;
-                    } else if (type == JPy_JChar) {
-                        matchValue = view.itemsize == 2 ? 10 : 0;
-                    } else if (type == JPy_JShort) {
-                        matchValue = view.itemsize == 2 ? 10 : 0;
-                    } else if (type == JPy_JInt) {
-                        matchValue = view.itemsize == 4 ? 10 : 0;
-                    } else if (type == JPy_JLong) {
-                        matchValue = view.itemsize == 8 ? 10 : 0;
-                    } else if (type == JPy_JFloat) {
-                        matchValue = view.itemsize == 4 ? 10 : 0;
-                    } else if (type == JPy_JDouble) {
-                        matchValue = view.itemsize == 8 ? 10 : 0;
-                    }
-                } else {
+                if (view.format != NULL) {
                     char format = *view.format;
                     if (type == JPy_JBoolean) {
                         matchValue = format == 'b' || format == 'B' ? 100 : 0;
@@ -1066,35 +1148,200 @@ int JType_AssessToJObject(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, Py
                     } else if (type == JPy_JDouble) {
                         matchValue = format == 'd' ? 100 : 0;
                     }
+                } else {
+                    if (type == JPy_JBoolean) {
+                        matchValue = view.itemsize == 1 ? 10 : 0;
+                    } else if (type == JPy_JByte) {
+                        matchValue = view.itemsize == 1 ? 10 : 0;
+                    } else if (type == JPy_JChar) {
+                        matchValue = view.itemsize == 2 ? 10 : 0;
+                    } else if (type == JPy_JShort) {
+                        matchValue = view.itemsize == 2 ? 10 : 0;
+                    } else if (type == JPy_JInt) {
+                        matchValue = view.itemsize == 4 ? 10 : 0;
+                    } else if (type == JPy_JLong) {
+                        matchValue = view.itemsize == 8 ? 10 : 0;
+                    } else if (type == JPy_JFloat) {
+                        matchValue = view.itemsize == 4 ? 10 : 0;
+                    } else if (type == JPy_JDouble) {
+                        matchValue = view.itemsize == 8 ? 10 : 0;
+                    }
                 }
 
                 PyBuffer_Release(&view);
                 return matchValue;
             }
+        } else if (PySequence_Check(pyArg)) {
+            return 10;
         }
-        return 0;
-    }
-
-    argType = (JPy_JType*) Py_TYPE(pyArg);
-    if (argType == paramType) {
-        return 100;
-    }
-
-    argValue = (JPy_JObj*) pyArg;
-    if ((*jenv)->IsInstanceOf(jenv, argValue->objectRef, paramType->classRef)) {
-        argComponentType = argType->componentType;
-        if (argComponentType == paramComponentType) {
+    } else if (paramType == JPy_JObject) {
+        // Parameter type is not an array type, but any other Java object type
+        return 10;
+    } else if (paramType == JPy_JBooleanObj) {
+        if (PyBool_Check(pyArg)) {
+            return 100;
+        } else if (PyLong_Check(pyArg)) {
+            return 10;
+        }
+    } else if (paramType == JPy_JCharacterObj
+               || paramType == JPy_JByteObj
+               || paramType == JPy_JShortObj
+               || paramType == JPy_JIntegerObj
+               || paramType == JPy_JLongObj) {
+        if (PyLong_Check(pyArg)) {
+            return 100;
+        } else if (PyBool_Check(pyArg)) {
+            return 10;
+        }
+    } else if (paramType == JPy_JFloatObj
+               || paramType == JPy_JDoubleObj) {
+        if (PyFloat_Check(pyArg)) {
+            return 100;
+        } else if (PyLong_Check(pyArg)) {
             return 90;
-        }
-        if (argComponentType != NULL && paramComponentType != NULL) {
-            // Determines whether an object of clazz1 can be safely cast to clazz2.
-            if ((*jenv)->IsAssignableFrom(jenv, argComponentType->classRef, paramComponentType->classRef)) {
-                return 80;
-            }
+        } else if (PyBool_Check(pyArg)) {
+            return 10;
         }
     }
 
     return 0;
+}
+
+
+int JType_ConvertToJObject(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg, jvalue* value, JPy_ArgDisposer* disposer)
+{
+    JPy_JType* paramType;
+    JPy_JType* paramComponentType;
+
+    if (pyArg == Py_None) {
+        value->l = NULL;
+        disposer->data = NULL;
+        disposer->disposeArg = NULL;
+        return 0;
+    }
+
+    if (JObj_Check(pyArg)) {
+        JPy_JObj* obj = (JPy_JObj*) pyArg;
+        value->l = obj->objectRef;
+        disposer->data = NULL;
+        disposer->disposeArg = NULL;
+        return 0;
+    }
+
+    paramType = paramDescriptor->type;
+    paramComponentType = paramType->componentType;
+
+    if (paramComponentType != NULL) {
+        if (paramComponentType->isPrimitive && PyObject_CheckBuffer(pyArg)) {
+            Py_buffer* view;
+            int flags;
+            Py_ssize_t itemCount;
+            jarray array;
+            void* carray;
+            jint itemSize;
+            JPy_JType* type;
+
+            view = PyMem_New(Py_buffer, 1);
+            if (view == NULL) {
+                PyErr_NoMemory();
+                return -1;
+            }
+
+            flags = paramDescriptor->isMutable ? PyBUF_WRITABLE : PyBUF_SIMPLE;
+            if (PyObject_GetBuffer(pyArg, view, flags) < 0) {
+                PyMem_Del(view);
+                return -1;
+            }
+
+            itemCount = view->len / view->itemsize;
+            if (itemCount <= 0) {
+                PyBuffer_Release(view);
+                PyMem_Del(view);
+                PyErr_SetString(PyExc_ValueError, "illegal buffer configuration");
+                return -1;
+            }
+
+            type = paramComponentType;
+            if (type == JPy_JBoolean) {
+                array = (*jenv)->NewBooleanArray(jenv, itemCount);
+                itemSize = sizeof(jboolean);
+            } else if (type == JPy_JByte) {
+                array = (*jenv)->NewByteArray(jenv, itemCount);
+                itemSize = sizeof(jbyte);
+            } else if (type == JPy_JChar) {
+                array = (*jenv)->NewCharArray(jenv, itemCount);
+                itemSize = sizeof(jchar);
+            } else if (type == JPy_JShort) {
+                array = (*jenv)->NewShortArray(jenv, itemCount);
+                itemSize = sizeof(jshort);
+            } else if (type == JPy_JInt) {
+                array = (*jenv)->NewIntArray(jenv, itemCount);
+                itemSize = sizeof(jint);
+            } else if (type == JPy_JLong) {
+                array = (*jenv)->NewLongArray(jenv, itemCount);
+                itemSize = sizeof(jlong);
+            } else if (type == JPy_JFloat) {
+                array = (*jenv)->NewFloatArray(jenv, itemCount);
+                itemSize = sizeof(jfloat);
+            } else if (type == JPy_JDouble) {
+                array = (*jenv)->NewDoubleArray(jenv, itemCount);
+                itemSize = sizeof(jdouble);
+            } else {
+                PyBuffer_Release(view);
+                PyMem_Del(view);
+                PyErr_SetString(PyExc_RuntimeError, "internal error: illegal primitive type");
+                return -1;
+            }
+
+            if (view->len != itemCount * itemSize) {
+                //printf("%ld, %ld, %ld, %ld\n", view->len , view->itemsize, itemCount, itemSize);
+                PyBuffer_Release(view);
+                PyMem_Del(view);
+                PyErr_SetString(PyExc_ValueError, "buffer length is too small");
+                return -1;
+            }
+
+            if (array == NULL) {
+                PyBuffer_Release(view);
+                PyMem_Del(view);
+                PyErr_NoMemory();
+                return -1;
+            }
+
+            carray = (*jenv)->GetPrimitiveArrayCritical(jenv, array, NULL);
+            if (carray == NULL) {
+                PyBuffer_Release(view);
+                PyMem_Del(view);
+                PyErr_NoMemory();
+                return -1;
+            }
+            memcpy(carray, view->buf, itemCount * itemSize);
+            (*jenv)->ReleasePrimitiveArrayCritical(jenv, array, carray, 0);
+
+            value->l = array;
+            disposer->data = view;
+            disposer->disposeArg = paramDescriptor->isMutable ? JType_DisposeWritableBuffer : JType_DisposeReadOnlyBuffer;
+
+            return 0;
+        } else {
+            PyErr_Format(PyExc_ValueError, "conversion from Python %s to Java %s: not implemented yet", Py_TYPE(pyArg)->tp_name, paramType->javaName);
+            return -1;
+        }
+    } else {
+        jobject objectRef;
+        if (JType_CreateNewJavaObjectReference(jenv, paramType, pyArg, &objectRef) < 0) {
+            return -1;
+        }
+        value->l = objectRef;
+        disposer->data = NULL;
+        disposer->disposeArg = JType_DisposeLocalObjectRef;
+        return 0;
+    }
+
+    PyErr_Format(PyExc_RuntimeError, "conversion from Python %s to Java %s:\n"
+                                     "should not have come here, check accordance of JType_AssessToJObject vs. JType_ConvertToJObject",
+                                     Py_TYPE(pyArg)->tp_name, paramType->javaName);
+    return -1;
 }
 
 int JType_DisposeReadOnlyBuffer(JNIEnv* jenv, jvalue* value, void* data)
@@ -1131,117 +1378,6 @@ int JType_DisposeWritableBuffer(JNIEnv* jenv, jvalue* value, void* data)
         (*jenv)->DeleteLocalRef(jenv, array);
         PyBuffer_Release(view);
         PyMem_Del(view);
-    }
-    return 0;
-}
-
-
-int JType_ConvertToJObject(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg, jvalue* value, JPy_ArgDisposer* disposer)
-{
-    JPy_JType* paramType;
-    JPy_JType* componentType;
-
-    if (pyArg == Py_None) {
-        value->l = NULL;
-        return 0;
-    }
-
-    paramType = paramDescriptor->type;
-    componentType = paramType->componentType;
-    if (componentType != NULL && componentType->isPrimitive && PyObject_CheckBuffer(pyArg)) {
-        Py_buffer* view;
-        int flags;
-        Py_ssize_t itemCount;
-        jarray array;
-        void* carray;
-        jint itemSize;
-        JPy_JType* type;
-
-        view = PyMem_New(Py_buffer, 1);
-        if (view == NULL) {
-            PyErr_NoMemory();
-            return -1;
-        }
-
-        flags = paramDescriptor->isMutable ? PyBUF_WRITABLE : PyBUF_SIMPLE;
-        if (PyObject_GetBuffer(pyArg, view, flags) < 0) {
-            PyMem_Del(view);
-            return -1;
-        }
-
-        itemCount = view->len / view->itemsize;
-        if (itemCount <= 0) {
-            PyBuffer_Release(view);
-            PyMem_Del(view);
-            PyErr_SetString(PyExc_ValueError, "illegal buffer configuration");
-            return -1;
-        }
-
-        type = componentType;
-        if (type == JPy_JBoolean) {
-            array = (*jenv)->NewBooleanArray(jenv, itemCount);
-            itemSize = sizeof(jboolean);
-        } else if (type == JPy_JByte) {
-            array = (*jenv)->NewByteArray(jenv, itemCount);
-            itemSize = sizeof(jbyte);
-        } else if (type == JPy_JChar) {
-            array = (*jenv)->NewCharArray(jenv, itemCount);
-            itemSize = sizeof(jchar);
-        } else if (type == JPy_JShort) {
-            array = (*jenv)->NewShortArray(jenv, itemCount);
-            itemSize = sizeof(jshort);
-        } else if (type == JPy_JInt) {
-            array = (*jenv)->NewIntArray(jenv, itemCount);
-            itemSize = sizeof(jint);
-        } else if (type == JPy_JLong) {
-            array = (*jenv)->NewLongArray(jenv, itemCount);
-            itemSize = sizeof(jlong);
-        } else if (type == JPy_JFloat) {
-            array = (*jenv)->NewFloatArray(jenv, itemCount);
-            itemSize = sizeof(jfloat);
-        } else if (type == JPy_JDouble) {
-            array = (*jenv)->NewDoubleArray(jenv, itemCount);
-            itemSize = sizeof(jdouble);
-        } else {
-            PyBuffer_Release(view);
-            PyMem_Del(view);
-            PyErr_SetString(PyExc_RuntimeError, "internal error: illegal primitive type");
-            return -1;
-        }
-
-        if (view->len != itemCount * itemSize) {
-            //printf("%ld, %ld, %ld, %ld\n", view->len , view->itemsize, itemCount, itemSize);
-            PyBuffer_Release(view);
-            PyMem_Del(view);
-            PyErr_SetString(PyExc_ValueError, "buffer length is too small");
-            return -1;
-        }
-
-        if (array == NULL) {
-            PyBuffer_Release(view);
-            PyMem_Del(view);
-            PyErr_NoMemory();
-            return -1;
-        }
-
-        carray = (*jenv)->GetPrimitiveArrayCritical(jenv, array, NULL);
-        if (carray == NULL) {
-            PyBuffer_Release(view);
-            PyMem_Del(view);
-            PyErr_NoMemory();
-            return -1;
-        }
-        memcpy(carray, view->buf, itemCount * itemSize);
-        (*jenv)->ReleasePrimitiveArrayCritical(jenv, array, carray, 0);
-
-        value->l = array;
-        disposer->data = view;
-        disposer->disposeArg = paramDescriptor->isMutable ? JType_DisposeWritableBuffer : JType_DisposeReadOnlyBuffer;
-    } else {
-        JPy_JObj* obj = (JPy_JObj*) pyArg;
-        value->l = obj->objectRef;
-        disposer->data = NULL;
-        disposer->disposeArg = NULL;
     }
     return 0;
 }

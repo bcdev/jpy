@@ -1,5 +1,7 @@
 package org.jpy.fixtures;
 
+import java.lang.reflect.Array;
+
 /**
  * Used as a test class for the test cases in jpy_overload_test.py
  *
@@ -79,15 +81,40 @@ public class MethodOverloadTestFixture {
             }
             Object arg = args[i];
             if (arg != null) {
-                argString.append(arg.getClass().getSimpleName());
+                Class<?> argClass = arg.getClass();
+                argString.append(argClass.getSimpleName());
                 argString.append('(');
-                argString.append(String.valueOf(arg));
+                if (argClass.isArray()) {
+                    stringifyArray(arg, argString);
+                } else {
+                    stringifyObject(arg, argString);
+                }
                 argString.append(')');
             } else {
                 argString.append("null");
             }
         }
         return argString.toString();
+    }
+
+    private static void stringifyObject(Object arg, StringBuilder argString) {
+        argString.append(String.valueOf(arg));
+    }
+
+    private static void stringifyArray(Object arg, StringBuilder argString) {
+        boolean primitive = arg.getClass().getComponentType().isPrimitive();
+        int length = Array.getLength(arg);
+        for (int i = 0; i < length; i++) {
+            Object item = Array.get(arg, i);
+            if (i > 0) {
+                argString.append(",");
+            }
+            if (primitive) {
+                argString.append(String.valueOf(item));
+            } else {
+                argString.append(stringifyArgs(item));
+            }
+        }
     }
 
 

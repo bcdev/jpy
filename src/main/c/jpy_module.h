@@ -110,6 +110,7 @@ extern struct JPy_JType* JPy_JIntegerObj;
 extern struct JPy_JType* JPy_JLongObj;
 extern struct JPy_JType* JPy_JFloatObj;
 extern struct JPy_JType* JPy_JDoubleObj;
+extern struct JPy_JType* JPy_JObject;
 extern struct JPy_JType* JPy_JString;
 
 // java.lang.Comparable
