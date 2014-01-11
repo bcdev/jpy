@@ -86,7 +86,9 @@ max_mem = config.get('DEFAULT', 'max_mem', fallback='512M')
 
 jpy.create_jvm(options=['-Djava.class.path=' + os.pathsep.join(classpath), '-Xmx' + max_mem], debug=debug)
 
-def annotate_RasterDataNode_readPixels(type, method):
+def annotate_RasterDataNode_methods(type, method):
+    index = -1
+
     if method.name == 'readPixels' and method.param_count >= 5:
         index = 4
         param_type_str = str(method.get_param_type(index))
@@ -95,16 +97,25 @@ def annotate_RasterDataNode_readPixels(type, method):
             or param_type_str == "<class '[D'>":
             method.set_param_mutable(index, True)
             method.set_param_return(index, True)
-            if debug:
-                print('annotate_RasterDataNode_readPixels: Method "{0}": modified parameter {1:d}: mutable = {2}, return = {3}'.format(
-                                   method.name, index, method.is_param_mutable(4), method.is_param_return(4)))
+
+    if method.name == 'readValidMask' and method.param_count == 5:
+        index = 4
+        param_type_str = str(method.get_param_type(index))
+        if param_type_str == "<class '[Z'>":
+            method.set_param_mutable(index, True)
+            method.set_param_return(index, True)
+
+    if index >= 0 and debug:
+        print('annotate_RasterDataNode_methods: Method "{0}": modified parameter {1:d}: mutable = {2}, return = {3}'.format(
+              method.name, index, method.is_param_mutable(index), method.is_param_return(index)))
+
     return True
 
 
-jpy.type_callbacks['org.esa.beam.framework.datamodel.RasterDataNode'] = annotate_RasterDataNode_readPixels
-jpy.type_callbacks['org.esa.beam.framework.datamodel.AbstractBand'] = annotate_RasterDataNode_readPixels
-jpy.type_callbacks['org.esa.beam.framework.datamodel.Band'] = annotate_RasterDataNode_readPixels
-jpy.type_callbacks['org.esa.beam.framework.datamodel.VirtualBand'] = annotate_RasterDataNode_readPixels
+jpy.type_callbacks['org.esa.beam.framework.datamodel.RasterDataNode'] = annotate_RasterDataNode_methods
+jpy.type_callbacks['org.esa.beam.framework.datamodel.AbstractBand'] = annotate_RasterDataNode_methods
+jpy.type_callbacks['org.esa.beam.framework.datamodel.Band'] = annotate_RasterDataNode_methods
+jpy.type_callbacks['org.esa.beam.framework.datamodel.VirtualBand'] = annotate_RasterDataNode_methods
 
 
 try:

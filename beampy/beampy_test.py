@@ -1,5 +1,7 @@
 import unittest
 import beampy
+import numpy as np
+import array
 
 class TestBeamIO(unittest.TestCase):
 
@@ -45,7 +47,6 @@ class TestBeamIO(unittest.TestCase):
         w = self.product.getSceneRasterWidth()
         h = self.product.getSceneRasterHeight()
         b = self.product.getBand('radiance_13')
-        import array
         a = array.array('f', w * [0])
         b.readPixels(0, 0, w, 1, a)
         self.assertAlmostEqual(a[100], 232.93376, places=5)
@@ -56,7 +57,6 @@ class TestBeamIO(unittest.TestCase):
 
 
     def test_readPixels_with_numpy_array(self):
-        import numpy as np
         w = self.product.getSceneRasterWidth()
         h = self.product.getSceneRasterHeight()
         b = self.product.getBand('radiance_13')
@@ -81,6 +81,21 @@ class TestBeamIO(unittest.TestCase):
         self.assertAlmostEqual(a[103], 226.83096, places=5)
         self.assertAlmostEqual(a[104], 219.54100, places=5)
 
+
+    def test_readValidMask_with_numpy_array(self):
+        w = self.product.getSceneRasterWidth()
+        h = self.product.getSceneRasterHeight()
+        b = self.product.getBand('radiance_13')
+        a = np.zeros(w, dtype=np.int8)
+        b.readValidMask(0, 0, w, 1, a)
+        self.assertEqual(a[0], 0)
+        self.assertEqual(a[1], 0)
+        self.assertEqual(a[2], 0)
+        self.assertEqual(a[100], 1)
+        self.assertEqual(a[101], 1)
+        self.assertEqual(a[102], 1)
+        self.assertEqual(a[103], 1)
+        self.assertEqual(a[104], 1)
 
 
 if __name__ == '__main__':
