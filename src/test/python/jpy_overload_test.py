@@ -11,7 +11,7 @@ class TestConstructorOverloads(unittest.TestCase):
 
     def setUp(self):
         self.Fixture = jpy.get_class('org.jpy.fixtures.ConstructorOverloadTestFixture')
-        self.assertTrue('org.jpy.fixtures.ConstructorOverloadTestFixture' in jpy.types)
+        self.assertIsNotNone(self.Fixture)
 
 
     def test_FloatConstructors(self):
@@ -46,7 +46,7 @@ class TestMethodOverloads(unittest.TestCase):
 
     def setUp(self):
         self.Fixture = jpy.get_class('org.jpy.fixtures.MethodOverloadTestFixture')
-        self.assertTrue('org.jpy.fixtures.MethodOverloadTestFixture' in jpy.types)
+        self.assertIsNotNone(self.Fixture)
 
 
     def test_2ArgOverloadsWithVaryingTypes(self):

@@ -7,7 +7,7 @@ class TestString(unittest.TestCase):
 
     def setUp(self):
         self.String = jpy.get_class('java.lang.String')
-        self.assertTrue('java.lang.String' in jpy.types)
+        self.assertIsNotNone(self.String)
 
     def test_constructor(self):
         s = self.String('Bibo')
@@ -59,7 +59,7 @@ class TestFile(unittest.TestCase):
 
     def setUp(self):
         self.File = jpy.get_class('java.io.File')
-        self.assertTrue('java.io.File' in jpy.types)
+        self.assertIsNotNone(self.File)
 
     def test_constructor(self):
         f = self.File('/usr/local/bibo')

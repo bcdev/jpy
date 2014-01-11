@@ -10,7 +10,7 @@ class TestExceptions(unittest.TestCase):
 
     def setUp(self):
         self.Fixture = jpy.get_class('org.jpy.fixtures.ExceptionTestFixture')
-        self.assertTrue('org.jpy.fixtures.ExceptionTestFixture' in jpy.types)
+        self.assertIsNotNone(self.Fixture)
 
 
     def test_NullPointerException(self):

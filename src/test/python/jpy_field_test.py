@@ -12,13 +12,13 @@ class TestFields(unittest.TestCase):
 
     def setUp(self):
         self.Fixture = jpy.get_class('org.jpy.fixtures.FieldTestFixture')
-        self.assertTrue('org.jpy.fixtures.FieldTestFixture' in jpy.types)
+        self.assertIsNotNone(self.Fixture)
 
         self.Thing = jpy.get_class('org.jpy.fixtures.Thing')
-        self.assertTrue('org.jpy.fixtures.Thing' in jpy.types)
+        self.assertIsNotNone(self.Thing)
 
         self.String = jpy.get_class('java.lang.String')
-        self.assertTrue('java.lang.String' in jpy.types)
+        self.assertIsNotNone(self.String)
 
 
     def test_static_fields(self):
