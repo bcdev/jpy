@@ -681,14 +681,10 @@ PyObject* JOverloadedMethod_call(JPy_JOverloadedMethod* self, PyObject *args, Py
 
     JPy_GET_JNI_ENV_OR_RETURN(jenv, NULL)
 
-    //printf("JOverloadedMethod_call 1: self=%p\n", self);
-
     method = JOverloadedMethod_FindMethod(jenv, self, args, JNI_TRUE);
     if (method == NULL) {
         return NULL;
     }
-
-    //printf("JOverloadedMethod_call 2: method=%p\n", method);
 
     return JMethod_InvokeMethod(jenv, method, self->declaringClass, args);
 }

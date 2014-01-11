@@ -129,6 +129,6 @@ if sys.argv[1] == 'install':
     os.system(sys.executable + ' src/test/python/jpy_exception_test.py')
     os.system(sys.executable + ' src/test/python/jpy_overload_test.py')
     os.system(sys.executable + ' src/test/python/jpy_typeconv_test.py')
-    #os.system(sys.executable + ' src/test/python/jpy_typeres_test.py')
+    os.system(sys.executable + ' src/test/python/jpy_typeres_test.py')
 
     print('Note: if any of the above tests fails, make sure to compile Java test sources first.')

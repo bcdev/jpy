@@ -346,11 +346,22 @@ int JObj_setattro(JPy_JObj* self, PyObject* name, PyObject* value)
  */
 PyObject* JObj_getattro(JPy_JObj* self, PyObject* name)
 {
+    JPy_JType* selfType;
     PyObject* value;
 
     //printf("JObj_getattro: %s.%s\n", Py_TYPE(self)->tp_name, PyUnicode_AsUTF8(name));
 
-    // todo: implement a sepcial lookup: we need to override __getattro__ of JType (--> JType_getattro) as well so that we know if a method
+    // First make sure that the Java type is resolved, otherwise we won't find any methods at all.
+    selfType = (JPy_JType*) Py_TYPE(self);
+    if (!selfType->isResolved) {
+        JNIEnv* jenv;
+        JPy_GET_JNI_ENV_OR_RETURN(jenv, NULL)
+        if (JType_ResolveType(jenv, selfType) < 0) {
+            return NULL;
+        }
+    }
+
+    // todo: implement a special lookup: we need to override __getattro__ of JType (--> JType_getattro) as well so that we know if a method
     // is called on a class rather than on an instance. Using PyObject_GenericGetAttr will also call  JType_getattro,
     // but then we loose the information that a method is called on an instance and not on a class.
     value = PyObject_GenericGetAttr((PyObject*) self, name);
@@ -361,7 +372,7 @@ PyObject* JObj_getattro(JPy_JObj* self, PyObject* name)
     if (PyObject_TypeCheck(value, &JOverloadedMethod_Type)) {
         //JPy_JOverloadedMethod* overloadedMethod = (JPy_JOverloadedMethod*) value;
         //printf("JObj_getattro: wrapping JOverloadedMethod, overloadCount=%d\n", PyList_Size(overloadedMethod->methodList));
-        return PyMethod_New(value,(PyObject*) self);
+        return PyMethod_New(value, (PyObject*) self);
     } else if (PyObject_TypeCheck(value, &JField_Type)) {
         JNIEnv* jenv;
         JPy_JField* field;
