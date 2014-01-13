@@ -1125,28 +1125,46 @@ int JType_AssessToJObject(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, Py
                 JPy_JType* type;
                 int matchValue;
 
-                //printf("buffer len=%d, itemsize=%d, format=%s\n", view.len, view.itemsize, view.format);
+                //printf("JType_AssessToJObject: buffer len=%d, itemsize=%d, format=%s\n", view.len, view.itemsize, view.format);
 
                 type = paramComponentType;
                 matchValue = 0;
                 if (view.format != NULL) {
                     char format = *view.format;
                     if (type == JPy_JBoolean) {
-                        matchValue = format == 'b' || format == 'B' ? 100 : 0;
+                        matchValue = format == 'b' || format == 'B' ? 100
+                                   : view.itemsize == 1 ? 10 : 0;
                     } else if (type == JPy_JByte) {
-                        matchValue = format == 'b' ? 100 : format == 'B' ? 90 : 0;
+                        matchValue = format == 'b' ? 100
+                                   : format == 'B' ? 90
+                                   : view.itemsize == 1 ? 10 : 0;
                     } else if (type == JPy_JChar) {
-                        matchValue = format == 'u' ? 100 : format == 'H' ? 90 : format == 'h' ? 80 : 0;
+                        matchValue = format == 'u' ? 100
+                                   : format == 'H' ? 90
+                                   : format == 'h' ? 80 : view.itemsize == 2 ? 10
+                                   : 0;
                     } else if (type == JPy_JShort) {
-                        matchValue = format == 'h' ? 100 : format == 'H' ? 90 : 0;
+                        matchValue = format == 'h' ? 100
+                                   : format == 'H' ? 90
+                                   : view.itemsize == 2 ? 10
+                                   : 0;
                     } else if (type == JPy_JInt) {
-                        matchValue = format == 'i' || format == 'l' ? 100 : format == 'I' || format == 'L' ? 90 : 0;
+                        matchValue = format == 'i' || format == 'l' ? 100
+                                   : format == 'I' || format == 'L' ? 90
+                                   : view.itemsize == 4 ? 10
+                                   : 0;
                     } else if (type == JPy_JLong) {
-                        matchValue = format == 'q' ? 100 : format == 'Q' ? 90 : 0;
+                        matchValue = format == 'q' ? 100
+                                   : format == 'Q' ? 90
+                                   : view.itemsize == 8 ? 10
+                                   : 0;
                     } else if (type == JPy_JFloat) {
-                        matchValue = format == 'f' ? 100 : 0;
+                        matchValue = format == 'f' ? 100
+                                   : view.itemsize == 4 ? 10 : 0;
                     } else if (type == JPy_JDouble) {
-                        matchValue = format == 'd' ? 100 : 0;
+                        matchValue = format == 'd' ? 100
+                                   : view.itemsize == 8 ? 10
+                                   : 0;
                     }
                 } else {
                     if (type == JPy_JBoolean) {
