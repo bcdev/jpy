@@ -67,6 +67,7 @@ JPy_JType* JType_GetTypeForName(JNIEnv* jenv, const char* typeName, jboolean res
 JPy_JType* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve)
 {
     PyObject* typeKey;
+    PyObject* typeValue;
     JPy_JType* type;
 
     if (JPy_Types == NULL) {
@@ -75,9 +76,8 @@ JPy_JType* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve)
     }
 
     typeKey = JPy_FromTypeName(jenv, classRef);
-    // todo: add check, because the following is a dangerous cast: someone else could have put something else into JPy_Types
-    type = (JPy_JType*) PyDict_GetItem(JPy_Types, typeKey);
-    if (type == NULL) {
+    typeValue = PyDict_GetItem(JPy_Types, typeKey);
+    if (typeValue == NULL) {
 
         // Create a new type instance
         type = JType_New(jenv, classRef, resolve);
@@ -114,6 +114,13 @@ JPy_JType* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve)
 
     } else {
         Py_DECREF(typeKey);
+
+        if (!JType_Check(typeValue)) {
+            PyErr_Format(PyExc_RuntimeError, "attributes in 'jpy." JPy_MODULE_ATTR_NAME_TYPES "' must be of type 'jpy.JType'");
+            return NULL;
+        }
+
+        type = (JPy_JType*) typeValue;
     }
 
     JPy_DEBUG_PRINTF("JType_GetType: javaName='%s', resolve=%d, resolved=%d, type=%p\n", type->javaName, resolve, type->isResolved, type);
