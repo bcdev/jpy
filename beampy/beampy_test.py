@@ -30,6 +30,26 @@ class TestBeamIO(unittest.TestCase):
         self.assertEqual(h,  881)
 
 
+    def test_readPixels_performance(self):
+        w = self.product.getSceneRasterWidth()
+        h = self.product.getSceneRasterHeight()
+        b = self.product.getBand('radiance_13')
+        a = np.zeros(w, dtype=np.float32)
+
+        import time
+
+        t0 = time.time()
+        for y in range(h):
+            b.readPixels(0, 0, w, 1, a)
+        t1 = time.time()
+
+        dt = t1 - t0
+        print('Band.readPixels(): w =', w, ', dtype=np.float32:', h, 'calls in', dt*1000, 'ms, that is ', dt*1000/y, 'ms per call')
+
+
+
+
+
     def test_readPixels_with_java_array(self):
         w = self.product.getSceneRasterWidth()
         h = self.product.getSceneRasterHeight()
@@ -86,7 +106,7 @@ class TestBeamIO(unittest.TestCase):
         w = self.product.getSceneRasterWidth()
         h = self.product.getSceneRasterHeight()
         b = self.product.getBand('radiance_13')
-        a = np.zeros(w, dtype=np.int8)
+        a = np.zeros(w, dtype=np.bool)
         b.readValidMask(0, 0, w, 1, a)
         self.assertEqual(a[0], 0)
         self.assertEqual(a[1], 0)
