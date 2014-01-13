@@ -16,6 +16,11 @@ extern PyObject* JException_Type;
 
 #define JPy_JINIT_ATTR_NAME "__jinit__"
 
+#define JPy_MODULE_ATTR_NAME_TYPES "types"
+#define JPy_MODULE_ATTR_NAME_TYPE_CALLBACKS "type_callbacks"
+
+
+
 /**
  * Gets the current JNI environment pointer.
  * Returns NULL, if the JVM is down.

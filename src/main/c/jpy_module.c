@@ -322,13 +322,13 @@ PyMODINIT_FUNC PyInit_jpy(void)
 
     JPy_Types = PyDict_New();
     Py_INCREF(JPy_Types);
-    PyModule_AddObject(JPy_Module, "types", JPy_Types);
+    PyModule_AddObject(JPy_Module, JPy_MODULE_ATTR_NAME_TYPES, JPy_Types);
 
     /////////////////////////////////////////////////////////////////////////
 
     JPy_Type_Callbacks = PyDict_New();
     Py_INCREF(JPy_Type_Callbacks);
-    PyModule_AddObject(JPy_Module, "type_callbacks", JPy_Type_Callbacks);
+    PyModule_AddObject(JPy_Module, JPy_MODULE_ATTR_NAME_TYPE_CALLBACKS, JPy_Type_Callbacks);
 
     /////////////////////////////////////////////////////////////////////////
 
