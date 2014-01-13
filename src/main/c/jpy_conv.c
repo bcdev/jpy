@@ -7,26 +7,7 @@
 
 int JPy_AsJObject(JNIEnv* jenv, PyObject* pyObj, jobject* objectRef)
 {
-    if (pyObj == Py_None) {
-        *objectRef = NULL;
-        return 0;
-    } else if (JObj_Check(pyObj)) {
-        *objectRef = ((JPy_JObj*) pyObj)->objectRef;
-        return 0;
-    } else if (PyBool_Check(pyObj)) {
-        return JPy_AsJObjectWithType(jenv, pyObj, objectRef, JPy_JBooleanObj);
-    } else if (PyLong_Check(pyObj)) {
-        return JPy_AsJObjectWithType(jenv, pyObj, objectRef, JPy_JIntegerObj);
-    } else if (PyFloat_Check(pyObj)) {
-        return JPy_AsJObjectWithType(jenv, pyObj, objectRef, JPy_JDoubleObj);
-    } else if (PyUnicode_Check(pyObj)) {
-        return JPy_AsJObjectWithType(jenv, pyObj, objectRef, JPy_JString);
-    } else {
-        // todo: print Python type(pyObj) info here, otherwise users don't know what went wrong
-        PyErr_SetString(PyExc_RuntimeError, "don't know how to convert Python to Java object");
-        *objectRef = NULL;
-        return -1;
-    }
+    return JType_ConvertPythonToJavaObject(jenv, JPy_JObject, pyObj, objectRef);
 }
 
 int JPy_AsJObjectWithType(JNIEnv* jenv, PyObject* pyObj, jobject* objectRef, JPy_JType* type)
