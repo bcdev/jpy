@@ -8,6 +8,7 @@ beampy.ini
 *.jar
 *.war
 *.ear
+*.exe
 jpy.dll
 libjpy.so
 hs_err_pid*
