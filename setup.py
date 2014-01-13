@@ -79,7 +79,7 @@ elif DARWIN:
 setup(name='jpy',
       description='Python/Java Bridge',
       long_description='A bidirectional Python/Java bridge',
-      version='0.4',
+      version='0.5',
       platforms='Python 3.3, Java 1.7',
       author='Norman Fomferra, Brockmann Consult GmbH',
       author_email='beam@brockmann-consult.de',

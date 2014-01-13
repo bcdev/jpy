@@ -64,8 +64,6 @@ PyObject* JException_Type = NULL;
 typedef struct {
     // A global reference to a Java VM.
     JavaVM* jvm;
-    // The current JNI interface.
-    JNIEnv* jenv;
     // If true, this JVM structure has been created from Python jpy.create_jvm()
     jboolean mustDestroy;
     // Used for switching debug prints in this module
@@ -190,22 +188,18 @@ void JPy_ClearGlobalVars(void);
  */
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* jvm, void* reserved)
 {
-    JNIEnv* jenv = NULL;
-
     if (JVM.jvm == NULL) {
-        (*jvm)->GetEnv(jvm, (void**) &jenv, JPY_JNI_VERSION);
         JVM.jvm = jvm;
-        JVM.jenv = jenv;
         JVM.mustDestroy = JNI_FALSE;
     } else if (JVM.jvm == jvm) {
         //if (JVM.debug)
-            printf("jpy: JNI_OnLoad: same JVM already running\n");
+        //    printf("jpy: JNI_OnLoad: same JVM already running\n");
     } else {
         //if (JVM.debug)
-            printf("jpy: JNI_OnLoad: different JVM already running (expect weird things!)\n");
+        //    printf("jpy: JNI_OnLoad: different JVM already running (expect weird things!)\n");
     }
 
-    printf("jpy: JNI_OnLoad: JVM.jvm=%p, JVM.jenv=%p, JVM.mustDestroy=%d, JVM.debug=%d\n", JVM.jvm, JVM.jenv, JVM.mustDestroy, JVM.debug);
+    printf("jpy: JNI_OnLoad: JVM.jvm=%p, JVM.mustDestroy=%d, JVM.debug=%d\n", JVM.jvm, JVM.mustDestroy, JVM.debug);
 
     return JPY_JNI_VERSION;
 }
@@ -216,21 +210,41 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* jvm, void* reserved)
  */
 JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* jvm, void* reserved)
 {
-    printf("jpy: JNI_OnUnload: JVM.jvm=%p, JVM.jenv=%p, JVM.mustDestroy=%d, JVM.debug=%d\n", JVM.jvm, JVM.jenv, JVM.mustDestroy, JVM.debug);
+    printf("jpy: JNI_OnUnload: JVM.jvm=%p, JVM.mustDestroy=%d, JVM.debug=%d\n", JVM.jvm, JVM.mustDestroy, JVM.debug);
 
     if (!JVM.mustDestroy) {
         JVM.jvm = NULL;
-        JVM.jenv = NULL;
         JPy_ClearGlobalVars();
     }
 }
 
 JNIEnv* JPy_GetJNIEnv(void)
 {
-    // Currently JPy is only single threaded.
-    // To make it multi-threaded we must use the following code:
-    // (*JVM.jvm)->AttachCurrentThread(JVM.jvm, &JVM.jenv, NULL);
-    return JVM.jenv;
+    JavaVM* jvm;
+    JNIEnv* jenv;
+    jint status;
+
+    jvm = JVM.jvm;
+    if (jvm == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "jpy: No JVM available.");
+        return NULL;
+    }
+
+    status = (*jvm)->GetEnv(jvm, (void**) &jenv, JPY_JNI_VERSION);
+    if (status == JNI_EDETACHED) {
+        if (JVM.debug) printf("jpy: Attaching current thread to JVM.\n");
+        if ((*jvm)->AttachCurrentThread(jvm, (void**) &jenv, NULL) != 0) {
+            PyErr_SetString(PyExc_RuntimeError, "jpy: Failed to attach current thread to JVM.");
+            return NULL;
+        }
+    } else if (status == JNI_EVERSION) {
+        PyErr_SetString(PyExc_RuntimeError, "jpy: Failed to attach current thread to JVM: Java version not supported.");
+        return NULL;
+    } else if (status == JNI_OK) {
+        // ok!
+    }
+
+    return jenv;
 }
 
 jboolean JPy_IsDebug(void)
@@ -318,9 +332,14 @@ PyMODINIT_FUNC PyInit_jpy(void)
 
     /////////////////////////////////////////////////////////////////////////
 
-    if (JVM.jenv != NULL) {
+    if (JVM.jvm != NULL) {
+        JNIEnv* jenv;
+        jenv = JPy_GetJNIEnv();
+        if (jenv == NULL) {
+            return NULL;
+        }
         // If we have already a running VM, initialize global variables
-        if (JPy_InitGlobalVars(JVM.jenv) < 0) {
+        if (JPy_InitGlobalVars(jenv) < 0) {
             return NULL;
         }
     }
@@ -345,6 +364,7 @@ PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds)
     PyObject*   option;
     JavaVMOption* jvmOptions;
     JavaVMInitArgs jvmInitArgs;
+    JNIEnv*     jenv;
     Py_ssize_t  i;
     jint        res;
     int         debug;
@@ -398,11 +418,11 @@ PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds)
     jvmInitArgs.options = jvmOptions;
     jvmInitArgs.nOptions = (size_t) optionCount;
     jvmInitArgs.ignoreUnrecognized = 0;
-    res = JNI_CreateJavaVM(&JVM.jvm, (void**) &JVM.jenv, &jvmInitArgs);
+    res = JNI_CreateJavaVM(&JVM.jvm, (void**) &jenv, &jvmInitArgs);
     JVM.mustDestroy = JNI_TRUE;
     JVM.debug = debug;
 
-    JPy_DEBUG_PRINTF("JPy_create_jvm: res=%d, JVM.jvm=%p, JVM.jenv=%p\n", res, JVM.jvm, JVM.jenv);
+    JPy_DEBUG_PRINTF("JPy_create_jvm: res=%d, JVM.jvm=%p, jenv=%p\n", res, JVM.jvm, jenv);
 
     PyMem_Del(jvmOptions);
 
@@ -415,7 +435,7 @@ PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds)
         return NULL;
     }
 
-    if (JPy_InitGlobalVars(JVM.jenv) < 0) {
+    if (JPy_InitGlobalVars(jenv) < 0) {
         return NULL;
     }
 
@@ -424,12 +444,11 @@ PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds)
 
 PyObject* JPy_destroy_jvm(PyObject* self, PyObject* args)
 {
-    JPy_DEBUG_PRINTF("JPy_destroy_jvm: JVM.jvm=%p, JVM.jenv=%p\n", JVM.jvm, JVM.jenv);
+    JPy_DEBUG_PRINTF("JPy_destroy_jvm: JVM.jvm=%p\n", JVM.jvm);
 
     if (JVM.jvm != NULL && JVM.mustDestroy) {
         (*JVM.jvm)->DestroyJavaVM(JVM.jvm);
         JVM.jvm = NULL;
-        JVM.jenv = NULL;
         JPy_ClearGlobalVars();
     }
 

@@ -34,7 +34,6 @@ JNIEnv* JPy_GetJNIEnv(void);
  */
 #define JPy_GET_JNI_ENV_OR_RETURN(JENV, RET_VALUE) \
     if ((JENV = JPy_GetJNIEnv()) == NULL) { \
-        PyErr_SetString(PyExc_RuntimeError, "Java VM not available (use jpy.create_jvm() to create one)"); \
         return (RET_VALUE); \
     } else { \
     }
