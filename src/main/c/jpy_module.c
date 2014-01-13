@@ -75,7 +75,7 @@ static JPy_JVM JVM = {NULL};
 #define JPY_JNI_VERSION JNI_VERSION_1_6
 
 
-// Global VM Information (todo: put this into JPy_JVM structure)
+// Global VM Information (maybe better place this in the JPy_JVM structure later)
 // {{{
 
 JPy_JType* JPy_JBoolean = NULL;
