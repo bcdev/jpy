@@ -14,7 +14,7 @@ extern PyObject* JPy_Types;
 extern PyObject* JPy_Type_Callbacks;
 extern PyObject* JException_Type;
 
-#define JPy_JINIT_ATTR_NAME "__jinit__"
+#define JPy_JTYPE_ATTR_NAME_JINIT "__jinit__"
 
 #define JPy_MODULE_ATTR_NAME_TYPES "types"
 #define JPy_MODULE_ATTR_NAME_TYPE_CALLBACKS "type_callbacks"

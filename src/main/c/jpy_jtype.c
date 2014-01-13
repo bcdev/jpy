@@ -604,7 +604,7 @@ int JType_ProcessClassConstructors(JNIEnv* jenv, JPy_JType* type)
     PyObject* methodKey;
 
     classRef = type->classRef;
-    methodKey = Py_BuildValue("s", JPy_JINIT_ATTR_NAME);
+    methodKey = Py_BuildValue("s", JPy_JTYPE_ATTR_NAME_JINIT);
     constructors = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetDeclaredConstructors_MID);
     constrCount = (*jenv)->GetArrayLength(jenv, constructors);
 
@@ -617,7 +617,7 @@ int JType_ProcessClassConstructors(JNIEnv* jenv, JPy_JType* type)
         if (isPublic) {
             parameterTypes = (*jenv)->CallObjectMethod(jenv, constructor, JPy_Constructor_GetParameterTypes_MID);
             mid = (*jenv)->FromReflectedMethod(jenv, constructor);
-            JType_ProcessMethod(jenv, type, methodKey, JPy_JINIT_ATTR_NAME, NULL, parameterTypes, 1, mid);
+            JType_ProcessMethod(jenv, type, methodKey, JPy_JTYPE_ATTR_NAME_JINIT, NULL, parameterTypes, 1, mid);
         }
     }
     return 0;

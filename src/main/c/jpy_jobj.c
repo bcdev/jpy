@@ -37,14 +37,14 @@ int JObj_init(JPy_JObj* self, PyObject* args, PyObject* kwds)
 
     type = ((PyObject*) self)->ob_type;
 
-    constructor = PyDict_GetItemString(type->tp_dict, JPy_JINIT_ATTR_NAME);
+    constructor = PyDict_GetItemString(type->tp_dict, JPy_JTYPE_ATTR_NAME_JINIT);
     if (constructor == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "no constructor found (missing JType attribute '" JPy_JINIT_ATTR_NAME "')");
+        PyErr_SetString(PyExc_RuntimeError, "no constructor found (missing JType attribute '" JPy_JTYPE_ATTR_NAME_JINIT "')");
         return -1;
     }
 
     if (!PyObject_TypeCheck(constructor, &JOverloadedMethod_Type)) {
-        PyErr_SetString(PyExc_RuntimeError, "invalid JType attribute '"  JPy_JINIT_ATTR_NAME  "': expected type JOverloadedMethod_Type");
+        PyErr_SetString(PyExc_RuntimeError, "invalid JType attribute '"  JPy_JTYPE_ATTR_NAME_JINIT  "': expected type JOverloadedMethod_Type");
         return -1;
     }
 
