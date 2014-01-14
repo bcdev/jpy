@@ -1262,7 +1262,7 @@ int JType_ConvertToJObject(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, P
             int flags;
             Py_ssize_t itemCount;
             jarray array;
-            void* carray;
+            void* arrayItems;
             jint itemSize;
             JPy_JType* type;
 
@@ -1333,21 +1333,23 @@ int JType_ConvertToJObject(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, P
                 return -1;
             }
 
-            carray = (*jenv)->GetPrimitiveArrayCritical(jenv, array, NULL);
-            if (carray == NULL) {
+            arrayItems = (*jenv)->GetPrimitiveArrayCritical(jenv, array, NULL);
+            if (arrayItems == NULL) {
                 PyBuffer_Release(view);
                 PyMem_Del(view);
                 PyErr_NoMemory();
                 return -1;
             }
-            memcpy(carray, view->buf, itemCount * itemSize);
-            (*jenv)->ReleasePrimitiveArrayCritical(jenv, array, carray, 0);
+            memcpy(arrayItems, view->buf, itemCount * itemSize);
+            (*jenv)->ReleasePrimitiveArrayCritical(jenv, array, arrayItems, 0);
 
             value->l = array;
             disposer->data = view;
             disposer->disposeArg = paramDescriptor->isMutable ? JType_DisposeWritableBuffer : JType_DisposeReadOnlyBuffer;
 
             return 0;
+        } else if (PySequence_Check(pyArg)) {
+
         } else {
             PyErr_Format(PyExc_ValueError, "conversion from Python %s to Java %s: not implemented yet", Py_TYPE(pyArg)->tp_name, paramType->javaName);
             return -1;
