@@ -939,7 +939,7 @@ JPy_ParamDescriptor* JType_CreateParamDescriptors(JNIEnv* jenv, int paramCount, 
     return paramDescriptors;
 }
 
-int JType_MatchPyArgAsJBooleanParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
+int JType_MatchPyArgWithJBooleanParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
     if (PyBool_Check(pyArg)) return 100;
     else if (PyLong_Check(pyArg)) return 10;
@@ -952,7 +952,7 @@ int JType_ConvertPyArgToJBooleanArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDesc
     return 0;
 }
 
-int JType_MatchPyArgAsJByteParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
+int JType_MatchPyArgWithJByteParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
     if (PyLong_Check(pyArg)) return 100;
     else if (PyBool_Check(pyArg)) return 10;
@@ -965,7 +965,7 @@ int JType_ConvertPyArgToJByteArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescrip
     return 0;
 }
 
-int JType_MatchPyArgAsJCharParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
+int JType_MatchPyArgWithJCharParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
     if (PyLong_Check(pyArg)) return 100;
     else if (PyBool_Check(pyArg)) return 10;
@@ -978,7 +978,7 @@ int JType_ConvertPyArgToJCharArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescrip
     return 0;
 }
 
-int JType_MatchPyArgAsJShortParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
+int JType_MatchPyArgWithJShortParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
     if (PyLong_Check(pyArg)) return 100;
     else if (PyBool_Check(pyArg)) return 10;
@@ -991,7 +991,7 @@ int JType_ConvertPyArgToJShortArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescri
     return 0;
 }
 
-int JType_MatchPyArgAsJIntParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
+int JType_MatchPyArgWithJIntParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
     if (PyLong_Check(pyArg)) return 100;
     else if (PyBool_Check(pyArg)) return 10;
@@ -1004,7 +1004,7 @@ int JType_ConvertPyArgToJIntArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescript
     return 0;
 }
 
-int JType_MatchPyArgAsJLongParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
+int JType_MatchPyArgWithJLongParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
     if (PyLong_Check(pyArg)) return 100;
     else if (PyBool_Check(pyArg)) return 10;
@@ -1017,7 +1017,7 @@ int JType_ConvertPyArgToJLongArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescrip
     return 0;
 }
 
-int JType_MatchPyArgAsJFloatParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
+int JType_MatchPyArgWithJFloatParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
     if (PyFloat_Check(pyArg)) return 90; // not 100, in order to give 'double' a chance
     else if (PyNumber_Check(pyArg)) return 50;
@@ -1032,7 +1032,7 @@ int JType_ConvertPyArgToJFloatArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescri
     return 0;
 }
 
-int JType_MatchPyArgAsJDoubleParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
+int JType_MatchPyArgWithJDoubleParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
     if (PyFloat_Check(pyArg)) return 100;
     else if (PyNumber_Check(pyArg)) return 50;
@@ -1047,7 +1047,7 @@ int JType_ConvertPyArgToJDoubleArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
     return 0;
 }
 
-int JType_MatchPyArgAsJStringParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
+int JType_MatchPyArgWithJStringParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
     if (pyArg == Py_None) {
         // Signal it is possible, but give low priority since we cannot perform any type checks on 'None'
@@ -1066,7 +1066,7 @@ int JType_ConvertPyArgToJStringArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
     return JPy_AsJString(jenv, pyArg, &value->l);
 }
 
-int JType_MatchPyArgAsJObjectParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
+int JType_MatchPyArgWithJObjectParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
     JPy_JType* paramType;
     JPy_JType* argType;
@@ -1357,7 +1357,7 @@ int JType_ConvertPyArgToJObjectArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
     }
 
     PyErr_Format(PyExc_RuntimeError, "conversion from Python %s to Java %s:\n"
-                                     "should not have come here, check accordance of JType_MatchPyArgAsJObjectParam() vs. JType_ConvertPyArgToJObjectArg()",
+                                     "should not have come here, check accordance of JType_MatchPyArgWithJObjectParam() vs. JType_ConvertPyArgToJObjectArg()",
                                      Py_TYPE(pyArg)->tp_name, paramType->javaName);
     return -1;
 }
@@ -1416,37 +1416,37 @@ void JType_InitParamDescriptorFunctions(JPy_ParamDescriptor* paramDescriptor)
         paramDescriptor->MatchPyArg = NULL;
         paramDescriptor->ConvertPyArg = NULL;
     } else if (paramType == JPy_JBoolean) {
-        paramDescriptor->MatchPyArg = JType_MatchPyArgAsJBooleanParam;
+        paramDescriptor->MatchPyArg = JType_MatchPyArgWithJBooleanParam;
         paramDescriptor->ConvertPyArg = JType_ConvertPyArgToJBooleanArg;
     } else if (paramType == JPy_JByte) {
-        paramDescriptor->MatchPyArg = JType_MatchPyArgAsJByteParam;
+        paramDescriptor->MatchPyArg = JType_MatchPyArgWithJByteParam;
         paramDescriptor->ConvertPyArg = JType_ConvertPyArgToJByteArg;
     } else if (paramType == JPy_JChar) {
-        paramDescriptor->MatchPyArg = JType_MatchPyArgAsJCharParam;
+        paramDescriptor->MatchPyArg = JType_MatchPyArgWithJCharParam;
         paramDescriptor->ConvertPyArg = JType_ConvertPyArgToJCharArg;
     } else if (paramType == JPy_JShort) {
-        paramDescriptor->MatchPyArg = JType_MatchPyArgAsJShortParam;
+        paramDescriptor->MatchPyArg = JType_MatchPyArgWithJShortParam;
         paramDescriptor->ConvertPyArg = JType_ConvertPyArgToJShortArg;
     } else if (paramType == JPy_JInt) {
-        paramDescriptor->MatchPyArg = JType_MatchPyArgAsJIntParam;
+        paramDescriptor->MatchPyArg = JType_MatchPyArgWithJIntParam;
         paramDescriptor->ConvertPyArg = JType_ConvertPyArgToJIntArg;
     } else if (paramType == JPy_JLong) {
-        paramDescriptor->MatchPyArg = JType_MatchPyArgAsJLongParam;
+        paramDescriptor->MatchPyArg = JType_MatchPyArgWithJLongParam;
         paramDescriptor->ConvertPyArg = JType_ConvertPyArgToJLongArg;
     } else if (paramType == JPy_JFloat) {
-        paramDescriptor->MatchPyArg = JType_MatchPyArgAsJFloatParam;
+        paramDescriptor->MatchPyArg = JType_MatchPyArgWithJFloatParam;
         paramDescriptor->ConvertPyArg = JType_ConvertPyArgToJFloatArg;
     } else if (paramType == JPy_JDouble) {
-        paramDescriptor->MatchPyArg = JType_MatchPyArgAsJDoubleParam;
+        paramDescriptor->MatchPyArg = JType_MatchPyArgWithJDoubleParam;
         paramDescriptor->ConvertPyArg = JType_ConvertPyArgToJDoubleArg;
     } else if (paramType == JPy_JString) {
-        paramDescriptor->MatchPyArg = JType_MatchPyArgAsJStringParam;
+        paramDescriptor->MatchPyArg = JType_MatchPyArgWithJStringParam;
         paramDescriptor->ConvertPyArg = JType_ConvertPyArgToJStringArg;
     //} else if (paramType == JPy_JMap) {
     //} else if (paramType == JPy_JList) {
     //} else if (paramType == JPy_JSet) {
     } else {
-        paramDescriptor->MatchPyArg = JType_MatchPyArgAsJObjectParam;
+        paramDescriptor->MatchPyArg = JType_MatchPyArgWithJObjectParam;
         paramDescriptor->ConvertPyArg = JType_ConvertPyArgToJObjectArg;
     }
 }
