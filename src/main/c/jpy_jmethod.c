@@ -60,10 +60,11 @@ void JMethod_Del(JPy_JMethod* method)
 }
 
 /**
- * Returns the sum of the method's parameter match values.
- * Thus, the actual match assessment is: float matchValue = (float) matchValueSum / (float) method->paramCount;
+ * Matches the give Python argument tuple against the Java method's formal parameters.
+ * Returns the sum of the i-th argument against the i-th Java parameter.
+ * The maximum match value returned is 100 * method->paramCount.
  */
-int JMethod_AssessConversion(JNIEnv* jenv, JPy_JMethod* method, int argCount, PyObject* argTuple)
+int JMethod_MatchPyArgs(JNIEnv* jenv, JPy_JMethod* method, int argCount, PyObject* argTuple)
 {
     JPy_ParamDescriptor* paramDescriptor;
     PyObject* arg;
@@ -75,7 +76,7 @@ int JMethod_AssessConversion(JNIEnv* jenv, JPy_JMethod* method, int argCount, Py
     if (method->isStatic) {
         //printf("Static! method->paramCount=%d, argCount=%d\n", method->paramCount, argCount);
         if (method->paramCount != argCount) {
-            JPy_DEBUG_PRINTF("JMethod_AssessConversion: argument count mismatch (matchValue=0)\n");
+            JPy_DEBUG_PRINTF("JMethod_MatchPyArgs: argument count mismatch (matchValue=0)\n");
             // argument count mismatch
             return 0;
         }
@@ -84,20 +85,20 @@ int JMethod_AssessConversion(JNIEnv* jenv, JPy_JMethod* method, int argCount, Py
         PyObject* self;
         //printf("Non-Static! method->paramCount=%d, argCount=%d\n", method->paramCount, argCount);
         if (method->paramCount != argCount - 1) {
-            JPy_DEBUG_PRINTF("JMethod_AssessConversion: argument count mismatch (matchValue=0)\n");
+            JPy_DEBUG_PRINTF("JMethod_MatchPyArgs: argument count mismatch (matchValue=0)\n");
             // argument count mismatch
             return 0;
         }
         self = PyTuple_GetItem(argTuple, 0);
         if (!JObj_Check(self)) {
-            JPy_DEBUG_PRINTF("JMethod_AssessConversion: self argument is not a Java object (matchValue=0)\n");
+            JPy_DEBUG_PRINTF("JMethod_MatchPyArgs: self argument is not a Java object (matchValue=0)\n");
             return 0;
         }
         i0 = 1;
     }
 
     if (method->paramCount == 0) {
-        JPy_DEBUG_PRINTF("JMethod_AssessConversion: no-argument method (matchValue=100)\n");
+        JPy_DEBUG_PRINTF("JMethod_MatchPyArgs: no-argument method (matchValue=100)\n");
         // There can't be any other method overloads with no parameters
         return 100;
     }
@@ -107,12 +108,12 @@ int JMethod_AssessConversion(JNIEnv* jenv, JPy_JMethod* method, int argCount, Py
     for (i = i0; i < argCount; i++) {
 
         arg = PyTuple_GetItem(argTuple, i);
-        matchValue = paramDescriptor->paramAssessor(jenv, paramDescriptor, arg);
+        matchValue = paramDescriptor->MatchPyArg(jenv, paramDescriptor, arg);
 
-        JPy_DEBUG_PRINTF("JMethod_AssessConversion: argTuple[%d]: matchValue=%d\n", i, matchValue);
+        JPy_DEBUG_PRINTF("JMethod_MatchPyArgs: argTuple[%d]: matchValue=%d\n", i, matchValue);
 
         if (matchValue == 0) {
-            //printf("JMethod_AssessConversion 6\n");
+            //printf("JMethod_MatchPyArgs 6\n");
             // current arg does not match parameter type at all
             return 0;
         }
@@ -121,7 +122,7 @@ int JMethod_AssessConversion(JNIEnv* jenv, JPy_JMethod* method, int argCount, Py
         paramDescriptor++;
     }
 
-    //printf("JMethod_AssessConversion 7\n");
+    //printf("JMethod_MatchPyArgs 7\n");
     return matchValueSum;
 }
 
@@ -302,8 +303,8 @@ int JMethod_CreateJArgs(JNIEnv* jenv, JPy_JMethod* method, PyObject* argTuple, j
         arg = PyTuple_GetItem(argTuple, i);
         jValue->l = 0;
         jDisposer->data = NULL;
-        jDisposer->disposeArg = NULL;
-        if (paramDescriptor->paramConverter(jenv, paramDescriptor, arg, jValue, jDisposer) < 0) {
+        jDisposer->DisposeArg = NULL;
+        if (paramDescriptor->ConvertPyArg(jenv, paramDescriptor, arg, jValue, jDisposer) < 0) {
             PyMem_Del(jValues);
             PyMem_Del(jDisposers);
             return -1;
@@ -328,8 +329,8 @@ void JMethod_DisposeJArgs(JNIEnv* jenv, int paramCount, jvalue* jArgs, JPy_ArgDi
     jDisposer = jDisposers;
 
     for (index = 0; index < paramCount; index++) {
-        if (jDisposer->disposeArg != NULL) {
-            jDisposer->disposeArg(jenv, jArg, jDisposer->data);
+        if (jDisposer->DisposeArg != NULL) {
+            jDisposer->DisposeArg(jenv, jArg, jDisposer->data);
         }
         jArg++;
         jDisposer++;
@@ -531,7 +532,7 @@ JPy_JMethod* JOverloadedMethod_FindMethod0(JNIEnv* jenv, JPy_JOverloadedMethod* 
 
     for (i = 0; i < overloadCount; i++) {
         currMethod = (JPy_JMethod*) PyList_GetItem(overloadedMethod->methodList, i);
-        matchValue = JMethod_AssessConversion(jenv, currMethod, argCount, argTuple);
+        matchValue = JMethod_MatchPyArgs(jenv, currMethod, argCount, argTuple);
 
         JPy_DEBUG_PRINTF("JOverloadedMethod_FindMethod0: methodList[%d]: paramCount=%d, matchValue=%d\n", i,
                                   currMethod->paramCount, matchValue);

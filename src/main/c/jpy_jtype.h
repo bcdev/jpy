@@ -48,15 +48,15 @@ typedef int (*JPy_DisposeArg)(JNIEnv*, jvalue* value, void* data);
 typedef struct JPy_ArgDisposer
 {
     void* data;
-    JPy_DisposeArg disposeArg;
+    JPy_DisposeArg DisposeArg;
 }
 JPy_ArgDisposer;
 
 
 struct JPy_ParamDescriptor;
 
-typedef int (*JPy_ParamAssessor)(JNIEnv*, struct JPy_ParamDescriptor*, PyObject*);
-typedef int (*JPy_ParamConverter)(JNIEnv*, struct JPy_ParamDescriptor*, PyObject*, jvalue*, JPy_ArgDisposer*);
+typedef int (*JPy_MatchPyArg)(JNIEnv*, struct JPy_ParamDescriptor*, PyObject*);
+typedef int (*JPy_ConvertPyArg)(JNIEnv*, struct JPy_ParamDescriptor*, PyObject*, jvalue*, JPy_ArgDisposer*);
 
 /**
  * Method return value descriptor.
@@ -75,8 +75,8 @@ typedef struct JPy_ParamDescriptor
     JPy_JType* type;
     char isMutable;
     char isReturn;
-    JPy_ParamAssessor paramAssessor;
-    JPy_ParamConverter paramConverter;
+    JPy_MatchPyArg MatchPyArg;
+    JPy_ConvertPyArg ConvertPyArg;
 }
 JPy_ParamDescriptor;
 
