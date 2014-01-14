@@ -373,6 +373,8 @@ int JType_CreateJavaDoubleObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg,
 
 int JType_CreateNewJavaObjectReference(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
 {
+    // We expect the following here: pyArg != Py_None && !JObj_Check(pyArg)
+
     if (type == JPy_JBoolean || type == JPy_JBooleanObj) {
         return JType_CreateJavaBooleanObject(jenv, type, pyArg, objectRef);
     } else if (type == JPy_JChar || type == JPy_JCharacterObj) {
@@ -415,16 +417,15 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
         // None converts into NULL
         *objectRef = NULL;
         return 0;
-    }
-
-    if (JObj_Check(pyArg)) {
+    } else if (JObj_Check(pyArg)) {
         // If it is already a Java object wrapper JObj, then we are done
         *objectRef = ((JPy_JObj*) pyArg)->objectRef;
         return 0;
+    } else {
+        // For any other Python argument create a Java object (a new local reference)
+        // todo: problem of memory leak here: '**objectRef' escapes but we must actually must call (*jenv)->DeleteLocalRef(jenv, *objectRef) some time later
+        return JType_CreateNewJavaObjectReference(jenv, type, pyArg, objectRef);
     }
-
-    // todo: problem of memory leak here: '**objectRef' escapes but we must actually must call jenv->DeleteLocalRef(*objectRef) some time later
-    return JType_CreateNewJavaObjectReference(jenv, type, pyArg, objectRef);
 }
 
 
@@ -1228,29 +1229,25 @@ int JType_MatchPyArgAsJObjectParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
 
 int JType_ConvertPyArgToJObjectArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg, jvalue* value, JPy_ArgDisposer* disposer)
 {
-    JPy_JType* paramType;
-    JPy_JType* paramComponentType;
-
     if (pyArg == Py_None) {
         value->l = NULL;
         disposer->data = NULL;
         disposer->DisposeArg = NULL;
         return 0;
-    }
-
-    if (JObj_Check(pyArg)) {
+    } else if (JObj_Check(pyArg)) {
         JPy_JObj* obj = (JPy_JObj*) pyArg;
         value->l = obj->objectRef;
         disposer->data = NULL;
         disposer->DisposeArg = NULL;
         return 0;
-    }
+    } else {
+        JPy_JType* paramType;
+        JPy_JType* paramComponentType;
 
-    paramType = paramDescriptor->type;
-    paramComponentType = paramType->componentType;
+        paramType = paramDescriptor->type;
+        paramComponentType = paramType->componentType;
 
-    if (paramComponentType != NULL) {
-        if (paramComponentType->isPrimitive && PyObject_CheckBuffer(pyArg)) {
+        if (paramComponentType != NULL && paramComponentType->isPrimitive && PyObject_CheckBuffer(pyArg)) {
             Py_buffer* view;
             int flags;
             Py_ssize_t itemCount;
@@ -1342,23 +1339,20 @@ int JType_ConvertPyArgToJObjectArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
 
             return 0;
         } else {
-            PyErr_Format(PyExc_ValueError, "conversion from Python %s to Java %s: not implemented yet", Py_TYPE(pyArg)->tp_name, paramType->javaName);
-            return -1;
+            jobject objectRef;
+            if (JType_CreateNewJavaObjectReference(jenv, paramDescriptor->type, pyArg, &objectRef) < 0) {
+                return -1;
+            }
+            value->l = objectRef;
+            disposer->data = NULL;
+            disposer->DisposeArg = JType_DisposeLocalObjectRefArg;
+            return 0;
         }
-    } else {
-        jobject objectRef;
-        if (JType_CreateNewJavaObjectReference(jenv, paramType, pyArg, &objectRef) < 0) {
-            return -1;
-        }
-        value->l = objectRef;
-        disposer->data = NULL;
-        disposer->DisposeArg = JType_DisposeLocalObjectRefArg;
-        return 0;
     }
 
     PyErr_Format(PyExc_RuntimeError, "conversion from Python %s to Java %s:\n"
                                      "should not have come here, check accordance of JType_MatchPyArgAsJObjectParam() vs. JType_ConvertPyArgToJObjectArg()",
-                                     Py_TYPE(pyArg)->tp_name, paramType->javaName);
+                                     Py_TYPE(pyArg)->tp_name, paramDescriptor->type->javaName);
     return -1;
 }
 
