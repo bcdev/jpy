@@ -51,6 +51,16 @@ class TestTypeConversions(unittest.TestCase):
         self.assertEqual(str(e.exception), 'no matching Java method overloads found')
 
 
+    def test_ToObjectArrayConversion(self):
+        fixture = self.Fixture()
+
+        self.assertEqual(fixture.stringifyObjectArrayArg(('A', 12, 3.4)), 'Object[](String(A),Integer(12),Double(3.4))')
+        self.assertEqual(fixture.stringifyObjectArrayArg(['A', 12, 3.4]), 'Object[](String(A),Integer(12),Double(3.4))')
+        #self.assertEqual(fixture.stringifyObjectArrayArg(['A', (1, 2, 3), 'C']), 'grrr!')
+
+        self.assertEqual(fixture.stringifyStringArrayArg(('A', 'B', 'C')), 'String[](String(A),String(B),String(C))')
+        self.assertEqual(fixture.stringifyStringArrayArg(['A', 'B', 'C']), 'String[](String(A),String(B),String(C))')
+
 
 if __name__ == '__main__':
     unittest.main()

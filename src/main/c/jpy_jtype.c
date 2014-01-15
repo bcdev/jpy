@@ -1451,6 +1451,7 @@ int JType_ConvertPyArgToJObjectArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
 int JType_DisposeLocalObjectRefArg(JNIEnv* jenv, jvalue* value, void* data)
 {
     if (value->l != NULL) {
+        JPy_DEBUG_PRINTF("JType_DisposeLocalObjectRefArg: value->l != NULL\n");
         (*jenv)->DeleteLocalRef(jenv, value->l);
     }
     return 0;
@@ -1464,6 +1465,7 @@ int JType_DisposeReadOnlyBufferArg(JNIEnv* jenv, jvalue* value, void* data)
     array = (jarray) value->l;
     view = (Py_buffer*) data;
     if (array != NULL && view != NULL) {
+        JPy_DEBUG_PRINTF("JType_DisposeReadOnlyBufferArg: array != NULL && view != NULL\n");
         (*jenv)->DeleteLocalRef(jenv, array);
         PyBuffer_Release(view);
         PyMem_Del(view);
@@ -1480,6 +1482,7 @@ int JType_DisposeWritableBufferArg(JNIEnv* jenv, jvalue* value, void* data)
     array = (jarray) value->l;
     view = (Py_buffer*) data;
     if (array != NULL && view != NULL) {
+        JPy_DEBUG_PRINTF("JType_DisposeWritableBufferArg: array != NULL && view != NULL\n");
         // Copy modified array content back into buffer view
         carray = (*jenv)->GetPrimitiveArrayCritical(jenv, array, NULL);
         if (carray != NULL) {
