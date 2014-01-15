@@ -3,7 +3,7 @@ import jpy
 import numpy as np
 import array
 
-#debug = True
+debug = True
 debug = False
 jpy.create_jvm(options=['-Djava.class.path=target/test-classes', '-Xmx512M'], debug=debug)
 

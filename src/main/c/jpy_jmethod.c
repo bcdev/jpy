@@ -150,6 +150,8 @@ PyObject* JMethod_InvokeMethod(JNIEnv* jenv, JPy_JMethod* method, JPy_JType* typ
     if (method->isStatic) {
         jclass classRef = type->classRef;
 
+        JPy_DEBUG_PRINTF("JMethod_InvokeMethod: calling static Java method %s#%s\n", type->javaName, PyUnicode_AsUTF8(method->name));
+
         if (returnType == JPy_JVoid) {
             (*jenv)->CallStaticVoidMethodA(jenv, classRef, method->mid, jArgs);
             JPy_ON_JAVA_EXCEPTION_GOTO(error);
@@ -199,6 +201,8 @@ PyObject* JMethod_InvokeMethod(JNIEnv* jenv, JPy_JMethod* method, JPy_JType* typ
     } else {
         jobject objectRef;
         PyObject* self;
+
+        JPy_DEBUG_PRINTF("JMethod_InvokeMethod: calling Java method %s#%s\n", type->javaName, PyUnicode_AsUTF8(method->name));
 
         self = PyTuple_GetItem(argTuple, 0);
         // Note it is already ensured that self is a JPy_JObj*

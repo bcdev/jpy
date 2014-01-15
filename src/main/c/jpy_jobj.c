@@ -63,11 +63,13 @@ int JObj_init(JPy_JObj* self, PyObject* args, PyObject* kwds)
         return -1;
     }
 
+    JPy_DEBUG_PRINTF("JObj_init: calling Java constructor %s\n", jType->javaName);
+
     objectRef = (*jenv)->NewObjectA(jenv, jType->classRef, jMethod->mid, jArgs);
     JPy_ON_JAVA_EXCEPTION_RETURN(-1);
 
     if (objectRef == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "Java constructor returned null");
+        PyErr_NoMemory();
         return -1;
     }
 
@@ -88,6 +90,8 @@ int JObj_init(JPy_JObj* self, PyObject* args, PyObject* kwds)
 
     self->objectRef = objectRef;
 
+    JPy_DEBUG_PRINTF("JObj_init: self->objectRef=%p\n", self->objectRef);
+
     return 0;
 }
 
@@ -98,7 +102,7 @@ void JObj_dealloc(JPy_JObj* self)
 {
     JNIEnv* jenv;
 
-    JPy_DEBUG_PRINTF("JObj_dealloc: self->objectRef=%p\n", self->objectRef);
+    JPy_DEBUG_PRINTF("JObj_dealloc: releasing instance of %s, self->objectRef=%p\n", Py_TYPE(self)->tp_name, self->objectRef);
 
     jenv = JPy_GetJNIEnv();
     if (jenv != NULL) {
