@@ -3,6 +3,11 @@ import beampy
 import numpy as np
 import array
 
+JAI = beampy.jpy.get_class('javax.media.jai.JAI')
+
+JAI.getDefaultInstance().getTileCache().setMemoryCapacity(128 * 1000 * 1000)
+
+
 class TestBeamIO(unittest.TestCase):
 
     def setUp(self):
@@ -12,6 +17,15 @@ class TestBeamIO(unittest.TestCase):
 
     def tearDown(self):
         self.product.dispose()
+
+
+    def test_getProductReader(self):
+        print('Band.mro =', beampy.Band.mro())
+        reader = self.product.getProductReader()
+        self.assertIsNotNone(reader)
+        print('ProductReader.mro =', type(reader).mro())
+        readerClass = reader.getClass()
+        self.assertEqual(readerClass.getName(), '??')
 
 
     def test_getBandNames(self):
