@@ -371,45 +371,6 @@ int JType_CreateJavaDoubleObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg,
     return JType_CreateJavaObject(jenv, type, pyArg, JPy_Double_JClass, JPy_Double_Init_MID, value, objectRef);
 }
 
-int JType_CreateNewJavaObjectReference(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
-{
-    // We expect the following here: pyArg != Py_None && !JObj_Check(pyArg)
-
-    if (type == JPy_JBoolean || type == JPy_JBooleanObj) {
-        return JType_CreateJavaBooleanObject(jenv, type, pyArg, objectRef);
-    } else if (type == JPy_JChar || type == JPy_JCharacterObj) {
-        return JType_CreateJavaCharacterObject(jenv, type, pyArg, objectRef);
-    } else if (type == JPy_JByte || type == JPy_JByteObj) {
-        return JType_CreateJavaByteObject(jenv, type, pyArg, objectRef);
-    } else if (type == JPy_JShort || type == JPy_JShortObj) {
-        return JType_CreateJavaShortObject(jenv, type, pyArg, objectRef);
-    } else if (type == JPy_JInt || type == JPy_JIntegerObj) {
-        return JType_CreateJavaIntegerObject(jenv, type, pyArg, objectRef);
-    } else if (type == JPy_JLong || type == JPy_JLongObj) {
-        return JType_CreateJavaLongObject(jenv, type, pyArg, objectRef);
-    } else if (type == JPy_JFloat || type == JPy_JFloatObj) {
-        return JType_CreateJavaFloatObject(jenv, type, pyArg, objectRef);
-    } else if (type == JPy_JDouble || type == JPy_JDoubleObj) {
-        return JType_CreateJavaDoubleObject(jenv, type, pyArg, objectRef);
-    } else if (type == JPy_JObject) {
-        if (PyBool_Check(pyArg)) {
-            return JType_CreateJavaBooleanObject(jenv, type, pyArg, objectRef);
-        } else if (PyLong_Check(pyArg)) {
-            return JType_CreateJavaIntegerObject(jenv, type, pyArg, objectRef);
-        } else if (PyFloat_Check(pyArg)) {
-            return JType_CreateJavaDoubleObject(jenv, type, pyArg, objectRef);
-        } else if (PyUnicode_Check(pyArg)) {
-            return JPy_AsJString(jenv, pyArg, objectRef);
-        }
-    } else if (type == JPy_JString) {
-        if (PyUnicode_Check(pyArg)) {
-            return JPy_AsJString(jenv, pyArg, objectRef);
-        }
-    }
-
-    return JType_PythonToJavaConversionError(type, pyArg);
-}
-
 
 int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
 {
@@ -424,7 +385,38 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
     } else {
         // For any other Python argument create a Java object (a new local reference)
         // todo: problem of memory leak here: '**objectRef' escapes but we must actually must call (*jenv)->DeleteLocalRef(jenv, *objectRef) some time later
-        return JType_CreateNewJavaObjectReference(jenv, type, pyArg, objectRef);
+        if (type == JPy_JBoolean || type == JPy_JBooleanObj) {
+            return JType_CreateJavaBooleanObject(jenv, type, pyArg, objectRef);
+        } else if (type == JPy_JChar || type == JPy_JCharacterObj) {
+            return JType_CreateJavaCharacterObject(jenv, type, pyArg, objectRef);
+        } else if (type == JPy_JByte || type == JPy_JByteObj) {
+            return JType_CreateJavaByteObject(jenv, type, pyArg, objectRef);
+        } else if (type == JPy_JShort || type == JPy_JShortObj) {
+            return JType_CreateJavaShortObject(jenv, type, pyArg, objectRef);
+        } else if (type == JPy_JInt || type == JPy_JIntegerObj) {
+            return JType_CreateJavaIntegerObject(jenv, type, pyArg, objectRef);
+        } else if (type == JPy_JLong || type == JPy_JLongObj) {
+            return JType_CreateJavaLongObject(jenv, type, pyArg, objectRef);
+        } else if (type == JPy_JFloat || type == JPy_JFloatObj) {
+            return JType_CreateJavaFloatObject(jenv, type, pyArg, objectRef);
+        } else if (type == JPy_JDouble || type == JPy_JDoubleObj) {
+            return JType_CreateJavaDoubleObject(jenv, type, pyArg, objectRef);
+        } else if (type == JPy_JObject) {
+            if (PyBool_Check(pyArg)) {
+                return JType_CreateJavaBooleanObject(jenv, type, pyArg, objectRef);
+            } else if (PyLong_Check(pyArg)) {
+                return JType_CreateJavaIntegerObject(jenv, type, pyArg, objectRef);
+            } else if (PyFloat_Check(pyArg)) {
+                return JType_CreateJavaDoubleObject(jenv, type, pyArg, objectRef);
+            } else if (PyUnicode_Check(pyArg)) {
+                return JPy_AsJString(jenv, pyArg, objectRef);
+            }
+        } else if (type == JPy_JString) {
+            if (PyUnicode_Check(pyArg)) {
+                return JPy_AsJString(jenv, pyArg, objectRef);
+            }
+        }
+        return JType_PythonToJavaConversionError(type, pyArg);
     }
 }
 
@@ -1340,7 +1332,7 @@ int JType_ConvertPyArgToJObjectArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
             return 0;
         } else {
             jobject objectRef;
-            if (JType_CreateNewJavaObjectReference(jenv, paramDescriptor->type, pyArg, &objectRef) < 0) {
+            if (JType_ConvertPythonToJavaObject(jenv, paramType, pyArg, &objectRef) < 0) {
                 return -1;
             }
             value->l = objectRef;
