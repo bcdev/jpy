@@ -1222,23 +1222,21 @@ int JType_MatchPyArgAsJObjectParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
 int JType_ConvertPyArgToJObjectArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg, jvalue* value, JPy_ArgDisposer* disposer)
 {
     if (pyArg == Py_None) {
+        // Py_None maps to (Java) NULL
         value->l = NULL;
         disposer->data = NULL;
         disposer->DisposeArg = NULL;
-        return 0;
     } else if (JObj_Check(pyArg)) {
+        // If it is a wrapped Java object, it is always a global reference, so don't dispose it
         JPy_JObj* obj = (JPy_JObj*) pyArg;
         value->l = obj->objectRef;
         disposer->data = NULL;
         disposer->DisposeArg = NULL;
-        return 0;
     } else {
-        JPy_JType* paramType;
-        JPy_JType* paramComponentType;
-
-        paramType = paramDescriptor->type;
-        paramComponentType = paramType->componentType;
-
+        // For any other Python argument, we first check if the formal parameter is a primitive array
+        // and the Python argument is a buffer object
+        JPy_JType* paramType = paramDescriptor->type;
+        JPy_JType* paramComponentType = paramType->componentType;
         if (paramComponentType != NULL && paramComponentType->isPrimitive && PyObject_CheckBuffer(pyArg)) {
             Py_buffer* view;
             int flags;
@@ -1328,8 +1326,6 @@ int JType_ConvertPyArgToJObjectArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
             value->l = array;
             disposer->data = view;
             disposer->DisposeArg = paramDescriptor->isMutable ? JType_DisposeWritableBufferArg : JType_DisposeReadOnlyBufferArg;
-
-            return 0;
         } else {
             jobject objectRef;
             if (JType_ConvertPythonToJavaObject(jenv, paramType, pyArg, &objectRef) < 0) {
@@ -1338,14 +1334,10 @@ int JType_ConvertPyArgToJObjectArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
             value->l = objectRef;
             disposer->data = NULL;
             disposer->DisposeArg = JType_DisposeLocalObjectRefArg;
-            return 0;
         }
     }
 
-    PyErr_Format(PyExc_RuntimeError, "conversion from Python %s to Java %s:\n"
-                                     "should not have come here, check accordance of JType_MatchPyArgAsJObjectParam() vs. JType_ConvertPyArgToJObjectArg()",
-                                     Py_TYPE(pyArg)->tp_name, paramDescriptor->type->javaName);
-    return -1;
+    return 0;
 }
 
 int JType_DisposeLocalObjectRefArg(JNIEnv* jenv, jvalue* value, void* data)
