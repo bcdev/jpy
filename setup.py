@@ -126,6 +126,7 @@ if sys.argv[1] == 'install':
     os.system(sys.executable + ' src/test/python/jpy_retval_test.py')
     os.system(sys.executable + ' src/test/python/jpy_array_test.py')
     os.system(sys.executable + ' src/test/python/jpy_rt_test.py')
+    os.system(sys.executable + ' src/test/python/jpy_mt_test.py')
     os.system(sys.executable + ' src/test/python/jpy_exception_test.py')
     os.system(sys.executable + ' src/test/python/jpy_overload_test.py')
     os.system(sys.executable + ' src/test/python/jpy_typeconv_test.py')
