@@ -38,7 +38,7 @@ JPy_JType;
  */
 extern PyTypeObject JType_Type;
 
-typedef int (*JPy_DisposeArg)(JNIEnv*, jvalue* value, void* data);
+typedef void (*JPy_DisposeArg)(JNIEnv*, jvalue* value, void* data);
 
 /**
  * ArgDisposers are used to dispose arguments after invocation of Java methods.

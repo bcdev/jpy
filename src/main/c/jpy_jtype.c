@@ -20,9 +20,9 @@ JPy_ParamDescriptor* JType_CreateParamDescriptors(JNIEnv* jenv, int paramCount, 
 void JType_InitParamDescriptorFunctions(JPy_ParamDescriptor* paramDescriptor);
 void JType_InitMethodParamDescriptorFunctions(JPy_JType* type, JPy_JMethod* method);
 int JType_ProcessField(JNIEnv* jenv, JPy_JType* declaringType, PyObject* fieldKey, const char* fieldName, jclass fieldClassRef, jboolean isStatic, jboolean isFinal, jfieldID fid);
-int JType_DisposeLocalObjectRefArg(JNIEnv* jenv, jvalue* value, void* data);
-int JType_DisposeReadOnlyBufferArg(JNIEnv* jenv, jvalue* value, void* data);
-int JType_DisposeWritableBufferArg(JNIEnv* jenv, jvalue* value, void* data);
+void JType_DisposeLocalObjectRefArg(JNIEnv* jenv, jvalue* value, void* data);
+void JType_DisposeReadOnlyBufferArg(JNIEnv* jenv, jvalue* value, void* data);
+void JType_DisposeWritableBufferArg(JNIEnv* jenv, jvalue* value, void* data);
 
 JPy_JType* JType_GetTypeForName(JNIEnv* jenv, const char* typeName, jboolean resolve)
 {
@@ -1448,16 +1448,15 @@ int JType_ConvertPyArgToJObjectArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
     return 0;
 }
 
-int JType_DisposeLocalObjectRefArg(JNIEnv* jenv, jvalue* value, void* data)
+void JType_DisposeLocalObjectRefArg(JNIEnv* jenv, jvalue* value, void* data)
 {
     if (value->l != NULL) {
         JPy_DEBUG_PRINTF("JType_DisposeLocalObjectRefArg: value->l != NULL\n");
         (*jenv)->DeleteLocalRef(jenv, value->l);
     }
-    return 0;
 }
 
-int JType_DisposeReadOnlyBufferArg(JNIEnv* jenv, jvalue* value, void* data)
+void JType_DisposeReadOnlyBufferArg(JNIEnv* jenv, jvalue* value, void* data)
 {
     Py_buffer* view;
     jarray array;
@@ -1470,10 +1469,9 @@ int JType_DisposeReadOnlyBufferArg(JNIEnv* jenv, jvalue* value, void* data)
         PyBuffer_Release(view);
         PyMem_Del(view);
     }
-    return 0;
 }
 
-int JType_DisposeWritableBufferArg(JNIEnv* jenv, jvalue* value, void* data)
+void JType_DisposeWritableBufferArg(JNIEnv* jenv, jvalue* value, void* data)
 {
     Py_buffer* view;
     jarray array;
@@ -1494,7 +1492,6 @@ int JType_DisposeWritableBufferArg(JNIEnv* jenv, jvalue* value, void* data)
         PyBuffer_Release(view);
         PyMem_Del(view);
     }
-    return 0;
 }
 
 void JType_InitParamDescriptorFunctions(JPy_ParamDescriptor* paramDescriptor)
