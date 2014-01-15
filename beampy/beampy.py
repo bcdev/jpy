@@ -8,7 +8,10 @@ You can configure beampy by using a file named beampy.ini as follows:
     [DEFAULT]
     beam_home: C:\Program Files\beam-4.11
     extra_classpath: target/classes
+    max_mem: 4G
     debug: False
+
+You can place beampy.ini next to <python3>/site-packages/beampy.py or put it in your current working directory.
 
 """
 
