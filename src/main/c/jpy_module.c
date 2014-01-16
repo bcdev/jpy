@@ -364,9 +364,9 @@ PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds)
     PyObject*   option;
     JavaVMOption* jvmOptions;
     JavaVMInitArgs jvmInitArgs;
+    jint        jvmErrorCode;
     JNIEnv*     jenv;
     Py_ssize_t  i;
-    jint        res;
     int         debug;
 
     //printf("JPy_create_jvm: JVM.jvm=%p, JVM.jenv=%p, JVM.debug=%d\n", JVM.jvm, JVM.jenv, JVM.debug);
@@ -378,19 +378,19 @@ PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds)
     }
 
     if (JVM.jvm != NULL) {
-        if (debug) printf("jpy: Java VM is already running.\n");
+        if (debug) printf("JPy_create_jvm: Java VM is already running.\n");
         Py_DECREF(options);
         return Py_BuildValue("");
     }
 
     if (!PySequence_Check(options)) {
-        PyErr_SetString(PyExc_ValueError, "list of JVM options expected");
+        PyErr_SetString(PyExc_ValueError, "list of Java VM options expected");
         return NULL;
     }
 
     optionCount = PySequence_Length(options);
     if (optionCount == -1) {
-        PyErr_SetString(PyExc_ValueError, "can't retrieve number of JVM options");
+        PyErr_SetString(PyExc_ValueError, "can't retrieve number of Java VM options");
         return NULL;
     }
 
@@ -406,7 +406,7 @@ PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds)
             return NULL;
         }
         jvmOptions[i].optionString = PyUnicode_AsUTF8(option);
-        //printf("jvmOptions[%d].optionString = '%s'\n", i, jvmOptions[i].optionString);
+        if (debug) printf("JPy_create_jvm: jvmOptions[%d].optionString = '%s'\n", i, jvmOptions[i].optionString);
         if (jvmOptions[i].optionString == NULL) {
             PyMem_Del(jvmOptions);
             return NULL;
@@ -418,20 +418,24 @@ PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds)
     jvmInitArgs.options = jvmOptions;
     jvmInitArgs.nOptions = (size_t) optionCount;
     jvmInitArgs.ignoreUnrecognized = 0;
-    res = JNI_CreateJavaVM(&JVM.jvm, (void**) &jenv, &jvmInitArgs);
+    jvmErrorCode = JNI_CreateJavaVM(&JVM.jvm, (void**) &jenv, &jvmInitArgs);
     JVM.mustDestroy = JNI_TRUE;
     JVM.debug = debug;
 
-    JPy_DEBUG_PRINTF("JPy_create_jvm: res=%d, JVM.jvm=%p, jenv=%p\n", res, JVM.jvm, jenv);
+    JPy_DEBUG_PRINTF("JPy_create_jvm: res=%d, JVM.jvm=%p, jenv=%p\n", jvmErrorCode, JVM.jvm, jenv);
 
     PyMem_Del(jvmOptions);
 
-    if (res != JNI_OK) {
+    if (jvmErrorCode != JNI_OK) {
         char msg[1024];
-        sprintf(msg, "failed to create JVM: JNI_CreateJavaVM() returned exit code %d. "
-                      "Make sure the JVM shared library (Unix: libjvm.so, Windows: jvm.dll) can be found. "
-                      "Check your 'path' environment variable.", res);
-        PyErr_SetString(PyExc_ValueError, msg);
+        PyErr_Format(PyExc_RuntimeError, "failed to create Java VM");
+        fprintf(stderr,
+                "Failed to create Java VM (JNI error code %d). Possible reasons are:\n"
+                "* The Java heap space setting is too high (option -Xmx). Try '256M' first, then increment.\n"
+                "* The JVM shared library (Unix: libjvm.so, Windows: jvm.dll) cannot be found or cannot be loaded.\n"
+                "  Make sure the shared library can be found via the 'PATH' environment variable.\n"
+                "  Also make sure that the JVM is compiled for the same architecture as Python.\n",
+                jvmErrorCode);
         return NULL;
     }
 
@@ -848,10 +852,10 @@ void JPy_HandleJavaException(JNIEnv* jenv)
                 PyErr_Format(PyExc_RuntimeError, "%s", messageChars);
                 (*jenv)->ReleaseStringUTFChars(jenv, message, messageChars);
             } else {
-                PyErr_SetString(PyExc_RuntimeError, "An exception occurred in the Java VM, but failed to allocate message text");
+                PyErr_SetString(PyExc_RuntimeError, "Java VM exception occurred, but failed to allocate message text");
             }
         } else {
-            PyErr_SetString(PyExc_RuntimeError, "An exception occurred in the Java VM, no message");
+            PyErr_SetString(PyExc_RuntimeError, "Java VM exception occurred, no message");
         }
 
         (*jenv)->DeleteLocalRef(jenv, error);
