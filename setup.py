@@ -79,7 +79,7 @@ elif DARWIN:
 setup(name='jpy',
       description='Python/Java Bridge',
       long_description='A bidirectional Python/Java bridge',
-      version='0.6',
+      version='0.7',
       platforms='Python 3.3, Java 1.7',
       author='Norman Fomferra, Brockmann Consult GmbH',
       author_email='beam@brockmann-consult.de',
@@ -131,5 +131,6 @@ if sys.argv[1] == 'install':
     os.system(sys.executable + ' src/test/python/jpy_overload_test.py')
     os.system(sys.executable + ' src/test/python/jpy_typeconv_test.py')
     os.system(sys.executable + ' src/test/python/jpy_typeres_test.py')
+    os.system(sys.executable + ' src/test/python/jpy_modretparam_test.py')
 
     print('Note: if any of the above tests fails, make sure to compile Java test sources first.')

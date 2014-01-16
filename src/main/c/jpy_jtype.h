@@ -63,7 +63,15 @@ typedef int (*JPy_ConvertPyArg)(JNIEnv*, struct JPy_ParamDescriptor*, PyObject*,
  */
 typedef struct JPy_ReturnDescriptor
 {
+    /**
+     * The return type.
+     */
     JPy_JType* type;
+    /**
+     * If JPy_ParamDescriptor.isReturnIndex == TRUE the index of the parameter, whose argument will serve as return value.
+     * If JPy_ParamDescriptor.isReturnIndex == FALSE it will be -1.
+     */
+    jint paramIndex;
 }
 JPy_ReturnDescriptor;
 
@@ -73,8 +81,8 @@ JPy_ReturnDescriptor;
 typedef struct JPy_ParamDescriptor
 {
     JPy_JType* type;
-    char isMutable;
-    char isReturn;
+    jboolean isMutable;
+    jboolean isReturn;
     JPy_MatchPyArg MatchPyArg;
     JPy_ConvertPyArg ConvertPyArg;
 }

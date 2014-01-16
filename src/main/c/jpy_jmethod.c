@@ -64,10 +64,10 @@ void JMethod_Del(JPy_JMethod* method)
  * Returns the sum of the i-th argument against the i-th Java parameter.
  * The maximum match value returned is 100 * method->paramCount.
  */
-int JMethod_MatchPyArgs(JNIEnv* jenv, JPy_JMethod* method, int argCount, PyObject* argTuple)
+int JMethod_MatchPyArgs(JNIEnv* jenv, JPy_JMethod* method, int argCount, PyObject* pyArgs)
 {
     JPy_ParamDescriptor* paramDescriptor;
-    PyObject* arg;
+    PyObject* pyArg;
     int matchValueSum;
     int matchValue;
     int i;
@@ -89,7 +89,7 @@ int JMethod_MatchPyArgs(JNIEnv* jenv, JPy_JMethod* method, int argCount, PyObjec
             // argument count mismatch
             return 0;
         }
-        self = PyTuple_GetItem(argTuple, 0);
+        self = PyTuple_GetItem(pyArgs, 0);
         if (!JObj_Check(self)) {
             JPy_DEBUG_PRINTF("JMethod_MatchPyArgs: self argument is not a Java object (matchValue=0)\n");
             return 0;
@@ -107,14 +107,14 @@ int JMethod_MatchPyArgs(JNIEnv* jenv, JPy_JMethod* method, int argCount, PyObjec
     matchValueSum = 0;
     for (i = i0; i < argCount; i++) {
 
-        arg = PyTuple_GetItem(argTuple, i);
-        matchValue = paramDescriptor->MatchPyArg(jenv, paramDescriptor, arg);
+        pyArg = PyTuple_GetItem(pyArgs, i);
+        matchValue = paramDescriptor->MatchPyArg(jenv, paramDescriptor, pyArg);
 
-        JPy_DEBUG_PRINTF("JMethod_MatchPyArgs: argTuple[%d]: matchValue=%d\n", i, matchValue);
+        JPy_DEBUG_PRINTF("JMethod_MatchPyArgs: pyArgs[%d]: matchValue=%d\n", i, matchValue);
 
         if (matchValue == 0) {
             //printf("JMethod_MatchPyArgs 6\n");
-            // current arg does not match parameter type at all
+            // current pyArg does not match parameter type at all
             return 0;
         }
 
@@ -126,11 +126,29 @@ int JMethod_MatchPyArgs(JNIEnv* jenv, JPy_JMethod* method, int argCount, PyObjec
     return matchValueSum;
 }
 
+#define JPy_SUPPORT_RETURN_PARAMETER 1
+
+PyObject* JMethod_FromJObject(JNIEnv* jenv, JPy_JMethod* method, PyObject* pyArgs, jvalue* jArgs, int argOffset, JPy_JType* returnType, jobject jReturnValue)
+{
+    #ifdef JPy_SUPPORT_RETURN_PARAMETER
+    if (method->returnDescriptor->paramIndex >= 0) {
+        jint paramIndex = method->returnDescriptor->paramIndex;
+        PyObject* pyReturnArg = PyTuple_GetItem(pyArgs, paramIndex + argOffset);
+        jobject jArg = jArgs[paramIndex].l;
+        //printf("JMethod_FromJObject: paramIndex=%d, jArg=%p, isNone=%d\n", paramIndex, jArg, pyReturnArg == Py_None);
+        if ((JObj_Check(pyReturnArg) || PyObject_CheckBuffer(pyReturnArg))
+             && (*jenv)->IsSameObject(jenv, jReturnValue, jArg)) {
+            return pyReturnArg;
+        }
+    }
+    #endif
+    return JPy_FromJObjectWithType(jenv, jReturnValue, returnType);
+}
 
 /**
  * Invoke a method. We have already ensured that the Python arguments and expected Java parameters match.
  */
-PyObject* JMethod_InvokeMethod(JNIEnv* jenv, JPy_JMethod* method, JPy_JType* type, PyObject* argTuple)
+PyObject* JMethod_InvokeMethod(JNIEnv* jenv, JPy_JMethod* method, JPy_JType* type, PyObject* pyArgs)
 {
     jvalue* jArgs;
     JPy_ArgDisposer* argDisposers;
@@ -138,7 +156,7 @@ PyObject* JMethod_InvokeMethod(JNIEnv* jenv, JPy_JMethod* method, JPy_JType* typ
     JPy_JType* returnType;
 
     //printf("JMethod_InvokeMethod 1: typeCode=%c\n", typeCode);
-    if (JMethod_CreateJArgs(jenv, method, argTuple, &jArgs, &argDisposers) < 0) {
+    if (JMethod_CreateJArgs(jenv, method, pyArgs, &jArgs, &argDisposers) < 0) {
         return NULL;
     }
 
@@ -196,7 +214,7 @@ PyObject* JMethod_InvokeMethod(JNIEnv* jenv, JPy_JMethod* method, JPy_JType* typ
         } else {
             jobject v = (*jenv)->CallStaticObjectMethodA(jenv, classRef, method->mid, jArgs);
             JPy_ON_JAVA_EXCEPTION_GOTO(error);
-            returnValue = JPy_FromJObjectWithType(jenv, v, (JPy_JType*) returnType);
+            returnValue = JMethod_FromJObject(jenv, method, pyArgs, jArgs, 0, returnType, v);
             (*jenv)->DeleteLocalRef(jenv, v);
         }
 
@@ -206,7 +224,7 @@ PyObject* JMethod_InvokeMethod(JNIEnv* jenv, JPy_JMethod* method, JPy_JType* typ
 
         JPy_DEBUG_PRINTF("JMethod_InvokeMethod: calling Java method %s#%s\n", type->javaName, PyUnicode_AsUTF8(method->name));
 
-        self = PyTuple_GetItem(argTuple, 0);
+        self = PyTuple_GetItem(pyArgs, 0);
         // Note it is already ensured that self is a JPy_JObj*
         objectRef = ((JPy_JObj*) self)->objectRef;
 
@@ -254,7 +272,7 @@ PyObject* JMethod_InvokeMethod(JNIEnv* jenv, JPy_JMethod* method, JPy_JType* typ
         } else {
             jobject v = (*jenv)->CallObjectMethodA(jenv, objectRef, method->mid, jArgs);
             JPy_ON_JAVA_EXCEPTION_GOTO(error);
-            returnValue = JPy_FromJObjectWithType(jenv, v, (JPy_JType*) returnType);
+            returnValue = JMethod_FromJObject(jenv, method, pyArgs, jArgs, 1, returnType, v);
             (*jenv)->DeleteLocalRef(jenv, v);
         }
     }
@@ -267,11 +285,11 @@ error:
     return returnValue;
 }
 
-int JMethod_CreateJArgs(JNIEnv* jenv, JPy_JMethod* method, PyObject* argTuple, jvalue** argValuesRet, JPy_ArgDisposer** argDisposersRet)
+int JMethod_CreateJArgs(JNIEnv* jenv, JPy_JMethod* method, PyObject* pyArgs, jvalue** argValuesRet, JPy_ArgDisposer** argDisposersRet)
 {
     JPy_ParamDescriptor* paramDescriptor;
     int i, i0, argCount;
-    PyObject* arg;
+    PyObject* pyArg;
     jvalue* jValue;
     jvalue* jValues;
     JPy_ArgDisposer* argDisposer;
@@ -283,7 +301,7 @@ int JMethod_CreateJArgs(JNIEnv* jenv, JPy_JMethod* method, PyObject* argTuple, j
         return 0;
     }
 
-    argCount = PyTuple_Size(argTuple);
+    argCount = PyTuple_Size(pyArgs);
 
     i0 = argCount - method->paramCount;
     if (!(i0 == 0 || i0 == 1)) {
@@ -308,11 +326,11 @@ int JMethod_CreateJArgs(JNIEnv* jenv, JPy_JMethod* method, PyObject* argTuple, j
     jValue = jValues;
     argDisposer = argDisposers;
     for (i = i0; i < argCount; i++) {
-        arg = PyTuple_GetItem(argTuple, i);
+        pyArg = PyTuple_GetItem(pyArgs, i);
         jValue->l = 0;
         argDisposer->data = NULL;
         argDisposer->DisposeArg = NULL;
-        if (paramDescriptor->ConvertPyArg(jenv, paramDescriptor, arg, jValue, argDisposer) < 0) {
+        if (paramDescriptor->ConvertPyArg(jenv, paramDescriptor, pyArg, jValue, argDisposer) < 0) {
             PyMem_Del(jValues);
             PyMem_Del(argDisposers);
             return -1;
@@ -375,7 +393,7 @@ static PyMemberDef JMethod_members[] =
     {NULL}  /* Sentinel */
 };
 
-#define JMethod_CheckParameterIndex(self, index) \
+#define JMethod_CHECK_PARAMETER_INDEX(self, index) \
     if (index < 0 || index >= self->paramCount) { \
         PyErr_SetString(PyExc_IndexError, "invalid parameter index"); \
         return NULL; \
@@ -389,7 +407,7 @@ PyObject* JMethod_get_param_type(JPy_JMethod* self, PyObject* args)
     if (!PyArg_ParseTuple(args, "i:get_param_type", &index)) {
         return NULL;
     }
-    JMethod_CheckParameterIndex(self, index);
+    JMethod_CHECK_PARAMETER_INDEX(self, index);
     type = (PyObject*) self->paramDescriptors[index].type;
     Py_INCREF(type);
     return type;
@@ -402,7 +420,7 @@ PyObject* JMethod_is_param_mutable(JPy_JMethod* self, PyObject* args)
     if (!PyArg_ParseTuple(args, "i:is_param_mutable", &index)) {
         return NULL;
     }
-    JMethod_CheckParameterIndex(self, index);
+    JMethod_CHECK_PARAMETER_INDEX(self, index);
     value = self->paramDescriptors[index].isMutable;
     return PyBool_FromLong(value);
 }
@@ -414,7 +432,7 @@ PyObject* JMethod_set_param_mutable(JPy_JMethod* self, PyObject* args)
     if (!PyArg_ParseTuple(args, "ip:set_param_mutable", &index, &value)) {
         return NULL;
     }
-    JMethod_CheckParameterIndex(self, index);
+    JMethod_CHECK_PARAMETER_INDEX(self, index);
     self->paramDescriptors[index].isMutable = value;
     return Py_BuildValue("");
 }
@@ -426,7 +444,7 @@ PyObject* JMethod_is_param_return(JPy_JMethod* self, PyObject* args)
     if (!PyArg_ParseTuple(args, "i:is_param_return", &index)) {
         return NULL;
     }
-    JMethod_CheckParameterIndex(self, index);
+    JMethod_CHECK_PARAMETER_INDEX(self, index);
     value = self->paramDescriptors[index].isReturn;
     return PyBool_FromLong(value);
 }
@@ -438,8 +456,11 @@ PyObject* JMethod_set_param_return(JPy_JMethod* self, PyObject* args)
     if (!PyArg_ParseTuple(args, "ip:set_param_return", &index, &value)) {
         return NULL;
     }
-    JMethod_CheckParameterIndex(self, index);
+    JMethod_CHECK_PARAMETER_INDEX(self, index);
     self->paramDescriptors[index].isReturn = value;
+    if (value) {
+        self->returnDescriptor->paramIndex = index;
+    }
     return Py_BuildValue("");
 }
 
@@ -509,7 +530,7 @@ typedef struct JPy_MethodFindResult
 }
 JPy_MethodFindResult;
 
-JPy_JMethod* JOverloadedMethod_FindMethod0(JNIEnv* jenv, JPy_JOverloadedMethod* overloadedMethod, PyObject* argTuple, JPy_MethodFindResult* result)
+JPy_JMethod* JOverloadedMethod_FindMethod0(JNIEnv* jenv, JPy_JOverloadedMethod* overloadedMethod, PyObject* pyArgs, JPy_MethodFindResult* result)
 {
     int overloadCount;
     int argCount;
@@ -530,7 +551,7 @@ JPy_JMethod* JOverloadedMethod_FindMethod0(JNIEnv* jenv, JPy_JOverloadedMethod* 
         return NULL;
     }
 
-    argCount = PyTuple_Size(argTuple);
+    argCount = PyTuple_Size(pyArgs);
     matchCount = 0;
     matchValueMax = -1;
     bestMethod = NULL;
@@ -540,7 +561,7 @@ JPy_JMethod* JOverloadedMethod_FindMethod0(JNIEnv* jenv, JPy_JOverloadedMethod* 
 
     for (i = 0; i < overloadCount; i++) {
         currMethod = (JPy_JMethod*) PyList_GetItem(overloadedMethod->methodList, i);
-        matchValue = JMethod_MatchPyArgs(jenv, currMethod, argCount, argTuple);
+        matchValue = JMethod_MatchPyArgs(jenv, currMethod, argCount, pyArgs);
 
         JPy_DEBUG_PRINTF("JOverloadedMethod_FindMethod0: methodList[%d]: paramCount=%d, matchValue=%d\n", i,
                                   currMethod->paramCount, matchValue);
@@ -572,7 +593,7 @@ JPy_JMethod* JOverloadedMethod_FindMethod0(JNIEnv* jenv, JPy_JOverloadedMethod* 
     return bestMethod;
 }
 
-JPy_JMethod* JOverloadedMethod_FindMethod(JNIEnv* jenv, JPy_JOverloadedMethod* overloadedMethod, PyObject* argTuple, jboolean visitSuperClass)
+JPy_JMethod* JOverloadedMethod_FindMethod(JNIEnv* jenv, JPy_JOverloadedMethod* overloadedMethod, PyObject* pyArgs, jboolean visitSuperClass)
 {
     JPy_JOverloadedMethod* currentOM;
     JPy_MethodFindResult result;
@@ -581,11 +602,11 @@ JPy_JMethod* JOverloadedMethod_FindMethod(JNIEnv* jenv, JPy_JOverloadedMethod* o
     PyObject* superOM;
 
     if (JPy_IsDebug()) {
-        int i, argCount = PyTuple_Size(argTuple);
+        int i, argCount = PyTuple_Size(pyArgs);
         printf("JOverloadedMethod_FindMethod: argCount=%d, visitSuperClass=%d\n", argCount, visitSuperClass);
         for (i = 0; i < argCount; i++) {
-            PyObject* arg = PyTuple_GetItem(argTuple, i);
-            printf("\tPy_TYPE(argTuple[%d])->tp_name = %s\n", i, Py_TYPE(arg)->tp_name);
+            PyObject* pyArg = PyTuple_GetItem(pyArgs, i);
+            printf("\tPy_TYPE(pyArgs[%d])->tp_name = %s\n", i, Py_TYPE(pyArg)->tp_name);
         }
     }
 
@@ -595,7 +616,7 @@ JPy_JMethod* JOverloadedMethod_FindMethod(JNIEnv* jenv, JPy_JOverloadedMethod* o
 
     currentOM = overloadedMethod;
     while (1) {
-        if (JOverloadedMethod_FindMethod0(jenv, currentOM, argTuple, &result) < 0) {
+        if (JOverloadedMethod_FindMethod0(jenv, currentOM, pyArgs, &result) < 0) {
             // oops, error
             return NULL;
         }
