@@ -601,15 +601,25 @@ JPy_JType* JPy_GetNonObjectJType(JNIEnv* jenv, jclass classRef)
     return type;
 }
 
-jclass JPy_FindClass(JNIEnv* jenv, const char* name)
+jclass JPy_GetClass(JNIEnv* jenv, const char* name)
 {
-    jclass classRef;
-    classRef = (*jenv)->FindClass(jenv, name);
-    if (classRef == NULL) {
+    jclass localClassRef;
+    jclass globalClassRef;
+
+    localClassRef = (*jenv)->FindClass(jenv, name);
+    if (localClassRef == NULL) {
         PyErr_Format(PyExc_RuntimeError, "class '%s' not found", name);
         return NULL;
     }
-    return classRef;
+
+    globalClassRef = (*jenv)->NewGlobalRef(jenv, localClassRef);
+    (*jenv)->DeleteLocalRef(jenv, localClassRef);
+    if (globalClassRef == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    return globalClassRef;
 }
 
 jmethodID JPy_GetMethod(JNIEnv* jenv, jclass classRef, const char* name, const char* sig)
@@ -626,7 +636,7 @@ jmethodID JPy_GetMethod(JNIEnv* jenv, jclass classRef, const char* name, const c
 
 
 #define DEFINE_CLASS(C, N) \
-    C = JPy_FindClass(jenv, N); \
+    C = JPy_GetClass(jenv, N); \
     if (C == NULL) { \
         return -1; \
     }
@@ -658,8 +668,6 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     if (JPy_Comparable_JClass != NULL) {
         return 0;
     }
-
-    // todo: check, if we need to convert all jclass types using NewGlobalReference()
 
     DEFINE_CLASS(JPy_Comparable_JClass, "java/lang/Comparable");
     DEFINE_METHOD(JPy_Comparable_CompareTo_MID, JPy_Comparable_JClass, "compareTo", "(Ljava/lang/Object;)I");
@@ -760,6 +768,8 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
 
 void JPy_ClearGlobalVars(void)
 {
+    // todo - For all global class refs: (*jenv)->DeleteGlobalRef(jenv, classRef)
+
     JPy_Comparable_JClass = NULL;
 
     JPy_Object_JClass = NULL;
