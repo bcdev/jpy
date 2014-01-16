@@ -1346,93 +1346,92 @@ int JType_ConvertPyArgToJObjectArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
         JPy_JType* paramComponentType = paramType->componentType;
 
         if (paramComponentType != NULL && paramComponentType->isPrimitive && PyObject_CheckBuffer(pyArg)) {
-            Py_buffer* view;
+            Py_buffer* pyBuffer;
             int flags;
             Py_ssize_t itemCount;
-            jarray array;
+            jarray jArray;
             void* arrayItems;
             jint itemSize;
-            JPy_JType* type;
 
-            view = PyMem_New(Py_buffer, 1);
-            if (view == NULL) {
+            pyBuffer = PyMem_New(Py_buffer, 1);
+            if (pyBuffer == NULL) {
                 PyErr_NoMemory();
                 return -1;
             }
 
             flags = paramDescriptor->isMutable ? PyBUF_WRITABLE : PyBUF_SIMPLE;
-            if (PyObject_GetBuffer(pyArg, view, flags) < 0) {
-                PyMem_Del(view);
+            if (PyObject_GetBuffer(pyArg, pyBuffer, flags) < 0) {
+                PyMem_Del(pyBuffer);
                 return -1;
             }
 
-            itemCount = view->len / view->itemsize;
+            itemCount = pyBuffer->len / pyBuffer->itemsize;
             if (itemCount <= 0) {
-                PyBuffer_Release(view);
-                PyMem_Del(view);
-                PyErr_SetString(PyExc_ValueError, "illegal buffer configuration");
+                PyBuffer_Release(pyBuffer);
+                PyMem_Del(pyBuffer);
+                PyErr_Format(PyExc_ValueError, "illegal buffer configuration, negative item count: %d", itemCount);
                 return -1;
             }
 
-            type = paramComponentType;
-            if (type == JPy_JBoolean) {
-                array = (*jenv)->NewBooleanArray(jenv, itemCount);
+            if (paramComponentType == JPy_JBoolean) {
+                jArray = (*jenv)->NewBooleanArray(jenv, itemCount);
                 itemSize = sizeof(jboolean);
-            } else if (type == JPy_JByte) {
-                array = (*jenv)->NewByteArray(jenv, itemCount);
+            } else if (paramComponentType == JPy_JByte) {
+                jArray = (*jenv)->NewByteArray(jenv, itemCount);
                 itemSize = sizeof(jbyte);
-            } else if (type == JPy_JChar) {
-                array = (*jenv)->NewCharArray(jenv, itemCount);
+            } else if (paramComponentType == JPy_JChar) {
+                jArray = (*jenv)->NewCharArray(jenv, itemCount);
                 itemSize = sizeof(jchar);
-            } else if (type == JPy_JShort) {
-                array = (*jenv)->NewShortArray(jenv, itemCount);
+            } else if (paramComponentType == JPy_JShort) {
+                jArray = (*jenv)->NewShortArray(jenv, itemCount);
                 itemSize = sizeof(jshort);
-            } else if (type == JPy_JInt) {
-                array = (*jenv)->NewIntArray(jenv, itemCount);
+            } else if (paramComponentType == JPy_JInt) {
+                jArray = (*jenv)->NewIntArray(jenv, itemCount);
                 itemSize = sizeof(jint);
-            } else if (type == JPy_JLong) {
-                array = (*jenv)->NewLongArray(jenv, itemCount);
+            } else if (paramComponentType == JPy_JLong) {
+                jArray = (*jenv)->NewLongArray(jenv, itemCount);
                 itemSize = sizeof(jlong);
-            } else if (type == JPy_JFloat) {
-                array = (*jenv)->NewFloatArray(jenv, itemCount);
+            } else if (paramComponentType == JPy_JFloat) {
+                jArray = (*jenv)->NewFloatArray(jenv, itemCount);
                 itemSize = sizeof(jfloat);
-            } else if (type == JPy_JDouble) {
-                array = (*jenv)->NewDoubleArray(jenv, itemCount);
+            } else if (paramComponentType == JPy_JDouble) {
+                jArray = (*jenv)->NewDoubleArray(jenv, itemCount);
                 itemSize = sizeof(jdouble);
             } else {
-                PyBuffer_Release(view);
-                PyMem_Del(view);
-                PyErr_SetString(PyExc_RuntimeError, "internal error: illegal primitive type");
+                PyBuffer_Release(pyBuffer);
+                PyMem_Del(pyBuffer);
+                PyErr_SetString(PyExc_RuntimeError, "internal error: illegal primitive Java type");
                 return -1;
             }
 
-            if (view->len != itemCount * itemSize) {
-                //printf("%ld, %ld, %ld, %ld\n", view->len , view->itemsize, itemCount, itemSize);
-                PyBuffer_Release(view);
-                PyMem_Del(view);
-                PyErr_SetString(PyExc_ValueError, "buffer length is too small");
+            if (pyBuffer->len != itemCount * itemSize) {
+                //printf("%ld, %ld, %ld, %ld\n", pyBuffer->len , pyBuffer->itemsize, itemCount, itemSize);
+                PyBuffer_Release(pyBuffer);
+                PyMem_Del(pyBuffer);
+                PyErr_Format(PyExc_ValueError, "invalid buffer value: expected %d, got %d bytes", itemCount * itemSize, pyBuffer->len);
                 return -1;
             }
 
-            if (array == NULL) {
-                PyBuffer_Release(view);
-                PyMem_Del(view);
+            if (jArray == NULL) {
+                PyBuffer_Release(pyBuffer);
+                PyMem_Del(pyBuffer);
                 PyErr_NoMemory();
                 return -1;
             }
 
-            arrayItems = (*jenv)->GetPrimitiveArrayCritical(jenv, array, NULL);
+            arrayItems = (*jenv)->GetPrimitiveArrayCritical(jenv, jArray, NULL);
             if (arrayItems == NULL) {
-                PyBuffer_Release(view);
-                PyMem_Del(view);
+                PyBuffer_Release(pyBuffer);
+                PyMem_Del(pyBuffer);
                 PyErr_NoMemory();
                 return -1;
             }
-            memcpy(arrayItems, view->buf, itemCount * itemSize);
-            (*jenv)->ReleasePrimitiveArrayCritical(jenv, array, arrayItems, 0);
+            JPy_DEBUG_PRINTF("JType_ConvertPyArgToJObjectArg: moving Python buffer into Java array: pyBuffer->buf=%p, pyBuffer->len=%d\n", pyBuffer->buf, pyBuffer->len);
+            memcpy(arrayItems, pyBuffer->buf, itemCount * itemSize);
+            (*jenv)->ReleasePrimitiveArrayCritical(jenv, jArray, arrayItems, 0);
 
-            value->l = array;
-            disposer->data = view;
+            value->l = jArray;
+            disposer->data = pyBuffer;
             disposer->DisposeArg = paramDescriptor->isMutable ? JType_DisposeWritableBufferArg : JType_DisposeReadOnlyBufferArg;
         } else {
             jobject objectRef;
@@ -1458,39 +1457,50 @@ void JType_DisposeLocalObjectRefArg(JNIEnv* jenv, jvalue* value, void* data)
 
 void JType_DisposeReadOnlyBufferArg(JNIEnv* jenv, jvalue* value, void* data)
 {
-    Py_buffer* view;
-    jarray array;
+    Py_buffer* pyBuffer;
+    jarray jArray;
 
-    array = (jarray) value->l;
-    view = (Py_buffer*) data;
-    if (array != NULL && view != NULL) {
-        JPy_DEBUG_PRINTF("JType_DisposeReadOnlyBufferArg: array != NULL && view != NULL\n");
-        (*jenv)->DeleteLocalRef(jenv, array);
-        PyBuffer_Release(view);
-        PyMem_Del(view);
+    pyBuffer = (Py_buffer*) data;
+    jArray = (jarray) value->l;
+
+    JPy_DEBUG_PRINTF("JType_DisposeReadOnlyBufferArg: pyBuffer=%p, jArray=%p\n", pyBuffer, jArray);
+
+    if (pyBuffer != NULL) {
+        PyBuffer_Release(pyBuffer);
+        PyMem_Del(pyBuffer);
+    }
+    if (jArray != NULL) {
+        (*jenv)->DeleteLocalRef(jenv, jArray);
     }
 }
 
 void JType_DisposeWritableBufferArg(JNIEnv* jenv, jvalue* value, void* data)
 {
-    Py_buffer* view;
-    jarray array;
-    void* carray;
+    Py_buffer* pyBuffer;
+    jarray jArray;
+    void* arrayItems;
 
-    array = (jarray) value->l;
-    view = (Py_buffer*) data;
-    if (array != NULL && view != NULL) {
-        JPy_DEBUG_PRINTF("JType_DisposeWritableBufferArg: array != NULL && view != NULL\n");
+    pyBuffer = (Py_buffer*) data;
+    jArray = (jarray) value->l;
+
+    JPy_DEBUG_PRINTF("JType_DisposeWritableBufferArg: pyBuffer=%p, jArray=%p\n", pyBuffer, jArray);
+
+    if (pyBuffer != NULL && jArray != NULL) {
         // Copy modified array content back into buffer view
-        carray = (*jenv)->GetPrimitiveArrayCritical(jenv, array, NULL);
-        if (carray != NULL) {
-            view = (Py_buffer*) data;
-            memcpy(view->buf, carray, view->len);
-            (*jenv)->ReleasePrimitiveArrayCritical(jenv, array, carray, 0);
+        arrayItems = (*jenv)->GetPrimitiveArrayCritical(jenv, jArray, NULL);
+        if (arrayItems != NULL) {
+            JPy_DEBUG_PRINTF("JType_DisposeWritableBufferArg: moving Java array into Python buffer: pyBuffer->buf=%p, pyBuffer->len=%d\n", pyBuffer->buf, pyBuffer->len);
+            memcpy(pyBuffer->buf, arrayItems, pyBuffer->len);
+            (*jenv)->ReleasePrimitiveArrayCritical(jenv, jArray, arrayItems, 0);
         }
-        (*jenv)->DeleteLocalRef(jenv, array);
-        PyBuffer_Release(view);
-        PyMem_Del(view);
+        (*jenv)->DeleteLocalRef(jenv, jArray);
+        PyBuffer_Release(pyBuffer);
+        PyMem_Del(pyBuffer);
+    } else if (pyBuffer != NULL) {
+        PyBuffer_Release(pyBuffer);
+        PyMem_Del(pyBuffer);
+    } else if (jArray != NULL) {
+        (*jenv)->DeleteLocalRef(jenv, jArray);
     }
 }
 
