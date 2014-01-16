@@ -8,7 +8,18 @@ package org.jpy.fixtures;
 @SuppressWarnings("UnusedDeclaration")
 public class TypeResolutionTestFixture {
 
-    public Thing createThing(int value) {
-        return new Thing(value);
+    public SuperThing createSuperThing(int value) {
+        return new SuperThing(value);
+    }
+
+
+    public static class SuperThing extends Thing {
+        public SuperThing(int value) {
+            super(value);
+        }
+
+        public void add(int val) {
+            setValue(getValue() + val);
+        }
     }
 }
