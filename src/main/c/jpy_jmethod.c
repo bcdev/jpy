@@ -137,8 +137,9 @@ PyObject* JMethod_FromJObject(JNIEnv* jenv, JPy_JMethod* method, PyObject* pyArg
         jobject jArg = jArgs[paramIndex].l;
         //printf("JMethod_FromJObject: paramIndex=%d, jArg=%p, isNone=%d\n", paramIndex, jArg, pyReturnArg == Py_None);
         if ((JObj_Check(pyReturnArg) || PyObject_CheckBuffer(pyReturnArg))
-             && (*jenv)->IsSameObject(jenv, jReturnValue, jArg)) {
-            return pyReturnArg;
+            && (*jenv)->IsSameObject(jenv, jReturnValue, jArg)) {
+             Py_INCREF(pyReturnArg);
+             return pyReturnArg;
         }
     }
     #endif

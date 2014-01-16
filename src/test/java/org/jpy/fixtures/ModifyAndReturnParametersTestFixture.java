@@ -16,26 +16,37 @@ public class ModifyAndReturnParametersTestFixture {
     }
 
     public Thing returnThing(@Return Thing thing) {
+        if (thing == null) {
+            thing = new Thing();
+        }
         return thing;
     }
 
     public Thing modifyAndReturnThing(@Mutable @Return Thing thing, int value) {
+        if (thing == null) {
+            thing = new Thing();
+        }
         thing.setValue(value);
         return thing;
     }
 
     public void modifyIntArray(@Mutable int[] array, int item0, int item1, int item2) {
-        System.out.println("array = " + array);
         array[0] = item0;
         array[1] = item1;
         array[2] = item2;
     }
 
     public int[] returnIntArray(@Return int[] array) {
+        if (array == null) {
+            array = new int[3];
+        }
         return array;
     }
 
     public int[] modifyAndReturnIntArray(@Mutable @Return int[] array, int item0, int item1, int item2) {
+        if (array == null) {
+            array = new int[3];
+        }
         array[0] = item0;
         array[1] = item1;
         array[2] = item2;
