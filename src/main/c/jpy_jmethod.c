@@ -263,19 +263,19 @@ error:
     return returnValue;
 }
 
-int JMethod_CreateJArgs(JNIEnv* jenv, JPy_JMethod* method, PyObject* argTuple, jvalue** argValues, JPy_ArgDisposer** argDisposers)
+int JMethod_CreateJArgs(JNIEnv* jenv, JPy_JMethod* method, PyObject* argTuple, jvalue** argValuesRet, JPy_ArgDisposer** argDisposersRet)
 {
     JPy_ParamDescriptor* paramDescriptor;
     int i, i0, argCount;
     PyObject* arg;
     jvalue* jValue;
     jvalue* jValues;
-    JPy_ArgDisposer* jDisposer;
-    JPy_ArgDisposer* jDisposers;
+    JPy_ArgDisposer* argDisposer;
+    JPy_ArgDisposer* argDisposers;
 
     if (method->paramCount == 0) {
-        *argValues = NULL;
-        *argDisposers = NULL;
+        *argValuesRet = NULL;
+        *argDisposersRet = NULL;
         return 0;
     }
 
@@ -293,8 +293,8 @@ int JMethod_CreateJArgs(JNIEnv* jenv, JPy_JMethod* method, PyObject* argTuple, j
         return -1;
     }
 
-    jDisposers = PyMem_New(JPy_ArgDisposer, method->paramCount);
-    if (jDisposers == NULL) {
+    argDisposers = PyMem_New(JPy_ArgDisposer, method->paramCount);
+    if (argDisposers == NULL) {
         PyMem_Del(jValues);
         PyErr_NoMemory();
         return -1;
@@ -302,46 +302,46 @@ int JMethod_CreateJArgs(JNIEnv* jenv, JPy_JMethod* method, PyObject* argTuple, j
 
     paramDescriptor = method->paramDescriptors;
     jValue = jValues;
-    jDisposer = jDisposers;
+    argDisposer = argDisposers;
     for (i = i0; i < argCount; i++) {
         arg = PyTuple_GetItem(argTuple, i);
         jValue->l = 0;
-        jDisposer->data = NULL;
-        jDisposer->DisposeArg = NULL;
-        if (paramDescriptor->ConvertPyArg(jenv, paramDescriptor, arg, jValue, jDisposer) < 0) {
+        argDisposer->data = NULL;
+        argDisposer->DisposeArg = NULL;
+        if (paramDescriptor->ConvertPyArg(jenv, paramDescriptor, arg, jValue, argDisposer) < 0) {
             PyMem_Del(jValues);
-            PyMem_Del(jDisposers);
+            PyMem_Del(argDisposers);
             return -1;
         }
         paramDescriptor++;
         jValue++;
-        jDisposer++;
+        argDisposer++;
     }
 
-    *argValues = jValues;
-    *argDisposers = jDisposers;
+    *argValuesRet = jValues;
+    *argDisposersRet = argDisposers;
     return 0;
 }
 
-void JMethod_DisposeJArgs(JNIEnv* jenv, int paramCount, jvalue* jArgs, JPy_ArgDisposer* jDisposers)
+void JMethod_DisposeJArgs(JNIEnv* jenv, int paramCount, jvalue* jArgs, JPy_ArgDisposer* argDisposers)
 {
     jvalue* jArg;
-    JPy_ArgDisposer* jDisposer;
+    JPy_ArgDisposer* argDisposer;
     int index;
 
     jArg = jArgs;
-    jDisposer = jDisposers;
+    argDisposer = argDisposers;
 
     for (index = 0; index < paramCount; index++) {
-        if (jDisposer->DisposeArg != NULL) {
-            jDisposer->DisposeArg(jenv, jArg, jDisposer->data);
+        if (argDisposer->DisposeArg != NULL) {
+            argDisposer->DisposeArg(jenv, jArg, argDisposer->data);
         }
         jArg++;
-        jDisposer++;
+        argDisposer++;
     }
 
     PyMem_Del(jArgs);
-    PyMem_Del(jDisposers);
+    PyMem_Del(argDisposers);
 }
 
 
