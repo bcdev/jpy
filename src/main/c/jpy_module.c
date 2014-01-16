@@ -427,8 +427,7 @@ PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds)
     PyMem_Del(jvmOptions);
 
     if (jvmErrorCode != JNI_OK) {
-        char msg[1024];
-        PyErr_Format(PyExc_RuntimeError, "failed to create Java VM");
+        PyErr_SetString(PyExc_RuntimeError, "failed to create Java VM");
         fprintf(stderr,
                 "Failed to create Java VM (JNI error code %d). Possible reasons are:\n"
                 "* The Java heap space setting is too high (option -Xmx). Try '256M' first, then increment.\n"
@@ -561,6 +560,7 @@ PyObject* JPy_array(PyObject* self, PyObject* args)
 
     classRef = (*jenv)->GetObjectClass(jenv, arrayRef);
     type = JType_GetType(jenv, classRef, JNI_FALSE);
+    (*jenv)->DeleteLocalRef(jenv, classRef);
     if (type == NULL) {
         return NULL;
     }
@@ -854,6 +854,7 @@ void JPy_HandleJavaException(JNIEnv* jenv)
             } else {
                 PyErr_SetString(PyExc_RuntimeError, "Java VM exception occurred, but failed to allocate message text");
             }
+            (*jenv)->DeleteLocalRef(jenv, message);
         } else {
             PyErr_SetString(PyExc_RuntimeError, "Java VM exception occurred, no message");
         }

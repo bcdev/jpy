@@ -133,12 +133,12 @@ int JMethod_MatchPyArgs(JNIEnv* jenv, JPy_JMethod* method, int argCount, PyObjec
 PyObject* JMethod_InvokeMethod(JNIEnv* jenv, JPy_JMethod* method, JPy_JType* type, PyObject* argTuple)
 {
     jvalue* jArgs;
-    JPy_ArgDisposer* jDisposers;
+    JPy_ArgDisposer* argDisposers;
     PyObject* returnValue;
     JPy_JType* returnType;
 
     //printf("JMethod_InvokeMethod 1: typeCode=%c\n", typeCode);
-    if (JMethod_CreateJArgs(jenv, method, argTuple, &jArgs, &jDisposers) < 0) {
+    if (JMethod_CreateJArgs(jenv, method, argTuple, &jArgs, &argDisposers) < 0) {
         return NULL;
     }
 
@@ -257,7 +257,7 @@ PyObject* JMethod_InvokeMethod(JNIEnv* jenv, JPy_JMethod* method, JPy_JType* typ
 
 error:
     if (jArgs != NULL) {
-        JMethod_DisposeJArgs(jenv, method->paramCount, jArgs, jDisposers);
+        JMethod_DisposeJArgs(jenv, method->paramCount, jArgs, argDisposers);
     }
 
     return returnValue;

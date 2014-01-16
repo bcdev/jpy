@@ -425,9 +425,12 @@ PyObject* PyLib_CallAndReturnObject(JNIEnv *jenv, PyObject* pyObject, jboolean i
                 goto error;
             }
             pyArg = JPy_FromJObjectWithType(jenv, jArg, paramType);
+            (*jenv)->DeleteLocalRef(jenv, jParamClass);
         } else {
             pyArg = JPy_FromJObject(jenv, jArg);
         }
+
+        (*jenv)->DeleteLocalRef(jenv, jArg);
 
         if (pyArg == NULL) {
             JPy_DEBUG_PRINTF("PyLib_CallAndReturnObject: error: callable '%s': argument %d: failed to convert Java into Python object\n", nameChars, i);

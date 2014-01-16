@@ -389,6 +389,10 @@ int JType_CreateJavaObjectArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, 
     }
 
     array = (*jenv)->NewObjectArray(jenv, itemCount, type->componentType->classRef, NULL);
+    if ((*jenv)->ExceptionCheck(jenv)) {
+        JPy_HandleJavaException(jenv);
+        return -1;
+    }
     if (array == NULL) {
         PyErr_NoMemory();
         return -1;
@@ -682,6 +686,7 @@ int JType_InitSuperType(JNIEnv* jenv, JPy_JType* type, jboolean resolve)
             return -1;
         }
         Py_INCREF(type->superType);
+        (*jenv)->DeleteLocalRef(jenv, superClassRef);
     } else {
         type->superType = NULL;
     }
@@ -718,8 +723,13 @@ int JType_ProcessClassConstructors(JNIEnv* jenv, JPy_JType* type)
             parameterTypes = (*jenv)->CallObjectMethod(jenv, constructor, JPy_Constructor_GetParameterTypes_MID);
             mid = (*jenv)->FromReflectedMethod(jenv, constructor);
             JType_ProcessMethod(jenv, type, methodKey, JPy_JTYPE_ATTR_NAME_JINIT, NULL, parameterTypes, 1, mid);
+            (*jenv)->DeleteLocalRef(jenv, parameterTypes);
         }
+        (*jenv)->DeleteLocalRef(jenv, constructor);
     }
+
+    (*jenv)->DeleteLocalRef(jenv, constructors);
+
     return 0;
 }
 
@@ -763,10 +773,14 @@ int JType_ProcessClassFields(JNIEnv* jenv, JPy_JType* type)
             fieldName = (*jenv)->GetStringUTFChars(jenv, fieldNameStr, NULL);
             fieldKey = Py_BuildValue("s", fieldName);
             JType_ProcessField(jenv, type, fieldKey, fieldName, fieldTypeObj, isStatic, isFinal, fid);
-
             (*jenv)->ReleaseStringUTFChars(jenv, fieldNameStr, fieldName);
+
+            (*jenv)->DeleteLocalRef(jenv, fieldTypeObj);
+            (*jenv)->DeleteLocalRef(jenv, fieldNameStr);
         }
+        (*jenv)->DeleteLocalRef(jenv, field);
     }
+    (*jenv)->DeleteLocalRef(jenv, fields);
     return 0;
 }
 
@@ -809,10 +823,15 @@ int JType_ProcessClassMethods(JNIEnv* jenv, JPy_JType* type)
             methodName = (*jenv)->GetStringUTFChars(jenv, methodNameStr, NULL);
             methodKey = Py_BuildValue("s", methodName);
             JType_ProcessMethod(jenv, type, methodKey, methodName, returnType, parameterTypes, isStatic, mid);
-
             (*jenv)->ReleaseStringUTFChars(jenv, methodNameStr, methodName);
+
+            (*jenv)->DeleteLocalRef(jenv, parameterTypes);
+            (*jenv)->DeleteLocalRef(jenv, returnType);
+            (*jenv)->DeleteLocalRef(jenv, methodNameStr);
         }
+        (*jenv)->DeleteLocalRef(jenv, method);
     }
+    (*jenv)->DeleteLocalRef(jenv, methods);
     return 0;
 }
 
@@ -1577,6 +1596,8 @@ PyObject* JType_str(JPy_JType* self)
     utfChars = (*jenv)->GetStringUTFChars(jenv, strJObj, &isCopy);
     strPyObj = PyUnicode_FromFormat("%s", utfChars);
     (*jenv)->ReleaseStringUTFChars(jenv, strJObj, utfChars);
+    (*jenv)->DeleteLocalRef(jenv, strJObj);
+
     return strPyObj;
 }
 
