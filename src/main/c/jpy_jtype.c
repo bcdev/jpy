@@ -890,11 +890,13 @@ int JType_AddFieldAttribute(JNIEnv* jenv, JPy_JType* declaringClass, PyObject* f
         jdouble item = (*jenv)->GetStaticDoubleField(jenv, declaringClass->classRef, fid);
         fieldValue = JPy_FROM_JDOUBLE(item);
     } else if (fieldType == JPy_JString) {
-        jobject objectRef = (*jenv)->GetStaticObjectField(jenv, declaringClass->classRef, fid);
+        jstring objectRef = (*jenv)->GetStaticObjectField(jenv, declaringClass->classRef, fid);
         fieldValue = JPy_FromJString(jenv, objectRef);
+        (*jenv)->DeleteLocalRef(jenv, objectRef);
     } else {
         jobject objectRef = (*jenv)->GetStaticObjectField(jenv, declaringClass->classRef, fid);
         fieldValue = JPy_FromJObjectWithType(jenv, objectRef, (JPy_JType*) fieldType);
+        (*jenv)->DeleteLocalRef(jenv, objectRef);
     }
     PyDict_SetItem(typeDict, fieldName, fieldValue);
     return 0;

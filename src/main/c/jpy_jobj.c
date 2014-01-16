@@ -9,12 +9,18 @@
 JPy_JObj* JObj_FromType(JNIEnv* jenv, JPy_JType* type, jobject objectRef)
 {
     JPy_JObj* obj;
+
     obj = (JPy_JObj*) PyObject_New(JPy_JObj, (PyTypeObject*) type);
+    if (obj == NULL) {
+        return NULL;
+    }
+
     objectRef = (*jenv)->NewGlobalRef(jenv, objectRef);
     if (objectRef == NULL) {
         PyErr_NoMemory();
         return NULL;
     }
+
     obj->objectRef = objectRef;
     return obj;
 }
@@ -101,6 +107,8 @@ int JObj_init(JPy_JObj* self, PyObject* args, PyObject* kwds)
 void JObj_dealloc(JPy_JObj* self)
 {
     JNIEnv* jenv;
+
+    printf("JObj_dealloc: releasing instance of %s, self->objectRef=%p\n", Py_TYPE(self)->tp_name, self->objectRef);
 
     JPy_DEBUG_PRINTF("JObj_dealloc: releasing instance of %s, self->objectRef=%p\n", Py_TYPE(self)->tp_name, self->objectRef);
 
@@ -420,9 +428,12 @@ PyObject* JObj_getattro(JPy_JObj* self, PyObject* name)
             JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
             return JPy_FROM_JDOUBLE(item);
         } else {
-            jobject objectRef = (*jenv)->GetObjectField(jenv, self->objectRef, field->fid);
+            PyObject* returnValue;
+            jobject item = (*jenv)->GetObjectField(jenv, self->objectRef, field->fid);
             JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
-            return JPy_FromJObjectWithType(jenv, objectRef, field->type);
+            returnValue = JPy_FromJObjectWithType(jenv, item, field->type);
+            (*jenv)->DeleteLocalRef(jenv, item);
+            return returnValue;
         }
     } else {
         //printf("JObj_getattro: passing through\n");
@@ -516,9 +527,12 @@ PyObject* JObj_sq_item(JPy_JObj* self, Py_ssize_t index)
         JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
         return JPy_FROM_JDOUBLE(item);
     } else {
+        PyObject* returnValue;
         jobject item = (*jenv)->GetObjectArrayElement(jenv, self->objectRef, (jsize) index);
         JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
-        return JPy_FromJObjectWithType(jenv, item, type->componentType);
+        returnValue = JPy_FromJObjectWithType(jenv, item, type->componentType);
+        (*jenv)->DeleteLocalRef(jenv, item);
+        return returnValue;
     }
 }
 
