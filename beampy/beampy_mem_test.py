@@ -9,16 +9,6 @@ test_product_file = './MER_RR__1P.N1'
 
 class TestBeamIO(unittest.TestCase):
 
-    """
-    def test_readProduct_mem(self):
-        N = 365
-        print('test_readProduct_mem')
-        for i in range(N):
-            print('i = ', i)
-            product = beampy.ProductIO.readProduct(test_product_file)
-            product.dispose()
-    """
-
     def test_readProduct_and_readPixels_mem(self):
         N = 365
         print('test_readProduct_and_readPixels_mem')
@@ -29,12 +19,8 @@ class TestBeamIO(unittest.TestCase):
             w = band.getRasterWidth()
             h = band.getRasterHeight()
             a = np.zeros(w, dtype=np.float32)
-
             for y in range(h):
-                bla = band.readPixels(0, 0, w, 1, a)
-
-            bla = None
-
+                band.readPixels(0, 0, w, 1, a)
             product.dispose()
 
 
