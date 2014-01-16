@@ -88,7 +88,14 @@ del _collect_classpath
 debug = config.getboolean('DEFAULT', 'debug', fallback=False)
 max_mem = config.get('DEFAULT', 'max_mem', fallback='512M')
 
-jpy.create_jvm(options=['-Djava.class.path=' + os.pathsep.join(classpath), '-Xmx' + max_mem], debug=debug)
+options=['-Djava.class.path=' + os.pathsep.join(classpath), '-Xmx' + max_mem]
+
+extra_options = config.get('DEFAULT', 'extra_options', fallback=None)
+if extra_options:
+    options += extra_options.split(sep='|')
+
+
+jpy.create_jvm(options=options, debug=debug)
 
 def annotate_RasterDataNode_methods(type, method):
     index = -1
