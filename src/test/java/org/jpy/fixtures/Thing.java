@@ -5,6 +5,7 @@ package org.jpy.fixtures;
  *
  * @author Norman Fomferra
  */
+@SuppressWarnings("UnusedDeclaration")
 public class Thing {
     private int value;
 
