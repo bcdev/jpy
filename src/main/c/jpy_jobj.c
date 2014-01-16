@@ -108,8 +108,6 @@ void JObj_dealloc(JPy_JObj* self)
 {
     JNIEnv* jenv;
 
-    printf("JObj_dealloc: releasing instance of %s, self->objectRef=%p\n", Py_TYPE(self)->tp_name, self->objectRef);
-
     JPy_DEBUG_PRINTF("JObj_dealloc: releasing instance of %s, self->objectRef=%p\n", Py_TYPE(self)->tp_name, self->objectRef);
 
     jenv = JPy_GetJNIEnv();
