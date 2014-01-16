@@ -74,8 +74,9 @@ searchpath = _get_beam_jar_locations()
 #pprint.pprint(searchpath)
 classpath = _create_classpath(searchpath)
 
-extra_classpath = config.get('DEFAULT', 'extra_classpath', fallback=[])
-classpath += extra_classpath
+extra_classpath = config.get('DEFAULT', 'extra_classpath', fallback=None)
+if extra_classpath:
+    classpath += extra_classpath.split(sep=os.pathsep)
 
 #pprint.pprint(classpath)
 
