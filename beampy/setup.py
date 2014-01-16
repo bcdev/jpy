@@ -8,8 +8,3 @@ setup(name='beampy',
       author='Norman Fomferra, Brockmann Consult GmbH',
       py_modules=['beampy'],
       )
-
-import sys
-if sys.argv[1] == 'install':
-    import os
-    os.system(sys.executable + ' beampy_test.py')
