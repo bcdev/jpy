@@ -1,7 +1,7 @@
 package org.jpy.fixtures;
 
 /**
- * Used as dummy to test various return value types and variants.
+ * Used as a test class for the test cases in jpy_retval_test.py
  * Note: Please make sure to not add any method overloads to this class.
  * This is done in {@link MethodOverloadTestFixture}.
  *
