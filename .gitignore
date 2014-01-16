@@ -12,3 +12,4 @@ beampy.ini
 jpy.dll
 libjpy.so
 hs_err_pid*
+*.N1
