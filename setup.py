@@ -39,6 +39,7 @@ sources = [
 headers = [
     'src/main/c/jpy_module.h',
     'src/main/c/jpy_carray.h',
+    'src/main/c/jpy_jarray.h',
     'src/main/c/jpy_conv.h',
     'src/main/c/jpy_jtype.h',
     'src/main/c/jpy_jmethod.h',
