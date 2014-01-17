@@ -178,7 +178,7 @@ jclass JPy_String_JClass = NULL;
 
 
 int JPy_InitGlobalVars(JNIEnv* jenv);
-void JPy_ClearGlobalVars(void);
+void JPy_ClearGlobalVars(JNIEnv* jenv);
 
 
 /**
@@ -212,8 +212,8 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* jvm, void* reserved)
     printf("jpy: JNI_OnUnload: JVM.jvm=%p, JVM.mustDestroy=%d, JVM.debug=%d\n", JVM.jvm, JVM.mustDestroy, JVM.debug);
 
     if (!JVM.mustDestroy) {
+        JPy_ClearGlobalVars(JPy_GetJNIEnv());
         JVM.jvm = NULL;
-        JPy_ClearGlobalVars();
     }
 }
 
@@ -441,9 +441,9 @@ PyObject* JPy_destroy_jvm(PyObject* self, PyObject* args)
     JPy_DEBUG_PRINTF("JPy_destroy_jvm: JVM.jvm=%p\n", JVM.jvm);
 
     if (JVM.jvm != NULL && JVM.mustDestroy) {
+        JPy_ClearGlobalVars(JPy_GetJNIEnv());
         (*JVM.jvm)->DestroyJavaVM(JVM.jvm);
         JVM.jvm = NULL;
-        JPy_ClearGlobalVars();
     }
 
     return Py_BuildValue("");
@@ -757,9 +757,17 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     return 0;
 }
 
-void JPy_ClearGlobalVars(void)
+void JPy_ClearGlobalVars(JNIEnv* jenv)
 {
-    // todo - For all global class refs: (*jenv)->DeleteGlobalRef(jenv, classRef)
+    if (jenv != NULL) {
+        (*jenv)->DeleteGlobalRef(jenv, JPy_Comparable_JClass);
+        (*jenv)->DeleteGlobalRef(jenv, JPy_Object_JClass);
+        (*jenv)->DeleteGlobalRef(jenv, JPy_Class_JClass);
+        (*jenv)->DeleteGlobalRef(jenv, JPy_Constructor_JClass);
+        (*jenv)->DeleteGlobalRef(jenv, JPy_Method_JClass);
+        (*jenv)->DeleteGlobalRef(jenv, JPy_Field_JClass);
+        (*jenv)->DeleteGlobalRef(jenv, JPy_RuntimeException_JClass);
+    }
 
     JPy_Comparable_JClass = NULL;
 
