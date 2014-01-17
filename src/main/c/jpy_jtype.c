@@ -1,9 +1,8 @@
 #include "jpy_module.h"
 #include "jpy_jtype.h"
-#include "jpy_jmethod.h"
 #include "jpy_jfield.h"
+#include "jpy_jmethod.h"
 #include "jpy_jobj.h"
-#include "jpy_carray.h"
 #include "jpy_conv.h"
 
 
@@ -185,7 +184,7 @@ PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject
     }
 
     if (type->componentType == NULL) {
-        // Scalar type, not an array
+        // Scalar type, not an array, try to convert to Python equivalent
         if (type == JPy_JBooleanObj) {
             jboolean value = (*jenv)->CallBooleanMethod(jenv, objectRef, JPy_Boolean_BooleanValue_MID);
             JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
@@ -208,58 +207,11 @@ PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject
             return JPy_FROM_JDOUBLE(value);
         } else if (type == JPy_JString) {
             return JPy_FromJString(jenv, objectRef);
-        } else {
-            return (PyObject*) JObj_FromType(jenv, type, objectRef);
         }
-    } else if (type->componentType->isPrimitive) {
-        // Primitive array
-        JPy_CArray* array;
-        const char* format;
-        jint length;
-        jbyte* items;
-
-        length = (*jenv)->GetArrayLength(jenv, objectRef);
-        //printf("JType_ConvertJavaToPythonObject: length=%d\n", length);
-        items = (*jenv)->GetPrimitiveArrayCritical(jenv, objectRef, 0);
-        if (items == NULL) {
-            PyErr_NoMemory();
-            return NULL;
-        }
-        if (type->componentType == JPy_JBoolean) {
-            format = "b";
-        } else if (type->componentType == JPy_JChar) {
-            format = "H";
-        } else if (type->componentType == JPy_JByte) {
-            format = "b";
-        } else if (type->componentType == JPy_JShort) {
-            format = "h";
-        } else if (type->componentType == JPy_JInt) {
-            format = "l";
-        } else if (type->componentType == JPy_JLong) {
-            format = "q";
-        } else if (type->componentType == JPy_JFloat) {
-            format = "f";
-        } else if (type->componentType == JPy_JDouble) {
-            format = "d";
-        } else {
-            (*jenv)->ReleasePrimitiveArrayCritical(jenv, objectRef, items, 0);
-            PyErr_SetString(PyExc_RuntimeError, "internal error: unknown primitive Java type");
-            return NULL;
-        }
-
-        array = (JPy_CArray*) CArray_New(format, length);
-        if (array != NULL) {
-            memcpy(array->items, items, array->itemSize * length);
-        }
-
-        (*jenv)->ReleasePrimitiveArrayCritical(jenv, objectRef, items, 0);
-
-        return (PyObject*) array;
-    } else {
-        // Object array
-        // Note: we may convert the Java array into a list here
-        return (PyObject*) JObj_FromType(jenv, type, objectRef);
     }
+
+    // For all types we create a Java object wrapper
+    return (PyObject*) JObj_FromType(jenv, type, objectRef);
 }
 
 int JType_PythonToJavaConversionError(JPy_JType* type, PyObject* pyArg)
@@ -434,6 +386,8 @@ int JType_CreateJavaPrimitiveArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyAr
         return JType_PythonToJavaConversionError(type, pyArg);
     }
 
+    // todo - code duplication here, see JPy_array() for very similar code
+
     itemSize = 0;
     itemCount = PySequence_Length(pyArg);
     if (itemCount < 0) {
@@ -469,6 +423,8 @@ int JType_CreateJavaPrimitiveArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyAr
         return -1;
     }
 
+    // todo - implement item transfer from Python sequence into Java primitive array
+
     JPy_DEBUG_PRINTF("JType_CreateJavaPrimitiveArray: NOT IMPLEMENTED! componentType=%s, itemCount=%d, itemSize=%d\n", type->componentType->javaName, itemCount, itemSize);
 
     *objectRef = array;
@@ -478,8 +434,10 @@ int JType_CreateJavaPrimitiveArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyAr
 
 int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
 {
-    // todo: Problem of memory leak here: if a new local reference is created here and assigned to *objectRef, the reference escapes.
-    //       We have to call (*jenv)->DeleteLocalRef(jenv, *objectRef) some time later
+    // Note: There may be a potential memory leak here.
+    // If a new local reference is created in this function and assigned to *objectRef, the reference may escape.
+    // If the reference is created for an argument to a JNI call, we already delete the ref (see JMethod_InvokeMethod()).
+    // In other cases we actually have to call (*jenv)->DeleteLocalRef(jenv, *objectRef) some time later.
 
     if (pyArg == Py_None) {
         // None converts into NULL

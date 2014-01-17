@@ -51,7 +51,7 @@ class TestString(unittest.TestCase):
         s = self.String('Bibo')
         self.assertTrue('getBytes' in self.String.__dict__)
         array = s.getBytes()
-        self.assertEqual(type(array), jpy.CArray)
+        self.assertEqual(str(type(array)), "<class '[B'>")
         self.assertEqual(len(array), 4)
         self.assertEqual(array[0], 66)
         self.assertEqual(array[1], 105)
@@ -101,7 +101,6 @@ class TestFile(unittest.TestCase):
         self.assertTrue('toPath' in self.File.__dict__)
         path = f.toPath()
         self.assertEqual(str(type(path)), '<class \'java.nio.file.Path\'>')
-
 
         jpy.get_class('java.nio.file.Path')
         n1 = path.getName(0)

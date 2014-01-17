@@ -8,18 +8,17 @@ extern "C" {
 /**
  * The Java primitive array representation in Python.
  *
- * IMPORTANT: It must only differ from the JPy_JObj type by the 'exportCount' member
- * since we use the same basic type, name JPy_JType for it.
+ * IMPORTANT: JPy_JArray must only differ from the JPy_JObj structure by the 'bufferExportCount' member
+ * since we use the same basic type, name JPy_JType for it. DON'T ever change member positions!
+ * @see JPy_JObj
  */
 typedef struct JPy_JArray
 {
     PyObject_HEAD
-    jarray arrayRef;
-    jint exportCount;
+    jobject objectRef;
+    jint bufferExportCount;
 }
 JPy_JArray;
-
-PyObject* JArray_New(const char* format, int itemCount);
 
 extern PyBufferProcs JArray_as_buffer_boolean;
 extern PyBufferProcs JArray_as_buffer_char;

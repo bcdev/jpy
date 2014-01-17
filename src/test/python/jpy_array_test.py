@@ -7,7 +7,7 @@ jpy.create_jvm(options=['-Djava.class.path=target/test-classes', '-Xmx512M'], de
 
 class TestJavaArrays(unittest.TestCase):
 
-    def do_test_array_protocol(self, type, initial, expected):
+    def do_test_basic_array_protocol(self, type, initial, expected):
         a = jpy.array(type, 3)
         self.assertEqual(len(a), 3)
         self.assertEqual(a[0], initial[0])
@@ -16,20 +16,18 @@ class TestJavaArrays(unittest.TestCase):
         a[0] = expected[0]
         a[1] = expected[1]
         a[2] = expected[2]
+        return a
+
+
+    def do_test_array_protocol(self, type, initial, expected):
+        a = self.do_test_basic_array_protocol(type, initial, expected)
         self.assertEqual(a[0], expected[0])
         self.assertEqual(a[1], expected[1])
         self.assertEqual(a[2], expected[2])
 
 
     def do_test_array_protocol_float(self, type, initial, expected, places):
-        a = jpy.array(type, 3)
-        self.assertEqual(len(a), 3)
-        self.assertEqual(a[0], initial[0])
-        self.assertEqual(a[1], initial[1])
-        self.assertEqual(a[2], initial[2])
-        a[0] = expected[0]
-        a[1] = expected[1]
-        a[2] = expected[2]
+        a = self.do_test_basic_array_protocol(type, initial, expected)
         self.assertAlmostEqual(a[0], expected[0], places=places)
         self.assertAlmostEqual(a[1], expected[1], places=places)
         self.assertAlmostEqual(a[2], expected[2], places=places)
@@ -71,6 +69,77 @@ class TestJavaArrays(unittest.TestCase):
         self.do_test_array_protocol('java.lang.String', [None, None, None], ['A', 'B', 'C'])
         F = jpy.get_class('java.io.File')
         self.do_test_array_protocol('java.io.File', [None, None, None], [F('A'), F('B'), F('C')])
+
+
+
+    def do_test_basic_buffer_protocol(self, type, itemsize, values):
+
+        a = jpy.array(type, 4)
+        self.assertEqual(len(a), 4)
+
+        a[0] = values[0]
+        a[1] = values[1]
+        a[2] = values[2]
+        a[3] = values[3]
+
+        m = memoryview(a)
+        self.assertEqual(len(m), 4)
+        self.assertEqual(m.ndim, 1)
+        self.assertEqual(m.itemsize, itemsize)
+        self.assertEqual(m.nbytes, 4 * itemsize)
+        self.assertEqual(m.shape, (4,))
+        self.assertEqual(m.strides, (itemsize,))
+        self.assertEqual(m.contiguous, True)
+        self.assertEqual(m.c_contiguous, True)
+        self.assertEqual(m.readonly, True)
+        return m
+
+
+    def do_test_buffer_protocol(self, type, itemsize, values):
+        m = self.do_test_basic_buffer_protocol(type, itemsize, values)
+        self.assertEqual(m.tolist(), values)
+        m.release()
+
+
+    def do_test_buffer_protocol_float(self, type, itemsize, values, places):
+        m = self.do_test_basic_buffer_protocol(type, itemsize, values)
+        self.assertAlmostEqual(m[0], values[0], places=places)
+        self.assertAlmostEqual(m[1], values[1], places=places)
+        self.assertAlmostEqual(m[2], values[2], places=places)
+        self.assertAlmostEqual(m[3], values[3], places=places)
+        m.release()
+
+
+    def test_buffer_boolean(self):
+        self.do_test_buffer_protocol('boolean', 1, [True, False, True, True])
+
+
+    def test_buffer_char(self):
+        self.do_test_buffer_protocol('char', 2, [65, 0, 67, 32])
+
+
+    def test_buffer_byte(self):
+        self.do_test_buffer_protocol('byte', 1, [65, 0, -110, -1])
+
+
+    def test_buffer_short(self):
+        self.do_test_buffer_protocol('short', 2, [651, 0, -1102, -1])
+
+
+    def test_buffer_int(self):
+        self.do_test_buffer_protocol('int', 4, [65123, 0, -110123, -1])
+
+
+    def test_buffer_long(self):
+        self.do_test_buffer_protocol('long', 8, [65123456789, 0, -110123456789, -1])
+
+
+    def test_buffer_float(self):
+        self.do_test_buffer_protocol_float('float', 4, [0.12345, 0.0, -100.123, 54.3], 5)
+
+
+    def test_buffer_double(self):
+        self.do_test_buffer_protocol_float('double', 8, [0.12345678, 0.0, -100.123456, 54.3], 8)
 
 
 if __name__ == '__main__':

@@ -27,7 +27,7 @@ if WIN32 and os.environ.get('VS90COMNTOOLS', None) is None:
 
 sources = [
     'src/main/c/jpy_module.c',
-    'src/main/c/jpy_carray.c',
+    'src/main/c/jpy_jarray.c',
     'src/main/c/jpy_conv.c',
     'src/main/c/jpy_jtype.c',
     'src/main/c/jpy_jmethod.c',
@@ -38,7 +38,6 @@ sources = [
 
 headers = [
     'src/main/c/jpy_module.h',
-    'src/main/c/jpy_carray.h',
     'src/main/c/jpy_jarray.h',
     'src/main/c/jpy_conv.h',
     'src/main/c/jpy_jtype.h',
@@ -125,7 +124,6 @@ if sys.argv[1] == 'install':
 
     os.system(sys.executable + ' src/test/python/jpy_field_test.py')
     os.system(sys.executable + ' src/test/python/jpy_retval_test.py')
-    os.system(sys.executable + ' src/test/python/jpy_array_test.py')
     os.system(sys.executable + ' src/test/python/jpy_rt_test.py')
     os.system(sys.executable + ' src/test/python/jpy_mt_test.py')
     os.system(sys.executable + ' src/test/python/jpy_exception_test.py')
@@ -133,5 +131,6 @@ if sys.argv[1] == 'install':
     os.system(sys.executable + ' src/test/python/jpy_typeconv_test.py')
     os.system(sys.executable + ' src/test/python/jpy_typeres_test.py')
     os.system(sys.executable + ' src/test/python/jpy_modretparam_test.py')
+    os.system(sys.executable + ' src/test/python/jpy_array_test.py')
 
     print('Note: if any of the above tests fails, make sure to compile Java test sources first.')

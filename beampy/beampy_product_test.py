@@ -71,7 +71,6 @@ class TestBeamIO(unittest.TestCase):
         self.assertAlmostEqual(a[100], expected_a100, places=5)
 
 
-
     def test_readPixels_with_numpy_array(self):
         w = self.product.getSceneRasterWidth()
         h = self.product.getSceneRasterHeight()
@@ -80,18 +79,6 @@ class TestBeamIO(unittest.TestCase):
         b.readPixels(0, 0, w, 1, a)
         self.assertAlmostEqual(a[0], 0.0, places=5)
         self.assertAlmostEqual(a[100], expected_a100, places=5)
-
-
-
-    def test_readPixels_with_carray(self):
-        w = self.product.getSceneRasterWidth()
-        h = self.product.getSceneRasterHeight()
-        b = self.product.getBand('radiance_13')
-        a = beampy.jpy.CArray('f', w)
-        b.readPixels(0, 0, w, 1, a)
-        self.assertAlmostEqual(a[0], 0.0, places=5)
-        self.assertAlmostEqual(a[100], expected_a100, places=5)
-
 
 
     def test_readValidMask_with_numpy_array(self):

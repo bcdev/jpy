@@ -3,7 +3,6 @@
 #include "jpy_jmethod.h"
 #include "jpy_jfield.h"
 #include "jpy_jobj.h"
-#include "jpy_carray.h"
 #include "jpy_conv.h"
 
 #include <stdlib.h>
@@ -271,14 +270,6 @@ PyMODINIT_FUNC PyInit_jpy(void)
     if (JPy_Module == NULL) {
         return NULL;
     }
-
-    /////////////////////////////////////////////////////////////////////////
-
-    if (PyType_Ready(&CArray_Type) < 0) {
-        return NULL;
-    }
-    Py_INCREF(&CArray_Type);
-    PyModule_AddObject(JPy_Module, "CArray", (PyObject*) &CArray_Type);
 
     /////////////////////////////////////////////////////////////////////////
 

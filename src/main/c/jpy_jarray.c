@@ -2,24 +2,28 @@
 #include "jpy_jarray.h"
 
 
-#define PRINT_FLAG(F) printf("JArray_getbufferproc: %s = %d\n", #F, (flags & F) != 0);
-#define PRINT_MEMB(F, M) printf("JArray_getbufferproc: %s = " ## F ## "\n", #M, M);
+#define PRINT_FLAG(F) printf("JArray_GetBufferProc: %s = %d\n", #F, (flags & F) != 0);
+#define PRINT_MEMB(F, M) printf("JArray_GetBufferProc: %s = " ## F ## "\n", #M, M);
+
+//#define JPy_USE_GET_PRIMITIVE_ARRAY_CRITICAL 1
 
 
 /*
- * Implements the getbuffer() method of the <buffer> interface for CArray_Type
+ * Implements the getbuffer() method of the buffer protocol for JPy_JArray objects.
+ * Regarding the format parameter, refer to the Python 'struct' module documentation:
+ * http://docs.python.org/2/library/struct.html#module-struct
  */
-int JArray_GetBufferProc(JPy_JArray* self, Py_buffer* view, int flags, jint itemSize, const char* format)
+int JArray_GetBufferProc(JPy_JArray* self, Py_buffer* view, int flags, char javaType, jint itemSize, const char* format)
 {
     JNIEnv* jenv;
     jint itemCount;
-    jint isCopy;
-    void* items;
+    jboolean isCopy;
+    void* buf;
 
     JPy_GET_JNI_ENV_OR_RETURN(jenv, -1)
 
     /*
-    printf("CArray_getbufferproc\n");
+    printf("JArray_GetBufferProc:\n");
     PRINT_FLAG(PyBUF_ANY_CONTIGUOUS);
     PRINT_FLAG(PyBUF_CONTIG);
     PRINT_FLAG(PyBUF_CONTIG_RO);
@@ -41,20 +45,45 @@ int JArray_GetBufferProc(JPy_JArray* self, Py_buffer* view, int flags, jint item
     PRINT_FLAG(PyBUF_WRITEABLE);
     */
 
-    itemCount = (*jenv)->GetArrayLength(jenv, self->arrayRef);
+    itemCount = (*jenv)->GetArrayLength(jenv, self->objectRef);
 
     // According to Python documentation,
     // buffer allocation shall be done in the 5 following steps;
 
     // Step 1/5
-    items = (*jenv)->GetPrimitiveArrayCritical(jenv, self->arrayRef, &isCopy);
-    if (items == NULL) {
+#ifdef JPy_USE_GET_PRIMITIVE_ARRAY_CRITICAL
+    buf = (*jenv)->GetPrimitiveArrayCritical(jenv, self->objectRef, &isCopy);
+#else
+    if (javaType == 'Z') {
+        buf = (*jenv)->GetBooleanArrayElements(jenv, self->objectRef, &isCopy);
+    } else if (javaType == 'C') {
+        buf = (*jenv)->GetCharArrayElements(jenv, self->objectRef, &isCopy);
+    } else if (javaType == 'B') {
+        buf = (*jenv)->GetByteArrayElements(jenv, self->objectRef, &isCopy);
+    } else if (javaType == 'S') {
+        buf = (*jenv)->GetShortArrayElements(jenv, self->objectRef, &isCopy);
+    } else if (javaType == 'I') {
+        buf = (*jenv)->GetIntArrayElements(jenv, self->objectRef, &isCopy);
+    } else if (javaType == 'J') {
+        buf = (*jenv)->GetLongArrayElements(jenv, self->objectRef, &isCopy);
+    } else if (javaType == 'F') {
+        buf = (*jenv)->GetFloatArrayElements(jenv, self->objectRef, &isCopy);
+    } else if (javaType == 'D') {
+        buf = (*jenv)->GetDoubleArrayElements(jenv, self->objectRef, &isCopy);
+    } else {
+        PyErr_Format(PyExc_RuntimeError, "internal error: illegal Java array type '%c'", javaType);
+        return -1;
+    }
+#endif
+    if (buf == NULL) {
         PyErr_NoMemory();
         return -1;
     }
 
+    JPy_DEBUG_PRINTF("JArray_GetBufferProc: buf=%p, type='%s', format='%s', itemSize=%d, itemCount=%d, isCopy=%d\n", buf, Py_TYPE(self)->tp_name, format, itemSize, itemCount, isCopy);
+
     // Step 2/5
-    view->buf = items;
+    view->buf = buf;
     view->len = itemCount * itemSize;
     view->itemsize = itemSize;
     view->readonly = (flags & (PyBUF_WRITE | PyBUF_WRITEABLE)) == 0;
@@ -65,9 +94,9 @@ int JArray_GetBufferProc(JPy_JArray* self, Py_buffer* view, int flags, jint item
     *view->strides = itemSize;
     view->suboffsets = NULL;
     if ((flags & PyBUF_FORMAT) != 0) {
-        view->format = format;
+        view->format = (char*) format;
     } else {
-        view->format = "B";
+        view->format = (char*) "B";
     }
 
     /*
@@ -81,30 +110,92 @@ int JArray_GetBufferProc(JPy_JArray* self, Py_buffer* view, int flags, jint item
     */
 
     // Step 3/5
-    self->exportCount++;
+    self->bufferExportCount++;
 
     // Step 4/5
     view->obj = (PyObject*) self;
     Py_INCREF(view->obj);
 
     // Step 5/5
-    return ret;
+    return 0;
 }
 
+int JArray_getbufferproc_boolean(JPy_JArray* self, Py_buffer* view, int flags)
+{
+    return JArray_GetBufferProc(self, view, flags, 'Z', 1, "B");
+}
+
+int JArray_getbufferproc_char(JPy_JArray* self, Py_buffer* view, int flags)
+{
+    return JArray_GetBufferProc(self, view, flags, 'C', 2, "H");
+}
+
+int JArray_getbufferproc_byte(JPy_JArray* self, Py_buffer* view, int flags)
+{
+    return JArray_GetBufferProc(self, view, flags, 'B', 1, "b");
+}
+
+int JArray_getbufferproc_short(JPy_JArray* self, Py_buffer* view, int flags)
+{
+    return JArray_GetBufferProc(self, view, flags, 'S', 2, "h");
+}
+
+int JArray_getbufferproc_int(JPy_JArray* self, Py_buffer* view, int flags)
+{
+    return JArray_GetBufferProc(self, view, flags, 'I', 4, "i");
+}
+
+int JArray_getbufferproc_long(JPy_JArray* self, Py_buffer* view, int flags)
+{
+    return JArray_GetBufferProc(self, view, flags, 'J', 8, "q");
+}
+
+int JArray_getbufferproc_float(JPy_JArray* self, Py_buffer* view, int flags)
+{
+    return JArray_GetBufferProc(self, view, flags, 'F', 4, "f");
+}
+
+int JArray_getbufferproc_double(JPy_JArray* self, Py_buffer* view, int flags)
+{
+    return JArray_GetBufferProc(self, view, flags, 'D', 8, "d");
+}
+
+
 /*
- * Implements the releasebuffer() method of the <buffer> interface for CArray_Type
+ * Implements the releasebuffer() method the buffer protocol for JPy_JArray objects
  */
-void JArray_releasebufferproc(JPy_JArray* self, Py_buffer* view)
+void JArray_ReleaseBufferProc(JPy_JArray* self, Py_buffer* view, char javaType)
 {
     // Step 1
-    self->exportCount--;
-    // printf("JArray_releasebufferproc: self->exportCount=%d\n", self->exportCount);
+    self->bufferExportCount--;
+
+    JPy_DEBUG_PRINTF("JArray_ReleaseBufferProc: buf=%p, bufferExportCount=%d\n", view->buf, self->bufferExportCount);
 
     // Step 2
-    if (self->exportCount == 0) {
+    if (self->bufferExportCount == 0 && view->buf != NULL) {
         JNIEnv* jenv = JPy_GetJNIEnv();
         if (jenv != NULL) {
-            (*jenv)->ReleasePrimitiveArrayCritical(jenv, self->arrayRef, view->buf, 0);
+#ifdef JPy_USE_GET_PRIMITIVE_ARRAY_CRITICAL
+           (*jenv)->ReleasePrimitiveArrayCritical(jenv, self->objectRef, view->buf, 0);
+#else
+            if (javaType == 'Z') {
+                (*jenv)->ReleaseBooleanArrayElements(jenv, self->objectRef, (jboolean*) view->buf, 0);
+            } else if (javaType == 'C') {
+                (*jenv)->ReleaseCharArrayElements(jenv, self->objectRef, (jchar*) view->buf, 0);
+            } else if (javaType == 'B') {
+                (*jenv)->ReleaseByteArrayElements(jenv, self->objectRef, (jbyte*) view->buf, 0);
+            } else if (javaType == 'S') {
+                (*jenv)->ReleaseShortArrayElements(jenv, self->objectRef, (jshort*) view->buf, 0);
+            } else if (javaType == 'I') {
+                (*jenv)->ReleaseIntArrayElements(jenv, self->objectRef, (jint*) view->buf, 0);
+            } else if (javaType == 'J') {
+                (*jenv)->ReleaseLongArrayElements(jenv, self->objectRef, (jlong*) view->buf, 0);
+            } else if (javaType == 'F') {
+                (*jenv)->ReleaseFloatArrayElements(jenv, self->objectRef, (jfloat*) view->buf, 0);
+            } else if (javaType == 'D') {
+                (*jenv)->ReleaseDoubleArrayElements(jenv, self->objectRef, (jdouble*) view->buf, 0);
+            }
+#endif
         }
         view->buf = NULL;
     }
@@ -113,82 +204,83 @@ void JArray_releasebufferproc(JPy_JArray* self, Py_buffer* view)
     //Py_DECREF(view->obj);
 }
 
-int JArray_getbufferproc_boolean(JPy_CArray* self, Py_buffer* view, int flags)
+void JArray_releasebufferproc_boolean(JPy_JArray* self, Py_buffer* view)
 {
-    return JArray_GetBufferProc(self, view, flags, 1, 'B');
+    JArray_ReleaseBufferProc(self, view, 'Z');
 }
 
-int JArray_getbufferproc_char(JPy_CArray* self, Py_buffer* view, int flags)
+void JArray_releasebufferproc_char(JPy_JArray* self, Py_buffer* view)
 {
-    return JArray_GetBufferProc(self, view, flags, 2, 'H');
+    JArray_ReleaseBufferProc(self, view, 'C');
 }
 
-int JArray_getbufferproc_byte(JPy_CArray* self, Py_buffer* view, int flags)
+void JArray_releasebufferproc_byte(JPy_JArray* self, Py_buffer* view)
 {
-    return JArray_GetBufferProc(self, view, flags, 1, 'b');
+    JArray_ReleaseBufferProc(self, view, 'B');
 }
 
-int JArray_getbufferproc_short(JPy_CArray* self, Py_buffer* view, int flags)
+void JArray_releasebufferproc_short(JPy_JArray* self, Py_buffer* view)
 {
-    return JArray_GetBufferProc(self, view, flags, 2, 'h');
+    JArray_ReleaseBufferProc(self, view, 'S');
 }
 
-int JArray_getbufferproc_int(JPy_CArray* self, Py_buffer* view, int flags)
+void JArray_releasebufferproc_int(JPy_JArray* self, Py_buffer* view)
 {
-    return JArray_GetBufferProc(self, view, flags, 4, 'i');
+    JArray_ReleaseBufferProc(self, view, 'I');
 }
 
-int JArray_getbufferproc_long(JPy_CArray* self, Py_buffer* view, int flags)
+void JArray_releasebufferproc_long(JPy_JArray* self, Py_buffer* view)
 {
-    return JArray_GetBufferProc(self, view, flags, 8, 'q');
+    JArray_ReleaseBufferProc(self, view, 'J');
 }
 
-int JArray_getbufferproc_float(JPy_CArray* self, Py_buffer* view, int flags)
+void JArray_releasebufferproc_float(JPy_JArray* self, Py_buffer* view)
 {
-    return JArray_GetBufferProc(self, view, flags, 4, 'f');
+    JArray_ReleaseBufferProc(self, view, 'F');
 }
 
-int JArray_getbufferproc_double(JPy_CArray* self, Py_buffer* view, int flags)
+void JArray_releasebufferproc_double(JPy_JArray* self, Py_buffer* view)
 {
-    return JArray_GetBufferProc(self, view, flags, 8, 'd');
+    JArray_ReleaseBufferProc(self, view, 'D');
 }
 
-static PyBufferProcs JArray_as_buffer_boolean = {
+
+PyBufferProcs JArray_as_buffer_boolean = {
     (getbufferproc) JArray_getbufferproc_boolean,
-    (releasebufferproc) JArray_releasebufferproc
+    (releasebufferproc) JArray_releasebufferproc_boolean
 };
 
-static PyBufferProcs JArray_as_buffer_char = {
+PyBufferProcs JArray_as_buffer_char = {
     (getbufferproc) JArray_getbufferproc_char,
-    (releasebufferproc) JArray_releasebufferproc
+    (releasebufferproc) JArray_releasebufferproc_char
 };
 
-static PyBufferProcs JArray_as_buffer_byte = {
+PyBufferProcs JArray_as_buffer_byte = {
     (getbufferproc) JArray_getbufferproc_byte,
-    (releasebufferproc) JArray_releasebufferproc
+    (releasebufferproc) JArray_releasebufferproc_byte
 };
 
-static PyBufferProcs JArray_as_buffer_short = {
+PyBufferProcs JArray_as_buffer_short = {
     (getbufferproc) JArray_getbufferproc_short,
-    (releasebufferproc) JArray_releasebufferproc
+    (releasebufferproc) JArray_releasebufferproc_short
 };
 
-static PyBufferProcs JArray_as_buffer_int = {
+PyBufferProcs JArray_as_buffer_int = {
     (getbufferproc) JArray_getbufferproc_int,
-    (releasebufferproc) JArray_releasebufferproc
+    (releasebufferproc) JArray_releasebufferproc_int
 };
 
-static PyBufferProcs JArray_as_buffer_long = {
+PyBufferProcs JArray_as_buffer_long = {
     (getbufferproc) JArray_getbufferproc_long,
-    (releasebufferproc) JArray_releasebufferproc
+    (releasebufferproc) JArray_releasebufferproc_long
 };
 
-static PyBufferProcs JArray_as_buffer_float = {
+PyBufferProcs JArray_as_buffer_float = {
     (getbufferproc) JArray_getbufferproc_float,
-    (releasebufferproc) JArray_releasebufferproc
+    (releasebufferproc) JArray_releasebufferproc_float
 };
 
-static PyBufferProcs JArray_as_buffer_double = {
+PyBufferProcs JArray_as_buffer_double = {
     (getbufferproc) JArray_getbufferproc_double,
-    (releasebufferproc) JArray_releasebufferproc
+    (releasebufferproc) JArray_releasebufferproc_double
 };

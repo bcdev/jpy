@@ -1,4 +1,5 @@
 #include "jpy_module.h"
+#include "jpy_jarray.h"
 #include "jpy_jtype.h"
 #include "jpy_jobj.h"
 #include "jpy_jmethod.h"
@@ -22,6 +23,15 @@ JPy_JObj* JObj_FromType(JNIEnv* jenv, JPy_JType* type, jobject objectRef)
     }
 
     obj->objectRef = objectRef;
+
+    // For special treatment of primitive array refer to JType_InitSlots()
+    if (type->componentType != NULL && type->componentType->isPrimitive) {
+        JPy_JArray* array;
+
+        array = (JPy_JArray*) obj;
+        array->bufferExportCount = 0;
+    }
+
     return obj;
 }
 
@@ -618,6 +628,11 @@ static PySequenceMethods JObj_as_sequence = {
 int JType_InitSlots(JPy_JType* type)
 {
     PyTypeObject* typeObj;
+    jboolean isArray;
+    jboolean isPrimitiveArray;
+
+    isArray = type->componentType != NULL;
+    isPrimitiveArray = isArray && type->componentType->isPrimitive;
 
     typeObj = (PyTypeObject*) type;
 
@@ -631,7 +646,7 @@ int JType_InitSlots(JPy_JType* type)
     //Py_TYPE(type) = &JType_Type;
     //Py_SIZE(type) = sizeof (JPy_JType);
 
-    typeObj->tp_basicsize = sizeof (JPy_JObj);
+    typeObj->tp_basicsize = isPrimitiveArray ? sizeof (JPy_JArray) : sizeof (JPy_JObj);
     typeObj->tp_itemsize = 0;
     typeObj->tp_base = type->superType != NULL ? (PyTypeObject*) type->superType : &JType_Type;
     //typeObj->tp_base = (PyTypeObject*) type->superType;
@@ -652,11 +667,32 @@ int JType_InitSlots(JPy_JType* type)
 
 
     // If this type is an array type, add support for the <sequence> protocol
-    if (type->componentType != NULL) {
+    if (isArray) {
         typeObj->tp_as_sequence = &JObj_as_sequence;
-    } else {
-        typeObj->tp_as_sequence = NULL;
     }
+
+    if (isPrimitiveArray) {
+        const char* componentTypeName = type->componentType->javaName;
+        if (strcmp(componentTypeName, "boolean") == 0) {
+            typeObj->tp_as_buffer = &JArray_as_buffer_boolean;
+        } else if (strcmp(componentTypeName, "char") == 0) {
+            typeObj->tp_as_buffer = &JArray_as_buffer_char;
+        } else if (strcmp(componentTypeName, "byte") == 0) {
+            typeObj->tp_as_buffer = &JArray_as_buffer_byte;
+        } else if (strcmp(componentTypeName, "short") == 0) {
+            typeObj->tp_as_buffer = &JArray_as_buffer_short;
+        } else if (strcmp(componentTypeName, "int") == 0) {
+            typeObj->tp_as_buffer = &JArray_as_buffer_int;
+        } else if (strcmp(componentTypeName, "long") == 0) {
+            typeObj->tp_as_buffer = &JArray_as_buffer_long;
+        } else if (strcmp(componentTypeName, "float") == 0) {
+            typeObj->tp_as_buffer = &JArray_as_buffer_float;
+        } else if (strcmp(componentTypeName, "double") == 0) {
+            typeObj->tp_as_buffer = &JArray_as_buffer_double;
+        }
+    }
+
+    //printf("JType_InitSlots: typeObj->tp_as_buffer=%p\n", typeObj->tp_as_buffer);
 
     typeObj->tp_alloc = PyType_GenericAlloc;
     typeObj->tp_new = PyType_GenericNew;

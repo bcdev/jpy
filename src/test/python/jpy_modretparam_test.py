@@ -82,12 +82,6 @@ class TestMutableAndReturnParameters(unittest.TestCase):
     def test_modifyIntArray(self):
         fixture = self.Fixture()
 
-        a = jpy.CArray('i', 3)
-        fixture.modifyIntArray(a, 12, 13, 14)
-        self.assertEqual(a[0], 12)
-        self.assertEqual(a[1], 13)
-        self.assertEqual(a[2], 14)
-
         a = array.array('i', [0, 0, 0])
         fixture.modifyIntArray(a, 12, 13, 14)
         self.assertEqual(a[0], 12)
@@ -106,7 +100,7 @@ class TestMutableAndReturnParameters(unittest.TestCase):
         self.assertEqual(a[1], 0)
         self.assertEqual(a[2], 0)
 
-        with  self.assertRaises(RuntimeError, msg='RuntimeError expected') as e:
+        with self.assertRaises(RuntimeError, msg='RuntimeError expected') as e:
             a = None
             fixture.modifyIntArray(a, 14, 15, 16)
         self.assertEqual(str(e.exception), 'java.lang.NullPointerException')
@@ -115,10 +109,6 @@ class TestMutableAndReturnParameters(unittest.TestCase):
     def test_returnIntArray(self):
         fixture = self.Fixture()
 
-        a1 = jpy.CArray('i', 3)
-        a2 = fixture.returnIntArray(a1)
-        self.assertIs(a1, a2)
-
         a1 = array.array('i', [0, 0, 0])
         a2 = fixture.returnIntArray(a1)
         self.assertIs(a1, a2)
@@ -129,23 +119,16 @@ class TestMutableAndReturnParameters(unittest.TestCase):
 
         a1 = None
         a2 = fixture.returnIntArray(a1)
-        self.assertIsInstance(a2, jpy.CArray)
+        self.assertEqual(type(a2), jpy.get_class('[I'))
 
         a1 = [0, 0, 0]
         a2 = fixture.returnIntArray(a1)
-        self.assertIsInstance(a2, jpy.CArray)
+        self.assertEqual(type(a2), jpy.get_class('[I'))
 
 
     def test_modifyAndReturnIntArray(self):
         fixture = self.Fixture()
 
-        a1 = jpy.CArray('i', 3)
-        a2 = fixture.modifyAndReturnIntArray(a1, 16, 17, 18)
-        self.assertIs(a1, a2)
-        self.assertEqual(a2[0], 16)
-        self.assertEqual(a2[1], 17)
-        self.assertEqual(a2[2], 18)
-
         a1 = array.array('i', [0, 0, 0])
         a2 = fixture.modifyAndReturnIntArray(a1, 16, 17, 18)
         self.assertIs(a1, a2)
@@ -162,17 +145,19 @@ class TestMutableAndReturnParameters(unittest.TestCase):
 
         a1 = None
         a2 = fixture.modifyAndReturnIntArray(a1, 16, 17, 18)
-        self.assertIsInstance(a2, jpy.CArray)
+        self.assertEqual(type(a2), jpy.get_class('[I'))
         self.assertEqual(a2[0], 16)
         self.assertEqual(a2[1], 17)
         self.assertEqual(a2[2], 18)
 
         a1 = [0, 0, 0]
         a2 = fixture.modifyAndReturnIntArray(a1, 16, 17, 18)
-        self.assertIsInstance(a2, jpy.CArray)
+        self.assertEqual(type(a2), jpy.get_class('[I'))
         self.assertEqual(a2[0], 16)
         self.assertEqual(a2[1], 17)
         self.assertEqual(a2[2], 18)
+
+
 
 
 

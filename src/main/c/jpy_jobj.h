@@ -10,11 +10,14 @@ extern "C" {
 
 /**
  * The Java Object representation in Python.
+ * @see JPy_JArray
  */
-typedef struct {
+typedef struct JPy_JObj
+{
     PyObject_HEAD
     jobject objectRef;
-} JPy_JObj;
+}
+JPy_JObj;
 
 
 JPy_JObj* JObj_FromType(JNIEnv* jenv, JPy_JType* type, jobject objectRef);
