@@ -767,15 +767,24 @@ void JPy_ClearGlobalVars(JNIEnv* jenv)
         (*jenv)->DeleteGlobalRef(jenv, JPy_Method_JClass);
         (*jenv)->DeleteGlobalRef(jenv, JPy_Field_JClass);
         (*jenv)->DeleteGlobalRef(jenv, JPy_RuntimeException_JClass);
+        (*jenv)->DeleteGlobalRef(jenv, JPy_Boolean_JClass);
+        (*jenv)->DeleteGlobalRef(jenv, JPy_Character_JClass);
+        (*jenv)->DeleteGlobalRef(jenv, JPy_Byte_JClass);
+        (*jenv)->DeleteGlobalRef(jenv, JPy_Short_JClass);
+        (*jenv)->DeleteGlobalRef(jenv, JPy_Integer_JClass);
+        (*jenv)->DeleteGlobalRef(jenv, JPy_Long_JClass);
+        (*jenv)->DeleteGlobalRef(jenv, JPy_Float_JClass);
+        (*jenv)->DeleteGlobalRef(jenv, JPy_Double_JClass);
+        (*jenv)->DeleteGlobalRef(jenv, JPy_Number_JClass);
+        (*jenv)->DeleteGlobalRef(jenv, JPy_Void_JClass);
+        (*jenv)->DeleteGlobalRef(jenv, JPy_String_JClass);
     }
 
     JPy_Comparable_JClass = NULL;
-
     JPy_Object_JClass = NULL;
     JPy_Object_ToString_MID = NULL;
     JPy_Object_HashCode_MID = NULL;
     JPy_Object_Equals_MID = NULL;
-
     JPy_Class_JClass = NULL;
     JPy_Class_GetName_MID = NULL;
     JPy_Class_GetDeclaredConstructors_MID = NULL;
@@ -783,25 +792,43 @@ void JPy_ClearGlobalVars(JNIEnv* jenv)
     JPy_Class_GetDeclaredMethods_MID = NULL;
     JPy_Class_GetComponentType_MID = NULL;
     JPy_Class_IsPrimitive_MID = NULL;
-
     JPy_Constructor_JClass = NULL;
     JPy_Constructor_GetModifiers_MID = NULL;
     JPy_Constructor_GetParameterTypes_MID = NULL;
-
     JPy_Method_JClass = NULL;
     JPy_Method_GetName_MID = NULL;
     JPy_Method_GetReturnType_MID = NULL;
     JPy_Method_GetParameterTypes_MID = NULL;
     JPy_Method_GetModifiers_MID = NULL;
-
     JPy_Field_JClass = NULL;
     JPy_Field_GetName_MID = NULL;
     JPy_Field_GetModifiers_MID = NULL;
     JPy_Field_GetType_MID = NULL;
-
     JPy_RuntimeException_JClass = NULL;
-
-
+    JPy_Boolean_JClass = NULL;
+    JPy_Boolean_Init_MID = NULL;
+    JPy_Boolean_BooleanValue_MID = NULL;
+    JPy_Character_JClass = NULL;
+    JPy_Character_Init_MID = NULL;
+    JPy_Character_CharValue_MID = NULL;
+    JPy_Byte_JClass = NULL;
+    JPy_Byte_Init_MID = NULL;
+    JPy_Short_JClass = NULL;
+    JPy_Short_Init_MID = NULL;
+    JPy_Integer_JClass = NULL;
+    JPy_Integer_Init_MID = NULL;
+    JPy_Long_JClass = NULL;
+    JPy_Long_Init_MID = NULL;
+    JPy_Float_JClass = NULL;
+    JPy_Float_Init_MID = NULL;
+    JPy_Double_JClass = NULL;
+    JPy_Double_Init_MID = NULL;
+    JPy_Number_JClass = NULL;
+    JPy_Number_IntValue_MID = NULL;
+    JPy_Number_LongValue_MID = NULL;
+    JPy_Number_DoubleValue_MID = NULL;
+    JPy_Void_JClass = NULL;
+    JPy_String_JClass = NULL;
 
     Py_DECREF(JPy_JBoolean);
     Py_DECREF(JPy_JChar);
