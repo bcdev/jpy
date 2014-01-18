@@ -122,6 +122,7 @@ if sys.argv[1] == 'install':
         f.write('jpy.lib = ' + jpy_lib_path.replace('\\', '\\\\') + '\n')
         f.write('jpy.exec_path = ' + jpy_exec_path.replace('\\', '\\\\') + '\n')
 
+    os.system(sys.executable + ' src/test/python/jpy_array_test.py')
     os.system(sys.executable + ' src/test/python/jpy_field_test.py')
     os.system(sys.executable + ' src/test/python/jpy_retval_test.py')
     os.system(sys.executable + ' src/test/python/jpy_rt_test.py')
@@ -131,6 +132,6 @@ if sys.argv[1] == 'install':
     os.system(sys.executable + ' src/test/python/jpy_typeconv_test.py')
     os.system(sys.executable + ' src/test/python/jpy_typeres_test.py')
     os.system(sys.executable + ' src/test/python/jpy_modretparam_test.py')
-    os.system(sys.executable + ' src/test/python/jpy_array_test.py')
+    os.system(sys.executable + ' src/test/python/jpy_getclass_test.py')
 
     print('Note: if any of the above tests fails, make sure to compile Java test sources first.')
