@@ -111,6 +111,57 @@ class TestFile(unittest.TestCase):
         self.assertEqual(str(n3), 'bibo')
 
 
+class TestArrayList(unittest.TestCase):
+
+    def setUp(self):
+        self.ArrayList = jpy.get_class('java.util.ArrayList')
+
+        array_list = ArrayList()
+        array_list.add('A')
+        array_list.add(12)
+        array_list.add(3.4)
+
+        self.assertEqual(array_list.size(), 3)
+        self.assertEqual(array_list.get(0), 'A')
+        self.assertEqual(array_list.get(1), 12)
+        self.assertEqual(array_list.get(2), 3.4)
+
+        array_list = ArrayList(array_list)
+        self.assertEqual(array_list.size(), 3)
+        self.assertEqual(array_list.get(0), 'A')
+        self.assertEqual(array_list.get(1), 12)
+        self.assertEqual(array_list.get(2), 3.4)
+
+        array = array_list.toArray()
+        self.assertEqual(len(array), 3)
+        self.assertEqual(array[0], 'A')
+        self.assertEqual(array[1], 12)
+        self.assertEqual(array[2], 3.4)
+
+
+class TestHashMap(unittest.TestCase):
+
+    def setUp(self):
+        self.HashMap = jpy.get_class('java.util.HashMap')
+
+        hash_map = HashMap()
+        hash_map.put(0, 'A')
+        hash_map.put(1, 12)
+        hash_map.put(2, 3.4)
+
+        self.assertEqual(hash_map.size(), 3)
+        self.assertEqual(hash_map.get(0), 'A')
+        self.assertEqual(hash_map.get(1), 12)
+        self.assertEqual(hash_map.get(2), 3.4)
+
+        hash_map = HashMap(hash_map)
+        self.assertEqual(hash_map.size(), 3)
+        self.assertEqual(hash_map.get(0), 'A')
+        self.assertEqual(hash_map.get(1), 12)
+        self.assertEqual(hash_map.get(2), 3.4)
+
+
+
 if __name__ == '__main__':
     print('\nRunning', __file__)
     unittest.main()
