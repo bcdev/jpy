@@ -6,6 +6,20 @@
 #include "jpy_jfield.h"
 #include "jpy_conv.h"
 
+JPy_JObj* JObj_New(JNIEnv* jenv, jobject objectRef)
+{
+    jclass classRef;
+    JPy_JType* type;
+
+    classRef = (*jenv)->GetObjectClass(jenv, objectRef);
+    type = JType_GetType(jenv, classRef, JNI_TRUE);
+    (*jenv)->DeleteLocalRef(jenv, classRef);
+    if (type == NULL) {
+        return NULL;
+    }
+
+    return JObj_FromType(jenv, type, objectRef);
+}
 
 JPy_JObj* JObj_FromType(JNIEnv* jenv, JPy_JType* type, jobject objectRef)
 {

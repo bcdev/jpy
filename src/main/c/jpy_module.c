@@ -520,7 +520,6 @@ PyObject* JPy_array(PyObject* self, PyObject* args)
         PyErr_SetString(PyExc_ValueError, "negative array length");
     }
 
-    type = NULL;
     if (strcmp(name, "boolean") == 0) {
         arrayRef = (*jenv)->NewBooleanArray(jenv, length);
     } else if (strcmp(name, "byte") == 0) {
@@ -549,14 +548,7 @@ PyObject* JPy_array(PyObject* self, PyObject* args)
         return PyErr_NoMemory();
     }
 
-    classRef = (*jenv)->GetObjectClass(jenv, arrayRef);
-    type = JType_GetType(jenv, classRef, JNI_FALSE);
-    (*jenv)->DeleteLocalRef(jenv, classRef);
-    if (type == NULL) {
-        return NULL;
-    }
-
-    return (PyObject*) JObj_FromType(jenv, type, arrayRef);
+    return (PyObject*) JObj_New(jenv, arrayRef);
 }
 
 JPy_JType* JPy_GetNonObjectJType(JNIEnv* jenv, jclass classRef)
@@ -599,7 +591,7 @@ jclass JPy_GetClass(JNIEnv* jenv, const char* name)
 
     localClassRef = (*jenv)->FindClass(jenv, name);
     if (localClassRef == NULL) {
-        PyErr_Format(PyExc_RuntimeError, "class '%s' not found", name);
+        PyErr_Format(PyExc_RuntimeError, "Java class '%s' not found", name);
         return NULL;
     }
 
