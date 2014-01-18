@@ -323,111 +323,284 @@ int JType_CreateJavaDoubleObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg,
     return JType_CreateJavaObject(jenv, type, pyArg, JPy_Double_JClass, JPy_Double_Init_MID, value, objectRef);
 }
 
-int JType_CreateJavaObjectArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
+int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
 {
-    PyObject* pyItem;
-    jobject jItem;
-    jobjectArray array;
+    jint itemCount;
+    jarray arrayRef;
+    jboolean error;
     jint index;
-    jint itemCount;
+    PyObject* pyItem;
 
-    if (!PySequence_Check(pyArg)) {
+    if (pyArg == Py_None) {
+        itemCount = 0;
+    } else if (PySequence_Check(pyArg)) {
+        itemCount = PySequence_Length(pyArg);
+        if (itemCount < 0) {
+            return -1;
+        }
+    } else {
         return JType_PythonToJavaConversionError(type, pyArg);
     }
 
-    itemCount = PySequence_Length(pyArg);
-    if (itemCount < 0) {
-        return -1;
-    }
-
-    array = (*jenv)->NewObjectArray(jenv, itemCount, type->componentType->classRef, NULL);
-    if ((*jenv)->ExceptionCheck(jenv)) {
-        JPy_HandleJavaException(jenv);
-        return -1;
-    }
-    if (array == NULL) {
-        PyErr_NoMemory();
-        return -1;
-    }
-
-    for (index = 0; index < itemCount; index++) {
-         pyItem = PySequence_GetItem(pyArg, index);
-         if (pyItem == NULL) {
-             Py_DECREF(pyItem);
-             (*jenv)->DeleteLocalRef(jenv, array);
-             return -1;
-         }
-         if (JType_ConvertPythonToJavaObject(jenv, type->componentType, pyItem, &jItem) < 0) {
-             Py_DECREF(pyItem);
-             (*jenv)->DeleteLocalRef(jenv, array);
-             return -1;
-         }
-         (*jenv)->SetObjectArrayElement(jenv, array, index, jItem);
-         if ((*jenv)->ExceptionCheck(jenv)) {
-             Py_DECREF(pyItem);
-             (*jenv)->DeleteLocalRef(jenv, array);
-             JPy_HandleJavaException(jenv);
-             return -1;
-         }
-         Py_DECREF(pyItem);
-    }
-
-    *objectRef = array;
-    return 0;
-}
-
-int JType_CreateJavaPrimitiveArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
-{
-    jint itemSize;
-    jint itemCount;
-    jarray array;
-
-    if (!PySequence_Check(pyArg)) {
-        return JType_PythonToJavaConversionError(type, pyArg);
-    }
-
-    // todo - code duplication here, see JPy_array() for very similar code
-
-    itemSize = 0;
-    itemCount = PySequence_Length(pyArg);
-    if (itemCount < 0) {
-        return -1;
-    }
+    error = JNI_FALSE;
+    arrayRef = NULL;
 
     if (type->componentType == JPy_JBoolean) {
-        array = (*jenv)->NewBooleanArray(jenv, itemCount);
-        itemSize = sizeof(jboolean);
+        arrayRef = (*jenv)->NewBooleanArray(jenv, itemCount);
+        if (arrayRef == NULL || (*jenv)->ExceptionCheck(jenv)) {
+            JPy_HandleJavaException(jenv);
+            return -1;
+        }
+        if (itemCount > 0) {
+            jboolean* items = (*jenv)->GetBooleanArrayElements(jenv, arrayRef, NULL);
+            if (items == NULL) {
+                (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                PyErr_NoMemory();
+                return -1;
+            }
+            for (index = 0; index < itemCount; index++) {
+                pyItem = PySequence_GetItem(pyArg, index);
+                if (pyItem == NULL) {
+                    (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                    return -1;
+                }
+                items[index] = JPy_AS_JBOOLEAN(pyItem);
+                Py_DECREF(pyItem);
+                if (PyErr_Occurred()) {
+                    (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                    return -1;
+                }
+            }
+            (*jenv)->ReleaseBooleanArrayElements(jenv, arrayRef, items, 0);
+        }
     } else if (type->componentType == JPy_JByte) {
-        array = (*jenv)->NewByteArray(jenv, itemCount);
-        itemSize = sizeof(jbyte);
+        arrayRef = (*jenv)->NewByteArray(jenv, itemCount);
+        if (arrayRef == NULL || (*jenv)->ExceptionCheck(jenv)) {
+            JPy_HandleJavaException(jenv);
+            return -1;
+        }
+        if (itemCount > 0) {
+            jbyte* items = (*jenv)->GetByteArrayElements(jenv, arrayRef, NULL);
+            if (items == NULL) {
+                (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                PyErr_NoMemory();
+                return -1;
+            }
+            for (index = 0; index < itemCount; index++) {
+                pyItem = PySequence_GetItem(pyArg, index);
+                if (pyItem == NULL) {
+                    (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                    return -1;
+                }
+                items[index] = JPy_AS_JBYTE(pyItem);
+                Py_DECREF(pyItem);
+                if (PyErr_Occurred()) {
+                    (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                    return -1;
+                }
+            }
+            (*jenv)->ReleaseByteArrayElements(jenv, arrayRef, items, 0);
+        }
     } else if (type->componentType == JPy_JChar) {
-        array = (*jenv)->NewCharArray(jenv, itemCount);
-        itemSize = sizeof(jchar);
+        arrayRef = (*jenv)->NewCharArray(jenv, itemCount);
+        if (arrayRef == NULL || (*jenv)->ExceptionCheck(jenv)) {
+            JPy_HandleJavaException(jenv);
+            return -1;
+        }
+        if (itemCount > 0) {
+            jchar* items = (*jenv)->GetCharArrayElements(jenv, arrayRef, NULL);
+            if (items == NULL) {
+                (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                PyErr_NoMemory();
+                return -1;
+            }
+            for (index = 0; index < itemCount; index++) {
+                pyItem = PySequence_GetItem(pyArg, index);
+                if (pyItem == NULL) {
+                    (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                    return -1;
+                }
+                items[index] = JPy_AS_JCHAR(pyItem);
+                Py_DECREF(pyItem);
+                if (PyErr_Occurred()) {
+                    (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                    return -1;
+                }
+            }
+            (*jenv)->ReleaseCharArrayElements(jenv, arrayRef, items, 0);
+        }
     } else if (type->componentType == JPy_JShort) {
-        array = (*jenv)->NewShortArray(jenv, itemCount);
-        itemSize = sizeof(jshort);
+        arrayRef = (*jenv)->NewShortArray(jenv, itemCount);
+        if (arrayRef == NULL || (*jenv)->ExceptionCheck(jenv)) {
+            JPy_HandleJavaException(jenv);
+            return -1;
+        }
+        if (itemCount > 0) {
+            jshort* items = (*jenv)->GetShortArrayElements(jenv, arrayRef, NULL);
+            if (items == NULL) {
+                (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                PyErr_NoMemory();
+                return -1;
+            }
+            for (index = 0; index < itemCount; index++) {
+                pyItem = PySequence_GetItem(pyArg, index);
+                if (pyItem == NULL) {
+                    (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                    return -1;
+                }
+                items[index] = JPy_AS_JSHORT(pyItem);
+                Py_DECREF(pyItem);
+                if (PyErr_Occurred()) {
+                    (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                    return -1;
+                }
+            }
+            (*jenv)->ReleaseShortArrayElements(jenv, arrayRef, items, 0);
+        }
     } else if (type->componentType == JPy_JInt) {
-        array = (*jenv)->NewIntArray(jenv, itemCount);
-        itemSize = sizeof(jint);
+        arrayRef = (*jenv)->NewIntArray(jenv, itemCount);
+        if (arrayRef == NULL || (*jenv)->ExceptionCheck(jenv)) {
+            JPy_HandleJavaException(jenv);
+            return -1;
+        }
+        if (itemCount > 0) {
+            jint* items = (*jenv)->GetIntArrayElements(jenv, arrayRef, NULL);
+            if (items == NULL) {
+                (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                PyErr_NoMemory();
+                return -1;
+            }
+            for (index = 0; index < itemCount; index++) {
+                pyItem = PySequence_GetItem(pyArg, index);
+                if (pyItem == NULL) {
+                    (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                    return -1;
+                }
+                items[index] = JPy_AS_JINT(pyItem);
+                Py_DECREF(pyItem);
+                if (PyErr_Occurred()) {
+                    (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                    return -1;
+                }
+            }
+            (*jenv)->ReleaseIntArrayElements(jenv, arrayRef, items, 0);
+        }
     } else if (type->componentType->componentType == JPy_JLong) {
-        array = (*jenv)->NewLongArray(jenv, itemCount);
-        itemSize = sizeof(jlong);
+        arrayRef = (*jenv)->NewLongArray(jenv, itemCount);
+        if (arrayRef == NULL || (*jenv)->ExceptionCheck(jenv)) {
+            JPy_HandleJavaException(jenv);
+            return -1;
+        }
+        if (itemCount > 0) {
+            jlong* items = (*jenv)->GetLongArrayElements(jenv, arrayRef, NULL);
+            if (items == NULL) {
+                (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                PyErr_NoMemory();
+                return -1;
+            }
+            for (index = 0; index < itemCount; index++) {
+                pyItem = PySequence_GetItem(pyArg, index);
+                if (pyItem == NULL) {
+                    (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                    return -1;
+                }
+                items[index] = JPy_AS_JLONG(pyItem);
+                Py_DECREF(pyItem);
+                if (PyErr_Occurred()) {
+                    (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                    return -1;
+                }
+            }
+            (*jenv)->ReleaseLongArrayElements(jenv, arrayRef, items, 0);
+        }
     } else if (type->componentType == JPy_JFloat) {
-        array = (*jenv)->NewFloatArray(jenv, itemCount);
-        itemSize = sizeof(jfloat);
+        arrayRef = (*jenv)->NewFloatArray(jenv, itemCount);
+        if (arrayRef == NULL || (*jenv)->ExceptionCheck(jenv)) {
+            JPy_HandleJavaException(jenv);
+            return -1;
+        }
+        if (itemCount > 0) {
+            jfloat* items = (*jenv)->GetFloatArrayElements(jenv, arrayRef, NULL);
+            if (items == NULL) {
+                (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                PyErr_NoMemory();
+                return -1;
+            }
+            for (index = 0; index < itemCount; index++) {
+                pyItem = PySequence_GetItem(pyArg, index);
+                if (pyItem == NULL) {
+                    (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                    return -1;
+                }
+                items[index] = JPy_AS_JFLOAT(pyItem);
+                Py_DECREF(pyItem);
+                if (PyErr_Occurred()) {
+                    (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                    return -1;
+                }
+            }
+            (*jenv)->ReleaseFloatArrayElements(jenv, arrayRef, items, 0);
+        }
     } else if (type->componentType == JPy_JDouble) {
-        array = (*jenv)->NewDoubleArray(jenv, itemCount);
-        itemSize = sizeof(jdouble);
+        arrayRef = (*jenv)->NewDoubleArray(jenv, itemCount);
+        if (arrayRef == NULL || (*jenv)->ExceptionCheck(jenv)) {
+            JPy_HandleJavaException(jenv);
+            return -1;
+        }
+        if (itemCount > 0) {
+            jdouble* items = (*jenv)->GetDoubleArrayElements(jenv, arrayRef, NULL);
+            if (items == NULL) {
+                (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                PyErr_NoMemory();
+                return -1;
+            }
+            for (index = 0; index < itemCount; index++) {
+                pyItem = PySequence_GetItem(pyArg, index);
+                if (pyItem == NULL) {
+                    (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                    return -1;
+                }
+                items[index] = JPy_AS_JDOUBLE(pyItem);
+                Py_DECREF(pyItem);
+                if (PyErr_Occurred()) {
+                    (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                    return -1;
+                }
+            }
+            (*jenv)->ReleaseDoubleArrayElements(jenv, arrayRef, items, 0);
+        }
+    } else if (!type->componentType->isPrimitive) {
+        jobject jItem;
+        arrayRef = (*jenv)->NewObjectArray(jenv, itemCount, type->componentType->classRef, NULL);
+        if (arrayRef == NULL || (*jenv)->ExceptionCheck(jenv)) {
+            JPy_HandleJavaException(jenv);
+            return -1;
+        }
+        for (index = 0; index < itemCount; index++) {
+            pyItem = PySequence_GetItem(pyArg, index);
+            if (pyItem == NULL) {
+                (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                return -1;
+            }
+            if (JType_ConvertPythonToJavaObject(jenv, type->componentType, pyItem, &jItem) < 0) {
+                (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                Py_DECREF(pyItem);
+                return -1;
+            }
+            Py_DECREF(pyItem);
+            (*jenv)->SetObjectArrayElement(jenv, arrayRef, index, jItem);
+            if ((*jenv)->ExceptionCheck(jenv)) {
+                (*jenv)->DeleteLocalRef(jenv, arrayRef);
+                (*jenv)->DeleteLocalRef(jenv, jItem);
+                JPy_HandleJavaException(jenv);
+                return -1;
+            }
+        }
     } else {
-        PyErr_SetString(PyExc_RuntimeError, "internal error: illegal primitive type");
-        return -1;
+        return JType_PythonToJavaConversionError(type, pyArg);
     }
 
-    // todo - implement item transfer from Python sequence into Java primitive array
-
-    JPy_DEBUG_PRINTF("JType_CreateJavaPrimitiveArray: NOT IMPLEMENTED! componentType=%s, itemCount=%d, itemSize=%d\n", type->componentType->javaName, itemCount, itemSize);
-
-    *objectRef = array;
+    *objectRef = arrayRef;
     return 0;
 }
 
@@ -449,11 +622,7 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
         return 0;
     } else if (type->componentType != NULL) {
         // For any other Python argument create a Java object (a new local reference)
-        if (type->componentType->isPrimitive) {
-            return JType_CreateJavaPrimitiveArray(jenv, type, pyArg, objectRef);
-        } else {
-            return JType_CreateJavaObjectArray(jenv, type, pyArg, objectRef);
-        }
+        return JType_CreateJavaArray(jenv, type, pyArg, objectRef);
     } else if (type == JPy_JBoolean || type == JPy_JBooleanObj) {
         return JType_CreateJavaBooleanObject(jenv, type, pyArg, objectRef);
     } else if (type == JPy_JChar || type == JPy_JCharacterObj) {

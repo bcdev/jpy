@@ -38,13 +38,13 @@ class TestTypeConversions(unittest.TestCase):
         a = np.array([1,2,3], dtype=np.int32)
         self.assertEqual(fixture.stringifyIntArrayArg(a), 'int[](1,2,3)')
 
-        a = [1, 2, 3]
-        # list to Java int array - todo
-        #self.assertEqual(fixture.stringifyIntArrayArg(a), 'int[](1,2,3)')
+        # integer list
+        a = [4, 5, 6]
+        self.assertEqual(fixture.stringifyIntArrayArg(a), 'int[](4,5,6)')
 
-        a = (1, 2, 3)
-        # tuple to Java int array - todo
-        #self.assertEqual(fixture.stringifyIntArrayArg(a), 'int[](1,2,3)')
+        # integer tuple
+        a = (7, 8, 9)
+        self.assertEqual(fixture.stringifyIntArrayArg(a), 'int[](7,8,9)')
 
         with self.assertRaises(RuntimeError) as e:
             fixture.stringifyIntArrayArg(1 + 2j)
@@ -56,7 +56,6 @@ class TestTypeConversions(unittest.TestCase):
 
         self.assertEqual(fixture.stringifyObjectArrayArg(('A', 12, 3.4)), 'Object[](String(A),Integer(12),Double(3.4))')
         self.assertEqual(fixture.stringifyObjectArrayArg(['A', 12, 3.4]), 'Object[](String(A),Integer(12),Double(3.4))')
-        #self.assertEqual(fixture.stringifyObjectArrayArg(['A', (1, 2, 3), 'C']), 'grrr!')
 
         self.assertEqual(fixture.stringifyStringArrayArg(('A', 'B', 'C')), 'String[](String(A),String(B),String(C))')
         self.assertEqual(fixture.stringifyStringArrayArg(['A', 'B', 'C']), 'String[](String(A),String(B),String(C))')
