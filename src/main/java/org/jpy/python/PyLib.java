@@ -51,7 +51,7 @@ public class PyLib {
 
     public static native boolean isInterpreterInitialized();
 
-    public static native boolean initializeInterpreter(String[] options, boolean debug);
+    public static native boolean initializeInterpreter(String[] options);
 
     public static native void destroyInterpreter();
 
@@ -67,8 +67,11 @@ public class PyLib {
 
     public static native Object getObjectValue(long pointer);
 
-
     public static native long importModule(String name);
+
+    public static native int getDiagFlags();
+
+    public static native void setDiagFlags(int flags);
 
     /**
      * Gets the value of a given Python attribute as Python object pointer.

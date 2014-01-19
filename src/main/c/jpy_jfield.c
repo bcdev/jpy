@@ -1,4 +1,5 @@
 #include "jpy_module.h"
+#include "jpy_diag.h"
 #include "jpy_jtype.h"
 #include "jpy_jobj.h"
 #include "jpy_jfield.h"

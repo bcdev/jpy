@@ -2,9 +2,7 @@ import jpy
 import threading
 import unittest
 
-debug = True
-debug = False
-jpy.create_jvm(options=['-Xmx512M'], debug=debug)
+jpy.create_jvm(options=['-Xmx512M'])
 
 
 class MyThread(threading.Thread):

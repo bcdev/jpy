@@ -94,8 +94,10 @@ extra_options = config.get('DEFAULT', 'extra_options', fallback=None)
 if extra_options:
     options += extra_options.split(sep='|')
 
+if debug:
+    jpy.diag_flags.value = jpy.diag_flags.all
 
-jpy.create_jvm(options=options, debug=debug)
+jpy.create_jvm(options=options)
 
 def annotate_RasterDataNode_methods(type, method):
     index = -1

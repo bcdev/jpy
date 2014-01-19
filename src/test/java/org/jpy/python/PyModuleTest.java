@@ -18,7 +18,7 @@ public class PyModuleTest {
     @BeforeClass
     public static void setUp() throws Exception {
         assertEquals(false, PyLib.isInterpreterInitialized());
-        PyLib.initializeInterpreter(new String[0], true);
+        PyLib.initializeInterpreter(new String[0]);
         assertEquals(true, PyLib.isInterpreterInitialized());
     }
 

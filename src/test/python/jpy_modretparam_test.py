@@ -2,9 +2,7 @@ import unittest
 import array
 import jpy
 
-debug = True
-debug = False
-jpy.create_jvm(options=['-Djava.class.path=target/test-classes', '-Xmx512M'], debug=debug)
+jpy.create_jvm(options=['-Djava.class.path=target/test-classes', '-Xmx512M'])
 
 
 def annotate_fixture_methods(type, method):

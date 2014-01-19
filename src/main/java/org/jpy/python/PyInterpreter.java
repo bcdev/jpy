@@ -13,7 +13,7 @@ public class PyInterpreter {
         if (PyLib.isInterpreterInitialized()) {
             throw new RuntimeException();
         }
-        PyLib.initializeInterpreter(options, debug);
+        PyLib.initializeInterpreter(options);
     }
 
     public static void destroy() {

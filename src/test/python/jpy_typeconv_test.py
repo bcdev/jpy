@@ -3,9 +3,7 @@ import jpy
 import numpy as np
 import array
 
-debug = True
-debug = False
-jpy.create_jvm(options=['-Djava.class.path=target/test-classes', '-Xmx512M'], debug=debug)
+jpy.create_jvm(options=['-Djava.class.path=target/test-classes', '-Xmx512M'])
 
 
 class TestTypeConversions(unittest.TestCase):

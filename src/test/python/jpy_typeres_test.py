@@ -2,9 +2,7 @@ import unittest
 import jpy
 import numpy as np
 
-#debug = True
-debug = False
-jpy.create_jvm(options=['-Djava.class.path=target/test-classes', '-Xmx512M'], debug=debug)
+jpy.create_jvm(options=['-Djava.class.path=target/test-classes', '-Xmx512M'])
 
 
 class TestTypeResolution(unittest.TestCase):

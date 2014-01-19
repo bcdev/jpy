@@ -20,7 +20,6 @@ extern PyObject* JException_Type;
 #define JPy_MODULE_ATTR_NAME_TYPE_CALLBACKS "type_callbacks"
 
 
-
 /**
  * Gets the current JNI environment pointer.
  * Returns NULL, if the JVM is down.
@@ -42,19 +41,6 @@ JNIEnv* JPy_GetJNIEnv(void);
         return (RET_VALUE); \
     } else { \
     }
-
-/**
- * Checks if we are in debug mode.
- */
-jboolean JPy_IsDebug(void);
-
-/**
- * Sets if we are in debug mode.
- */
-void JPy_SetDebug(jboolean debug);
-
-
-#define JPy_DEBUG_PRINTF if (JPy_IsDebug()) printf
 
 
 /**

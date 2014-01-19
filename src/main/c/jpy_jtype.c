@@ -1,4 +1,5 @@
 #include "jpy_module.h"
+#include "jpy_diag.h"
 #include "jpy_jtype.h"
 #include "jpy_jfield.h"
 #include "jpy_jmethod.h"
@@ -45,7 +46,7 @@ JPy_JType* JType_GetTypeForName(JNIEnv* jenv, const char* typeName, jboolean res
         resourceName = typeName;
     }
 
-    JPy_DEBUG_PRINTF("JType_GetTypeForName: typeName='%s', resourceName='%s'\n", typeName, resourceName);
+    JPy_DIAG_PRINT(JPy_DIAG_TYPE, "JType_GetTypeForName: typeName='%s', resourceName='%s'\n", typeName, resourceName);
 
     classRef = (*jenv)->FindClass(jenv, resourceName);
 
@@ -103,7 +104,7 @@ JPy_JType* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve)
 
         // Finally we initialise the type's slots, so that our JObj instances behave pythonic.
         if (JType_InitSlots(type) < 0) {
-            JPy_DEBUG_PRINTF("JType_GetType: error: JType_InitSlots() failed for javaName='%s'\n", type->javaName);
+            JPy_DIAG_PRINT(JPy_DIAG_TYPE, "JType_GetType: error: JType_InitSlots() failed for javaName='%s'\n", type->javaName);
 
             PyDict_DelItem(JPy_Types, typeKey);
 
@@ -123,7 +124,7 @@ JPy_JType* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve)
         type = (JPy_JType*) typeValue;
     }
 
-    JPy_DEBUG_PRINTF("JType_GetType: javaName='%s', resolve=%d, resolved=%d, type=%p\n", type->javaName, resolve, type->isResolved, type);
+    JPy_DIAG_PRINT(JPy_DIAG_TYPE, "JType_GetType: javaName='%s', resolve=%d, resolved=%d, type=%p\n", type->javaName, resolve, type->isResolved, type);
 
     if (!type->isResolved && resolve) {
         if (JType_ResolveType(jenv, type) < 0) {
@@ -172,7 +173,7 @@ JPy_JType* JType_New(JNIEnv* jenv, jclass classRef, jboolean resolve)
 
     type->isPrimitive = (*jenv)->CallBooleanMethod(jenv, type->classRef, JPy_Class_IsPrimitive_MID);
 
-    JPy_DEBUG_PRINTF("JType_New: javaName='%s', resolve=%d, type=%p\n", type->javaName, resolve, type);
+    JPy_DIAG_PRINT(JPy_DIAG_TYPE, "JType_New: javaName='%s', resolve=%d, type=%p\n", type->javaName, resolve, type);
 
     return type;
 }
@@ -726,7 +727,7 @@ jboolean JType_AcceptMethod(JPy_JType* declaringClass, JPy_JMethod* method)
             if (callableResult == Py_None || callableResult == Py_False) {
                 return JNI_FALSE;
             } else if (callableResult == NULL) {
-                JPy_DEBUG_PRINTF("JType_AcceptMethod: warning: failed to invoke callback on method addition\n");
+                JPy_DIAG_PRINT(JPy_DIAG_TYPE, "JType_AcceptMethod: warning: failed to invoke callback on method addition\n");
                 // Ignore this problem and continue
             }
         }
@@ -744,11 +745,11 @@ int JType_ProcessMethod(JNIEnv* jenv, JPy_JType* type, PyObject* methodKey, cons
     JPy_JMethod* method;
 
     paramCount = (*jenv)->GetArrayLength(jenv, paramTypes);
-    JPy_DEBUG_PRINTF("JType_ProcessMethod: methodName=%s, paramCount=%d, isStatic=%d, mid=%p\n", methodName, paramCount, isStatic, mid);
+    JPy_DIAG_PRINT(JPy_DIAG_TYPE, "JType_ProcessMethod: methodName=%s, paramCount=%d, isStatic=%d, mid=%p\n", methodName, paramCount, isStatic, mid);
     if (paramCount > 0) {
         paramDescriptors = JType_CreateParamDescriptors(jenv, paramCount, paramTypes);
         if (paramDescriptors == NULL) {
-            JPy_DEBUG_PRINTF("JType_ProcessMethod: error: Java method %s rejected because an error occurred during parameter type processing\n", methodName);
+            JPy_DIAG_PRINT(JPy_DIAG_ALL, "JType_ProcessMethod: error: Java method %s rejected because an error occurred during parameter type processing\n", methodName);
             return -1;
         }
     } else {
@@ -759,7 +760,7 @@ int JType_ProcessMethod(JNIEnv* jenv, JPy_JType* type, PyObject* methodKey, cons
         returnDescriptor = JType_CreateReturnDescriptor(jenv, returnType);
         if (returnDescriptor == NULL) {
             PyMem_Del(paramDescriptors);
-            JPy_DEBUG_PRINTF("JType_ProcessMethod: error: Java method %s rejected because an error occurred during return type processing\n", methodName);
+            JPy_DIAG_PRINT(JPy_DIAG_TYPE, "JType_ProcessMethod: error: Java method %s rejected because an error occurred during return type processing\n", methodName);
             return -1;
         }
     } else {
@@ -770,7 +771,7 @@ int JType_ProcessMethod(JNIEnv* jenv, JPy_JType* type, PyObject* methodKey, cons
     if (method == NULL) {
         PyMem_Del(paramDescriptors);
         PyMem_Del(returnDescriptor);
-        JPy_DEBUG_PRINTF("JType_ProcessMethod: error: Java method %s rejected because an error occurred during method instantiation\n", methodName);
+        JPy_DIAG_PRINT(JPy_DIAG_TYPE, "JType_ProcessMethod: error: Java method %s rejected because an error occurred during method instantiation\n", methodName);
         return -1;
     }
 
@@ -840,7 +841,7 @@ int JType_ProcessClassConstructors(JNIEnv* jenv, JPy_JType* type)
     constructors = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetDeclaredConstructors_MID);
     constrCount = (*jenv)->GetArrayLength(jenv, constructors);
 
-    JPy_DEBUG_PRINTF("JType_ProcessClassConstructors: constrCount=%d\n", constrCount);
+    JPy_DIAG_PRINT(JPy_DIAG_TYPE, "JType_ProcessClassConstructors: constrCount=%d\n", constrCount);
 
     for (i = 0; i < constrCount; i++) {
         constructor = (*jenv)->GetObjectArrayElement(jenv, constructors, i);
@@ -883,7 +884,7 @@ int JType_ProcessClassFields(JNIEnv* jenv, JPy_JType* type)
     fields = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetDeclaredFields_MID);
     fieldCount = (*jenv)->GetArrayLength(jenv, fields);
 
-    JPy_DEBUG_PRINTF("JType_ProcessClassFields: fieldCount=%d\n", fieldCount);
+    JPy_DIAG_PRINT(JPy_DIAG_TYPE, "JType_ProcessClassFields: fieldCount=%d\n", fieldCount);
 
     for (i = 0; i < fieldCount; i++) {
         field = (*jenv)->GetObjectArrayElement(jenv, fields, i);
@@ -933,7 +934,7 @@ int JType_ProcessClassMethods(JNIEnv* jenv, JPy_JType* type)
     methods = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetDeclaredMethods_MID);
     methodCount = (*jenv)->GetArrayLength(jenv, methods);
 
-    JPy_DEBUG_PRINTF("JType_ProcessClassMethods: methodCount=%d\n", methodCount);
+    JPy_DIAG_PRINT(JPy_DIAG_TYPE, "JType_ProcessClassMethods: methodCount=%d\n", methodCount);
 
     for (i = 0; i < methodCount; i++) {
         method = (*jenv)->GetObjectArrayElement(jenv, methods, i);
@@ -1036,7 +1037,7 @@ int JType_ProcessField(JNIEnv* jenv, JPy_JType* declaringClass, PyObject* fieldK
 
     fieldType = JType_GetType(jenv, fieldClassRef, JNI_FALSE);
     if (fieldType == NULL) {
-        JPy_DEBUG_PRINTF("JType_ProcessField: error: Java field %s rejected because an error occurred during type processing\n", fieldName);
+        JPy_DIAG_PRINT(JPy_DIAG_ALL, "JType_ProcessField: error: Java field %s rejected because an error occurred during type processing\n", fieldName);
         return -1;
     }
 
@@ -1050,7 +1051,7 @@ int JType_ProcessField(JNIEnv* jenv, JPy_JType* declaringClass, PyObject* fieldK
         // Add instance field accessor to the JPy_JType's tp_dict, this will be evaluated in the JPy_JType's tp_setattro and tp_getattro slots.
         field = JField_New(declaringClass, fieldKey, fieldType, isStatic, isFinal, fid);
         if (field == NULL) {
-            JPy_DEBUG_PRINTF("JType_ProcessField: error: Java field %s rejected because an error occurred during field instantiation\n", fieldName);
+            JPy_DIAG_PRINT(JPy_DIAG_TYPE, "JType_ProcessField: error: Java field %s rejected because an error occurred during field instantiation\n", fieldName);
             return -1;
         }
 
@@ -1060,7 +1061,7 @@ int JType_ProcessField(JNIEnv* jenv, JPy_JType* declaringClass, PyObject* fieldK
             JField_Del(field);
         }
     } else {
-        JPy_DEBUG_PRINTF("JType_ProcessField: warning: Java field %s rejected because is is static, but not final\n", fieldName);
+        JPy_DIAG_PRINT(JPy_DIAG_TYPE, "JType_ProcessField: warning: Java field %s rejected because is is static, but not final\n", fieldName);
     }
 
     return 0;
@@ -1151,7 +1152,7 @@ JPy_ReturnDescriptor* JType_CreateReturnDescriptor(JNIEnv* jenv, jclass returnCl
     returnDescriptor->paramIndex = -1;
     Py_INCREF((PyObject*) type);
 
-    JPy_DEBUG_PRINTF("JType_ProcessReturnType: type->tp_name='%s', type=%p\n", Py_TYPE(type)->tp_name, type);
+    JPy_DIAG_PRINT(JPy_DIAG_TYPE, "JType_ProcessReturnType: type->tp_name='%s', type=%p\n", Py_TYPE(type)->tp_name, type);
 
     return returnDescriptor;
 }
@@ -1575,7 +1576,7 @@ int JType_ConvertPyArgToJObjectArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
                 PyErr_NoMemory();
                 return -1;
             }
-            JPy_DEBUG_PRINTF("JType_ConvertPyArgToJObjectArg: moving Python buffer into Java array: pyBuffer->buf=%p, pyBuffer->len=%d\n", pyBuffer->buf, pyBuffer->len);
+            JPy_DIAG_PRINT(JPy_DIAG_EXEC|JPy_DIAG_MEM, "JType_ConvertPyArgToJObjectArg: moving Python buffer into Java array: pyBuffer->buf=%p, pyBuffer->len=%d\n", pyBuffer->buf, pyBuffer->len);
             memcpy(arrayItems, pyBuffer->buf, itemCount * itemSize);
             (*jenv)->ReleasePrimitiveArrayCritical(jenv, jArray, arrayItems, 0);
 
@@ -1598,9 +1599,10 @@ int JType_ConvertPyArgToJObjectArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
 
 void JType_DisposeLocalObjectRefArg(JNIEnv* jenv, jvalue* value, void* data)
 {
-    if (value->l != NULL) {
-        JPy_DEBUG_PRINTF("JType_DisposeLocalObjectRefArg: value->l != NULL\n");
-        (*jenv)->DeleteLocalRef(jenv, value->l);
+    jobject objectRef = value->l;
+    if (objectRef != NULL) {
+        JPy_DIAG_PRINT(JPy_DIAG_MEM, "JType_DisposeLocalObjectRefArg: objectRef=%p\n", objectRef);
+        (*jenv)->DeleteLocalRef(jenv, objectRef);
     }
 }
 
@@ -1612,7 +1614,7 @@ void JType_DisposeReadOnlyBufferArg(JNIEnv* jenv, jvalue* value, void* data)
     pyBuffer = (Py_buffer*) data;
     jArray = (jarray) value->l;
 
-    JPy_DEBUG_PRINTF("JType_DisposeReadOnlyBufferArg: pyBuffer=%p, jArray=%p\n", pyBuffer, jArray);
+    JPy_DIAG_PRINT(JPy_DIAG_MEM, "JType_DisposeReadOnlyBufferArg: pyBuffer=%p, jArray=%p\n", pyBuffer, jArray);
 
     if (pyBuffer != NULL) {
         PyBuffer_Release(pyBuffer);
@@ -1632,13 +1634,13 @@ void JType_DisposeWritableBufferArg(JNIEnv* jenv, jvalue* value, void* data)
     pyBuffer = (Py_buffer*) data;
     jArray = (jarray) value->l;
 
-    JPy_DEBUG_PRINTF("JType_DisposeWritableBufferArg: pyBuffer=%p, jArray=%p\n", pyBuffer, jArray);
+    JPy_DIAG_PRINT(JPy_DIAG_MEM, "JType_DisposeWritableBufferArg: pyBuffer=%p, jArray=%p\n", pyBuffer, jArray);
 
     if (pyBuffer != NULL && jArray != NULL) {
         // Copy modified array content back into buffer view
         arrayItems = (*jenv)->GetPrimitiveArrayCritical(jenv, jArray, NULL);
         if (arrayItems != NULL) {
-            JPy_DEBUG_PRINTF("JType_DisposeWritableBufferArg: moving Java array into Python buffer: pyBuffer->buf=%p, pyBuffer->len=%d\n", pyBuffer->buf, pyBuffer->len);
+            JPy_DIAG_PRINT(JPy_DIAG_EXEC|JPy_DIAG_MEM, "JType_DisposeWritableBufferArg: moving Java array into Python buffer: pyBuffer->buf=%p, pyBuffer->len=%d\n", pyBuffer->buf, pyBuffer->len);
             memcpy(pyBuffer->buf, arrayItems, pyBuffer->len);
             (*jenv)->ReleasePrimitiveArrayCritical(jenv, jArray, arrayItems, 0);
         }

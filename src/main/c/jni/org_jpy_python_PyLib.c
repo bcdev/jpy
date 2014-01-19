@@ -2,6 +2,7 @@
 #include <Python.h>
 
 #include "jpy_module.h"
+#include "jpy_diag.h"
 #include "jpy_jtype.h"
 #include "jpy_jobj.h"
 #include "jpy_conv.h"
@@ -24,7 +25,7 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_python_PyLib_isInterpreterInitialized
 {
     int retCode;
     retCode = Py_IsInitialized();
-    JPy_DEBUG_PRINTF("Java_org_jpy_python_PyLib_isInterpreterInitialized: retCode=%d\n", retCode);
+    JPy_DIAG_PRINT(JPy_DIAG_EXEC, "Java_org_jpy_python_PyLib_isInterpreterInitialized: retCode=%d\n", retCode);
     return retCode != 0;
 }
 
@@ -34,20 +35,19 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_python_PyLib_isInterpreterInitialized
  * Signature: ([Ljava/lang/String;Z)Z
  */
 JNIEXPORT jboolean JNICALL Java_org_jpy_python_PyLib_initializeInterpreter
-  (JNIEnv* jenv, jclass jLibClass, jobjectArray jOptions, jboolean debug)
+  (JNIEnv* jenv, jclass jLibClass, jobjectArray jOptions)
 {
-    JPy_DEBUG_PRINTF("Java_org_jpy_python_PyLib_initializeInterpreter: debug=%d\n", debug);
+    JPy_DIAG_PRINT(JPy_DIAG_EXEC, "Java_org_jpy_python_PyLib_initializeInterpreter: entered\n");
     if (!Py_IsInitialized()) {
         //Py_SetProgramName("java");
         Py_Initialize();
     }
-    JPy_SetDebug(debug);
     if (JPy_Module == NULL) {
         PyObject* pyModule;
 
         pyModule = PyImport_ImportModule("jpy");
         if (pyModule == NULL) {
-            JPy_DEBUG_PRINTF("Java_org_jpy_python_PyLib_initializeInterpreter: pyModule == NULL :-(\n");
+            JPy_DIAG_PRINT(JPy_DIAG_EXEC, "Java_org_jpy_python_PyLib_initializeInterpreter: pyModule == NULL :-(\n");
             JPy_HandlePythonException();
             return JNI_FALSE;
         }
@@ -64,7 +64,7 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_python_PyLib_initializeInterpreter
 JNIEXPORT void JNICALL Java_org_jpy_python_PyLib_destroyInterpreter
   (JNIEnv* jenv, jclass jLibClass)
 {
-    JPy_DEBUG_PRINTF("Java_org_jpy_python_PyLib_destroyInterpreter called\n");
+    JPy_DIAG_PRINT(JPy_DIAG_EXEC, "Java_org_jpy_python_PyLib_destroyInterpreter called\n");
     if (Py_IsInitialized()) {
         Py_Finalize();
     }
@@ -82,10 +82,10 @@ JNIEXPORT jint JNICALL Java_org_jpy_python_PyLib_execScript
     int retCode;
 
     scriptChars = (*jenv)->GetStringUTFChars(jenv, jScript, NULL);
-    JPy_DEBUG_PRINTF("Java_org_jpy_python_PyLib_execScript: script='%s'\n", scriptChars);
+    JPy_DIAG_PRINT(JPy_DIAG_EXEC, "Java_org_jpy_python_PyLib_execScript: script='%s'\n", scriptChars);
     retCode = PyRun_SimpleString(scriptChars);
     if (retCode < 0) {
-        JPy_DEBUG_PRINTF("Java_org_jpy_python_PyLib_execScript: error: PyRun_SimpleString(\"%s\") returned %d\n", scriptChars, retCode);
+        JPy_DIAG_PRINT(JPy_DIAG_EXEC, "Java_org_jpy_python_PyLib_execScript: error: PyRun_SimpleString(\"%s\") returned %d\n", scriptChars, retCode);
         // Note that we cannot retrieve last Python exception after a calling PyRun_SimpleString, see documentation of PyRun_SimpleString.
     }
     (*jenv)->ReleaseStringUTFChars(jenv, jScript, scriptChars);
@@ -101,7 +101,7 @@ JNIEXPORT jint JNICALL Java_org_jpy_python_PyLib_execScript
 JNIEXPORT void JNICALL Java_org_jpy_python_PyLib_decref
   (JNIEnv* jenv, jclass jLibClass, jlong objId)
 {
-    JPy_DEBUG_PRINTF("Java_org_jpy_python_PyLib_decref: objId=%p\n", (PyObject*) objId);
+    JPy_DIAG_PRINT(JPy_DIAG_EXEC, "Java_org_jpy_python_PyLib_decref: objId=%p\n", (PyObject*) objId);
     Py_DECREF((PyObject*) objId);
 }
 
@@ -146,7 +146,7 @@ JNIEXPORT jstring JNICALL Java_org_jpy_python_PyLib_getStringValue
     pyObject = (PyObject*) objId;
 
     if (JPy_AsJString(jenv, pyObject, &jString) < 0) {
-        JPy_DEBUG_PRINTF("Java_org_jpy_python_PyLib_getStringValue: error: failed to convert Python object to Java String\n");
+        JPy_DIAG_PRINT(JPy_DIAG_EXEC, "Java_org_jpy_python_PyLib_getStringValue: error: failed to convert Python object to Java String\n");
         JPy_HandlePythonException();
         return NULL;
     }
@@ -171,7 +171,7 @@ JNIEXPORT jobject JNICALL Java_org_jpy_python_PyLib_getObjectValue
         jObject = ((JPy_JObj*) pyObject)->objectRef;
     } else {
         if (JPy_AsJObject(jenv, pyObject, &jObject) < 0) {
-            JPy_DEBUG_PRINTF("Java_org_jpy_python_PyLib_getObjectValue: error: failed to convert Python object to Java Object\n");
+            JPy_DIAG_PRINT(JPy_DIAG_EXEC, "Java_org_jpy_python_PyLib_getObjectValue: error: failed to convert Python object to Java Object\n");
             JPy_HandlePythonException();
             return NULL;
         }
@@ -194,13 +194,13 @@ JNIEXPORT jlong JNICALL Java_org_jpy_python_PyLib_importModule
     const char* nameChars;
 
     nameChars = (*jenv)->GetStringUTFChars(jenv, jName, NULL);
-    JPy_DEBUG_PRINTF("Java_org_jpy_python_PyLib_importModule: name='%s'\n", nameChars);
+    JPy_DIAG_PRINT(JPy_DIAG_EXEC, "Java_org_jpy_python_PyLib_importModule: name='%s'\n", nameChars);
     /* Note: pyName is a new reference */
     pyName = PyUnicode_FromString(nameChars);
     /* Note: pyModule is a new reference */
     pyModule = PyImport_Import(pyName);
     if (pyModule == NULL) {
-        JPy_DEBUG_PRINTF("Java_org_jpy_python_PyLib_importModule: error: module not found '%s'\n", nameChars);
+        JPy_DIAG_PRINT(JPy_DIAG_EXEC, "Java_org_jpy_python_PyLib_importModule: error: module not found '%s'\n", nameChars);
         JPy_HandlePythonException();
     }
     Py_DECREF(pyName);
@@ -247,7 +247,7 @@ JNIEXPORT jobject JNICALL Java_org_jpy_python_PyLib_getAttributeValue
     }
 
     if (JPy_AsJObjectWithClass(jenv, pyValue, &jReturnValue, jValueClass) < 0) {
-        JPy_DEBUG_PRINTF("Java_org_jpy_python_PyLib_getAttributeValue: error: failed to convert attribute value\n");
+        JPy_DIAG_PRINT(JPy_DIAG_EXEC, "Java_org_jpy_python_PyLib_getAttributeValue: error: failed to convert attribute value\n");
         JPy_HandlePythonException();
         return NULL;
     }
@@ -272,7 +272,7 @@ JNIEXPORT void JNICALL Java_org_jpy_python_PyLib_setAttributeValue
     pyObject = (PyObject*) objId;
 
     nameChars = (*jenv)->GetStringUTFChars(jenv, jName, NULL);
-    JPy_DEBUG_PRINTF("Java_org_jpy_python_PyLib_setAttributeValue: objId=%p, name='%s', jValue=%p, jValueClass=%p\n", pyObject, nameChars, jValue, jValueClass);
+    JPy_DIAG_PRINT(JPy_DIAG_EXEC, "Java_org_jpy_python_PyLib_setAttributeValue: objId=%p, name='%s', jValue=%p, jValueClass=%p\n", pyObject, nameChars, jValue, jValueClass);
 
     if (jValueClass != NULL) {
         valueType = JType_GetType(jenv, jValueClass, JNI_FALSE);
@@ -287,13 +287,13 @@ JNIEXPORT void JNICALL Java_org_jpy_python_PyLib_setAttributeValue
     }
 
     if (pyValue == NULL) {
-        JPy_DEBUG_PRINTF("Java_org_jpy_python_PyLib_setAttributeValue: error: attribute '%s': Java object not convertible\n", nameChars);
+        JPy_DIAG_PRINT(JPy_DIAG_EXEC, "Java_org_jpy_python_PyLib_setAttributeValue: error: attribute '%s': Java object not convertible\n", nameChars);
         JPy_HandlePythonException();
         goto error;
     }
 
     if (PyObject_SetAttrString(pyObject, nameChars, pyValue) < 0) {
-        JPy_DEBUG_PRINTF("Java_org_jpy_python_PyLib_setAttributeValue: error: PyObject_SetAttrString failed on attribute '%s'\n", nameChars);
+        JPy_DIAG_PRINT(JPy_DIAG_EXEC, "Java_org_jpy_python_PyLib_setAttributeValue: error: PyObject_SetAttrString failed on attribute '%s'\n", nameChars);
         JPy_HandlePythonException();
         goto error;
     }
@@ -340,7 +340,7 @@ JNIEXPORT jobject JNICALL Java_org_jpy_python_PyLib_callAndReturnValue
     }
 
     if (JPy_AsJObjectWithClass(jenv, pyReturnValue, &jReturnValue, jReturnClass) < 0) {
-        JPy_DEBUG_PRINTF("Java_org_jpy_python_PyLib_callAndReturnValue: error: failed to convert attribute value\n");
+        JPy_DIAG_PRINT(JPy_DIAG_EXEC, "Java_org_jpy_python_PyLib_callAndReturnValue: error: failed to convert attribute value\n");
         JPy_HandlePythonException();
         return NULL;
     }
@@ -349,7 +349,27 @@ JNIEXPORT jobject JNICALL Java_org_jpy_python_PyLib_callAndReturnValue
 }
 
 
+/*
+ * Class:     org_jpy_python_PyLib
+ * Method:    getDiagFlags
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_org_jpy_python_PyLib_getDiagFlags
+  (JNIEnv *jenv, jclass classRef)
+{
+    return JPy_ActiveDiagFlags;
+}
 
+/*
+ * Class:     org_jpy_python_PyLib
+ * Method:    setDiagFlags
+ * Signature: (I)V
+ */
+JNIEXPORT void JNICALL Java_org_jpy_python_PyLib_setDiagFlags
+  (JNIEnv *jenv, jclass classRef, jint flags)
+{
+    JPy_ActiveDiagFlags = flags;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////
 // Helpers that also throw Java exceptions
@@ -361,11 +381,11 @@ PyObject* PyLib_GetAttributeObject(JNIEnv* jenv, PyObject* pyObject, jstring jNa
     const char* nameChars;
 
     nameChars = (*jenv)->GetStringUTFChars(jenv, jName, NULL);
-    JPy_DEBUG_PRINTF("PyLib_GetAttributeObject: objId=%p, name='%s'\n", pyObject, nameChars);
+    JPy_DIAG_PRINT(JPy_DIAG_EXEC, "PyLib_GetAttributeObject: objId=%p, name='%s'\n", pyObject, nameChars);
     /* Note: pyValue is a new reference */
     pyValue = PyObject_GetAttrString(pyObject, nameChars);
     if (pyValue == NULL) {
-        JPy_DEBUG_PRINTF("PyLib_GetAttributeObject: error: attribute not found '%s'\n", nameChars);
+        JPy_DIAG_PRINT(JPy_DIAG_EXEC, "PyLib_GetAttributeObject: error: attribute not found '%s'\n", nameChars);
         JPy_HandlePythonException();
     }
     (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
@@ -389,20 +409,20 @@ PyObject* PyLib_CallAndReturnObject(JNIEnv *jenv, PyObject* pyObject, jboolean i
 
     nameChars = (*jenv)->GetStringUTFChars(jenv, jName, NULL);
 
-    JPy_DEBUG_PRINTF("PyLib_CallAndReturnObject: objId=%p, isMethodCall=%d, name='%s', argCount=%d\n", pyObject, isMethodCall, nameChars, argCount);
+    JPy_DIAG_PRINT(JPy_DIAG_EXEC, "PyLib_CallAndReturnObject: objId=%p, isMethodCall=%d, name='%s', argCount=%d\n", pyObject, isMethodCall, nameChars, argCount);
 
     pyArgs = NULL;
 
     // Note: pyCallable is a new reference
     pyCallable = PyObject_GetAttrString(pyObject, nameChars);
     if (pyCallable == NULL) {
-        JPy_DEBUG_PRINTF("PyLib_CallAndReturnObject: error: function or method not found: '%s'\n", nameChars);
+        JPy_DIAG_PRINT(JPy_DIAG_EXEC, "PyLib_CallAndReturnObject: error: function or method not found: '%s'\n", nameChars);
         JPy_HandlePythonException();
         goto error;
     }
 
     if (!PyCallable_Check(pyCallable)) {
-        JPy_DEBUG_PRINTF("PyLib_CallAndReturnObject: error: object is not callable: '%s'\n", nameChars);
+        JPy_DIAG_PRINT(JPy_DIAG_EXEC, "PyLib_CallAndReturnObject: error: object is not callable: '%s'\n", nameChars);
         JPy_HandlePythonException();
         goto error;
     }
@@ -420,7 +440,7 @@ PyObject* PyLib_CallAndReturnObject(JNIEnv *jenv, PyObject* pyObject, jboolean i
         if (jParamClass != NULL) {
             paramType = JType_GetType(jenv, jParamClass, JNI_FALSE);
             if (paramType == NULL) {
-                JPy_DEBUG_PRINTF("PyLib_CallAndReturnObject: error: callable '%s': argument %d: failed to retrieve type\n", nameChars, i);
+                JPy_DIAG_PRINT(JPy_DIAG_EXEC, "PyLib_CallAndReturnObject: error: callable '%s': argument %d: failed to retrieve type\n", nameChars, i);
                 JPy_HandlePythonException();
                 goto error;
             }
@@ -433,7 +453,7 @@ PyObject* PyLib_CallAndReturnObject(JNIEnv *jenv, PyObject* pyObject, jboolean i
         (*jenv)->DeleteLocalRef(jenv, jArg);
 
         if (pyArg == NULL) {
-            JPy_DEBUG_PRINTF("PyLib_CallAndReturnObject: error: callable '%s': argument %d: failed to convert Java into Python object\n", nameChars, i);
+            JPy_DIAG_PRINT(JPy_DIAG_EXEC, "PyLib_CallAndReturnObject: error: callable '%s': argument %d: failed to convert Java into Python object\n", nameChars, i);
             JPy_HandlePythonException();
             goto error;
         }
@@ -449,7 +469,7 @@ PyObject* PyLib_CallAndReturnObject(JNIEnv *jenv, PyObject* pyObject, jboolean i
 
         pyMethod = PyMethod_New(pyCallable, pyObject);
         if (pyMethod == NULL) {
-            JPy_DEBUG_PRINTF("PyLib_CallAndReturnObject: error: callable '%s': no memory\n", nameChars);
+            JPy_DIAG_PRINT(JPy_DIAG_EXEC, "PyLib_CallAndReturnObject: error: callable '%s': no memory\n", nameChars);
             JPy_HandlePythonException();
             goto error;
         }
@@ -460,7 +480,7 @@ PyObject* PyLib_CallAndReturnObject(JNIEnv *jenv, PyObject* pyObject, jboolean i
 
     pyReturnValue = PyObject_CallObject(pyCallable, argCount > 0 ? pyArgs : NULL);
     if (pyReturnValue == NULL) {
-        JPy_DEBUG_PRINTF("PyLib_CallAndReturnObject: error: callable '%s': call returned NULL\n", nameChars);
+        JPy_DIAG_PRINT(JPy_DIAG_EXEC, "PyLib_CallAndReturnObject: error: callable '%s': call returned NULL\n", nameChars);
         JPy_HandlePythonException();
         goto error;
     }

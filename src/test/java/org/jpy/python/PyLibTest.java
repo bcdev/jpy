@@ -11,7 +11,8 @@ public class PyLibTest {
     @BeforeClass
     public static void setUp() throws Exception {
         assertEquals(false, PyLib.isInterpreterInitialized());
-        PyLib.initializeInterpreter(new String[0], false);
+        PyLib.initializeInterpreter(new String[0]);
+        PyLib.setDiagFlags(0xff);
         assertEquals(true, PyLib.isInterpreterInitialized());
     }
 

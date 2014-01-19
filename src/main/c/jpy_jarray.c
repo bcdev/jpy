@@ -1,4 +1,5 @@
 #include "jpy_module.h"
+#include "jpy_diag.h"
 #include "jpy_jarray.h"
 
 
@@ -80,7 +81,7 @@ int JArray_GetBufferProc(JPy_JArray* self, Py_buffer* view, int flags, char java
         return -1;
     }
 
-    JPy_DEBUG_PRINTF("JArray_GetBufferProc: buf=%p, type='%s', format='%s', itemSize=%d, itemCount=%d, isCopy=%d\n", buf, Py_TYPE(self)->tp_name, format, itemSize, itemCount, isCopy);
+    JPy_DIAG_PRINT(JPy_DIAG_MEM, "JArray_GetBufferProc: buf=%p, type='%s', format='%s', itemSize=%d, itemCount=%d, isCopy=%d\n", buf, Py_TYPE(self)->tp_name, format, itemSize, itemCount, isCopy);
 
     // Step 2/5
     view->buf = buf;
@@ -169,7 +170,7 @@ void JArray_ReleaseBufferProc(JPy_JArray* self, Py_buffer* view, char javaType)
     // Step 1
     self->bufferExportCount--;
 
-    JPy_DEBUG_PRINTF("JArray_ReleaseBufferProc: buf=%p, bufferExportCount=%d\n", view->buf, self->bufferExportCount);
+    JPy_DIAG_PRINT(JPy_DIAG_MEM, "JArray_ReleaseBufferProc: buf=%p, bufferExportCount=%d\n", view->buf, self->bufferExportCount);
 
     // Step 2
     if (self->bufferExportCount == 0 && view->buf != NULL) {
