@@ -95,7 +95,7 @@ if extra_options:
     options += extra_options.split(sep='|')
 
 if debug:
-    jpy.diag_flags.value = jpy.diag_flags.all
+    jpy.diag.flags = jpy.diag.F_ALL
 
 jpy.create_jvm(options=options)
 

@@ -7,29 +7,30 @@ jpy.create_jvm(options=['-Djava.class.path=target/test-classes', '-Xmx512M'])
 class TestJavaArrays(unittest.TestCase):
 
     def test_diag_flags_constants(self):
-        self.assertIsNotNone(jpy.diag_flags)
-        self.assertEqual(jpy.diag_flags.off,  0x00)
-        self.assertEqual(jpy.diag_flags.type, 0x01)
-        self.assertEqual(jpy.diag_flags.meth, 0x02)
-        self.assertEqual(jpy.diag_flags.exec, 0x04)
-        self.assertEqual(jpy.diag_flags.mem,  0x08)
-        self.assertEqual(jpy.diag_flags.all,  0xff)
+        self.assertIsNotNone(jpy.diag)
+        self.assertIsNotNone(jpy.diag.flags)
+        self.assertEqual(jpy.diag.F_OFF,  0x00)
+        self.assertEqual(jpy.diag.F_TYPE, 0x01)
+        self.assertEqual(jpy.diag.F_METH, 0x02)
+        self.assertEqual(jpy.diag.F_EXEC, 0x04)
+        self.assertEqual(jpy.diag.F_MEM,  0x08)
+        self.assertEqual(jpy.diag.F_ALL,  0xff)
 
 
     def test_diag_flags_value(self):
-        self.assertIsNotNone(jpy.diag_flags)
-        self.assertEqual(jpy.diag_flags.value,  0)
-        jpy.diag_flags.value = 1
-        self.assertEqual(jpy.diag_flags.value, 1)
-        jpy.diag_flags.value = 0
-        self.assertEqual(jpy.diag_flags.value, 0)
-        jpy.diag_flags.value = jpy.diag_flags.exec + jpy.diag_flags.mem
-        self.assertEqual(jpy.diag_flags.value, 12)
-        jpy.diag_flags.value = 0
-        self.assertEqual(jpy.diag_flags.value, 0)
-        jpy.diag_flags.value += jpy.diag_flags.exec
-        jpy.diag_flags.value += jpy.diag_flags.mem
-        self.assertEqual(jpy.diag_flags.value, 12)
+        self.assertIsNotNone(jpy.diag)
+        self.assertEqual(jpy.diag.flags,  0)
+        jpy.diag.flags = 1
+        self.assertEqual(jpy.diag.flags, 1)
+        jpy.diag.flags = 0
+        self.assertEqual(jpy.diag.flags, 0)
+        jpy.diag.flags = jpy.diag.F_EXEC + jpy.diag.F_MEM
+        self.assertEqual(jpy.diag.flags, 12)
+        jpy.diag.flags = 0
+        self.assertEqual(jpy.diag.flags, 0)
+        jpy.diag.flags += jpy.diag.F_EXEC
+        jpy.diag.flags += jpy.diag.F_MEM
+        self.assertEqual(jpy.diag.flags, 12)
 
 
 

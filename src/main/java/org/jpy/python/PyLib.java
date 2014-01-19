@@ -10,6 +10,7 @@ import static org.jpy.python.PyConfig.*;
  * @author Norman Fomferra
  */
 public class PyLib {
+
     private static Throwable problem;
 
     static {
@@ -68,10 +69,6 @@ public class PyLib {
     public static native Object getObjectValue(long pointer);
 
     public static native long importModule(String name);
-
-    public static native int getDiagFlags();
-
-    public static native void setDiagFlags(int flags);
 
     /**
      * Gets the value of a given Python attribute as Python object pointer.
@@ -158,4 +155,24 @@ public class PyLib {
                                                   Class<?>[] paramTypes,
                                                   Class<T> returnType);
 
+    /**
+     * Controls output of diagnostic information for debugging.
+     */
+    public static class Diag {
+
+        public static final int F_OFF = 0x00;
+        public static final int F_TYPE = 0x01;
+        public static final int F_METH = 0x02;
+        public static final int F_EXEC = 0x04;
+        public static final int F_MEM = 0x08;
+        public static final int F_ALL = 0xff;
+
+        public static native int getFlags();
+
+        public static native void setFlags(int flags);
+
+    }
+
 }
+
+

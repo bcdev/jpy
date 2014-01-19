@@ -12,7 +12,7 @@ public class PyLibTest {
     public static void setUp() throws Exception {
         assertEquals(false, PyLib.isInterpreterInitialized());
         PyLib.initializeInterpreter(new String[0]);
-        PyLib.setDiagFlags(0xff);
+        PyLib.Diag.setFlags(PyLib.Diag.F_ALL);
         assertEquals(true, PyLib.isInterpreterInitialized());
     }
 

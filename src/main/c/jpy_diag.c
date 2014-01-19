@@ -2,11 +2,12 @@
 #include "structmember.h"
 #include "jpy_diag.h"
 
-int JPy_ActiveDiagFlags = JPy_DIAG_OFF;
+int JPy_DiagFlags = JPy_DIAG_F_OFF;
+
 
 void JPy_DiagPrint(int diagFlags, const char * format, ...)
 {
-    if ((JPy_ActiveDiagFlags & diagFlags) != 0) {
+    if ((JPy_DiagFlags & diagFlags) != 0) {
         va_list args;
         va_start(args, format);
         vfprintf(stdout, format, args);
@@ -14,44 +15,43 @@ void JPy_DiagPrint(int diagFlags, const char * format, ...)
     }
 }
 
-PyObject* DiagFlags_New()
+
+PyObject* Diag_New()
 {
-    JPy_DiagFlags* self;
+    JPy_Diag* self;
 
-    self = (JPy_DiagFlags*) PyObject_New(PyObject, &DiagFlags_Type);
+    self = (JPy_Diag*) PyObject_New(PyObject, &Diag_Type);
 
-    self->off   = JPy_DIAG_OFF;
-    self->type  = JPy_DIAG_TYPE;
-    self->meth  = JPy_DIAG_METH;
-    self->exec  = JPy_DIAG_EXEC;
-    self->mem   = JPy_DIAG_MEM;
-    self->all   = JPy_DIAG_ALL;
+    self->F_OFF   = JPy_DIAG_F_OFF;
+    self->F_TYPE  = JPy_DIAG_F_TYPE;
+    self->F_METH  = JPy_DIAG_F_METH;
+    self->F_EXEC  = JPy_DIAG_F_EXEC;
+    self->F_MEM   = JPy_DIAG_F_MEM;
+    self->F_ALL   = JPy_DIAG_F_ALL;
 
     return (PyObject*) self;
 }
 
 
-PyObject* DiagFlags_getattro(JPy_DiagFlags* self, PyObject *attr_name)
+PyObject* Diag_getattro(JPy_Diag* self, PyObject *attr_name)
 {
-    if (strcmp(PyUnicode_AsUTF8(attr_name), "value") == 0) {
-        return PyLong_FromLong(JPy_ActiveDiagFlags);
+    //printf("Diag_getattro: attr_name=%s\n", PyUnicode_AsUTF8(attr_name));
+    if (strcmp(PyUnicode_AsUTF8(attr_name), "flags") == 0) {
+        return PyLong_FromLong(JPy_DiagFlags);
     } else {
         return PyObject_GenericGetAttr((PyObject*) self, attr_name);
     }
 }
 
 
-int DiagFlags_setattro(JPy_DiagFlags* self, PyObject *attr_name, PyObject *v)
+int Diag_setattro(JPy_Diag* self, PyObject *attr_name, PyObject *v)
 {
-    if (strcmp(PyUnicode_AsUTF8(attr_name), "value") == 0) {
-        if (v == Py_None || v == Py_False) {
-            JPy_ActiveDiagFlags = JPy_DIAG_OFF;
-        } else if (v == Py_True) {
-            JPy_ActiveDiagFlags = JPy_DIAG_ALL;
-        } else if (PyLong_Check(v)) {
-            JPy_ActiveDiagFlags = (int) PyLong_AsLong(v);
+    //printf("Diag_setattro: attr_name=%s\n", PyUnicode_AsUTF8(attr_name));
+    if (strcmp(PyUnicode_AsUTF8(attr_name), "flags") == 0) {
+        if (PyLong_Check(v)) {
+            JPy_DiagFlags = self->flags = (int) PyLong_AsLong(v);
         } else {
-            PyErr_SetString(PyExc_ValueError, "invalid flags value");
+            PyErr_SetString(PyExc_ValueError, "value for 'flags' must be an integer number");
             return -1;
         }
         return 0;
@@ -60,23 +60,25 @@ int DiagFlags_setattro(JPy_DiagFlags* self, PyObject *attr_name, PyObject *v)
     }
 }
 
-static PyMemberDef DiagFlags_members[] =
+
+static PyMemberDef Diag_members[] =
 {
-    {"off",    T_INT, offsetof(JPy_DiagFlags, off),   READONLY, "Don't print any diagnostic messages"},
-    {"type",   T_INT, offsetof(JPy_DiagFlags, type),  READONLY, "Type resolution: print diagnostic messages while generating Python classes from Java classes"},
-    {"meth",   T_INT, offsetof(JPy_DiagFlags, meth),  READONLY, "Method resolution: print diagnostic messages while resolving Java overloaded methods"},
-    {"exec",   T_INT, offsetof(JPy_DiagFlags, exec),  READONLY, "Execution: print diagnostic messages when Java code is executed"},
-    {"mem",    T_INT, offsetof(JPy_DiagFlags, mem),   READONLY, "Memory: print diagnostic messages when wrapped Java objects are allocated/deallocated"},
-    {"all",    T_INT, offsetof(JPy_DiagFlags, all),   READONLY, "Print all diagnostic messages"},
+    {"flags",    T_INT, offsetof(JPy_Diag, flags),   READONLY, "Combination of diagnostic flags (F_* constants). If != 0, diagnostic messages are printed out."},
+    {"F_OFF",    T_INT, offsetof(JPy_Diag, F_OFF),   READONLY, "Don't print any diagnostic messages"},
+    {"F_TYPE",   T_INT, offsetof(JPy_Diag, F_TYPE),  READONLY, "Type resolution: print diagnostic messages while generating Python classes from Java classes"},
+    {"F_METH",   T_INT, offsetof(JPy_Diag, F_METH),  READONLY, "Method resolution: print diagnostic messages while resolving Java overloaded methods"},
+    {"F_EXEC",   T_INT, offsetof(JPy_Diag, F_EXEC),  READONLY, "Execution: print diagnostic messages when Java code is executed"},
+    {"F_MEM",    T_INT, offsetof(JPy_Diag, F_MEM),   READONLY, "Memory: print diagnostic messages when wrapped Java objects are allocated/deallocated"},
+    {"F_ALL",    T_INT, offsetof(JPy_Diag, F_ALL),   READONLY, "Print all diagnostic messages"},
     {NULL}  /* Sentinel */
 };
 
 
-PyTypeObject DiagFlags_Type =
+PyTypeObject Diag_Type =
 {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "jpy.DiagFlags",              /* tp_name */
-    sizeof (JPy_DiagFlags),       /* tp_basicsize */
+    "jpy.Diag",                   /* tp_name */
+    sizeof (JPy_Diag),            /* tp_basicsize */
     0,                            /* tp_itemsize */
     NULL,                         /* tp_dealloc */
     NULL,                         /* tp_print */
@@ -90,11 +92,11 @@ PyTypeObject DiagFlags_Type =
     NULL,                         /* tp_hash  */
     NULL,                         /* tp_call */
     NULL,                         /* tp_str */
-    (getattrofunc) DiagFlags_getattro,  /* tp_getattro */
-    (setattrofunc) DiagFlags_setattro,  /* tp_setattro */
+    (getattrofunc) Diag_getattro, /* tp_getattro */
+    (setattrofunc) Diag_setattro, /* tp_setattro */
     NULL,                         /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,            /* tp_flags */
-    "Diagnostic flags for debugging",   /* tp_doc */
+    Py_TPFLAGS_DEFAULT,           /* tp_flags */
+    "Controls output of diagnostic information for debugging",   /* tp_doc */
     NULL,                         /* tp_traverse */
     NULL,                         /* tp_clear */
     NULL,                         /* tp_richcompare */
@@ -102,7 +104,7 @@ PyTypeObject DiagFlags_Type =
     NULL,                         /* tp_iter */
     NULL,                         /* tp_iternext */
     NULL,                         /* tp_methods */
-    DiagFlags_members,            /* tp_members */
+    Diag_members,                 /* tp_members */
     NULL,                         /* tp_getset */
     NULL,                         /* tp_base */
     NULL,                         /* tp_dict */
@@ -113,5 +115,3 @@ PyTypeObject DiagFlags_Type =
     NULL,                         /* tp_alloc */
     NULL,                         /* tp_new */
 };
-
-
