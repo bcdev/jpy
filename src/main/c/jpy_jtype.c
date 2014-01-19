@@ -55,7 +55,7 @@ JPy_JType* JType_GetTypeForName(JNIEnv* jenv, const char* typeName, jboolean res
     }
 
     if (classRef == NULL) {
-        PyErr_SetString(PyExc_ValueError, "Java class not found");
+        PyErr_Format(PyExc_ValueError, "Java class '%s' not found", typeName);
         return NULL;
     }
 
@@ -105,11 +105,7 @@ JPy_JType* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve)
         // Finally we initialise the type's slots, so that our JObj instances behave pythonic.
         if (JType_InitSlots(type) < 0) {
             JPy_DIAG_PRINT(JPy_DIAG_TYPE, "JType_GetType: error: JType_InitSlots() failed for javaName='%s'\n", type->javaName);
-
             PyDict_DelItem(JPy_Types, typeKey);
-
-            //printf("JType_GetType: after PyDict_DelItem\n");
-
             return NULL;
         }
 

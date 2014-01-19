@@ -15,10 +15,9 @@ class TestGetClass(unittest.TestCase):
         IntArray3D = jpy.get_class('[[[I')
         self.assertEqual(str(IntArray3D), "<class '[[[I'>")
 
-        # todo - uncomment and find Python crash here. fix me!
-        #with  self.assertRaises(RuntimeError) as e:
-        #    IntArray1D()
-        #self.assertEqual(str(e.exception), 'no matching Java method overloads found')
+        with self.assertRaises(RuntimeError) as e:
+            IntArray1D()
+        self.assertEqual(str(e.exception), "no constructor found (missing JType attribute '__jinit__')")
 
 
     def test_get_class_of_object_array(self):
@@ -31,16 +30,19 @@ class TestGetClass(unittest.TestCase):
         StringArray3D = jpy.get_class('[[[Ljava.lang.String;')
         self.assertEqual(str(StringArray3D), "<class '[[[Ljava.lang.String;'>")
 
-        # todo - uncomment and find Python crash here. fix me!
-        #with  self.assertRaises(RuntimeError) as e:
-        #    StringArray1D()
-        #self.assertEqual(str(e.exception), 'no matching Java method overloads found')
+        with self.assertRaises(RuntimeError) as e:
+            StringArray1D()
+        self.assertEqual(str(e.exception), "no constructor found (missing JType attribute '__jinit__')")
 
 
     def test_get_class_of_unknown_type(self):
         with  self.assertRaises(ValueError) as e:
             String = jpy.get_class('java.lang.Spring')
-        self.assertEqual(str(e.exception), 'Java class not found')
+        self.assertEqual(str(e.exception), "Java class 'java.lang.Spring' not found")
+
+        with  self.assertRaises(ValueError) as e:
+            IntArray = jpy.get_class('int[]')
+        self.assertEqual(str(e.exception), "Java class 'int[]' not found")
 
 
 
