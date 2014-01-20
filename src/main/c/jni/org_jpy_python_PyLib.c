@@ -110,7 +110,7 @@ JNIEXPORT void JNICALL Java_org_jpy_python_PyLib_decref
   (JNIEnv* jenv, jclass jLibClass, jlong objId)
 {
     JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_python_PyLib_decref: objId=%p\n", (PyObject*) objId);
-    Py_DECREF((PyObject*) objId);
+    Py_XDECREF((PyObject*) objId);
 }
 
 
@@ -208,11 +208,9 @@ JNIEXPORT jlong JNICALL Java_org_jpy_python_PyLib_importModule
     /* Note: pyModule is a new reference */
     pyModule = PyImport_Import(pyName);
     if (pyModule == NULL) {
-        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_python_PyLib_importModule: error: -----------------------> module not found '%s'\n", nameChars);
         JPy_HandlePythonException(jenv);
-        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_python_PyLib_importModule: error: <----------------------- module not found '%s'\n", nameChars);
     }
-    Py_DECREF(pyName);
+    Py_XDECREF(pyName);
     (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
     return (jlong) pyModule;
 }
@@ -498,8 +496,8 @@ PyObject* PyLib_CallAndReturnObject(JNIEnv *jenv, PyObject* pyObject, jboolean i
 
 error:
     (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
-    Py_DECREF(pyCallable);
-    Py_DECREF(pyArgs);
+    Py_XDECREF(pyCallable);
+    Py_XDECREF(pyArgs);
 
     return pyReturnValue;
 }

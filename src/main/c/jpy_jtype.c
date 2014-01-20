@@ -77,6 +77,10 @@ JPy_JType* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve)
     }
 
     typeKey = JPy_FromTypeName(jenv, classRef);
+    if (typeKey == NULL) {
+        return NULL;
+    }
+
     typeValue = PyDict_GetItem(JPy_Types, typeKey);
     if (typeValue == NULL) {
 
@@ -1746,10 +1750,10 @@ void JType_dealloc(JPy_JType* self)
         self->classRef = NULL;
     }
 
-    Py_DECREF(self->superType);
+    Py_XDECREF(self->superType);
     self->superType = NULL;
 
-    Py_DECREF(self->componentType);
+    Py_XDECREF(self->componentType);
     self->componentType = NULL;
 
     Py_TYPE(self)->tp_free((PyObject*) self);
