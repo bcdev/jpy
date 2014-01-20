@@ -12,8 +12,12 @@ import static org.jpy.python.PyConfig.*;
 public class PyLib {
 
     private static Throwable problem;
+    private static boolean init;
 
-    static {
+    private static void loadLib() {
+        if (init || problem != null) {
+            return;
+        }
         try {
             if (getOS() != OS.WINDOWS) {
                 // For PyLib, we load the shared library that was generated for the Python extension module 'jpy'.
@@ -36,10 +40,15 @@ public class PyLib {
             //System.out.println(JPY_LIB_KEY + " = " + libPath);
             System.load(libPath);
             problem = null;
+            init = true;
         } catch (Throwable t) {
             problem = t;
             throw t;
         }
+    }
+
+    static {
+        loadLib();
     }
 
     public static void assertInterpreterInitialized() {
@@ -160,6 +169,10 @@ public class PyLib {
      * Controls output of diagnostic information for debugging.
      */
     public static class Diag {
+
+        static {
+            PyLib.loadLib();
+        }
 
         public static final int F_OFF = 0x00;
         public static final int F_TYPE = 0x01;
