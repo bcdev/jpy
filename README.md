@@ -133,6 +133,8 @@ can be overwritten from Python, because Python does not know final/constant attr
 only be achieved with computed attributes, but as said before, they are not supported for 
 built-in extension types.
 
+*We currently cannot shutdown the JVM and then restart it.*
+
 
 
 Final TODOs for v1.0
