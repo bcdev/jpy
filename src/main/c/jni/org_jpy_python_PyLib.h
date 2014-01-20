@@ -89,22 +89,6 @@ JNIEXPORT jlong JNICALL Java_org_jpy_python_PyLib_importModule
 
 /*
  * Class:     org_jpy_python_PyLib
- * Method:    getDiagFlags
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_org_jpy_python_PyLib_getDiagFlags
-  (JNIEnv *, jclass);
-
-/*
- * Class:     org_jpy_python_PyLib
- * Method:    setDiagFlags
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_org_jpy_python_PyLib_setDiagFlags
-  (JNIEnv *, jclass, jint);
-
-/*
- * Class:     org_jpy_python_PyLib
  * Method:    getAttributeObject
  * Signature: (JLjava/lang/String;)J
  */
