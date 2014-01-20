@@ -24,10 +24,8 @@ __author__ = "Norman Fomferra, Brockmann Consult GmbH"
 
 def _get_beam_jar_locations():
 
-    invalid_beam_home = RuntimeError('The BEAM installation directory "beam_home" environment variable must be set to a valid BEAM installation directors')
-
     if beam_home is None:
-        raise invalid_beam_home
+        raise RuntimeError('environment variable "BEAM_HOME" must be set to a valid BEAM installation directory')
 
     beam_bin = os.path.join(beam_home, 'bin')
     beam_lib = os.path.join(beam_home, 'lib')
@@ -40,7 +38,7 @@ def _get_beam_jar_locations():
     if not (os.path.exists(beam_bin)
             and os.path.exists(beam_lib)
             and os.path.exists(beam_mod)):
-        raise RuntimeError('Does not seem to be a valid BEAM installation path: ' + beam_home)
+        raise RuntimeError('does not seem to be a valid BEAM installation path: ' + beam_home)
 
     return [beam_bin, beam_lib, beam_mod]
 
