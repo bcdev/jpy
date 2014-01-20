@@ -6,9 +6,9 @@ class Processor:
         self.n += 1
         return 'initialize-' + str(self.n)
 
-    def computeTile(self, x, y, array):
+    def computeTile(self, w, h, array):
         self.n += 1
-        return 'computeTile-' + str(self.n) + '-' + str(x) + ',' + str(y)
+        return 'computeTile-' + str(self.n) + '-' + str(w) + ',' + str(h)
 
     def dispose(self):
         self.n += 1
