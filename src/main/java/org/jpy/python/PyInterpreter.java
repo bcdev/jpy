@@ -9,7 +9,7 @@ import static org.jpy.python.PyLib.assertInterpreterInitialized;
  */
 public class PyInterpreter {
 
-    public static void initialize(String[] options, boolean debug) {
+    public static void initialize(String[] options) {
         if (PyLib.isInterpreterInitialized()) {
             throw new RuntimeException();
         }
