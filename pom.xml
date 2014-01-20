@@ -6,7 +6,7 @@
 
     <groupId>org.jpy</groupId>
     <artifactId>jpy</artifactId>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.7-SNAPSHOT</version>
 
     <packaging>jar</packaging>
 
