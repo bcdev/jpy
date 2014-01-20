@@ -62,25 +62,6 @@ void JPy_HandleJavaException(JNIEnv* jenv);
     }
 
 
-/**
- * Fetches the last Python exception occurred and raises a new Java exception.
- */
-void JPy_HandlePythonException();
-
-
-#define JPy_ON_PYTHON_EXCEPTION_GOTO(LABEL) \
-    if (PyErr_Occurred() != NULL) { \
-        JPy_HandlePythonException(jenv); \
-        goto LABEL; \
-    }
-
-#define JPy_ON_PYTHON_EXCEPTION_RETURN(VALUE) \
-    if (PyErr_Occurred() != NULL) { \
-        JPy_HandlePythonException(jenv); \
-        return VALUE; \
-    }
-
-
 struct JPy_JType;
 
 extern struct JPy_JType* JPy_JBoolean;

@@ -590,7 +590,7 @@ jclass JPy_GetClass(JNIEnv* jenv, const char* name)
     }
 
     globalClassRef = (*jenv)->NewGlobalRef(jenv, localClassRef);
-    (*jenv)->DeleteLocalRef(jenv, localClassRef);
+    //(*jenv)->DeleteLocalRef(jenv, localClassRef);
     if (globalClassRef == NULL) {
         PyErr_NoMemory();
         return NULL;
@@ -885,81 +885,4 @@ void JPy_HandleJavaException(JNIEnv* jenv)
         (*jenv)->ExceptionClear(jenv);
     }
 }
-
-void JPy_HandlePythonException(JNIEnv* jenv)
-{
-    PyObject* pyType;
-    PyObject* pyValue;
-    PyObject* pyTraceback;
-
-    PyObject* pyTypeStr;
-    PyObject* pyValueStr;
-    PyObject* pyTracebackStr;
-
-    PyObject* pyTypeUtf8;
-    PyObject* pyValueUtf8;
-    PyObject* pyTracebackUtf8;
-
-    char* typeChars;
-    char* valueChars;
-    char* tracebackChars;
-    char* javaMessage;
-
-    jint ret;
-
-    if (PyErr_Occurred() == NULL) {
-        return;
-    }
-
-    PyErr_Fetch(&pyType, &pyValue, &pyTraceback);
-    PyErr_NormalizeException(&pyType, &pyValue, &pyTraceback);
-
-    //printf("JPy_HandlePythonException 1: %p, %p, %p\n", pyType, pyValue, pyTraceback);
-
-    pyTypeStr = pyType != NULL ? PyObject_Str(pyType) : NULL;
-    pyValueStr = pyValue != NULL ? PyObject_Str(pyValue) : NULL;
-    pyTracebackStr = pyTraceback != NULL ? PyObject_Str(pyTraceback) : NULL;
-
-    //printf("JPy_HandlePythonException 2: %p, %p, %p\n", pyTypeStr, pyValueStr, pyTracebackStr);
-
-    pyTypeUtf8 = pyTypeStr != NULL ? PyUnicode_AsEncodedString(pyTypeStr, "utf-8", "replace") : NULL;
-    pyValueUtf8 = pyValueStr != NULL ? PyUnicode_AsEncodedString(pyValueStr, "utf-8", "replace") : NULL;
-    pyTracebackUtf8 = pyTracebackStr != NULL ? PyUnicode_AsEncodedString(pyTracebackStr, "utf-8", "replace") : NULL;
-
-    //printf("JPy_HandlePythonException 3: %p, %p, %p\n", pyTypeUtf8, pyValueUtf8, pyTracebackUtf8);
-
-    typeChars = pyTypeUtf8 != NULL ? PyBytes_AsString(pyTypeUtf8) : NULL;
-    valueChars = pyValueUtf8 != NULL ? PyBytes_AsString(pyValueUtf8) : NULL;
-    tracebackChars = pyTracebackUtf8 != NULL ? PyBytes_AsString(pyTracebackUtf8) : NULL;
-
-    //printf("JPy_HandlePythonException 4: %s, %s, %s\n", typeChars, valueChars, tracebackChars);
-
-    javaMessage = PyMem_New(char,
-                            (typeChars != NULL ? strlen(typeChars) : 8)
-                           + (valueChars != NULL ? strlen(valueChars) : 8)
-                           + (tracebackChars != NULL ? strlen(tracebackChars) : 8) + 80);
-    if (javaMessage != NULL) {
-        sprintf(javaMessage, "An error occurred in the Python interpreter:\n%s: %s\n%s", typeChars, valueChars, tracebackChars);
-        ret = (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, javaMessage);
-    } else {
-        ret = (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, valueChars);
-    }
-
-    //printf("JPy_HandlePythonException 5: %s\n", javaMessage);
-
-    PyMem_Del(javaMessage);
-
-    Py_DECREF(pyType);
-    Py_DECREF(pyValue);
-    Py_DECREF(pyTraceback);
-
-    Py_DECREF(pyTypeStr);
-    Py_DECREF(pyValueStr);
-    Py_DECREF(pyTracebackStr);
-
-    Py_DECREF(pyTypeUtf8);
-    Py_DECREF(pyValueUtf8);
-    Py_DECREF(pyTracebackUtf8);
-}
-
 

@@ -33,6 +33,7 @@ public class PyLib {
 
             String libPath = getProperty(JPY_LIB_KEY, true);
             // E.g. libPath = "/usr/local/lib/python3.3/dist-packages/jpy.cpython-33m.so";
+            //System.out.println(JPY_LIB_KEY + " = " + libPath);
             System.load(libPath);
             problem = null;
         } catch (Throwable t) {
