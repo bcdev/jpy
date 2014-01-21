@@ -30,7 +30,7 @@ jpy Functions
     |                               |  For example, ``-verbose:gc,class`` instructs the JVM to print GC and class                                            |
     |                               |  loading related messages. Standard names include: gc, class, and jni.                                                 |
     +-------------------------------+------------------------------------------------------------------------------------------------------------------------+
-    | ``-X<value>``                 |  Set a non-standard JVM option which begins with ``-X`` or an underscore. For example,                                  |
+    | ``-X<value>``                 |  Set a non-standard JVM option which begins with ``-X`` or an underscore. For example,                                 |
     |                               |  the Oracle JDK/JRE supports ``-Xms`` and ``-Xmx`` options to allow programmers specify the initial                    |
     |                               |  and maximum heap size.                                                                                                |
     +-------------------------------+------------------------------------------------------------------------------------------------------------------------+
