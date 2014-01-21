@@ -21,22 +21,27 @@ jpy Functions
     +-------------------------------+------------------------------------------------------------------------------------------------------------------------+
     | Option                        |  Meaning                                                                                                               |
     +===============================+========================================================================================================================+
-    | ``-D<name>=<value>``          |  Set a `Java system property <http://docs.oracle.com/javase/7/docs/api/java/lang/System.html#getProperties%28%29>`_    |
+    | ``-D<name>=<value>``          |  Set a `Java system property <http://docs.oracle.com/javase/7/docs/api/java/lang/System.html#getProperties%28%29>`_.   |
+    |                               |  The most important system property is ``java.class.path`` to include your Java libraries. You may also consider       |
+    |                               |  ``java.library.path`` if your Java code uses native code provided in shared libraries.                                |
     +-------------------------------+------------------------------------------------------------------------------------------------------------------------+
     | ``-verbose[:class|gc|jni]``   |  Enable verbose output. The options can be followed by a comma-separated list                                          |
     |                               |  of names indicating what kind of messages will be printed by the JVM.                                                 |
     |                               |  For example, ``-verbose:gc,class`` instructs the JVM to print GC and class                                            |
     |                               |  loading related messages. Standard names include: gc, class, and jni.                                                 |
     +-------------------------------+------------------------------------------------------------------------------------------------------------------------+
-    | ``-X<value>``                 |  Non-standard option names must begin with ``-X`` or an underscore ("_"). For example,                                 |
-    |                               |  the JDK/JRE supports ``-Xms`` and ``-Xmx`` options to allow programmers specify the initial and maximum heap size.    |
+    | ``-X<value>``                 |  Set a non-standard JVM option which begins with ``-X`` or an underscore. For example,                                  |
+    |                               |  the Oracle JDK/JRE supports ``-Xms`` and ``-Xmx`` options to allow programmers specify the initial                    |
+    |                               |  and maximum heap size.                                                                                                |
     +-------------------------------+------------------------------------------------------------------------------------------------------------------------+
 
-    For example: ::
-
-        jpy.create_jvm['-Xmx512M', '-Djava.class.path=/usr/home/norman/jpy-test/classes'])
-
     The function throws a runtime error on failure. It has no return value.
+
+    Usage example::
+
+        jpy.create_jvm(['-Xmx512M', '-Djava.class.path=/usr/home/norman/jpy-test/classes'])
+
+
 
 
 .. py:function:: destroy_jvm()
