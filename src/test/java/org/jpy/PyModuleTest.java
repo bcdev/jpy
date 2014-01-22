@@ -16,14 +16,14 @@ import static org.junit.Assert.assertNotNull;
 public class PyModuleTest {
     @BeforeClass
     public static void setUp() throws Exception {
-        assertEquals(false, PyLib.isInterpreterInitialized());
-        PyLib.initializeInterpreter();
-        assertEquals(true, PyLib.isInterpreterInitialized());
+        assertEquals(false, PyLib.isPythonRunning());
+        PyLib.startPython();
+        assertEquals(true, PyLib.isPythonRunning());
     }
 
     @AfterClass
     public static void tearDown() throws Exception {
-        PyLib.destroyInterpreter();
+        PyLib.stopPython();
     }
 
     @Test

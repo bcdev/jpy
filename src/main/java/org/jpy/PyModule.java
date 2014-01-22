@@ -1,6 +1,6 @@
 package org.jpy;
 
-import static org.jpy.PyLib.assertInterpreterInitialized;
+import static org.jpy.PyLib.assertPythonRuns;
 
 /**
  * Represents a Python module.
@@ -21,13 +21,13 @@ public class PyModule extends PyObject {
     }
 
     public static PyModule importModule(String name) {
-        PyLib.assertInterpreterInitialized();
+        assertPythonRuns();
         long pointer = PyLib.importModule(name);
-        return new PyModule(name, pointer);
+        return pointer != 0 ? new PyModule(name, pointer) : null;
     }
 
     public <T> T createProxy(Class<T> type) {
-        assertInterpreterInitialized();
+        assertPythonRuns();
         return (T) createProxy(PyLib.CallableKind.FUNCTION, type);
     }
 }

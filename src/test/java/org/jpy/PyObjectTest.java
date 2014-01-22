@@ -17,25 +17,19 @@ import static org.junit.Assert.assertNotNull;
 public class PyObjectTest {
     @BeforeClass
     public static void setUp() throws Exception {
-        assertEquals(false, PyLib.isInterpreterInitialized());
-        PyLib.initializeInterpreter();
-        assertEquals(true, PyLib.isInterpreterInitialized());
+        assertEquals(false, PyLib.isPythonRunning());
+        PyLib.startPython();
+        assertEquals(true, PyLib.isPythonRunning());
     }
 
     @AfterClass
     public static void tearDown() throws Exception {
-        PyLib.destroyInterpreter();
+        PyLib.stopPython();
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testNullPointer() throws Exception {
         new PyObject(0);
-    }
-
-    @Test
-    public void testNULL() throws Exception {
-        assertNotNull(PyObject.NULL);
-        assertEquals(0, PyObject.NULL.getPointer());
     }
 
     @Test

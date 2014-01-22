@@ -9,26 +9,26 @@ extern "C" {
 #endif
 /*
  * Class:     org_jpy_PyLib
- * Method:    isInterpreterInitialized
+ * Method:    isPythonRunning
  * Signature: ()Z
  */
-JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_isInterpreterInitialized
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_isPythonRunning
   (JNIEnv *, jclass);
 
 /*
  * Class:     org_jpy_PyLib
- * Method:    initializeInterpreter
- * Signature: ()Z
+ * Method:    startPython
+ * Signature: ([Ljava/lang/String;)V
  */
-JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_initializeInterpreter
-  (JNIEnv *, jclass);
+JNIEXPORT void JNICALL Java_org_jpy_PyLib_startPython
+  (JNIEnv *, jclass, jobjectArray);
 
 /*
  * Class:     org_jpy_PyLib
- * Method:    destroyInterpreter
+ * Method:    stopPython
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_org_jpy_PyLib_destroyInterpreter
+JNIEXPORT void JNICALL Java_org_jpy_PyLib_stopPython
   (JNIEnv *, jclass);
 
 /*

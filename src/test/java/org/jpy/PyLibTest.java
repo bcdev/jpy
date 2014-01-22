@@ -9,24 +9,30 @@ import static org.junit.Assert.assertTrue;
 
 public class PyLibTest {
     @BeforeClass
-    public static void setUp() throws Exception {
-        assertEquals(false, PyLib.isInterpreterInitialized());
-        PyLib.initializeInterpreter();
+    public static void setUpClass() throws Exception {
+        assertEquals(false, PyLib.isPythonRunning());
+        PyLib.startPython();
         PyLib.Diag.setFlags(PyLib.Diag.F_ALL);
-        assertEquals(true, PyLib.isInterpreterInitialized());
+        assertEquals(true, PyLib.isPythonRunning());
     }
 
     @AfterClass
-    public static void tearDown() throws Exception {
-        assertEquals(true, PyLib.isInterpreterInitialized());
-        PyLib.destroyInterpreter();
-        assertEquals(false, PyLib.isInterpreterInitialized());
+    public static void tearDownClass() throws Exception {
+        assertEquals(true, PyLib.isPythonRunning());
+        PyLib.stopPython();
+        assertEquals(false, PyLib.isPythonRunning());
     }
 
     @Test
     public void testExecScript() throws Exception {
         int exitCode = PyLib.execScript(String.format("print('%s says: \"Hello Python!\"')", PyLibTest.class.getName()));
         assertEquals(0, exitCode);
+    }
+
+    @Test
+    public void testExecScriptInError() throws Exception {
+        int exitCode = PyLib.execScript("1 / 0");
+        assertEquals(-1, exitCode);
     }
 
     @Test
@@ -73,14 +79,14 @@ public class PyLibTest {
     @Test
     public void testCallAndReturnObject() throws Exception {
         long builtins;
-        long pyObject;
+        long pointer;
 
         builtins = PyLib.importModule("builtins");
         assertTrue(builtins != 0);
 
-        pyObject = PyLib.callAndReturnObject(builtins, false, "max", 2, new Object[]{"A", "Z"}, null);
-        assertTrue(pyObject != 0);
+        pointer = PyLib.callAndReturnObject(builtins, false, "max", 2, new Object[]{"A", "Z"}, null);
+        assertTrue(pointer != 0);
 
-        assertEquals("Z", new PyObject(pyObject).getStringValue());
+        assertEquals("Z", new PyObject(pointer).getStringValue());
     }
 }

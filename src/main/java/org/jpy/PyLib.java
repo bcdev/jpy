@@ -40,20 +40,32 @@ public class PyLib {
      * Throws a runtime exception if the shared Python library code could not be loaded
      * or if the Python interpreter could not be initialised.
      */
-    public static void assertInterpreterInitialized() {
+    public static void assertPythonRuns() {
         if (sharedLibraryProblem != null) {
             throw new RuntimeException("PyLib not initialized", sharedLibraryProblem);
         }
-        if (!isInterpreterInitialized()) {
-            throw new RuntimeException("Python interpreter not initialized");
+        if (!isPythonRunning()) {
+            throw new RuntimeException("PyLib not initialized");
         }
     }
 
-    public static native boolean isInterpreterInitialized();
+    /**
+     * @return {@code true} if the Python interpreter is running and the the 'jpy' module has been loaded.
+     */
+    public static native boolean isPythonRunning();
 
-    public static native boolean initializeInterpreter();
+    /**
+     * Starts the Python interpreter and imports the 'jpy' module.
+     *
+     * @param options Python interpreter options (not used yet)
+     * @throws RuntimeException is Python could not be started or if the 'jpy' module could not be loaded.
+     */
+    public static native void startPython(String... options);
 
-    public static native void destroyInterpreter();
+    /**
+     * Stops the Python interpreter.
+     */
+    public static native void stopPython();
 
     public static native int execScript(String script);
 
