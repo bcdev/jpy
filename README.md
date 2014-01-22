@@ -1,51 +1,80 @@
 jpy
 ===
 
-Features
---------
+jpy is a *bi-directional* Java-Python bridge which you can use to embed Java code in Python programs or the other
+way round. It has been designed particularly with regard to maximum data transfer speed between the two languages.
+It comes with a number of outstanding features:
 
-* 1:1 translation from public Java to Python classes
-* Bidirectional communication:
-  - embed Java VM in Python programs
-  - embed Python VM in Java programs
-* Preserves Java type hierarchy
-* Support of Java multi-threading
+* Fully translates Java class hierarchies to Python
 * Transparently handles Java method overloading
-* Fast & efficient support of primitive Java array parameters via Python buffers.
-  E.g. use a numpy array argument, whenever a Java primitive array parameter is expected
-* Supports Java methods that modify primitive Java array passed in as buffers
-  (mutable array parameters)
-* Java arrays are sequences and Java pimitive arrays are also Python buffers
+* Support of Java multi-threading
+* Fast and memory-efficient support of primitive Java array parameters via `Python buffers <http://docs.python.org/3.3/c-api/buffer.html>`_
+  (e.g. `numpy arrays <http://docs.scipy.org/doc/numpy/reference/arrays.html>`_)
+* Support of Java methods that modify primitive Java array parameters (mutable parameters)
+* Java arrays translate into Python sequence objects
+* Java API for accessing Python objects (``jpy.jar``)
+
+The initial development of jpy has been driven by the need to write Python extensions to an established scientific
+imaging application programmed in Java (`ESA BEAM <http://www.brockmann-consult.de/cms/web/beam/>`_).
+Writing such Python plug-ins for a Java application usually requires a bi-directional communication between Java and
+Python, namely the Python extension code must be able to calling back into the Java APIs.
 
 
-System Requirements
--------------------
+How to Build
+------------
+
+After you have checked out jpy from GitHub or downloaded the sources, open a terminal window and cd into the check-out
+directory. Then you first have to build and install the jpy Python module and then the jyp Java library.
+
+Windows
+^^^^^^^
+
+You will need
 * Python 3.3
-* Python 3.3 Dev (Unix/Darwin)
-* JDK 1.7 (at build time)
-* JRE 1.7 (at runtime)
-* Microsoft Visual Studio 10 (Windows)
+* JDK 1.7
+* Maven 3
+* Microsoft Visual C++ 2010 (MSVC)
 
-How to build on Windows
------------------------
+The Python setup tools make use of the command-line C/C++ compiler of MSVC so you need to set all required compiler
+environment variables as described in http://msdn.microsoft.com/en-us/library/f2ccy3wt.aspx. Note that if you use
+Microsoft Visual C++ 2010 Express, then only 32-bit versions of jpy can be built. In this case make sure that you also
+use the 32-bit versions of Python and the JDK.
 
-Currently, only 32-bit versions are supported.
+To build and test the jpy Python module use the following commands:
 
-    > SET JDK_HOME=%JDK32_HOME%
     > SET VS90COMNTOOLS=%VS100COMNTOOLS%
     > SET PATH=%JDK_HOME%\jre\bin\server;%PATH%
     > python setup.py install
 
-To create a Windows executable installer, use
+To create a jpy Windows executable installer, use
 
     > python setup.py bdist_wininst
 
-How to build on Unix/Darwin
----------------------------
+To build and test the jpy Java library we use Maven:
+
+    > SET JAVA_HOME=%JDK_HOME%
+    > mvn install
+
+
+Unix/Darwin
+^^^^^^^^^^^
+
+You will need
+* Python 3.3 Dev (!)
+* JDK 1.7
+* Maven 3
+* gcc
+
+To build and test the jpy Python module use the following commands:
 
     > export JDK_HOME=%JDK32_HOME%
     > export path=$JDK_HOME\jre\bin\server;$path
     > python3.3 setup.py install --user
+
+To build and test the jpy Java library we use Maven:
+
+    > SET JAVA_HOME=%JDK_HOME%
+    > mvn install
 
 How to modify
 -------------
@@ -117,33 +146,11 @@ Disadvantages to the 'beampy' codegen approach:
 * Memory overhead because for every Java class we create a Python type that stores all Java methods as attributes
 
 
-Current limitations
--------------------
-*Non-final, static class fields are not supported.*
-Reason: In jpy, Java classes are represented in Python as (dynamically allocated) built-in 
-extension types. Built-in extension types cannot have (as of Python 3.3) static, computed 
-attributes which we would need for getting/setting Java static class fields. 
-See also
-* http://stackoverflow.com/questions/10161609/class-property-using-org.jpy.python-c-api
-* http://joyrex.spc.uchicago.edu/bookshelves/org.jpy.python/cookbook/pythoncook-CHP-16-SECT-6.html
-
-*Public final static fields are represented as normal (non-computed) type attributes.*
-Their values are Python representations of the final Java values. The limitation here is, that they
-can be overwritten from Python, because Python does not know final/constant attributes. This could
-only be achieved with computed attributes, but as said before, they are not supported for 
-built-in extension types.
-
-*We currently cannot shutdown the JVM and then restart it.*
-
 
 
 Final TODOs for v1.0
 --------------------
-* Add the possibility to let users pythonically import Java classes: e.g.
-     `from java.io import File`
-  instead of
-     `File = jpy.get_class('java.io.File')`
-  This is also how it is done in Jython.
+
 * Assert rigorously that Python reference counting is correct.
 * Assert rigorously that Java global/local references are correctly created and released.
 
@@ -167,9 +174,3 @@ Possible Usability Improvements and Optimisations
        Py_DECREF(pyUTF8);
 
 
-See also
---------
-
-* http://www.jython.org/
-* http://jyni.org/
-* https://code.google.com/p/jynx/

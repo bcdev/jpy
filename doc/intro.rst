@@ -3,7 +3,7 @@
 Introduction
 ############
 
-jpy is a bi-directional Java-Python bridge which you can use to embed Java code in Python programs or the other
+jpy is a **bi-directional** Java-Python bridge which you can use to embed Java code in Python programs or the other
 way round. It has been designed particularly with regard to maximum data transfer speed between the two languages.
 It comes with a number of outstanding features:
 
@@ -23,8 +23,18 @@ Python, namely the Python extension code must be able to calling back into the J
 
 
 ************
-How It Works
+How it works
 ************
+
+The jpy Python module is entirely written in the C programming language. The same resulting shared library is used
+as a Python jpy module and also as native library for the Java library (``jpy.jar``).
+
+Python programs that import the ``jpy`` module can load Java classes, access Java class fields, and call class
+constructors and methods.
+
+Java programs with ``jpy.jar`` on the classpath can import Python modules, access module attributes such as class
+types and variables, and call any callable objects such as module-level functions, class constructors, as well as
+static and instance class methods.
 
 
 Calling Java from Python
@@ -44,15 +54,22 @@ Instantiate Python objects from Java classes and call their public methods and f
 Calling Python from Java
 ========================
 
-Call Python functions from Java::
+Access Python attributes and call Python functions from Java::
 
-    PyModule sys = PyModule.importModule("sys")
-    PyObject path = sys.getAttribute("path")
+    PyModule sys = PyModule.importModule("sys");
+    PyObject path = sys.getAttribute("path");
+    path.call("append", "/usr/home/norman/");
     String value = path.getStringValue();
 
 
-Instantiating Java objects from Python modules or classes and call Python module functions or Python class methods
-is as simple. Assuming we have a Java interface ``PlugIn.java`` ::
+Implementing Java interfaces using Python
+========================================
+
+With jpy you can implement Java interfaces using Python. We instantiating Java (proxy) objects from Python modules or
+classes. If you call methods of the resulting Java object, jpy will delegate the calls to the matching Python
+module functions or class methods. Here is how this works.
+
+Assuming we have a Java interface ``PlugIn.java`` ::
 
     public interface PlugIn {
         String[] process(String arg);
@@ -67,19 +84,52 @@ and a Python implementation ``bibo_plugin.py`` ::
 
 then we can call the Python code from Java as follows ::
 
-    PyModule plugInModule = PyLib.importModule("bibo_plugin")
-    PyObject plugInClass = plugInModule.getAttribute("BiboPlugIn")
+    // Import the Python module
+    PyModule plugInModule = PyLib.importModule("bibo_plugin");
+
+    // Get the Python class
+    PyObject plugInClass = plugInModule.getAttribute("BiboPlugIn");
+
+    // Call the Python class to instantiate an object
     PyObject plugInObj = plugInClass.call();
+
+    // Create a Java proxy object for the Python object
     PlugIn plugIn = plugInObj.createProxy(PlugIn.class);
 
-    String[] result = plugIn.process('Abcdefghi jkl mnopqr stuv wxy z')
+    String[] result = plugIn.process('Abcdefghi jkl mnopqr stuv wxy z');
 
 
-**************
-Technical Info
-**************
+*******************
+Current limitations
+*******************
+
+*Java non-final, static class fields are currently not supported:*
+Reason: In jpy, Java classes are represented in Python as (dynamically allocated) built-in
+extension types. Built-in extension types cannot have (as of Python 3.3) static, computed
+attributes which we would need for getting/setting Java static class fields.
+
+See also
+* `Ref 1 <http://stackoverflow.com/questions/10161609/class-property-using-org.jpy.python-c-api>`_
+* `Ref 2 <http://joyrex.spc.uchicago.edu/bookshelves/org.jpy.python/cookbook/pythoncook-CHP-16-SECT-6.html>`_
+
+*Public final static fields are represented as normal (non-computed) type attributes:*
+Their values are Python representations of the final Java values. The limitation here is, that they
+can be overwritten from Python, because Python does not know final/constant attributes. This could
+only be achieved with computed attributes, but as said before, they are not supported for
+built-in extension types.
+
+*It is currently not possible to shutdown the Java VM from Python and then restart it.*
 
 
-The jpy Python module is entirely written in the C programming language. The same resulting shared library is used
-as a Python jpy module and also as native library for the Java module (``jpy.jar``).
+
+
+********************************
+Other projects with similar aims
+********************************
+
+* `JPype <http://jpype.sourceforge.net/>`_ - allow python programs full access to java class libraries
+* `Jython <http://www.jython.org/>`_ - Python for the Java Platform
+* `JyNI <http://jyni.org/>`_ - Jython Native Interface
+* `Jynx <https://code.google.com/p/jynx/>`_ - improve integration of Java with Python
+
 
