@@ -70,7 +70,7 @@ then we can call the Python code from Java as follows ::
     PyModule plugInModule = PyLib.importModule("bibo_plugin")
     PyObject plugInClass = plugInModule.getAttribute("BiboPlugIn")
     PyObject plugInObj = plugInClass.call();
-    PlugIn plugIn = plugInObj.cast(PlugIn.class);
+    PlugIn plugIn = plugInObj.createProxy(PlugIn.class);
 
     String[] result = plugIn.process('Abcdefghi jkl mnopqr stuv wxy z')
 
