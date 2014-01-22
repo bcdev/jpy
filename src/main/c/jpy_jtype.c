@@ -54,7 +54,8 @@ JPy_JType* JType_GetTypeForName(JNIEnv* jenv, const char* typeName, jboolean res
         PyMem_Del((char*) resourceName);
     }
 
-    if (classRef == NULL) {
+    if (classRef == NULL || (*jenv)->ExceptionCheck(jenv)) {
+        (*jenv)->ExceptionClear(jenv);
         PyErr_Format(PyExc_ValueError, "Java class '%s' not found", typeName);
         return NULL;
     }
@@ -206,6 +207,9 @@ PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject
             jdouble value = (*jenv)->CallDoubleMethod(jenv, objectRef, JPy_Number_DoubleValue_MID);
             JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
             return JPy_FROM_JDOUBLE(value);
+        } else if (type == JPy_JPyObject || type == JPy_JPyModule) {
+            jlong value = (*jenv)->CallLongMethod(jenv, objectRef, JPy_PyObject_GetPointer_MID);
+            return (PyObject*) value;
         } else if (type == JPy_JString) {
             return JPy_FromJString(jenv, objectRef);
         }

@@ -83,6 +83,8 @@ extern struct JPy_JType* JPy_JFloatObj;
 extern struct JPy_JType* JPy_JDoubleObj;
 extern struct JPy_JType* JPy_JObject;
 extern struct JPy_JType* JPy_JString;
+extern struct JPy_JType* JPy_JPyObject;
+extern struct JPy_JType* JPy_JPyModule;
 
 // java.lang.Comparable
 extern jclass JPy_Comparable_JClass;
@@ -116,9 +118,7 @@ extern jmethodID JPy_Field_GetName_MID;
 extern jmethodID JPy_Field_GetModifiers_MID;
 extern jmethodID JPy_Field_GetType_MID;
 
-
 extern jclass JPy_RuntimeException_JClass;
-
 
 extern jclass JPy_Boolean_JClass;
 extern jmethodID JPy_Boolean_Init_MID;
@@ -154,6 +154,7 @@ extern jmethodID JPy_Number_DoubleValue_MID;
 extern jclass JPy_String_JClass;
 extern jclass JPy_Void_JClass;
 
+extern jmethodID JPy_PyObject_GetPointer_MID;
 
 #ifdef __cplusplus
 } /* extern "C" */

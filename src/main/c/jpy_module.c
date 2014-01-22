@@ -94,7 +94,8 @@ JPy_JType* JPy_JFloatObj = NULL;
 JPy_JType* JPy_JDoubleObj = NULL;
 JPy_JType* JPy_JObject = NULL;
 JPy_JType* JPy_JString = NULL;
-
+JPy_JType* JPy_JPyObject = NULL;
+JPy_JType* JPy_JPyModule = NULL;
 
 
 // java.lang.Comparable
@@ -171,6 +172,9 @@ jmethodID JPy_Number_DoubleValue_MID = NULL;
 
 jclass JPy_Void_JClass = NULL;
 jclass JPy_String_JClass = NULL;
+
+jclass JPy_PyObject_JClass = NULL;
+jmethodID JPy_PyObject_GetPointer_MID = NULL;
 
 // }}}
 
@@ -640,6 +644,25 @@ jmethodID JPy_GetMethod(JNIEnv* jenv, jclass classRef, const char* name, const c
     }
 
 
+void initGlobalPyObjectVars(JNIEnv* jenv)
+{
+    JPy_JPyObject = JType_GetTypeForName(jenv, "org.jpy.PyObject", JNI_FALSE);
+    if (JPy_JPyObject == NULL) {
+        // org.jpy.PyObject may not be on the classpath, which is ok
+        PyErr_Clear();
+    } else {
+        DEFINE_METHOD(JPy_PyObject_GetPointer_MID, JPy_JPyObject->classRef, "getPointer", "()J");
+    }
+
+    JPy_JPyModule = JType_GetTypeForName(jenv, "org.jpy.PyModule", JNI_FALSE);
+    if (JPy_JPyModule == NULL) {
+        // org.jpy.PyModule may not be on the classpath, which is ok
+        PyErr_Clear();
+    }
+    //printf("JPy_JPyObject=%p, JPy_PyObject_GetPointer_MID=%p\n", JPy_JPyObject, JPy_PyObject_GetPointer_MID);
+}
+
+
 int JPy_InitGlobalVars(JNIEnv* jenv)
 {
     if (JPy_Comparable_JClass != NULL) {
@@ -677,9 +700,7 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     DEFINE_METHOD(JPy_Method_GetParameterTypes_MID, JPy_Method_JClass, "getParameterTypes", "()[Ljava/lang/Class;");
     DEFINE_METHOD(JPy_Method_GetReturnType_MID, JPy_Method_JClass, "getReturnType", "()Ljava/lang/Class;");
 
-
     DEFINE_CLASS(JPy_RuntimeException_JClass, "java/lang/RuntimeException");
-
 
     DEFINE_CLASS(JPy_Boolean_JClass, "java/lang/Boolean");
     DEFINE_METHOD(JPy_Boolean_Init_MID, JPy_Boolean_JClass, "<init>", "(Z)V");
@@ -739,6 +760,8 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     DEFINE_OBJECT_TYPE(JPy_JDoubleObj, JPy_Double_JClass);
     // Other objects.
     DEFINE_OBJECT_TYPE(JPy_JString, JPy_String_JClass);
+
+    initGlobalPyObjectVars(jenv);
 
     return 0;
 }
@@ -815,6 +838,7 @@ void JPy_ClearGlobalVars(JNIEnv* jenv)
     JPy_Number_DoubleValue_MID = NULL;
     JPy_Void_JClass = NULL;
     JPy_String_JClass = NULL;
+    JPy_PyObject_GetPointer_MID = NULL;
 
     Py_DECREF(JPy_JBoolean);
     Py_DECREF(JPy_JChar);
@@ -833,6 +857,8 @@ void JPy_ClearGlobalVars(JNIEnv* jenv)
     Py_DECREF(JPy_JLongObj);
     Py_DECREF(JPy_JFloatObj);
     Py_DECREF(JPy_JDoubleObj);
+    Py_XDECREF(JPy_JPyObject);
+    Py_XDECREF(JPy_JPyModule);
 
     JPy_JBoolean = NULL;
     JPy_JChar = NULL;
@@ -852,6 +878,8 @@ void JPy_ClearGlobalVars(JNIEnv* jenv)
     JPy_JLongObj = NULL;
     JPy_JFloatObj = NULL;
     JPy_JDoubleObj = NULL;
+    JPy_JPyObject = NULL;
+    JPy_JPyModule = NULL;
 }
 
 

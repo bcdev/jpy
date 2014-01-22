@@ -10,7 +10,6 @@
 #include "org_jpy_PyLib.h"
 #include "org_jpy_PyLib_Diag.h"
 
-
 PyObject* PyLib_GetAttributeObject(JNIEnv* jenv, PyObject* pyValue, jstring jName);
 PyObject* PyLib_CallAndReturnObject(JNIEnv *jenv, PyObject* pyValue, jboolean isMethodCall, jstring jName, jint argCount, jobjectArray jArgs, jobjectArray jParamClasses);
 
@@ -84,9 +83,11 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_stopPython
   (JNIEnv* jenv, jclass jLibClass)
 {
     JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_stopPython: entered\n");
+
     if (Py_IsInitialized()) {
         Py_Finalize();
     }
+
     JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_stopPython: exiting\n");
 }
 
@@ -410,7 +411,6 @@ PyObject* PyLib_GetAttributeObject(JNIEnv* jenv, PyObject* pyObject, jstring jNa
     (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
     return pyValue;
 }
-
 
 PyObject* PyLib_CallAndReturnObject(JNIEnv *jenv, PyObject* pyObject, jboolean isMethodCall, jstring jName, jint argCount, jobjectArray jArgs, jobjectArray jParamClasses)
 {
