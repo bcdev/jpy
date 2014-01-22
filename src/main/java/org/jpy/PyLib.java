@@ -105,8 +105,8 @@ public class PyLib {
      * <p/>
      * Before the Python attribute is set, the Java {@code value} is converted into a corresponding
      * Python object using the optional {@code valueType}.
-     * Todo: The {@code value} may also be of type {@code PyObject}.
-     * This will be directly translated into the corresponding Python object without conversion.
+     * The {@code value} may also be of type {@code PyObject}.
+     * In this case, it will be directly translated into the corresponding Python object without conversion.
      *
      * @param pointer   Identifies the Python object which contains the attribute {@code name}.
      * @param name      The attribute name.
@@ -120,7 +120,7 @@ public class PyLib {
      * <p/>
      * Before the Python callable is called, the {@code args} array of Java objects is converted into corresponding
      * Python objects.
-     * Todo: The {@code args} array may also contain objects of type {@code PyObject}.
+     * The {@code args} array may also contain objects of type {@code PyObject}.
      * These will be directly translated into the corresponding Python objects without conversion.
      *
      * @param pointer    Identifies the Python object which contains the callable {@code name}.
@@ -145,7 +145,7 @@ public class PyLib {
      * Before the Python callable is called, the {@code args} array of Java objects is converted into corresponding
      * Python objects. The return value of the Python call is converted to a Java object according the the given
      * return type.
-     * Todo: The {@code args} array may also contain objects of type {@code PyObject}.
+     * The {@code args} array may also contain objects of type {@code PyObject}.
      * These will be directly translated into the corresponding Python objects without conversion.
      *
      * @param pointer    Identifies the Python object which contains the callable {@code name}.
@@ -169,23 +169,49 @@ public class PyLib {
     /**
      * Controls output of diagnostic information for debugging.
      */
+    @SuppressWarnings("UnusedDeclaration")
     public static class Diag {
 
         static {
             PyLib.loadLib();
         }
 
+        /**
+         * Print no diagnostic information at all.
+         */
         public static final int F_OFF = 0x00;
+        /**
+         * Print diagnostic information while Java types are resolved.
+         */
         public static final int F_TYPE = 0x01;
+        /**
+         * Print diagnostic information while Java methods overloads are selected.
+         */
         public static final int F_METH = 0x02;
+        /**
+         * Print diagnostic information when code execution flow is passed from Java to Python or the other way round.
+         */
         public static final int F_EXEC = 0x04;
+        /**
+         * Print diagnostic information about memory allocation/deallocation.
+         */
         public static final int F_MEM = 0x08;
+        /**
+         * Print any diagnostic information.
+         */
         public static final int F_ALL = 0xff;
 
+        /**
+         * @return the current diagnostic flags.
+         */
         public static native int getFlags();
 
+        /**
+         * Sets the current diagnostic flags.
+         *
+         * @param flags the current diagnostic flags.
+         */
         public static native void setFlags(int flags);
-
     }
 
     private static void loadLib() {
