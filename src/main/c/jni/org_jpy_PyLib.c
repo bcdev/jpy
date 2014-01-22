@@ -201,6 +201,43 @@ JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_getObjectValue
     return jObject;
 }
 
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    getObjectArrayValue
+ * Signature: (JLjava/lang/Class;)[Ljava/lang/Object;
+ */
+JNIEXPORT jobjectArray JNICALL Java_org_jpy_PyLib_getObjectArrayValue
+  (JNIEnv* jenv, jclass jLibClass, jlong objId, jclass itemClassRef)
+{
+    PyObject* pyObject;
+    jobject jObject;
+
+    pyObject = (PyObject*) objId;
+
+    if (JObj_Check(pyObject)) {
+        jObject = ((JPy_JObj*) pyObject)->objectRef;
+    } else if (PySequence_Check(pyObject)) {
+        PyObject* pyItem;
+        jobject jItem;
+        jint i, length = PySequence_Length(pyObject);
+
+        jObject = (*jenv)->NewObjectArray(jenv, length, itemClassRef, NULL);
+
+        for (i = 0; i < length; i++) {
+            pyItem = PySequence_GetItem(pyObject, i);
+            if (JPy_AsJObject(jenv, pyItem, &jItem) < 0) {
+                JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_getObjectArrayValue: error: failed to convert Python object to Java Object\n");
+                JPy_HandlePythonException(jenv);
+                return NULL;
+            }
+            Py_XDECREF(pyItem);
+            (*jenv)->SetObjectArrayElement(jenv, jObject, i, jItem);
+        }
+    }
+
+    return jObject;
+}
+
 
 /*
  * Class:     org_jpy_python_PyLib

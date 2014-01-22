@@ -81,6 +81,14 @@ JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_getObjectValue
 
 /*
  * Class:     org_jpy_PyLib
+ * Method:    getObjectArrayValue
+ * Signature: (JLjava/lang/Class;)[Ljava/lang/Object;
+ */
+JNIEXPORT jobjectArray JNICALL Java_org_jpy_PyLib_getObjectArrayValue
+  (JNIEnv *, jclass, jlong, jclass);
+
+/*
+ * Class:     org_jpy_PyLib
  * Method:    importModule
  * Signature: (Ljava/lang/String;)J
  */

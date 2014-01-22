@@ -54,6 +54,11 @@ public class PyObject {
         return PyLib.getObjectValue(getPointer());
     }
 
+    public <T> T[] getObjectArrayValue(Class<T> itemType) {
+        assertPythonRuns();
+        return PyLib.getObjectArrayValue(getPointer(), itemType);
+    }
+
     public PyObject getAttribute(String name) {
         assertPythonRuns();
         long pointer = PyLib.getAttributeObject(getPointer(), name);

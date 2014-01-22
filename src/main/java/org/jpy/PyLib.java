@@ -79,6 +79,8 @@ public class PyLib {
 
     static native Object getObjectValue(long pointer);
 
+    static native <T> T[] getObjectArrayValue(long pointer, Class<T> itemType);
+
     static native long importModule(String name);
 
     /**
