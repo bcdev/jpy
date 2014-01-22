@@ -1,4 +1,4 @@
-package org.jpy.python;
+package org.jpy;
 
 import junit.framework.Assert;
 import org.jpy.fixtures.Processor;
@@ -18,7 +18,7 @@ public class PyObjectTest {
     @BeforeClass
     public static void setUp() throws Exception {
         assertEquals(false, PyLib.isInterpreterInitialized());
-        PyLib.initializeInterpreter(new String[0]);
+        PyLib.initializeInterpreter();
         assertEquals(true, PyLib.isInterpreterInitialized());
     }
 
@@ -86,15 +86,15 @@ public class PyObjectTest {
         PyModule imp = PyModule.importModule("imp");
         // Call imp.new_module('') module
         PyObject myobj = imp.call("new_module", "myobj");
-        myobj.setAttributeValue("a", "Tut tut!");
-        Assert.assertEquals("Tut tut!", myobj.getAttributeValue("a", String.class));
-        PyObject a = myobj.getAttributeObject("a");
+        myobj.setAttribute("a", "Tut tut!");
+        Assert.assertEquals("Tut tut!", myobj.getAttribute("a", String.class));
+        PyObject a = myobj.getAttribute("a");
         Assert.assertEquals("Tut tut!", a.getStringValue());
     }
 
 
     @Test
-    public void testCast() throws Exception {
+    public void testCreateProxy() throws Exception {
         // Add module dir to sys.path in order to import file 'proc_class.py'
         String importPath = new File("src/test/python/fixtures").getCanonicalPath();
         //System.out.println("importPath = " + importPath);
@@ -105,7 +105,7 @@ public class PyObjectTest {
         // Instantiate Python object of type 'Processor'
         PyObject procObj = procModule.call("Processor");
         // Cast the Python object to a Java object of type 'Processor'
-        Processor processor = procObj.cast(Processor.class);
+        Processor processor = procObj.createProxy(Processor.class);
         assertNotNull(processor);
         String result;
         result = processor.initialize();

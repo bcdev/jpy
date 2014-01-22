@@ -50,12 +50,12 @@ How to build on Unix/Darwin
 How to modify
 -------------
 
-After changing org.jpy.python.PyInterpreter, run
+After changing `org.jpy.PyLib`, run
 
-    > javah -d src/main/c/jni -v -classpath target/classes org.jpy.python.PyLib
+    > javah -d src/main/c/jni -v -classpath target/classes org.jpy.PyLib
 
-and adapt changes src/main/c/jni/org_jpy_PythonInterpreter.c according to newly generated
-src/main/c/jni /src/main/c/jni/org_jpy_PythonInterpreter.h
+and adapt changes `org_jpy_PyLib.c` according to newly generated `org_jpy_PyLib.h` and `org_jpy_PyLib_Diag.h`.
+Files are found in `src/main/c/jni/`.
 
 
 C programming guideline

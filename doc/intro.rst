@@ -46,7 +46,7 @@ Calling Python from Java
 
 Call Python functions from Java::
 
-    PyModule sys = PyLib.import("sys")
+    PyModule sys = PyModule.importModule("sys")
     PyObject path = sys.getAttribute("path")
     String value = path.getStringValue();
 
@@ -67,7 +67,7 @@ and a Python implementation ``bibo_plugin.py`` ::
 
 then we can call the Python code from Java as follows ::
 
-    PyModule plugInModule = PyLib.import("bibo_plugin")
+    PyModule plugInModule = PyLib.importModule("bibo_plugin")
     PyObject plugInClass = plugInModule.getAttribute("BiboPlugIn")
     PyObject plugInObj = plugInClass.call();
     PlugIn plugIn = plugInObj.cast(PlugIn.class);

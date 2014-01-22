@@ -1,4 +1,4 @@
-package org.jpy.python;
+package org.jpy;
 
 import java.io.File;
 import java.io.FileReader;
@@ -6,9 +6,12 @@ import java.io.IOException;
 import java.util.Properties;
 
 /**
+ * Provides configuration for {@link org.jpy.PyLib}.
+ *
  * @author Norman Fomferra
+ * @since 1.0
  */
-public class PyConfig {
+class PyLibConfig {
     public static final File JPY_CONFIG_FILE = new File(System.getProperty("user.home"), ".jpy");
     public static final String PYTHON_LIB_KEY = "python.lib";
     public static final String JPY_LIB_KEY = "jpy.lib";
@@ -29,7 +32,7 @@ public class PyConfig {
                     properties.load(reader);
                 }
             } catch (IOException e) {
-                System.err.printf("%s: failed to read from '%s'\n", PyConfig.class.getName(), JPY_CONFIG_FILE);
+                System.err.printf("%s: failed to read from '%s'\n", PyLibConfig.class.getName(), JPY_CONFIG_FILE);
                 //e.printStackTrace(System.err);
             }
         }

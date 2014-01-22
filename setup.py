@@ -34,7 +34,7 @@ sources = [
     'src/main/c/jpy_jobj.c',
     'src/main/c/jpy_jmethod.c',
     'src/main/c/jpy_jfield.c',
-    'src/main/c/jni/org_jpy_python_PyLib.c',
+    'src/main/c/jni/org_jpy_PyLib.c',
 ]
 
 headers = [

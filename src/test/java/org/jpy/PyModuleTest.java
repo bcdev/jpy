@@ -1,4 +1,4 @@
-package org.jpy.python;
+package org.jpy;
 
 import org.jpy.fixtures.Processor;
 import org.junit.AfterClass;
@@ -9,7 +9,6 @@ import java.io.File;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author Norman Fomferra
@@ -18,7 +17,7 @@ public class PyModuleTest {
     @BeforeClass
     public static void setUp() throws Exception {
         assertEquals(false, PyLib.isInterpreterInitialized());
-        PyLib.initializeInterpreter(new String[0]);
+        PyLib.initializeInterpreter();
         assertEquals(true, PyLib.isInterpreterInitialized());
     }
 
@@ -28,7 +27,7 @@ public class PyModuleTest {
     }
 
     @Test
-    public void testCast() throws Exception {
+    public void testCreateProxy() throws Exception {
         // Add module dir to sys.path in order to import file 'proc_module.py'
         String importPath = new File("src/test/python/fixtures").getCanonicalPath();
         //System.out.println("importPath = " + importPath);
@@ -37,7 +36,7 @@ public class PyModuleTest {
         // import module 'proc_module.py'
         PyModule procModule = PyModule.importModule("proc_module");
         // Cast the Python module to a Java object of type 'Processor'
-        Processor processor = procModule.cast(Processor.class);
+        Processor processor = procModule.createProxy(Processor.class);
         assertNotNull(processor);
         String result;
         result = processor.initialize();

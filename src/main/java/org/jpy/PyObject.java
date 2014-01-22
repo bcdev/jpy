@@ -1,18 +1,19 @@
-package org.jpy.python;
+package org.jpy;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 
-import static org.jpy.python.PyLib.assertInterpreterInitialized;
+import static org.jpy.PyLib.assertInterpreterInitialized;
 
 /**
- * Wraps a CPython (of type <code>PyObject *</code>).
+ * Wraps a Python object (Python/C API type {@code PyObject*}).
  *
  * @author Norman Fomferra
+ * @since 1.0
  */
 public class PyObject {
-    public static final long NULL_POINTER = 0;
-    public static final PyObject NULL = new PyObject();
+    static final long NULL_POINTER = 0;
+    static final PyObject NULL = new PyObject();
 
     private final long pointer;
 
@@ -59,23 +60,23 @@ public class PyObject {
         return PyLib.getObjectValue(getPointer());
     }
 
-    public PyObject getAttributeObject(String name) {
+    public PyObject getAttribute(String name) {
         assertInterpreterInitialized();
         long value = PyLib.getAttributeObject(getPointer(), name);
         return new PyObject(value);
     }
 
-    public <T> T getAttributeValue(String name, Class<T> valueType) {
+    public <T> T getAttribute(String name, Class<T> valueType) {
         assertInterpreterInitialized();
         return PyLib.getAttributeValue(getPointer(), name, valueType);
     }
 
-    public void setAttributeValue(String name, Object value) {
+    public void setAttribute(String name, Object value) {
         assertInterpreterInitialized();
         PyLib.setAttributeValue(getPointer(), name, value, value != null ? value.getClass() : (Class) null);
     }
 
-    public <T> void setAttributeValue(String name, T value, Class<T> valueType) {
+    public <T> void setAttribute(String name, T value, Class<T> valueType) {
         assertInterpreterInitialized();
         PyLib.setAttributeValue(getPointer(), name, value, valueType);
     }
@@ -92,18 +93,16 @@ public class PyObject {
         return new PyObject(pointer);
     }
 
-    public <T> T cast(Class<T> type) {
-        return (T) newProxyInstance(type);
+    public <T> T createProxy(Class<T> type) {
+        assertInterpreterInitialized();
+        return (T) createProxy(PyLib.CallableKind.METHOD, type);
     }
 
-    public Object newProxyInstance(Class<?>... types) {
+    public Object createProxy(PyLib.CallableKind callableKind, Class<?>... types) {
+        assertInterpreterInitialized();
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        InvocationHandler invocationHandler = createInvocationHandler();
+        InvocationHandler invocationHandler = new PyProxyHandler(this, callableKind);
         return Proxy.newProxyInstance(classLoader, types, invocationHandler);
-    }
-
-    protected PyInvocationHandler createInvocationHandler() {
-        return new PyInvocationHandler(this, true);
     }
 
     @Override

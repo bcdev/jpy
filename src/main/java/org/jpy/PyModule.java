@@ -1,9 +1,12 @@
-package org.jpy.python;
+package org.jpy;
+
+import static org.jpy.PyLib.assertInterpreterInitialized;
 
 /**
- * Represents a CPython object (of type <code>PyObject *</code>).
+ * Represents a Python module.
  *
  * @author Norman Fomferra
+ * @since 1.0
  */
 public class PyModule extends PyObject {
     private final String name;
@@ -23,8 +26,8 @@ public class PyModule extends PyObject {
         return new PyModule(name, pointer);
     }
 
-    @Override
-    protected PyInvocationHandler createInvocationHandler() {
-        return new PyInvocationHandler(this, false);
+    public <T> T createProxy(Class<T> type) {
+        assertInterpreterInitialized();
+        return (T) createProxy(PyLib.CallableKind.FUNCTION, type);
     }
 }

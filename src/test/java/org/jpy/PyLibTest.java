@@ -1,4 +1,4 @@
-package org.jpy.python;
+package org.jpy;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -11,7 +11,7 @@ public class PyLibTest {
     @BeforeClass
     public static void setUp() throws Exception {
         assertEquals(false, PyLib.isInterpreterInitialized());
-        PyLib.initializeInterpreter(new String[0]);
+        PyLib.initializeInterpreter();
         PyLib.Diag.setFlags(PyLib.Diag.F_ALL);
         assertEquals(true, PyLib.isInterpreterInitialized());
     }
@@ -25,8 +25,8 @@ public class PyLibTest {
 
     @Test
     public void testExecScript() throws Exception {
-        // Just call, no special test
-        PyLib.execScript(String.format("print('%s says: \"Hello Python!\"')", PyLibTest.class.getName()));
+        int exitCode = PyLib.execScript(String.format("print('%s says: \"Hello Python!\"')", PyLibTest.class.getName()));
+        assertEquals(0, exitCode);
     }
 
     @Test
@@ -38,7 +38,6 @@ public class PyLibTest {
 
         pyModule = PyLib.importModule("sys");
         assertTrue(pyModule != 0);
-
     }
 
     @Test

@@ -1,26 +1,28 @@
-package org.jpy.python;
+package org.jpy;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
-import static org.jpy.python.PyLib.assertInterpreterInitialized;
+import static org.jpy.PyLib.assertInterpreterInitialized;
 
 /**
- * InvocationHandler for the PyInterpreter.
+ * The {@code InvocationHandler} for used by the proxy instances created by the
+ * {@link PyObject#createProxy(Class)} and {@link PyModule#createProxy(Class)} methods.
  *
  * @author Norman Fomferra
+ * @since 1.0
  */
-class PyInvocationHandler implements InvocationHandler {
+class PyProxyHandler implements InvocationHandler {
     private final PyObject pyObject;
-    private final boolean methodCall;
+    private final PyLib.CallableKind callableKind;
 
-    public PyInvocationHandler(PyObject pyObject, boolean methodCall) {
+    public PyProxyHandler(PyObject pyObject, PyLib.CallableKind callableKind) {
         if (pyObject == null) {
             throw new NullPointerException("pyObject");
         }
         this.pyObject = pyObject;
-        this.methodCall = methodCall;
+        this.callableKind = callableKind;
     }
 
     @Override
@@ -29,7 +31,7 @@ class PyInvocationHandler implements InvocationHandler {
         assertInterpreterInitialized();
         return PyLib.callAndReturnValue(
                 this.pyObject.getPointer(),
-                methodCall,
+                callableKind == PyLib.CallableKind.METHOD,
                 method.getName(),
                 args != null ? args.length : 0,
                 args,
