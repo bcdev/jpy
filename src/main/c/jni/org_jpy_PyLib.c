@@ -91,6 +91,26 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_stopPython
     JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_stopPython: exiting\n");
 }
 
+
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    getPythonVersion
+ * Signature: ()Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_getPythonVersion
+  (JNIEnv* jenv, jclass jLibClass)
+{
+    const char* version;
+
+    version = Py_GetVersion();
+    if (version == NULL) {
+        return NULL;
+    }
+
+    return (*jenv)->NewStringUTF(jenv, version);
+}
+
+
 /*
  * Class:     org_jpy_python_PyLib
  * Method:    execScript

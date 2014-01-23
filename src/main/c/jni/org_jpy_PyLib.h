@@ -25,6 +25,14 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_startPython
 
 /*
  * Class:     org_jpy_PyLib
+ * Method:    getPythonVersion
+ * Signature: ()Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_getPythonVersion
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     org_jpy_PyLib
  * Method:    stopPython
  * Signature: ()V
  */

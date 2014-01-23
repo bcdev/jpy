@@ -62,6 +62,8 @@ public class PyLib {
      */
     public static native void startPython(String... options);
 
+    public static native String getPythonVersion();
+
     /**
      * Stops the Python interpreter.
      */

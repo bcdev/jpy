@@ -4,8 +4,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class PyLibTest {
     @BeforeClass
@@ -21,6 +20,13 @@ public class PyLibTest {
         assertEquals(true, PyLib.isPythonRunning());
         PyLib.stopPython();
         assertEquals(false, PyLib.isPythonRunning());
+    }
+
+    @Test
+    public void testGetPythonVersion() throws Exception {
+        String pythonVersion = PyLib.getPythonVersion();
+        System.out.println("pythonVersion = " + pythonVersion);
+        assertNotNull(pythonVersion);
     }
 
     @Test
