@@ -41,7 +41,7 @@ public class PyObjectTest {
     @Test
     public void testToString() throws Exception {
         PyObject pyObject = new PyObject(5120);
-        assertEquals("PyObject(pointer=1400)", pyObject.toString());
+        assertEquals("PyObject(pointer=0x1400)", pyObject.toString());
     }
 
     @Test
