@@ -11,7 +11,6 @@ public class PyLibTest {
     public static void setUpClass() throws Exception {
         assertEquals(false, PyLib.isPythonRunning());
         PyLib.startPython();
-        PyLib.Diag.setFlags(PyLib.Diag.F_ALL);
         assertEquals(true, PyLib.isPythonRunning());
     }
 
