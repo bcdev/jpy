@@ -148,8 +148,12 @@ try:
     PixelPos = jpy.get_class('org.esa.beam.framework.datamodel.PixelPos')
     FlagCoding = jpy.get_class('org.esa.beam.framework.datamodel.FlagCoding')
     ProductNodeGroup = jpy.get_class('org.esa.beam.framework.datamodel.ProductNodeGroup')
+    Operator = jpy.get_class('org.esa.beam.framework.gpf.Operator')
     #SubsetOp = jpy.get_class('org.esa.beam.gpf.operators.standard.SubsetOp')
     #JtsGeometryConverter = jpy.get_class('org.esa.beam.util.converters.JtsGeometryConverter')
+
+    Rectangle = jpy.get_class('java.awt.Rectangle')
+
 
 except Exception:
     jpy.destroy_jvm()
