@@ -1,5 +1,45 @@
 #!/usr/bin/env python3
 
+sources = [
+    'src/main/c/jpy_module.c',
+    'src/main/c/jpy_diag.c',
+    'src/main/c/jpy_conv.c',
+    'src/main/c/jpy_jtype.c',
+    'src/main/c/jpy_jarray.c',
+    'src/main/c/jpy_jobj.c',
+    'src/main/c/jpy_jmethod.c',
+    'src/main/c/jpy_jfield.c',
+    'src/main/c/jni/org_jpy_PyLib.c',
+]
+
+headers = [
+    'src/main/c/jpy_module.h',
+    'src/main/c/jpy_diag.h',
+    'src/main/c/jpy_conv.h',
+    'src/main/c/jpy_jtype.h',
+    'src/main/c/jpy_jarray.h',
+    'src/main/c/jpy_jobj.h',
+    'src/main/c/jpy_jmethod.h',
+    'src/main/c/jpy_jfield.h',
+    'src/main/c/jni/org_jpy_python_PyLib.h',
+]
+
+python_tests = [
+    'src/test/python/jpy_array_test.py',
+    'src/test/python/jpy_field_test.py',
+    'src/test/python/jpy_retval_test.py',
+    'src/test/python/jpy_rt_test.py',
+    'src/test/python/jpy_mt_test.py',
+    'src/test/python/jpy_exception_test.py',
+    'src/test/python/jpy_overload_test.py',
+    'src/test/python/jpy_typeconv_test.py',
+    'src/test/python/jpy_typeres_test.py',
+    'src/test/python/jpy_modretparam_test.py',
+    'src/test/python/jpy_getclass_test.py',
+    'src/test/python/jpy_diag_test.py',
+]
+
+
 import sys
 import sysconfig
 import os
@@ -25,29 +65,6 @@ if WIN32 and os.environ.get('VS90COMNTOOLS', None) is None:
     print('      If you use Visual Studio 2011, then: SET VS90COMNTOOLS=%VS100COMNTOOLS%,')
     print('      if you use Visual Studio 2012, then: SET VS90COMNTOOLS=%VS110COMNTOOLS%.')
 
-sources = [
-    'src/main/c/jpy_module.c',
-    'src/main/c/jpy_diag.c',
-    'src/main/c/jpy_conv.c',
-    'src/main/c/jpy_jtype.c',
-    'src/main/c/jpy_jarray.c',
-    'src/main/c/jpy_jobj.c',
-    'src/main/c/jpy_jmethod.c',
-    'src/main/c/jpy_jfield.c',
-    'src/main/c/jni/org_jpy_PyLib.c',
-]
-
-headers = [
-    'src/main/c/jpy_module.h',
-    'src/main/c/jpy_diag.h',
-    'src/main/c/jpy_conv.h',
-    'src/main/c/jpy_jtype.h',
-    'src/main/c/jpy_jarray.h',
-    'src/main/c/jpy_jobj.h',
-    'src/main/c/jpy_jmethod.h',
-    'src/main/c/jpy_jfield.h',
-    'src/main/c/jni/org_jpy_python_PyLib.h',
-]
 
 include_dirs = ['src/main/c']
 library_dirs = []
@@ -124,17 +141,17 @@ if sys.argv[1] == 'install':
         f.write('jpy.lib = ' + jpy_lib_path.replace('\\', '\\\\') + '\n')
         f.write('jpy.exec_path = ' + jpy_exec_path.replace('\\', '\\\\') + '\n')
 
-    os.system(sys.executable + ' src/test/python/jpy_array_test.py')
-    os.system(sys.executable + ' src/test/python/jpy_field_test.py')
-    os.system(sys.executable + ' src/test/python/jpy_retval_test.py')
-    os.system(sys.executable + ' src/test/python/jpy_rt_test.py')
-    os.system(sys.executable + ' src/test/python/jpy_mt_test.py')
-    os.system(sys.executable + ' src/test/python/jpy_exception_test.py')
-    os.system(sys.executable + ' src/test/python/jpy_overload_test.py')
-    os.system(sys.executable + ' src/test/python/jpy_typeconv_test.py')
-    os.system(sys.executable + ' src/test/python/jpy_typeres_test.py')
-    os.system(sys.executable + ' src/test/python/jpy_modretparam_test.py')
-    os.system(sys.executable + ' src/test/python/jpy_getclass_test.py')
-    os.system(sys.executable + ' src/test/python/jpy_diag_test.py')
+
+    os.system('mvn clean test-compile')
+
+    result = 0
+    for test in python_tests:
+        result = os.system(sys.executable + ' ' + test)
+        if result != 0:
+            break
 
     print('Note: if any of the above tests fails, make sure to compile Java test sources first.')
+
+    if result == 0:
+        os.system('mvn install')
+
