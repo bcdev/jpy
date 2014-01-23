@@ -2,6 +2,7 @@ package org.jpy;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 import static org.jpy.PyLib.assertPythonRuns;
 
@@ -26,8 +27,10 @@ class PyProxyHandler implements InvocationHandler {
 
     @Override
     public Object invoke(Object proxyObject, Method method, Object[] args) throws Throwable {
-        //System.out.printf("invoke: %s(%s)\n", method.getName(), Arrays.toString(args));
         assertPythonRuns();
+
+        System.out.printf("PyProxyHandler: invoke: %s(%s)\n", method.getName(), Arrays.toString(args));
+
         return PyLib.callAndReturnValue(
                 this.pyObject.getPointer(),
                 callableKind == PyLib.CallableKind.METHOD,
