@@ -419,6 +419,7 @@ JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_callAndReturnValue
     if (JPy_AsJObjectWithClass(jenv, pyReturnValue, &jReturnValue, jReturnClass) < 0) {
         JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_callAndReturnValue: error: failed to convert attribute value\n");
         JPy_HandlePythonException(jenv);
+        Py_DECREF(pyReturnValue);
         return NULL;
     }
 
