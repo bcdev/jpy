@@ -79,6 +79,12 @@ To build and test the jpy Java library we use Maven:
 How to modify
 -------------
 
+The source distribution directory layout is based on Maven.
+
+todo - put dir layout here and explain parts
+
+
+
 After changing `org.jpy.PyLib`, run
 
     > javah -d src/main/c/jni -v -classpath target/classes org.jpy.PyLib
