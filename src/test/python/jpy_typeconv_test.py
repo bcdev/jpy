@@ -1,6 +1,5 @@
 import unittest
 import jpy
-import numpy as np
 import array
 
 jpy.create_jvm(options=['-Djava.class.path=target/test-classes', '-Xmx512M'])
@@ -30,10 +29,6 @@ class TestTypeConversions(unittest.TestCase):
 
         # Python int array to Java int array
         a = array.array('i', [1,2,3])
-        self.assertEqual(fixture.stringifyIntArrayArg(a), 'int[](1,2,3)')
-
-        # numpy int array to Java int array
-        a = np.array([1,2,3], dtype=np.int32)
         self.assertEqual(fixture.stringifyIntArrayArg(a), 'int[](1,2,3)')
 
         # integer list

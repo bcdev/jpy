@@ -1,6 +1,5 @@
 import unittest
 import jpy
-import numpy as np
 
 jpy.create_jvm(options=['-Djava.class.path=target/test-classes', '-Xmx512M'])
 
