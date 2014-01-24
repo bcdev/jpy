@@ -9,9 +9,18 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 /**
  * @author Norman Fomferra
@@ -90,31 +99,22 @@ public class PyObjectTest {
 
     @Test
     public void testCreateProxyAndCallSingleThreaded() throws Exception {
-        extendPythonPath();
-        // import module 'proc_class.py'
+        addTestDirToPythonSysPath();
         PyModule procModule = PyModule.importModule("proc_class");
-        // Instantiate Python object of type 'Processor'
         PyObject procObj = procModule.call("Processor");
         testCallProxySingleThreaded(procObj);
     }
 
+    // todo - fix https://github.com/bcdev/jpy/issues/26
     @Test
-    @Ignore
+    @Ignore(value = "https://github.com/bcdev/jpy/issues/26")
     public void testCreateProxyAndCallMultiThreaded() throws Exception {
-        extendPythonPath();
-        // import module 'proc_class.py'
+        addTestDirToPythonSysPath();
         PyModule procModule = PyModule.importModule("proc_class");
-        // Instantiate Python object of type 'Processor'
         PyObject procObj = procModule.call("Processor");
         testCallProxyMultiThreaded(procObj);
     }
 
-    static void extendPythonPath() throws IOException {
-        // Add module dir to sys.path in order to import file 'proc_class.py'
-        String importPath = new File("src/test/python/fixtures").getCanonicalPath();
-        //System.out.println("importPath = " + importPath);
-        PyLib.execScript(String.format("import sys; sys.path.append('%s'); print('sys.path =', sys.path)", importPath.replace("\\", "\\\\")));
-    }
 
     static void testCallProxySingleThreaded(PyObject procObject) {
         // Cast the Python object to a Java object of type 'Processor'
@@ -136,70 +136,74 @@ public class PyObjectTest {
         assertEquals("dispose", result);
     }
 
+    static void addTestDirToPythonSysPath() throws IOException {
+        // Add module dir to sys.path in order to import file 'proc_class.py'
+        String importPath = new File("src/test/python/fixtures").getCanonicalPath();
+        //System.out.println("importPath = " + importPath);
+        PyLib.execScript(String.format("import sys; sys.path.append('%s'); print('sys.path =', sys.path)", importPath.replace("\\", "\\\\")));
+    }
+
     static void testCallProxyMultiThreaded(PyObject procObject) {
+
         // Cast the Python object to a Java object of type 'Processor'
         final Processor processor = procObject.createProxy(Processor.class);
         assertNotNull(processor);
-
-        ProcessorJob[] jobs = new ProcessorJob[]{
-                new ProcessorJob(processor, 100, 100),
-                new ProcessorJob(processor, 200, 100),
-                new ProcessorJob(processor, 100, 200),
-                new ProcessorJob(processor, 200, 200),
-        };
-
-        Thread[] threads = new Thread[]{
-                new Thread(jobs[0]),
-                new Thread(jobs[1]),
-                new Thread(jobs[2]),
-                new Thread(jobs[3]),
-        };
 
         String result;
         result = processor.initialize();
         assertEquals("initialize", result);
 
-        for (Thread thread : threads) {
-            thread.start();
-        }
-
+        int numThreads = 1;
+        ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
+        List<Future<String>> futures;
         try {
-            for (Thread thread : threads) {
-                thread.join();
-            }
-        } catch (InterruptedException e) {
+            futures = executorService.invokeAll(Arrays.asList(new ProcessorTask(processor, 100, 100),
+                                                              new ProcessorTask(processor, 200, 100),
+                                                              new ProcessorTask(processor, 100, 200),
+                                                              new ProcessorTask(processor, 200, 200)));
+            executorService.awaitTermination(1, TimeUnit.MINUTES);
+
+            result = processor.dispose();
+            assertEquals("dispose", result);
+
+            String[] results = new String[]{
+                    futures.get(0).get(),
+                    futures.get(1).get(),
+                    futures.get(2).get(),
+                    futures.get(3).get(),
+            };
+
+            Arrays.sort(results);
+
+            result = results[0];
+            assertEquals("computeTile-1-100,100", result);
+            result = results[1];
+            assertEquals("computeTile-2-200,100", result);
+            result = results[2];
+            assertEquals("computeTile-3-100,200", result);
+            result = results[3];
+            assertEquals("computeTile-4-200,200", result);
+
+        } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
+            fail(e.getMessage());
         }
-
-        result = jobs[0].result;
-        assertEquals("computeTile-1-100,100", result);
-        result = jobs[1].result;
-        assertEquals("computeTile-2-200,100", result);
-        result = jobs[2].result;
-        assertEquals("computeTile-3-100,200", result);
-        result = jobs[3].result;
-        assertEquals("computeTile-4-200,200", result);
-
-        result = processor.dispose();
-        assertEquals("dispose", result);
-
     }
 
-    private static class ProcessorJob implements Runnable {
-         final Processor processor;
-         int x;
+    private static class ProcessorTask implements Callable<String> {
+        final Processor processor;
+        int x;
         int y;
-        String result;
 
-        public ProcessorJob(Processor processor, int x, int y) {
+        public ProcessorTask(Processor processor, int x, int y) {
             this.processor = processor;
             this.x = x;
             this.y = y;
         }
 
         @Override
-        public void run() {
-            result = processor.computeTile(x, y, new float[100 * 100]);
+        public String call() throws Exception {
+            return processor.computeTile(x, y, new float[100 * 100]);
         }
     }
 }

@@ -391,8 +391,15 @@ JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_callAndReturnObject
     PyObject* pyObject;
     PyObject* pyReturnValue;
 
+    PyGILState_STATE gstate;
+    gstate = PyGILState_Ensure();
+
     pyObject = (PyObject*) objId;
     pyReturnValue = PyLib_CallAndReturnObject(jenv, pyObject, isMethodCall, jName, argCount, jArgs, jParamClasses);
+
+    /* Release the thread. No Python API allowed beyond this point. */
+    PyGILState_Release(gstate);
+
     return (jlong) pyReturnValue;
 }
 
@@ -409,19 +416,28 @@ JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_callAndReturnValue
     PyObject* pyReturnValue;
     jobject jReturnValue;
 
+    PyGILState_STATE gstate;
+    gstate = PyGILState_Ensure();
+
     pyObject = (PyObject*) objId;
 
     pyReturnValue = PyLib_CallAndReturnObject(jenv, pyObject, isMethodCall, jName, argCount, jArgs, jParamClasses);
     if (pyReturnValue == NULL) {
-        return NULL;
+        jReturnValue = NULL;
+        goto error;
     }
 
     if (JPy_AsJObjectWithClass(jenv, pyReturnValue, &jReturnValue, jReturnClass) < 0) {
         JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_callAndReturnValue: error: failed to convert attribute value\n");
         JPy_HandlePythonException(jenv);
         Py_DECREF(pyReturnValue);
-        return NULL;
+        jReturnValue = NULL;
+        goto error;
     }
+
+error:
+    /* Release the thread. No Python API allowed beyond this point. */
+    PyGILState_Release(gstate);
 
     return jReturnValue;
 }

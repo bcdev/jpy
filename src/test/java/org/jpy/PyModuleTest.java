@@ -2,10 +2,10 @@ package org.jpy;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 /**
  * @author Norman Fomferra
@@ -24,11 +24,18 @@ public class PyModuleTest {
     }
 
     @Test
-    public void testCreateProxySingleThreaded() throws Exception {
-        PyObjectTest.extendPythonPath();
-        // import module 'proc_module.py'
+    public void testCreateAndCallProxySingleThreaded() throws Exception {
+        PyObjectTest.addTestDirToPythonSysPath();
         PyModule procModule = PyModule.importModule("proc_module");
         PyObjectTest.testCallProxySingleThreaded(procModule);
     }
 
+    // todo - fix https://github.com/bcdev/jpy/issues/26
+    @Test
+    @Ignore(value = "https://github.com/bcdev/jpy/issues/26")
+    public void testCreateAndCallProxyMultiThreaded() throws Exception {
+        PyObjectTest.addTestDirToPythonSysPath();
+        PyModule procModule = PyModule.importModule("proc_module");
+        PyObjectTest.testCallProxyMultiThreaded(procModule);
+    }
 }
