@@ -286,13 +286,18 @@ JNIEXPORT jobjectArray JNICALL Java_org_jpy_PyLib_getObjectArrayValue
     jobject jObject;
 
     pyObject = (PyObject*) objId;
+    jObject = NULL;
+
+    // todo - handle error conditions
 
     if (JObj_Check(pyObject)) {
         jObject = ((JPy_JObj*) pyObject)->objectRef;
     } else if (PySequence_Check(pyObject)) {
         PyObject* pyItem;
         jobject jItem;
-        jint i, length = PySequence_Length(pyObject);
+        jint i, length;
+
+        length = PySequence_Length(pyObject);
 
         jObject = (*jenv)->NewObjectArray(jenv, length, itemClassRef, NULL);
 
