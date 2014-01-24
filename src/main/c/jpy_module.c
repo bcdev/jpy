@@ -21,7 +21,7 @@ PyObject* JPy_array(PyObject* self, PyObject* args);
 static PyMethodDef JPy_Functions[] = {
 
     {"has_jvm",     (PyCFunction) JPy_has_jvm, METH_NOARGS,
-                    "has_jvm() - Check if the a JVM is available."},
+                    "has_jvm() - Check if the JVM is available."},
 
     {"create_jvm",  (PyCFunction) JPy_create_jvm, METH_VARARGS|METH_KEYWORDS,
                     "create_jvm(options) - Create the Java VM from the given list of options."},
