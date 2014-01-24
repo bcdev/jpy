@@ -605,12 +605,13 @@ jmethodID JPy_GetMethod(JNIEnv* jenv, jclass classRef, const char* name, const c
     }
 
 
-void initGlobalPyObjectVars(JNIEnv* jenv)
+int initGlobalPyObjectVars(JNIEnv* jenv)
 {
     JPy_JPyObject = JType_GetTypeForName(jenv, "org.jpy.PyObject", JNI_FALSE);
     if (JPy_JPyObject == NULL) {
         // org.jpy.PyObject may not be on the classpath, which is ok
         PyErr_Clear();
+        return -1;
     } else {
         DEFINE_METHOD(JPy_PyObject_GetPointer_MID, JPy_JPyObject->classRef, "getPointer", "()J");
     }
@@ -619,8 +620,10 @@ void initGlobalPyObjectVars(JNIEnv* jenv)
     if (JPy_JPyModule == NULL) {
         // org.jpy.PyModule may not be on the classpath, which is ok
         PyErr_Clear();
+        return -1;
     }
     //printf("JPy_JPyObject=%p, JPy_PyObject_GetPointer_MID=%p\n", JPy_JPyObject, JPy_PyObject_GetPointer_MID);
+    return 0;
 }
 
 
@@ -722,7 +725,9 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     // Other objects.
     DEFINE_OBJECT_TYPE(JPy_JString, JPy_String_JClass);
 
-    initGlobalPyObjectVars(jenv);
+    if (initGlobalPyObjectVars(jenv) < 0) {
+        JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "JPy_InitGlobalVars: JPy_JPyObject=%p, JPy_JPyModule=%p\n", JPy_JPyObject, JPy_JPyModule);
+    }
 
     return 0;
 }
