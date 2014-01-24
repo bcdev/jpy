@@ -12,11 +12,8 @@
 
 PyObject* PyLib_GetAttributeObject(JNIEnv* jenv, PyObject* pyValue, jstring jName);
 PyObject* PyLib_CallAndReturnObject(JNIEnv *jenv, PyObject* pyValue, jboolean isMethodCall, jstring jName, jint argCount, jobjectArray jArgs, jobjectArray jParamClasses);
-
-/**
- * Fetches the last Python exception occurred and raises a new Java exception.
- */
 void JPy_HandlePythonException(JNIEnv* jenv);
+void PyLib_RedirectStdOut(void);
 
 #define JPy_JNI_DEBUG 1
 //#define JPy_JNI_DEBUG 0
@@ -43,6 +40,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* jvm, void* reserved)
         Py_SetProgramName(L"java");
         Py_Initialize();
         //PyEval_InitThreads();
+        PyLib_RedirectStdOut();
     }
 
     if (JPy_JNI_DEBUG) printf("JNI_OnLoad: exit: jvm=%p, JPy_JVM=%p, JPy_MustDestroyJVM=%d, Py_IsInitialized()=%d\n",
@@ -742,6 +740,57 @@ void JPy_HandlePythonException(JNIEnv* jenv)
     //printf("JPy_HandlePythonException 5: ret=%d\n", ret);
 
     PyErr_Clear();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Redirect stdout
+
+static PyObject* JPrint_write(PyObject* self, PyObject* args)
+{
+    const char* text;
+    if (!PyArg_ParseTuple(args, "s", &text)) {
+        return NULL;
+    }
+    printf("%s", text);
+    return Py_BuildValue("");
+}
+
+static PyObject* JPrint_flush(PyObject* self, PyObject* args)
+{
+    fflush(stdout);
+    return Py_BuildValue("");
+}
+
+static PyMethodDef JPrint_Functions[] = {
+
+    {"write",       (PyCFunction) JPrint_write, METH_VARARGS,
+                    "Internal function. Used to print to stdout in embedded mode."},
+
+    {"flush",       (PyCFunction) JPrint_flush, METH_VARARGS,
+                    "Internal function. Used to flush to stdout in embedded mode."},
+
+    {NULL, NULL, 0, NULL} /*Sentinel*/
+};
+
+static struct PyModuleDef JPrint_ModuleDef =
+{
+    PyModuleDef_HEAD_INIT,
+    "jpy_stdout", /* Name of the Python JPy_Module */
+    "Used to redirect 'stdout' to the console in embedded mode",  /* Module documentation */
+    -1,                 /* Size of per-interpreter state of the JPy_Module, or -1 if the JPy_Module keeps state in global variables. */
+    JPrint_Functions,    /* Structure containing global jpy-functions */
+    NULL,     // m_reload
+    NULL,     // m_traverse
+    NULL,     // m_clear
+    NULL      // m_free
+};
+
+void PyLib_RedirectStdOut(void)
+{
+    PyObject* module;
+    module = PyModule_Create(&JPrint_ModuleDef);
+    PySys_SetObject("stdout", module);
+    PySys_SetObject("stderr", module);
 }
 
 
