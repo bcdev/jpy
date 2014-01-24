@@ -142,16 +142,17 @@ if sys.argv[1] == 'install':
         f.write('jpy.exec_path = ' + jpy_exec_path.replace('\\', '\\\\') + '\n')
 
 
+    print("Compiling Java code...")
     os.system('mvn clean test-compile')
 
+    print("Executing Python unit tests...")
     result = 0
     for test in python_tests:
         result = os.system(sys.executable + ' ' + test)
         if result != 0:
             break
 
-    print('Note: if any of the above tests fails, make sure to compile Java test sources first.')
-
     if result == 0:
+        print("Installing compiled Java code...")
         os.system('mvn install')
 
