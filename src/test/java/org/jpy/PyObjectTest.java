@@ -108,12 +108,12 @@ public class PyObjectTest {
     //@Ignore(value = "https://github.com/bcdev/jpy/issues/26")
     public void testCreateProxyAndCallMultiThreaded() throws Exception {
         addTestDirToPythonSysPath();
-        PyLib.Diag.setFlags(PyLib.Diag.F_ALL);
+        //PyLib.Diag.setFlags(PyLib.Diag.F_ALL);
         PyModule procModule = PyModule.importModule("proc_class");
         PyObject procObj = procModule.call("Processor");
-        PyLib.Diag.setFlags(PyLib.Diag.F_ALL);
+        //PyLib.Diag.setFlags(PyLib.Diag.F_ALL);
         testCallProxyMultiThreaded(procObj);
-        PyLib.Diag.setFlags(PyLib.Diag.F_OFF);
+        //PyLib.Diag.setFlags(PyLib.Diag.F_OFF);
     }
 
 
