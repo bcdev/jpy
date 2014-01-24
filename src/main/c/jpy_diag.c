@@ -16,7 +16,7 @@ void JPy_DiagPrint(int diagFlags, const char * format, ...)
 }
 
 
-PyObject* Diag_New()
+PyObject* Diag_New(void)
 {
     JPy_Diag* self;
 

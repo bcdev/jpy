@@ -29,7 +29,7 @@ JPy_Diag;
 extern PyTypeObject Diag_Type;
 extern int JPy_DiagFlags;
 
-PyObject* Diag_New();
+PyObject* Diag_New(void);
 
 void JPy_DiagPrint(int diagFlags, const char * format, ...);
 
