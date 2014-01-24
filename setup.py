@@ -21,7 +21,7 @@ headers = [
     'src/main/c/jpy_jobj.h',
     'src/main/c/jpy_jmethod.h',
     'src/main/c/jpy_jfield.h',
-    'src/main/c/jni/org_jpy_python_PyLib.h',
+    'src/main/c/jni/org_jpy_PyLib.h',
 ]
 
 python_tests = [
