@@ -42,7 +42,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* jvm, void* reserved)
     if (!Py_IsInitialized()) {
         Py_SetProgramName(L"java");
         Py_Initialize();
-        PyEval_InitThreads();
+        //PyEval_InitThreads();
     }
 
     if (JPy_JNI_DEBUG) printf("JNI_OnLoad: exit: jvm=%p, JPy_JVM=%p, JPy_MustDestroyJVM=%d, Py_IsInitialized()=%d\n",
@@ -668,7 +668,7 @@ void JPy_HandlePythonException(JNIEnv* jenv)
     char* tracebackChars;
     char* javaMessage;
 
-    jint ret;
+    //jint ret;
 
     //printf("JPy_HandlePythonException 0: jenv=%p\n", jenv);
 
@@ -712,10 +712,12 @@ void JPy_HandlePythonException(JNIEnv* jenv)
             sprintf(javaMessage, "Python error: %s: %s", typeChars, valueChars);
         }
         //printf("JPy_HandlePythonException 4a: JPy_RuntimeException_JClass=%p, javaMessage=\"%s\"\n", JPy_RuntimeException_JClass, javaMessage);
-        ret = (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, javaMessage);
+        //ret =
+        (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, javaMessage);
     } else {
         //printf("JPy_HandlePythonException 4b: JPy_RuntimeException_JClass=%p, valueChars=\"%s\"\n", JPy_RuntimeException_JClass, valueChars);
-        ret = (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, valueChars);
+        //ret =
+        (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, valueChars);
     }
 
     PyMem_Del(javaMessage);
