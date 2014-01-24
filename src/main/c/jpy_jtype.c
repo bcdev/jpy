@@ -338,7 +338,6 @@ int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobjec
 {
     jint itemCount;
     jarray arrayRef;
-    jboolean error;
     jint index;
     PyObject* pyItem;
 
@@ -353,7 +352,6 @@ int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobjec
         return JType_PythonToJavaConversionError(type, pyArg);
     }
 
-    error = JNI_FALSE;
     arrayRef = NULL;
 
     if (type->componentType == JPy_JBoolean) {
