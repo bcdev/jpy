@@ -143,11 +143,11 @@ char* JPy_GetTypeName(JNIEnv* jenv, jclass classRef)
     jTypeNameChars = (*jenv)->GetStringUTFChars(jenv, jTypeName, NULL);
     if (jTypeNameChars == NULL) {
         PyErr_NoMemory();
-        goto error;
+        typeNameCopy = NULL;
+    } else {
+        typeNameCopy = JPy_CopyUTFString(jTypeNameChars);
+        (*jenv)->ReleaseStringUTFChars(jenv, jTypeName, jTypeNameChars);
     }
-    typeNameCopy = JPy_CopyUTFString(jTypeNameChars);
-    (*jenv)->ReleaseStringUTFChars(jenv, jTypeName, jTypeNameChars);
-error:
     (*jenv)->DeleteLocalRef(jenv, jTypeName);
     return typeNameCopy;
 }
@@ -168,11 +168,11 @@ PyObject* JPy_FromTypeName(JNIEnv* jenv, jclass classRef)
     jTypeNameChars = (*jenv)->GetStringUTFChars(jenv, jTypeName, NULL);
     if (jTypeNameChars == NULL) {
         PyErr_NoMemory();
-        goto error;
+        pyTypeName = NULL;
+    } else {
+        pyTypeName = Py_BuildValue("s", jTypeNameChars);
+        (*jenv)->ReleaseStringUTFChars(jenv, jTypeName, jTypeNameChars);
     }
-    pyTypeName = Py_BuildValue("s", jTypeNameChars);
-    (*jenv)->ReleaseStringUTFChars(jenv, jTypeName, jTypeNameChars);
-error:
     (*jenv)->DeleteLocalRef(jenv, jTypeName);
     return pyTypeName;
 }
