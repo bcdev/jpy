@@ -18,6 +18,18 @@ void PyLib_RedirectStdOut(void);
 #define JPy_JNI_DEBUG 1
 //#define JPy_JNI_DEBUG 0
 
+
+//#define JPy_GIL_AWARE
+
+#ifdef JPy_GIL_AWARE
+    #define JPy_BEGIN_GIL_STATE  { PyGILState_STATE gilState; gilState = PyGILState_Ensure();
+    #define JPy_END_GIL_STATE    PyGILState_Release(gilState); }
+#else
+    #define JPy_BEGIN_GIL_STATE
+    #define JPy_END_GIL_STATE
+#endif
+
+
 /**
  * Called if the JVM loads this module.
  * Will only called if this module's code is linked into a shared library and loaded by a Java VM.
@@ -83,9 +95,9 @@ JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* jvm, void* reserved)
 JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_isPythonRunning
   (JNIEnv* jenv, jclass jLibClass)
 {
-    int retCode;
-    retCode = Py_IsInitialized();
-    return retCode != 0 && JPy_Module != NULL;
+    int init;
+    init = Py_IsInitialized();
+    return init && JPy_Module != NULL;
 }
 
 /*
@@ -96,12 +108,15 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_isPythonRunning
 JNIEXPORT void JNICALL Java_org_jpy_PyLib_startPython
   (JNIEnv* jenv, jclass jLibClass, jobjectArray options)
 {
+
     JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "PyLib_startPython: entered\n");
 
     if (!Py_IsInitialized()) {
         Py_SetProgramName(L"java");
         Py_Initialize();
     }
+
+    JPy_BEGIN_GIL_STATE
 
     // if JPy_Module is still NULL, then the 'jpy' module has not been imported yet.
     //
@@ -122,6 +137,8 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_startPython
     }
 
     JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "PyLib_startPython: exiting\n");
+
+    JPy_END_GIL_STATE
 }
   
 
@@ -173,6 +190,8 @@ JNIEXPORT jint JNICALL Java_org_jpy_PyLib_execScript
     const char* scriptChars;
     int retCode;
 
+    JPy_BEGIN_GIL_STATE
+
     scriptChars = (*jenv)->GetStringUTFChars(jenv, jScript, NULL);
     JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_execScript: script='%s'\n", scriptChars);
     retCode = PyRun_SimpleString(scriptChars);
@@ -181,6 +200,9 @@ JNIEXPORT jint JNICALL Java_org_jpy_PyLib_execScript
         // Note that we cannot retrieve last Python exception after a calling PyRun_SimpleString, see documentation of PyRun_SimpleString.
     }
     (*jenv)->ReleaseStringUTFChars(jenv, jScript, scriptChars);
+
+    JPy_END_GIL_STATE
+
     return retCode;
 }
 
@@ -194,7 +216,9 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_decref
   (JNIEnv* jenv, jclass jLibClass, jlong objId)
 {
     JPy_DIAG_PRINT(JPy_DIAG_F_MEM, "Java_org_jpy_PyLib_decref: objId=%p\n", (PyObject*) objId);
+    JPy_BEGIN_GIL_STATE
     Py_XDECREF((PyObject*) objId);
+    JPy_END_GIL_STATE
 }
 
 
@@ -220,8 +244,16 @@ JNIEXPORT jdouble JNICALL Java_org_jpy_PyLib_getDoubleValue
   (JNIEnv* jenv, jclass jLibClass, jlong objId)
 {
     PyObject* pyObject;
+    jdouble value;
+
+    JPy_BEGIN_GIL_STATE
+
     pyObject = (PyObject*) objId;
-    return (jdouble) PyFloat_AsDouble(pyObject);
+    value = (jdouble) PyFloat_AsDouble(pyObject);
+
+    JPy_END_GIL_STATE
+
+    return value;
 }
 
 /*
@@ -235,13 +267,17 @@ JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_getStringValue
     PyObject* pyObject;
     jstring jString;
 
+    JPy_BEGIN_GIL_STATE
+
     pyObject = (PyObject*) objId;
 
     if (JPy_AsJString(jenv, pyObject, &jString) < 0) {
+        jString = NULL;
         JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_getStringValue: error: failed to convert Python object to Java String\n");
         PyLib_HandlePythonException(jenv);
-        return NULL;
     }
+
+    JPy_END_GIL_STATE
 
     return jString;
 }
@@ -257,17 +293,21 @@ JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_getObjectValue
     PyObject* pyObject;
     jobject jObject;
 
+    JPy_BEGIN_GIL_STATE
+
     pyObject = (PyObject*) objId;
 
     if (JObj_Check(pyObject)) {
         jObject = ((JPy_JObj*) pyObject)->objectRef;
     } else {
         if (JPy_AsJObject(jenv, pyObject, &jObject) < 0) {
+            jObject = NULL;
             JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_getObjectValue: error: failed to convert Python object to Java Object\n");
             PyLib_HandlePythonException(jenv);
-            return NULL;
         }
     }
+
+    JPy_END_GIL_STATE
 
     return jObject;
 }
@@ -283,12 +323,13 @@ JNIEXPORT jobjectArray JNICALL Java_org_jpy_PyLib_getObjectArrayValue
     PyObject* pyObject;
     jobject jObject;
 
+    JPy_BEGIN_GIL_STATE
+
     pyObject = (PyObject*) objId;
-    jObject = NULL;
 
-    // todo - handle error conditions
-
-    if (JObj_Check(pyObject)) {
+    if (pyObject == Py_None) {
+        jObject = NULL;
+    } else if (JObj_Check(pyObject)) {
         jObject = ((JPy_JObj*) pyObject)->objectRef;
     } else if (PySequence_Check(pyObject)) {
         PyObject* pyItem;
@@ -301,15 +342,33 @@ JNIEXPORT jobjectArray JNICALL Java_org_jpy_PyLib_getObjectArrayValue
 
         for (i = 0; i < length; i++) {
             pyItem = PySequence_GetItem(pyObject, i);
+            if (pyItem == NULL) {
+                (*jenv)->DeleteLocalRef(jenv, jObject);
+                jObject = NULL;
+                goto error;
+            }
             if (JPy_AsJObject(jenv, pyItem, &jItem) < 0) {
-                JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_getObjectArrayValue: error: failed to convert Python object to Java Object\n");
+                (*jenv)->DeleteLocalRef(jenv, jObject);
+                jObject = NULL;
+                JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_getObjectArrayValue: error: failed to convert Python item to Java Object\n");
                 PyLib_HandlePythonException(jenv);
-                return NULL;
+                goto error;
             }
             Py_XDECREF(pyItem);
             (*jenv)->SetObjectArrayElement(jenv, jObject, i, jItem);
+            if ((*jenv)->ExceptionCheck(jenv)) {
+                (*jenv)->DeleteLocalRef(jenv, jObject);
+                jObject = NULL;
+                goto error;
+            }
         }
+    } else {
+        jObject = NULL;
+        (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, "python object cannot be converted to Object[]");
     }
+
+error:
+    JPy_END_GIL_STATE
 
     return jObject;
 }
@@ -327,6 +386,8 @@ JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_importModule
     PyObject* pyModule;
     const char* nameChars;
 
+    JPy_BEGIN_GIL_STATE
+
     nameChars = (*jenv)->GetStringUTFChars(jenv, jName, NULL);
     JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_importModule: name='%s'\n", nameChars);
     /* Note: pyName is a new reference */
@@ -338,6 +399,9 @@ JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_importModule
     }
     Py_XDECREF(pyName);
     (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
+
+    JPy_END_GIL_STATE
+
     return (jlong) pyModule;
 }
 
@@ -355,8 +419,13 @@ JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_getAttributeObject
     PyObject* pyObject;
     PyObject* pyValue;
 
+    JPy_BEGIN_GIL_STATE
+
     pyObject = (PyObject*) objId;
     pyValue = PyLib_GetAttributeObject(jenv, pyObject, jName);
+
+    JPy_END_GIL_STATE
+
     return (jlong) pyValue;
 }
 
@@ -372,18 +441,24 @@ JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_getAttributeValue
     PyObject* pyValue;
     jobject jReturnValue;
 
+    JPy_BEGIN_GIL_STATE
+
     pyObject = (PyObject*) objId;
 
     pyValue = PyLib_GetAttributeObject(jenv, pyObject, jName);
     if (pyValue == NULL) {
-        return NULL;
+        jReturnValue = NULL;
+        goto error;
     }
 
     if (JPy_AsJObjectWithClass(jenv, pyValue, &jReturnValue, jValueClass) < 0) {
+        jReturnValue = NULL;
         JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_getAttributeValue: error: failed to convert attribute value\n");
         PyLib_HandlePythonException(jenv);
-        return NULL;
     }
+
+error:
+    JPy_END_GIL_STATE
 
     return jReturnValue;
 }
@@ -401,6 +476,8 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_setAttributeValue
     const char* nameChars;
     PyObject* pyValue;
     JPy_JType* valueType;
+
+    JPy_BEGIN_GIL_STATE
 
     pyObject = (PyObject*) objId;
 
@@ -433,6 +510,8 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_setAttributeValue
 
 error:
     (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
+
+    JPy_END_GIL_STATE
 }
 
 
@@ -447,18 +526,12 @@ JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_callAndReturnObject
     PyObject* pyObject;
     PyObject* pyReturnValue;
 
-    //PyGILState_STATE gstate;
-    //gstate = PyGILState_Ensure();
-
-    //Py_BEGIN_ALLOW_THREADS
+    JPy_BEGIN_GIL_STATE
 
     pyObject = (PyObject*) objId;
     pyReturnValue = PyLib_CallAndReturnObject(jenv, pyObject, isMethodCall, jName, argCount, jArgs, jParamClasses);
 
-    //Py_END_ALLOW_THREADS
-
-    /* Release the thread. No Python API allowed beyond this point. */
-    //PyGILState_Release(gstate);
+    JPy_END_GIL_STATE
 
     return (jlong) pyReturnValue;
 }
@@ -476,10 +549,7 @@ JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_callAndReturnValue
     PyObject* pyReturnValue;
     jobject jReturnValue;
 
-    //PyGILState_STATE gstate;
-    //gstate = PyGILState_Ensure();
-
-    //Py_BEGIN_ALLOW_THREADS
+    JPy_BEGIN_GIL_STATE
 
     pyObject = (PyObject*) objId;
 
@@ -497,10 +567,8 @@ JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_callAndReturnValue
         goto error;
     }
 
-    //Py_END_ALLOW_THREADS
 error:
-    /* Release the thread. No Python API allowed beyond this point. */
-    //PyGILState_Release(gstate);
+    JPy_END_GIL_STATE
 
     return jReturnValue;
 }
