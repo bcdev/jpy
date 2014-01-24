@@ -4,7 +4,6 @@ import junit.framework.Assert;
 import org.jpy.fixtures.Processor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -16,7 +15,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -107,12 +105,15 @@ public class PyObjectTest {
 
     // todo - fix https://github.com/bcdev/jpy/issues/26
     @Test
-    @Ignore(value = "https://github.com/bcdev/jpy/issues/26")
+    //@Ignore(value = "https://github.com/bcdev/jpy/issues/26")
     public void testCreateProxyAndCallMultiThreaded() throws Exception {
         addTestDirToPythonSysPath();
+        PyLib.Diag.setFlags(PyLib.Diag.F_ALL);
         PyModule procModule = PyModule.importModule("proc_class");
         PyObject procObj = procModule.call("Processor");
+        PyLib.Diag.setFlags(PyLib.Diag.F_ALL);
         testCallProxyMultiThreaded(procObj);
+        PyLib.Diag.setFlags(PyLib.Diag.F_OFF);
     }
 
 
@@ -125,26 +126,22 @@ public class PyObjectTest {
         result = processor.initialize();
         assertEquals("initialize", result);
         result = processor.computeTile(100, 100, new float[100 * 100]);
-        assertEquals("computeTile-1-100,100", result);
+        assertEquals("computeTile-100,100", result);
         result = processor.computeTile(200, 100, new float[100 * 100]);
-        assertEquals("computeTile-2-200,100", result);
+        assertEquals("computeTile-200,100", result);
         result = processor.computeTile(100, 200, new float[100 * 100]);
-        assertEquals("computeTile-3-100,200", result);
+        assertEquals("computeTile-100,200", result);
         result = processor.computeTile(200, 200, new float[100 * 100]);
-        assertEquals("computeTile-4-200,200", result);
+        assertEquals("computeTile-200,200", result);
         result = processor.dispose();
         assertEquals("dispose", result);
     }
 
-    static void addTestDirToPythonSysPath() throws IOException {
-        // Add module dir to sys.path in order to import file 'proc_class.py'
-        String importPath = new File("src/test/python/fixtures").getCanonicalPath();
-        //System.out.println("importPath = " + importPath);
-        PyLib.execScript(String.format("import sys; sys.path.append('%s'); print('sys.path =', sys.path)", importPath.replace("\\", "\\\\")));
+    static void testCallProxyMultiThreaded(PyObject procObject) {
+        testCallProxyMultiThreaded(procObject, Executors.newFixedThreadPool(4));
     }
 
-    static void testCallProxyMultiThreaded(PyObject procObject) {
-
+    private static void testCallProxyMultiThreaded(PyObject procObject, ExecutorService executorService) {
         // Cast the Python object to a Java object of type 'Processor'
         final Processor processor = procObject.createProxy(Processor.class);
         assertNotNull(processor);
@@ -153,22 +150,20 @@ public class PyObjectTest {
         result = processor.initialize();
         assertEquals("initialize", result);
 
-        int numThreads = 1;
-        ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
         List<Future<String>> futures;
         try {
             futures = executorService.invokeAll(Arrays.asList(new ProcessorTask(processor, 100, 100),
                                                               new ProcessorTask(processor, 200, 100),
                                                               new ProcessorTask(processor, 100, 200),
                                                               new ProcessorTask(processor, 200, 200)));
-            executorService.awaitTermination(1, TimeUnit.MINUTES);
+            //executorService.awaitTermination(1, TimeUnit.MINUTES);
 
             result = processor.dispose();
             assertEquals("dispose", result);
 
             String[] results = new String[]{
                     futures.get(0).get(),
-                    futures.get(1).get(),
+                   futures.get(1).get(),
                     futures.get(2).get(),
                     futures.get(3).get(),
             };
@@ -176,18 +171,25 @@ public class PyObjectTest {
             Arrays.sort(results);
 
             result = results[0];
-            assertEquals("computeTile-1-100,100", result);
+            assertEquals("computeTile-100,100", result);
             result = results[1];
-            assertEquals("computeTile-2-200,100", result);
+            assertEquals("computeTile-100,200", result);
             result = results[2];
-            assertEquals("computeTile-3-100,200", result);
+            assertEquals("computeTile-200,100", result);
             result = results[3];
-            assertEquals("computeTile-4-200,200", result);
+            assertEquals("computeTile-200,200", result);
 
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
             fail(e.getMessage());
         }
+    }
+
+    static void addTestDirToPythonSysPath() throws IOException {
+        // Add module dir to sys.path in order to import file 'proc_class.py'
+        String importPath = new File("src/test/python/fixtures").getCanonicalPath();
+        //System.out.println("importPath = " + importPath);
+        PyLib.execScript(String.format("import sys; sys.path.append('%s'); print('sys.path =', sys.path)", importPath.replace("\\", "\\\\")));
     }
 
     private static class ProcessorTask implements Callable<String> {

@@ -9,10 +9,16 @@ extern "C" {
 #include <structmember.h>
 #include <jni.h>
 
+#define JPY_JNI_VERSION JNI_VERSION_1_6
+
 extern PyObject* JPy_Module;
 extern PyObject* JPy_Types;
 extern PyObject* JPy_Type_Callbacks;
 extern PyObject* JException_Type;
+
+extern JavaVM* JPy_JVM;
+extern jboolean JPy_MustDestroyJVM;
+
 
 #define JPy_JTYPE_ATTR_NAME_JINIT "__jinit__"
 
@@ -28,6 +34,9 @@ extern PyObject* JException_Type;
  * Add a JNIEnv* as first parameter to all functions that require it.
  */
 JNIEnv* JPy_GetJNIEnv(void);
+
+int JPy_InitGlobalVars(JNIEnv* jenv);
+void JPy_ClearGlobalVars(JNIEnv* jenv);
 
 /**
  * Gets the current JNI environment pointer JENV. If this is NULL, it returns the given RET_VALUE.

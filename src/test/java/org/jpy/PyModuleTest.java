@@ -2,7 +2,6 @@ package org.jpy;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -32,7 +31,7 @@ public class PyModuleTest {
 
     // todo - fix https://github.com/bcdev/jpy/issues/26
     @Test
-    @Ignore(value = "https://github.com/bcdev/jpy/issues/26")
+    //@Ignore(value = "https://github.com/bcdev/jpy/issues/26")
     public void testCreateAndCallProxyMultiThreaded() throws Exception {
         PyObjectTest.addTestDirToPythonSysPath();
         PyModule procModule = PyModule.importModule("proc_module");

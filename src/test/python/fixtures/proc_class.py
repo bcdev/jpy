@@ -1,15 +1,14 @@
 class Processor:
     def __init__(self):
-        self.n = 0
+        pass
 
 
     def initialize(self):
         return 'initialize'
 
-    def computeTile(self, w, h, array):
-        self.n += 1
+    def computeTile(self, x, y, array):
         self.spend_some_time()
-        return 'computeTile-' + str(self.n) + '-' + str(w) + ',' + str(h)
+        return 'computeTile-' + str(x) + ',' + str(y)
 
     def dispose(self):
         return 'dispose'

@@ -44,6 +44,8 @@ static PyMethodDef JPy_Functions[] = {
     {NULL, NULL, 0, NULL} /*Sentinel*/
 };
 
+void JPy_free(void* unused);
+
 static struct PyModuleDef JPy_ModuleDef =
 {
     PyModuleDef_HEAD_INIT,
@@ -51,10 +53,10 @@ static struct PyModuleDef JPy_ModuleDef =
     "Java Python Bridge",  /* Module documentation */
     -1,                 /* Size of per-interpreter state of the JPy_Module, or -1 if the JPy_Module keeps state in global variables. */
     JPy_Functions,    /* Structure containing global jpy-functions */
-    NULL,   // m_reload
-    NULL,   // m_traverse
-    NULL,   // m_clear
-    NULL    // m_free
+    NULL,     // m_reload
+    NULL,     // m_traverse
+    NULL,     // m_clear
+    JPy_free  // m_free
 };
 
 PyObject* JPy_Module = NULL;
@@ -63,13 +65,10 @@ PyObject* JPy_Type_Callbacks = NULL;
 PyObject* JException_Type = NULL;
 
 // A global reference to a Java VM singleton.
-static JavaVM* JPy_JVM = NULL;
+JavaVM* JPy_JVM = NULL;
 
 // If true, this JVM structure has been initialised from Python jpy.create_jvm()
-static jboolean JPy_MustDestroyJVM = JNI_FALSE;
-
-
-#define JPY_JNI_VERSION JNI_VERSION_1_6
+jboolean JPy_MustDestroyJVM = JNI_FALSE;
 
 
 // Global VM Information (maybe better place this in the JPy_JVM structure later)
@@ -178,44 +177,6 @@ jmethodID JPy_PyObject_GetPointer_MID = NULL;
 
 // }}}
 
-
-int JPy_InitGlobalVars(JNIEnv* jenv);
-void JPy_ClearGlobalVars(JNIEnv* jenv);
-
-
-/**
- * Called if the JVM loads this module.
- * Will only called if this module's code is linked into a shared library and loaded by a Java VM.
- */
-JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* jvm, void* reserved)
-{
-    if (JPy_JVM == NULL) {
-        JPy_JVM = jvm;
-        JPy_MustDestroyJVM = JNI_FALSE;
-    } else if (JPy_JVM == jvm) {
-        //printf("jpy: JNI_OnLoad: same JVM already running\n");
-    } else {
-        //printf("jpy: JNI_OnLoad: different JVM already running (expect weird things!)\n");
-    }
-
-    //printf("jpy: JNI_OnLoad: JPy_JVM=%p, JPy_MustDestroyJVM=%d\n", JPy_JVM, JPy_MustDestroyJVM);
-
-    return JPY_JNI_VERSION;
-}
-
-/**
- * Called if the JVM unloads this module.
- * Will only called if this module's code is linked into a shared library and loaded by a Java VM.
- */
-JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* jvm, void* reserved)
-{
-    //printf("jpy: JNI_OnUnload: JPy_JVM=%p, JPy_MustDestroyJVM=%d\n", JPy_JVM, JPy_MustDestroyJVM);
-
-    if (!JPy_MustDestroyJVM) {
-        JPy_ClearGlobalVars(JPy_GetJNIEnv());
-        JPy_JVM = NULL;
-    }
-}
 
 JNIEnv* JPy_GetJNIEnv(void)
 {
@@ -912,5 +873,18 @@ void JPy_HandleJavaException(JNIEnv* jenv)
         (*jenv)->DeleteLocalRef(jenv, error);
         (*jenv)->ExceptionClear(jenv);
     }
+}
+
+void JPy_free(void* unused)
+{
+    JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "JPy_free: freeing module data...\n");
+    JPy_ClearGlobalVars(NULL);
+
+    JPy_Module = NULL;
+    JPy_Types = NULL;
+    JPy_Type_Callbacks = NULL;
+    JException_Type = NULL;
+
+    JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "JPy_free: done freeing module data\n");
 }
 
