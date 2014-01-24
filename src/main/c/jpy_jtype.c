@@ -71,6 +71,7 @@ JPy_JType* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve)
     PyObject* typeKey;
     PyObject* typeValue;
     JPy_JType* type;
+    jboolean found;
 
     if (JPy_Types == NULL) {
         PyErr_SetString(PyExc_RuntimeError, "internal error: module 'jpy' not initialized");
@@ -84,6 +85,8 @@ JPy_JType* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve)
 
     typeValue = PyDict_GetItem(JPy_Types, typeKey);
     if (typeValue == NULL) {
+
+        found = JNI_FALSE;
 
         // Create a new type instance
         type = JType_New(jenv, classRef, resolve);
@@ -115,6 +118,9 @@ JPy_JType* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve)
         }
 
     } else {
+
+        found = JNI_TRUE;
+
         Py_DECREF(typeKey);
 
         if (!JType_Check(typeValue)) {
@@ -125,7 +131,7 @@ JPy_JType* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve)
         type = (JPy_JType*) typeValue;
     }
 
-    JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_GetType: javaName='%s', resolve=%d, resolved=%d, type=%p\n", type->javaName, resolve, type->isResolved, type);
+    JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_GetType: javaName='%s', found=%d, resolve=%d, resolved=%d, type=%p\n", type->javaName, found, resolve, type->isResolved, type);
 
     if (!type->isResolved && resolve) {
         if (JType_ResolveType(jenv, type) < 0) {
