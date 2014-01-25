@@ -334,6 +334,13 @@ int JType_CreateJavaDoubleObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg,
     return JType_CreateJavaObject(jenv, type, pyArg, JPy_Double_JClass, JPy_Double_Init_MID, value, objectRef);
 }
 
+int JType_CreateJavaPyObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
+{
+    jvalue value;
+    value.j = (jlong) pyArg;
+    return JType_CreateJavaObject(jenv, type, pyArg, type->classRef, JPy_PyObject_Init_MID, value, objectRef);
+}
+
 int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
 {
     jint itemCount;
@@ -648,6 +655,8 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
         return JType_CreateJavaFloatObject(jenv, type, pyArg, objectRef);
     } else if (type == JPy_JDouble || type == JPy_JDoubleObj) {
         return JType_CreateJavaDoubleObject(jenv, type, pyArg, objectRef);
+    } else if (type == JPy_JPyObject) {
+        return JType_CreateJavaPyObject(jenv, type, pyArg, objectRef);
     } else if (type == JPy_JObject) {
         if (PyBool_Check(pyArg)) {
             return JType_CreateJavaBooleanObject(jenv, type, pyArg, objectRef);

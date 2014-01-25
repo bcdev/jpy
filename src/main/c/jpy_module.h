@@ -164,6 +164,7 @@ extern jclass JPy_String_JClass;
 extern jclass JPy_Void_JClass;
 
 extern jmethodID JPy_PyObject_GetPointer_MID;
+extern jmethodID JPy_PyObject_Init_MID;
 
 #ifdef __cplusplus
 } /* extern "C" */

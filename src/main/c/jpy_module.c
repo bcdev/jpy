@@ -172,8 +172,9 @@ jmethodID JPy_Number_DoubleValue_MID = NULL;
 jclass JPy_Void_JClass = NULL;
 jclass JPy_String_JClass = NULL;
 
-jclass JPy_PyObject_JClass = NULL;
 jmethodID JPy_PyObject_GetPointer_MID = NULL;
+jmethodID JPy_PyObject_Init_MID = NULL;
+jmethodID JPy_PyModule_Init_MID = NULL;
 
 // }}}
 
@@ -614,6 +615,7 @@ int initGlobalPyObjectVars(JNIEnv* jenv)
         return -1;
     } else {
         DEFINE_METHOD(JPy_PyObject_GetPointer_MID, JPy_JPyObject->classRef, "getPointer", "()J");
+        DEFINE_METHOD(JPy_PyObject_Init_MID, JPy_JPyObject->classRef, "<init>", "(J)V");
     }
 
     JPy_JPyModule = JType_GetTypeForName(jenv, "org.jpy.PyModule", JNI_FALSE);
@@ -622,7 +624,6 @@ int initGlobalPyObjectVars(JNIEnv* jenv)
         PyErr_Clear();
         return -1;
     }
-    //printf("JPy_JPyObject=%p, JPy_PyObject_GetPointer_MID=%p\n", JPy_JPyObject, JPy_PyObject_GetPointer_MID);
     return 0;
 }
 
