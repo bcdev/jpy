@@ -109,7 +109,7 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_startPython
   (JNIEnv* jenv, jclass jLibClass, jobjectArray options)
 {
 
-    JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "PyLib_startPython: entered\n");
+    JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "PyLib_startPython: entered: JPy_Module=%p\n", JPy_Module);
 
     if (!Py_IsInitialized()) {
         Py_SetProgramName(L"java");
@@ -136,7 +136,7 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_startPython
         }
     }
 
-    JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "PyLib_startPython: exiting\n");
+    JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "PyLib_startPython: exiting: JPy_Module=%p\n", JPy_Module);
 
     JPy_END_GIL_STATE
 }
@@ -150,13 +150,13 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_startPython
 JNIEXPORT void JNICALL Java_org_jpy_PyLib_stopPython
   (JNIEnv* jenv, jclass jLibClass)
 {
-    JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_stopPython: entered\n");
+    JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_stopPython: entered: JPy_Module=%p\n", JPy_Module);
 
     if (Py_IsInitialized()) {
         Py_Finalize();
     }
 
-    JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_stopPython: exiting\n");
+    JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_stopPython: exiting: JPy_Module=%p\n", JPy_Module);
 }
 
 
