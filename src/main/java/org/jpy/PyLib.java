@@ -71,7 +71,9 @@ public class PyLib {
 
     public static native int execScript(String script);
 
-    static native void decref(long pointer);
+    static native void incRef(long pointer);
+
+    static native void decRef(long pointer);
 
     static native int getIntValue(long pointer);
 

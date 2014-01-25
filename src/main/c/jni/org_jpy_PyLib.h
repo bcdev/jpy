@@ -49,10 +49,18 @@ JNIEXPORT jint JNICALL Java_org_jpy_PyLib_execScript
 
 /*
  * Class:     org_jpy_PyLib
- * Method:    decref
+ * Method:    incRef
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_org_jpy_PyLib_decref
+JNIEXPORT void JNICALL Java_org_jpy_PyLib_incRef
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    decRef
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_org_jpy_PyLib_decRef
   (JNIEnv *, jclass, jlong);
 
 /*

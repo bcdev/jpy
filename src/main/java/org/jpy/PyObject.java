@@ -25,9 +25,7 @@ public class PyObject {
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
-        if (PyLib.isPythonRunning()) {
-            PyLib.decref(getPointer());
-        }
+        PyLib.decRef(getPointer());
     }
 
     public final long getPointer() {

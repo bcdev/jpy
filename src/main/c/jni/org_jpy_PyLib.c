@@ -209,16 +209,58 @@ JNIEXPORT jint JNICALL Java_org_jpy_PyLib_execScript
 
 /*
  * Class:     org_jpy_python_PyLib
- * Method:    decref
+ * Method:    incRef
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_org_jpy_PyLib_decref
+JNIEXPORT void JNICALL Java_org_jpy_PyLib_incRef
   (JNIEnv* jenv, jclass jLibClass, jlong objId)
 {
-    JPy_DIAG_PRINT(JPy_DIAG_F_MEM, "Java_org_jpy_PyLib_decref: objId=%p\n", (PyObject*) objId);
-    JPy_BEGIN_GIL_STATE
-    Py_XDECREF((PyObject*) objId);
-    JPy_END_GIL_STATE
+    PyObject* pyObject;
+    Py_ssize_t refCount;
+
+    pyObject = (PyObject*) objId;
+
+    if (Py_IsInitialized()) {
+        JPy_BEGIN_GIL_STATE
+
+        refCount = pyObject->ob_refcnt;
+        JPy_DIAG_PRINT(JPy_DIAG_F_MEM, "Java_org_jpy_PyLib_incRef: pyObject=%p, refCount=%d\n", pyObject, refCount);
+        Py_INCREF(pyObject);
+
+        JPy_END_GIL_STATE
+    } else {
+        JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_incRef: error: no interpreter: pyObject=%p\n", pyObject);
+    }
+}
+
+/*
+ * Class:     org_jpy_python_PyLib
+ * Method:    decRef
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_org_jpy_PyLib_decRef
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    PyObject* pyObject;
+    Py_ssize_t refCount;
+
+    pyObject = (PyObject*) objId;
+
+    if (Py_IsInitialized()) {
+        JPy_BEGIN_GIL_STATE
+
+        refCount = pyObject->ob_refcnt;
+        if (refCount <= 0) {
+            JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_decRef: error: refCount <= 0: pyObject=%p, refCount=%d\n", pyObject, refCount);
+        } else {
+            JPy_DIAG_PRINT(JPy_DIAG_F_MEM, "Java_org_jpy_PyLib_decRef: pyObject=%p, refCount=%d\n", pyObject, refCount);
+        }
+        Py_DECREF(pyObject);
+
+        JPy_END_GIL_STATE
+    } else {
+        JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_decRef: error: no interpreter: pyObject=%p\n", pyObject);
+    }
 }
 
 
