@@ -104,7 +104,7 @@ public class PyObject {
 
     @Override
     public final String toString() {
-        return String.format("%s(pointer=0x%s)", getClass().getSimpleName(), Long.toHexString(pointer).toUpperCase());
+        return String.format("%s(pointer=0x%s)", getClass().getSimpleName(), Long.toHexString(pointer).toLowerCase());
     }
 
     @Override
