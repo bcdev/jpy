@@ -8,14 +8,14 @@ It comes with a number of outstanding features:
 * Fully translates Java class hierarchies to Python
 * Transparently handles Java method overloading
 * Support of Java multi-threading
-* Fast and memory-efficient support of primitive Java array parameters via `Python buffers <http://docs.python.org/3.3/c-api/buffer.html>`_
-  (e.g. `numpy arrays <http://docs.scipy.org/doc/numpy/reference/arrays.html>`_)
+* Fast and memory-efficient support of primitive Java array parameters via Python buffers (http://docs.python.org/3.3/c-api/buffer.html),
+  e.g. numpy arrays (http://docs.scipy.org/doc/numpy/reference/arrays.html)
 * Support of Java methods that modify primitive Java array parameters (mutable parameters)
 * Java arrays translate into Python sequence objects
-* Java API for accessing Python objects (``jpy.jar``)
+* Java API for accessing Python objects (`jpy.jar`)
 
 The initial development of jpy has been driven by the need to write Python extensions to an established scientific
-imaging application programmed in Java (`ESA BEAM <http://www.brockmann-consult.de/cms/web/beam/>`_).
+imaging application programmed in Java, namely ESA BEAM (http://www.brockmann-consult.de/cms/web/beam/).
 Writing such Python plug-ins for a Java application usually requires a bi-directional communication between Java and
 Python, namely the Python extension code must be able to calling back into the Java APIs.
 
@@ -31,7 +31,7 @@ Windows
 
 You will need
 * Python 3.3
-* JDK 1.7
+* JDK 1.7 (installed in $JDK_HOME)
 * Maven 3
 * Microsoft Visual C++ 2010 (MSVC)
 
@@ -42,6 +42,8 @@ use the 32-bit versions of Python and the JDK.
 
 To build and test the jpy Python module use the following commands:
 
+    > SET JDK_HOME=<path to the JDK installation directory>
+    > SET JAVA_HOME=%JDK_HOME%
     > SET VS90COMNTOOLS=%VS100COMNTOOLS%
     > SET PATH=%JDK_HOME%\jre\bin\server;%PATH%
     > python setup.py install
@@ -50,47 +52,41 @@ To create a jpy Windows executable installer, use
 
     > python setup.py bdist_wininst
 
-To build and test the jpy Java library we use Maven:
-
-    > SET JAVA_HOME=%JDK_HOME%
-    > mvn install
-
 
 Unix/Darwin
 ^^^^^^^^^^^
 
 You will need
 * Python 3.3 Dev (!)
-* JDK 1.7
+* JDK 1.7 (installed in $JDK_HOME)
 * Maven 3
 * gcc
 
 To build and test the jpy Python module use the following commands:
 
-    > export JDK_HOME=%JDK32_HOME%
+    > export JDK_HOME=<path to the JDK installation directory>
+    > export JAVA_HOME=$JDK_HOME
     > export path=$JDK_HOME\jre\bin\server;$path
     > python3.3 setup.py install --user
 
-To build and test the jpy Java library we use Maven:
-
-    > SET JAVA_HOME=%JDK_HOME%
-    > mvn install
 
 How to modify
 -------------
 
-The source distribution directory layout is based on Maven.
+The source distribution directory layout is based on Maven common directory structure.
 
 todo - put dir layout here and explain parts
 
 
+After changing signatures of native methods in `src/main/java/org/jpy/PyLib.java`, you need to compile the Java classes
+and regenerate the C headers for the `PyLib` class.
 
-After changing `org.jpy.PyLib`, run
-
+    > mvn compile
     > javah -d src/main/c/jni -v -classpath target/classes org.jpy.PyLib
 
 and adapt changes `org_jpy_PyLib.c` according to newly generated `org_jpy_PyLib.h` and `org_jpy_PyLib_Diag.h`.
-Files are found in `src/main/c/jni/`.
+Files are found in `src/main/c/jni/`. Then run `setup.py` again as indicated above.
+
 
 
 C programming guideline
