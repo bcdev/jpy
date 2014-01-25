@@ -26,6 +26,9 @@ public class PyObject {
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
+        if (pointer == 0) {
+            throw new IllegalStateException("pointer == 0");
+        }
         PyLib.decRef(getPointer());
     }
 
