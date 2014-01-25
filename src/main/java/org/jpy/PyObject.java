@@ -26,6 +26,7 @@ public class PyObject {
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
+        // Don't remove this check. 'pointer == 0' really occurred, don't ask me how!
         if (pointer == 0) {
             throw new IllegalStateException("pointer == 0");
         }
