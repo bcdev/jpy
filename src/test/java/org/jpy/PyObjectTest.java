@@ -10,15 +10,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 /**
  * @author Norman Fomferra
@@ -29,6 +23,7 @@ public class PyObjectTest {
         assertEquals(false, PyLib.isPythonRunning());
         PyLib.startPython();
         assertEquals(true, PyLib.isPythonRunning());
+        PyLib.Diag.setFlags(PyLib.Diag.F_MEM);
     }
 
     @AfterClass
@@ -43,24 +38,34 @@ public class PyObjectTest {
 
     @Test
     public void testPointer() throws Exception {
-        PyObject pyObject = new PyObject(5120);
-        assertEquals(5120, pyObject.getPointer());
+        long pointer = PyLib.importModule("sys");
+        PyObject pyObject = new PyObject(pointer);
+        assertEquals(pointer, pyObject.getPointer());
     }
 
     @Test
     public void testToString() throws Exception {
-        PyObject pyObject = new PyObject(5120);
-        assertEquals("PyObject(pointer=0x1400)", pyObject.toString());
+        long pointer = PyLib.importModule("sys");
+        PyObject pyObject = new PyObject(pointer);
+        assertEquals("PyObject(pointer=0x" + Long.toHexString(pointer) + ")", pyObject.toString());
     }
 
     @Test
     public void testEqualsAndHashCode() throws Exception {
-        PyObject pyObject = new PyObject(5120);
-        assertEquals(true, pyObject.equals(pyObject));
-        assertEquals(true, pyObject.equals(new PyObject(5120)));
-        assertEquals(false, pyObject.equals(new PyObject(5121)));
-        assertEquals(false, pyObject.equals((Object) 5121L));
-        assertEquals(5120, pyObject.hashCode());
+        long pointer1 = PyLib.importModule("sys");
+        long pointer2 = PyLib.importModule("os");
+        PyObject pyObject1 = new PyObject(pointer1);
+        PyObject pyObject2 = new PyObject(pointer2);
+        assertEquals(true, pyObject1.equals(pyObject1));
+        assertEquals(true, pyObject1.equals(new PyObject(pointer1)));
+        assertEquals(false, pyObject1.equals(pyObject2));
+        assertEquals(false, pyObject1.equals(new PyObject(pointer2)));
+        assertEquals(false, pyObject1.equals((Object) pointer1));
+        assertTrue(0 != pyObject1.hashCode());
+        assertTrue(0 != pyObject2.hashCode());
+        assertEquals(pyObject1.hashCode(), pyObject1.hashCode());
+        assertEquals(pyObject1.hashCode(), new PyObject(pointer1).hashCode());
+        assertTrue(pyObject1.hashCode() != pyObject2.hashCode());
     }
 
     @Test
@@ -153,9 +158,9 @@ public class PyObjectTest {
         List<Future<String>> futures;
         try {
             futures = executorService.invokeAll(Arrays.asList(new ProcessorTask(processor, 100, 100),
-                                                              new ProcessorTask(processor, 200, 100),
-                                                              new ProcessorTask(processor, 100, 200),
-                                                              new ProcessorTask(processor, 200, 200)));
+                    new ProcessorTask(processor, 200, 100),
+                    new ProcessorTask(processor, 100, 200),
+                    new ProcessorTask(processor, 200, 200)));
             //executorService.awaitTermination(1, TimeUnit.MINUTES);
 
             result = processor.dispose();
@@ -163,7 +168,7 @@ public class PyObjectTest {
 
             String[] results = new String[]{
                     futures.get(0).get(),
-                   futures.get(1).get(),
+                    futures.get(1).get(),
                     futures.get(2).get(),
                     futures.get(3).get(),
             };

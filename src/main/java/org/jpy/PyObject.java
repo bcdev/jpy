@@ -19,6 +19,7 @@ public class PyObject {
         if (pointer == 0) {
             throw new IllegalArgumentException("pointer == 0");
         }
+        PyLib.incRef(pointer);
         this.pointer = pointer;
     }
 
@@ -104,7 +105,7 @@ public class PyObject {
 
     @Override
     public final String toString() {
-        return String.format("%s(pointer=0x%s)", getClass().getSimpleName(), Long.toHexString(pointer).toLowerCase());
+        return String.format("%s(pointer=0x%s)", getClass().getSimpleName(), Long.toHexString(pointer));
     }
 
     @Override
