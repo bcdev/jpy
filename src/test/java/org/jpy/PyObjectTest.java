@@ -192,7 +192,7 @@ public class PyObjectTest {
         // Add module dir to sys.path in order to import file 'proc_class.py'
         String importPath = new File("src/test/python/fixtures").getCanonicalPath();
         //System.out.println("importPath = " + importPath);
-        PyLib.execScript(String.format("import sys; sys.path.append('%s'); print('sys.path =', sys.path)", importPath.replace("\\", "\\\\")));
+        PyLib.execScript(String.format("import sys; sys.path.append('%s')", importPath.replace("\\", "\\\\")));
     }
 
     private static class ProcessorTask implements Callable<String> {
