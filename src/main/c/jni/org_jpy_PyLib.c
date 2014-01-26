@@ -18,14 +18,15 @@ PyObject* PyLib_CallAndReturnObject(JNIEnv *jenv, PyObject* pyValue, jboolean is
 void PyLib_HandlePythonException(JNIEnv* jenv);
 void PyLib_RedirectStdOut(void);
 
+static int JPy_InitThreads = 0;
+
 #define JPy_JNI_DEBUG 1
 //#define JPy_JNI_DEBUG 0
 
-
-//#define JPy_GIL_AWARE
+#define JPy_GIL_AWARE
 
 #ifdef JPy_GIL_AWARE
-    #define JPy_BEGIN_GIL_STATE  { PyGILState_STATE gilState; gilState = PyGILState_Ensure();
+    #define JPy_BEGIN_GIL_STATE  { PyGILState_STATE gilState; if (!JPy_InitThreads) {JPy_InitThreads = 1; PyEval_InitThreads(); PyEval_SaveThread(); } gilState = PyGILState_Ensure();
     #define JPy_END_GIL_STATE    PyGILState_Release(gilState); }
 #else
     #define JPy_BEGIN_GIL_STATE
@@ -49,13 +50,6 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* jvm, void* reserved)
         if (JPy_JNI_DEBUG) printf("JNI_OnLoad: warning: same JVM already running\n");
     } else {
         if (JPy_JNI_DEBUG) printf("JNI_OnLoad: warning: different JVM already running (expect weird things!)\n");
-    }
-
-    if (!Py_IsInitialized()) {
-        Py_SetProgramName(L"java");
-        Py_Initialize();
-        //PyEval_InitThreads();
-        PyLib_RedirectStdOut();
     }
 
     if (JPy_JNI_DEBUG) printf("JNI_OnLoad: exit: jvm=%p, JPy_JVM=%p, JPy_MustDestroyJVM=%d, Py_IsInitialized()=%d\n",
@@ -100,6 +94,7 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_isPythonRunning
     return init && JPy_Module != NULL;
 }
 
+
 /*
  * Class:     org_jpy_PyLib
  * Method:    startPython
@@ -111,12 +106,12 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_startPython
 
     JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "PyLib_startPython: entered: JPy_Module=%p\n", JPy_Module);
 
+
     if (!Py_IsInitialized()) {
         Py_SetProgramName(L"java");
         Py_Initialize();
+        PyLib_RedirectStdOut();
     }
-
-    JPy_BEGIN_GIL_STATE
 
     // if JPy_Module is still NULL, then the 'jpy' module has not been imported yet.
     //
@@ -137,8 +132,6 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_startPython
     }
 
     JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "PyLib_startPython: exiting: JPy_Module=%p\n", JPy_Module);
-
-    JPy_END_GIL_STATE
 }
   
 
@@ -273,8 +266,16 @@ JNIEXPORT jint JNICALL Java_org_jpy_PyLib_getIntValue
   (JNIEnv* jenv, jclass jLibClass, jlong objId)
 {
     PyObject* pyObject;
+    jint value;
+
+    JPy_BEGIN_GIL_STATE
+
     pyObject = (PyObject*) objId;
-    return (jint) PyLong_AsLong(pyObject);
+    value = (jint) PyLong_AsLong(pyObject);
+
+    JPy_END_GIL_STATE
+
+    return value;
 }
 
 /*

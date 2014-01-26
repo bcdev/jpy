@@ -10,16 +10,17 @@ import static org.junit.Assert.assertEquals;
  * @author Norman Fomferra
  */
 public class PyModuleTest {
+
     @BeforeClass
     public static void setUp() throws Exception {
-        assertEquals(false, PyLib.isPythonRunning());
+        System.out.println("PyModuleTest: Current thread: " + Thread.currentThread());
         PyLib.startPython();
         assertEquals(true, PyLib.isPythonRunning());
     }
 
     @AfterClass
     public static void tearDown() throws Exception {
-        PyLib.stopPython();
+        //PyLib.stopPython();
     }
 
     @Test
@@ -29,9 +30,8 @@ public class PyModuleTest {
         PyObjectTest.testCallProxySingleThreaded(procModule);
     }
 
-    // todo - fix https://github.com/bcdev/jpy/issues/26
+    // see https://github.com/bcdev/jpy/issues/26
     @Test
-    //@Ignore(value = "https://github.com/bcdev/jpy/issues/26")
     public void testCreateAndCallProxyMultiThreaded() throws Exception {
         PyObjectTest.addTestDirToPythonSysPath();
         PyModule procModule = PyModule.importModule("proc_module");

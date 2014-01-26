@@ -7,18 +7,17 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class PyLibTest {
+
     @BeforeClass
     public static void setUpClass() throws Exception {
-        assertEquals(false, PyLib.isPythonRunning());
+        System.out.println("PyLibTest: Current thread: " + Thread.currentThread());
         PyLib.startPython();
         assertEquals(true, PyLib.isPythonRunning());
     }
 
     @AfterClass
     public static void tearDownClass() throws Exception {
-        assertEquals(true, PyLib.isPythonRunning());
-        PyLib.stopPython();
-        assertEquals(false, PyLib.isPythonRunning());
+        //PyLib.stopPython();
     }
 
     @Test

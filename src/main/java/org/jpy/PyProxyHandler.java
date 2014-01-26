@@ -26,10 +26,10 @@ class PyProxyHandler implements InvocationHandler {
     }
 
     @Override
-    public synchronized Object invoke(Object proxyObject, Method method, Object[] args) throws Throwable {
+    public Object invoke(Object proxyObject, Method method, Object[] args) throws Throwable {
         assertPythonRuns();
 
-        System.out.printf("PyProxyHandler: invoke: %s(%s)\n", method.getName(), Arrays.toString(args));
+        System.out.printf("PyProxyHandler: invoke: %s(%s) in thread %s\n", method.getName(), Arrays.toString(args), Thread.currentThread());
 
         return PyLib.callAndReturnValue(
                 this.pyObject.getPointer(),

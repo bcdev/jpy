@@ -20,15 +20,14 @@ import static org.junit.Assert.*;
 public class PyObjectTest {
     @BeforeClass
     public static void setUp() throws Exception {
-        assertEquals(false, PyLib.isPythonRunning());
+        System.out.println("PyObjectTest: Current thread: " + Thread.currentThread());
         PyLib.startPython();
         assertEquals(true, PyLib.isPythonRunning());
-        PyLib.Diag.setFlags(PyLib.Diag.F_MEM);
     }
 
     @AfterClass
     public static void tearDown() throws Exception {
-        PyLib.stopPython();
+        //PyLib.stopPython();
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -108,9 +107,8 @@ public class PyObjectTest {
         testCallProxySingleThreaded(procObj);
     }
 
-    // todo - fix https://github.com/bcdev/jpy/issues/26
+    // see https://github.com/bcdev/jpy/issues/26
     @Test
-    //@Ignore(value = "https://github.com/bcdev/jpy/issues/26")
     public void testCreateProxyAndCallMultiThreaded() throws Exception {
         addTestDirToPythonSysPath();
         //PyLib.Diag.setFlags(PyLib.Diag.F_ALL);
