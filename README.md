@@ -23,17 +23,35 @@ Python, namely the Python extension code must be able to calling back into the J
 How to Build
 ------------
 
-After you have checked out jpy from GitHub or downloaded the sources, open a terminal window and cd into the check-out
-directory. Then you first have to build and install the jpy Python module and then the jyp Java library.
+After you have checked out [jpy from GitHub](https://github.com/bcdev/jpy) or downloaded the sources, open a terminal
+window and cd into the check-out directory. Then you first have to build and install the jpy Python module and
+then the jyp Java library.
 
-Windows
-^^^^^^^
+
+### Unix/Darwin
+
 
 You will need
-* Python 3.3 ("the" Python from http://www.python.org/),
-* JDK 1.7 ("the" Java from http://www.oracle.com/technetwork/java/javase/downloads/index.html)
-* Maven 3 (from http://maven.apache.org/)
-* Microsoft Windows SDK 7.1
+* Python 3.3 Dev (!)
+* JDK 1.7
+* Maven 3
+* gcc
+
+To build and test the jpy Python module use the following commands:
+
+    > export JDK_HOME=<path to the JDK installation directory>
+    > export JAVA_HOME=$JDK_HOME
+    > export path=$JDK_HOME\jre\bin\server;$path
+    > python3.3 setup.py install --user
+
+
+### Microsoft Windows
+
+You will need
+* [Python 3.3](http://www.python.org/)
+* [JDK 1.7](http://www.oracle.com/technetwork/java/javase/downloads/)
+* [Maven 3](http://maven.apache.org/)
+* [Microsoft Windows SDK 7.1](http://www.microsoft.com/en-us/download/details.aspx?id=8279)
 
 If you build for a 32-bit Python, make sure to also install a 32-bit JDK. Accordingly, for a 64-bit Python, you will
 need a 64-bit JDK.
@@ -43,8 +61,8 @@ These are enabled by the ``DISTUTILS_USE_SDK`` environment variable. The compile
 the command-line by using the ``setenv`` tool of the Windows SDK. In order to install the Windows SDK do the following
 
 1. If you use Microsoft Visual Studio 2010, make sure to uninstall the x86 and amd64 compiler redistributables first. Otherwise the installation of the Windows SDK will definitely fail.
-2. Download and install Windows SDK 7.1 from http://www.microsoft.com/en-us/download/details.aspx?id=8279. This failed for me the first time. A second 'repair' install was successful.
-3. Download and install Windows SDK 7.1 SP1 from http://www.microsoft.com/en-us/download/details.aspx?id=4422
+2. Download and install [Windows SDK 7.1](http://www.microsoft.com/en-us/download/details.aspx?id=8279). This failed for me the first time. A second 'repair' install was successful.
+3. Download and install [Windows SDK 7.1 SP1](http://www.microsoft.com/en-us/download/details.aspx?id=4422).
 
 Open the command-line and execute
 
@@ -68,23 +86,6 @@ Then, to actually build and test the jpy Python module use the following command
 To create a jpy Windows executable installer, use
 
     > python setup.py bdist_wininst
-
-
-Unix/Darwin
-^^^^^^^^^^^
-
-You will need
-* Python 3.3 Dev (!)
-* JDK 1.7
-* Maven 3
-* gcc
-
-To build and test the jpy Python module use the following commands:
-
-    > export JDK_HOME=<path to the JDK installation directory>
-    > export JAVA_HOME=$JDK_HOME
-    > export path=$JDK_HOME\jre\bin\server;$path
-    > python3.3 setup.py install --user
 
 
 How to modify
