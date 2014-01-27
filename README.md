@@ -30,7 +30,6 @@ then the jyp Java library.
 
 ### Unix/Darwin
 
-
 You will need
 * Python 3.3 Dev (!)
 * JDK 1.7
@@ -57,7 +56,7 @@ If you build for a 32-bit Python, make sure to also install a 32-bit JDK. Accord
 need a 64-bit JDK.
 
 The Python setup tools (``distutils``) can make use of the command-line C/C++ compilers of the free Microsoft Windows SDK.
-These are enabled by the ``DISTUTILS_USE_SDK`` environment variable. The compilers are made accessible from
+These will by used by distutils if the ``DISTUTILS_USE_SDK`` environment variable is set. The compilers are made accessible via
 the command-line by using the ``setenv`` tool of the Windows SDK. In order to install the Windows SDK do the following
 
 1. If you use Microsoft Visual Studio 2010, make sure to uninstall the x86 and amd64 compiler redistributables first. Otherwise the installation of the Windows SDK will definitely fail.
