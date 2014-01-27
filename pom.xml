@@ -10,6 +10,19 @@
 
     <packaging>jar</packaging>
 
+    <organization>
+        <name>Brockmann Consult GmbH</name>
+        <url>http://www.brockmann-consult.de</url>
+    </organization>
+
+    <inceptionYear>2014</inceptionYear>
+
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/bcdev/jpy/issues?state=open</url>
+    </issueManagement>
+
+
     <dependencies>
         
         <dependency>
