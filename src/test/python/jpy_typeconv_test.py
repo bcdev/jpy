@@ -9,7 +9,7 @@ class TestTypeConversions(unittest.TestCase):
 
 
     def setUp(self):
-        self.Fixture = jpy.get_class('org.jpy.fixtures.TypeConversionTestFixture')
+        self.Fixture = jpy.get_type('org.jpy.fixtures.TypeConversionTestFixture')
         self.assertTrue('org.jpy.fixtures.TypeConversionTestFixture' in jpy.types)
 
 

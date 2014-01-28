@@ -9,13 +9,13 @@ class TestFields(unittest.TestCase):
 
 
     def setUp(self):
-        self.Fixture = jpy.get_class('org.jpy.fixtures.FieldTestFixture')
+        self.Fixture = jpy.get_type('org.jpy.fixtures.FieldTestFixture')
         self.assertIsNotNone(self.Fixture)
 
-        self.Thing = jpy.get_class('org.jpy.fixtures.Thing')
+        self.Thing = jpy.get_type('org.jpy.fixtures.Thing')
         self.assertIsNotNone(self.Thing)
 
-        self.String = jpy.get_class('java.lang.String')
+        self.String = jpy.get_type('java.lang.String')
         self.assertIsNotNone(self.String)
 
 

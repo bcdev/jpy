@@ -31,9 +31,9 @@ jpy.type_callbacks['org.jpy.fixtures.ModifyAndReturnParametersTestFixture'] = an
 class TestMutableAndReturnParameters(unittest.TestCase):
 
     def setUp(self):
-        self.Fixture = jpy.get_class('org.jpy.fixtures.ModifyAndReturnParametersTestFixture')
+        self.Fixture = jpy.get_type('org.jpy.fixtures.ModifyAndReturnParametersTestFixture')
         self.assertIsNotNone(self.Fixture)
-        self.Thing = jpy.get_class('org.jpy.fixtures.Thing')
+        self.Thing = jpy.get_type('org.jpy.fixtures.Thing')
         self.assertIsNotNone(self.Thing)
 
 
@@ -117,11 +117,11 @@ class TestMutableAndReturnParameters(unittest.TestCase):
 
         a1 = None
         a2 = fixture.returnIntArray(a1)
-        self.assertEqual(type(a2), jpy.get_class('[I'))
+        self.assertEqual(type(a2), jpy.get_type('[I'))
 
         a1 = [0, 0, 0]
         a2 = fixture.returnIntArray(a1)
-        self.assertEqual(type(a2), jpy.get_class('[I'))
+        self.assertEqual(type(a2), jpy.get_type('[I'))
 
 
     def test_modifyAndReturnIntArray(self):
@@ -143,14 +143,14 @@ class TestMutableAndReturnParameters(unittest.TestCase):
 
         a1 = None
         a2 = fixture.modifyAndReturnIntArray(a1, 16, 17, 18)
-        self.assertEqual(type(a2), jpy.get_class('[I'))
+        self.assertEqual(type(a2), jpy.get_type('[I'))
         self.assertEqual(a2[0], 16)
         self.assertEqual(a2[1], 17)
         self.assertEqual(a2[2], 18)
 
         a1 = [0, 0, 0]
         a2 = fixture.modifyAndReturnIntArray(a1, 16, 17, 18)
-        self.assertEqual(type(a2), jpy.get_class('[I'))
+        self.assertEqual(type(a2), jpy.get_type('[I'))
         self.assertEqual(a2[0], 16)
         self.assertEqual(a2[1], 17)
         self.assertEqual(a2[2], 18)

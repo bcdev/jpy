@@ -2,7 +2,7 @@ import unittest
 import beampy
 import numpy as np
 
-#JAI = beampy.jpy.get_class('javax.media.jai.JAI')
+#JAI = beampy.jpy.get_type('javax.media.jai.JAI')
 #JAI.getDefaultInstance().getTileCache().setMemoryCapacity(256 * 1000 * 1000)
 
 test_product_file = './MER_RR__1P.N1'

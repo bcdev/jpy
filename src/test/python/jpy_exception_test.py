@@ -7,7 +7,7 @@ class TestExceptions(unittest.TestCase):
 
 
     def setUp(self):
-        self.Fixture = jpy.get_class('org.jpy.fixtures.ExceptionTestFixture')
+        self.Fixture = jpy.get_type('org.jpy.fixtures.ExceptionTestFixture')
         self.assertIsNotNone(self.Fixture)
 
 

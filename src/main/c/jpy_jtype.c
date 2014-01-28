@@ -29,6 +29,26 @@ JPy_JType* JType_GetTypeForName(JNIEnv* jenv, const char* typeName, jboolean res
     const char* resourceName;
     jclass classRef;
 
+    if (strcmp(typeName, "boolean") == 0) {
+        return JPy_JBoolean;
+    } else if (strcmp(typeName, "char") == 0) {
+        return JPy_JChar;
+    } else if (strcmp(typeName, "byte") == 0) {
+        return JPy_JByte;
+    } else if (strcmp(typeName, "short") == 0) {
+        return JPy_JShort;
+    } else if (strcmp(typeName, "int") == 0) {
+        return JPy_JInt;
+    } else if (strcmp(typeName, "long") == 0) {
+        return JPy_JLong;
+    } else if (strcmp(typeName, "float") == 0) {
+        return JPy_JFloat;
+    } else if (strcmp(typeName, "double") == 0) {
+        return JPy_JDouble;
+    } else if (strcmp(typeName, "void") == 0) {
+        return JPy_JVoid;
+    }
+
     if (strchr(typeName, '.') != NULL) {
         // resourceName: Replace dots '.' by slashes '/'
         char* c;

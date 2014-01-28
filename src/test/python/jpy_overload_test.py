@@ -8,7 +8,7 @@ class TestConstructorOverloads(unittest.TestCase):
 
 
     def setUp(self):
-        self.Fixture = jpy.get_class('org.jpy.fixtures.ConstructorOverloadTestFixture')
+        self.Fixture = jpy.get_type('org.jpy.fixtures.ConstructorOverloadTestFixture')
         self.assertIsNotNone(self.Fixture)
 
 
@@ -43,7 +43,7 @@ class TestMethodOverloads(unittest.TestCase):
 
 
     def setUp(self):
-        self.Fixture = jpy.get_class('org.jpy.fixtures.MethodOverloadTestFixture')
+        self.Fixture = jpy.get_type('org.jpy.fixtures.MethodOverloadTestFixture')
         self.assertIsNotNone(self.Fixture)
 
 
@@ -78,7 +78,7 @@ class TestMethodOverloads(unittest.TestCase):
 
 
     def test_nArgOverloadsAreFoundInBaseClass(self):
-        Fixture = jpy.get_class('org.jpy.fixtures.MethodOverloadTestFixture$MethodOverloadTestFixture2')
+        Fixture = jpy.get_type('org.jpy.fixtures.MethodOverloadTestFixture$MethodOverloadTestFixture2')
         fixture = Fixture()
 
         self.assertEqual(fixture.join('x'), 'String(x)')

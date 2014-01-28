@@ -13,7 +13,7 @@
 PyObject* JPy_has_jvm(PyObject* self);
 PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds);
 PyObject* JPy_destroy_jvm(PyObject* self, PyObject* args);
-PyObject* JPy_get_class(PyObject* self, PyObject* args, PyObject* kwds);
+PyObject* JPy_get_type(PyObject* self, PyObject* args, PyObject* kwds);
 PyObject* JPy_cast(PyObject* self, PyObject* args);
 PyObject* JPy_array(PyObject* self, PyObject* args);
 
@@ -29,16 +29,16 @@ static PyMethodDef JPy_Functions[] = {
     {"destroy_jvm", JPy_destroy_jvm, METH_VARARGS,
                     "destroy_jvm() - Destroy the current Java VM."},
 
-    {"get_class",   (PyCFunction) JPy_get_class, METH_VARARGS|METH_KEYWORDS,
-                    "get_class(name, resolve=True) - Return the Java class with the given name, e.g. 'java.io.File'. "
+    {"get_type",    (PyCFunction) JPy_get_type, METH_VARARGS|METH_KEYWORDS,
+                    "get_type(name, resolve=True) - Return the Java class with the given name, e.g. 'java.io.File'. "
                     "Loads the Java class from the JVM if not already done. Optionally avoids resolving the class' methods."},
 
     {"cast",        JPy_cast, METH_VARARGS,
-                    "cast(obj, type) - Cast the given Java object to the given Java type. "
+                    "cast(obj, type) - Cast the given Java object to the given Java type (type name or type object). "
                     "Returns None if the cast is not possible."},
 
     {"array",       JPy_array, METH_VARARGS,
-                    "array(name, length) - Return a new Java array of given Java type and length. "
+                    "array(name, length) - Return a new Java array of given Java type (type name or type object) and length. "
                     "Possible primitive types are 'boolean', 'byte', 'char', 'short', 'int', 'long', 'float', and 'double'."},
 
     {NULL, NULL, 0, NULL} /*Sentinel*/
@@ -410,7 +410,7 @@ PyObject* JPy_destroy_jvm(PyObject* self, PyObject* args)
     return Py_BuildValue("");
 }
 
-PyObject* JPy_get_class(PyObject* self, PyObject* args, PyObject* kwds)
+PyObject* JPy_get_type(PyObject* self, PyObject* args, PyObject* kwds)
 {
     JNIEnv* jenv;
     static char* keywords[] = {"name", "resolve", NULL};
@@ -420,7 +420,7 @@ PyObject* JPy_get_class(PyObject* self, PyObject* args, PyObject* kwds)
     JPy_GET_JNI_ENV_OR_RETURN(jenv, NULL)
 
     resolve = JNI_TRUE;
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|p:get_class", keywords, &className, &resolve)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|p:get_type", keywords, &className, &resolve)) {
         return NULL;
     }
 
@@ -432,6 +432,7 @@ PyObject* JPy_cast(PyObject* self, PyObject* args)
     JNIEnv* jenv;
     PyObject* obj;
     PyObject* objType;
+    JPy_JType* type;
     jboolean inst;
 
     JPy_GET_JNI_ENV_OR_RETURN(jenv, NULL)
@@ -449,12 +450,20 @@ PyObject* JPy_cast(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    if (!JType_Check(objType)) {
-        PyErr_SetString(PyExc_ValueError, "argument 2 (obj_type) must be a Java type object");
+    if (PyUnicode_Check(objType)) {
+        const char* typeName = PyUnicode_AsUTF8(objType);
+        type = JType_GetTypeForName(jenv, typeName, JNI_FALSE);
+        if (type == NULL) {
+            return NULL;
+        }
+    } else if (JType_Check(objType)) {
+        type = (JPy_JType*) objType;
+    } else {
+        PyErr_SetString(PyExc_ValueError, "argument 2 (obj_type) must be a Java type name or Java type object");
         return NULL;
     }
 
-    inst = (*jenv)->IsInstanceOf(jenv, ((JPy_JObj*) obj)->objectRef, ((JPy_JType*) objType)->classRef);
+    inst = (*jenv)->IsInstanceOf(jenv, ((JPy_JObj*) obj)->objectRef, type->classRef);
     if (inst) {
         return (PyObject*) JObj_FromType(jenv, (JPy_JType*) objType, ((JPy_JObj*) obj)->objectRef);
     } else {
@@ -469,38 +478,53 @@ PyObject* JPy_array(PyObject* self, PyObject* args)
     const char* name;
     int length;
     jarray arrayRef;
+    PyObject* objType;
 
     JPy_GET_JNI_ENV_OR_RETURN(jenv, NULL)
 
-    if (!PyArg_ParseTuple(args, "si:array", &name, &length)) {
+    if (!PyArg_ParseTuple(args, "Oi:array", &objType, &length)) {
         return NULL;
     }
 
     if (length < 0) {
-        PyErr_SetString(PyExc_ValueError, "negative array length");
+        PyErr_SetString(PyExc_ValueError, "argument 2 (length) must not be negative");
     }
 
-    if (strcmp(name, "boolean") == 0) {
-        arrayRef = (*jenv)->NewBooleanArray(jenv, length);
-    } else if (strcmp(name, "byte") == 0) {
-        arrayRef = (*jenv)->NewByteArray(jenv, length);
-    } else if (strcmp(name, "char") == 0) {
-        arrayRef = (*jenv)->NewCharArray(jenv, length);
-    } else if (strcmp(name, "short") == 0) {
-        arrayRef = (*jenv)->NewShortArray(jenv, length);
-    } else if (strcmp(name, "int") == 0) {
-        arrayRef = (*jenv)->NewIntArray(jenv, length);
-    } else if (strcmp(name, "long") == 0) {
-        arrayRef = (*jenv)->NewLongArray(jenv, length);
-    } else if (strcmp(name, "float") == 0) {
-        arrayRef = (*jenv)->NewFloatArray(jenv, length);
-    } else if (strcmp(name, "double") == 0) {
-        arrayRef = (*jenv)->NewDoubleArray(jenv, length);
-    } else {
+    if (PyUnicode_Check(objType)) {
+        name = PyUnicode_AsUTF8(objType);
         type = JType_GetTypeForName(jenv, name, JNI_FALSE);
         if (type == NULL) {
             return NULL;
         }
+    } else if (JType_Check(objType)) {
+        type = (JPy_JType*) objType;
+    } else {
+        PyErr_SetString(PyExc_ValueError, "argument 1 (type) must by a type name or Java type object");
+        return NULL;
+    }
+
+    if (type == JPy_JVoid) {
+        PyErr_SetString(PyExc_ValueError, "argument 1 (type) must not be 'void'");
+        return NULL;
+    }
+
+    if (type == JPy_JBoolean) {
+        arrayRef = (*jenv)->NewBooleanArray(jenv, length);
+    } else if (type == JPy_JChar) {
+        arrayRef = (*jenv)->NewCharArray(jenv, length);
+    } else if (type == JPy_JByte) {
+        arrayRef = (*jenv)->NewByteArray(jenv, length);
+    } else if (type == JPy_JShort) {
+        arrayRef = (*jenv)->NewShortArray(jenv, length);
+    } else if (type == JPy_JInt) {
+        arrayRef = (*jenv)->NewIntArray(jenv, length);
+    } else if (type == JPy_JLong) {
+        arrayRef = (*jenv)->NewLongArray(jenv, length);
+    } else if (type == JPy_JFloat) {
+        arrayRef = (*jenv)->NewFloatArray(jenv, length);
+    } else if (type == JPy_JDouble) {
+        arrayRef = (*jenv)->NewDoubleArray(jenv, length);
+    } else {
         arrayRef = (*jenv)->NewObjectArray(jenv, length, ((JPy_JType*) type)->classRef, NULL);
     }
 

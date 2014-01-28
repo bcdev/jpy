@@ -8,7 +8,7 @@ class TestString(unittest.TestCase):
 
 
     def setUp(self):
-        self.String = jpy.get_class('java.lang.String')
+        self.String = jpy.get_type('java.lang.String')
         self.assertIsNotNone(self.String)
 
 
@@ -73,7 +73,7 @@ class TestFile(unittest.TestCase):
 
 
     def setUp(self):
-        self.File = jpy.get_class('java.io.File')
+        self.File = jpy.get_type('java.io.File')
         self.assertIsNotNone(self.File)
 
 
@@ -103,7 +103,7 @@ class TestFile(unittest.TestCase):
         path = f.toPath()
         self.assertEqual(str(type(path)), '<class \'java.nio.file.Path\'>')
 
-        jpy.get_class('java.nio.file.Path')
+        jpy.get_type('java.nio.file.Path')
         n1 = path.getName(0)
         n2 = path.getName(1)
         n3 = path.getName(2)
@@ -115,7 +115,7 @@ class TestFile(unittest.TestCase):
 class TestArrayList(unittest.TestCase):
 
     def setUp(self):
-        self.ArrayList = jpy.get_class('java.util.ArrayList')
+        self.ArrayList = jpy.get_type('java.util.ArrayList')
 
         array_list = ArrayList()
         array_list.add('A')
@@ -143,7 +143,7 @@ class TestArrayList(unittest.TestCase):
 class TestHashMap(unittest.TestCase):
 
     def setUp(self):
-        self.HashMap = jpy.get_class('java.util.HashMap')
+        self.HashMap = jpy.get_type('java.util.HashMap')
 
         hash_map = HashMap()
         hash_map.put(0, 'A')

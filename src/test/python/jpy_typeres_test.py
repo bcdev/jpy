@@ -7,7 +7,7 @@ jpy.create_jvm(options=['-Djava.class.path=target/test-classes', '-Xmx512M'])
 class TestTypeResolution(unittest.TestCase):
 
     def setUp(self):
-        self.Fixture = jpy.get_class('org.jpy.fixtures.TypeResolutionTestFixture')
+        self.Fixture = jpy.get_type('org.jpy.fixtures.TypeResolutionTestFixture')
         self.assertIsNotNone(self.Fixture)
 
 

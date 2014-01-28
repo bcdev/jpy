@@ -65,7 +65,7 @@ class TestJavaArrays(unittest.TestCase):
 
     def test_array_object(self):
         self.do_test_array_protocol('java.lang.String', [None, None, None], ['A', 'B', 'C'])
-        F = jpy.get_class('java.io.File')
+        F = jpy.get_type('java.io.File')
         self.do_test_array_protocol('java.io.File', [None, None, None], [F('A'), F('B'), F('C')])
 
 

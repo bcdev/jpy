@@ -7,9 +7,9 @@ class TestMethodReturnValues(unittest.TestCase):
 
 
     def setUp(self):
-        self.Fixture = jpy.get_class('org.jpy.fixtures.MethodReturnValueTestFixture')
+        self.Fixture = jpy.get_type('org.jpy.fixtures.MethodReturnValueTestFixture')
         self.assertIsNotNone(self.Fixture)
-        self.Thing = jpy.get_class('org.jpy.fixtures.Thing')
+        self.Thing = jpy.get_type('org.jpy.fixtures.Thing')
         self.assertIsNotNone(self.Thing)
 
 

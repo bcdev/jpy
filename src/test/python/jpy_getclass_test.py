@@ -6,13 +6,13 @@ jpy.create_jvm(options=['-Djava.class.path=target/test-classes', '-Xmx512M'])
 class TestGetClass(unittest.TestCase):
 
     def test_get_class_of_primitive_array(self):
-        IntArray1D = jpy.get_class('[I')
+        IntArray1D = jpy.get_type('[I')
         self.assertEqual(str(IntArray1D), "<class '[I'>")
 
-        IntArray2D = jpy.get_class('[[I')
+        IntArray2D = jpy.get_type('[[I')
         self.assertEqual(str(IntArray2D), "<class '[[I'>")
 
-        IntArray3D = jpy.get_class('[[[I')
+        IntArray3D = jpy.get_type('[[[I')
         self.assertEqual(str(IntArray3D), "<class '[[[I'>")
 
         with self.assertRaises(RuntimeError) as e:
@@ -21,13 +21,13 @@ class TestGetClass(unittest.TestCase):
 
 
     def test_get_class_of_object_array(self):
-        StringArray1D = jpy.get_class('[Ljava.lang.String;')
+        StringArray1D = jpy.get_type('[Ljava.lang.String;')
         self.assertEqual(str(StringArray1D), "<class '[Ljava.lang.String;'>")
 
-        StringArray2D = jpy.get_class('[[Ljava.lang.String;')
+        StringArray2D = jpy.get_type('[[Ljava.lang.String;')
         self.assertEqual(str(StringArray2D), "<class '[[Ljava.lang.String;'>")
 
-        StringArray3D = jpy.get_class('[[[Ljava.lang.String;')
+        StringArray3D = jpy.get_type('[[[Ljava.lang.String;')
         self.assertEqual(str(StringArray3D), "<class '[[[Ljava.lang.String;'>")
 
         with self.assertRaises(RuntimeError) as e:
@@ -37,11 +37,11 @@ class TestGetClass(unittest.TestCase):
 
     def test_get_class_of_unknown_type(self):
         with  self.assertRaises(ValueError) as e:
-            String = jpy.get_class('java.lang.Spring')
+            String = jpy.get_type('java.lang.Spring')
         self.assertEqual(str(e.exception), "Java class 'java.lang.Spring' not found")
 
         with  self.assertRaises(ValueError) as e:
-            IntArray = jpy.get_class('int[]')
+            IntArray = jpy.get_type('int[]')
         self.assertEqual(str(e.exception), "Java class 'int[]' not found")
 
 

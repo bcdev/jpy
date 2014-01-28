@@ -9,7 +9,7 @@ class MyThread(threading.Thread):
 
     def __init__(self, value):
         threading.Thread.__init__(self)
-        Integer = jpy.get_class('java.lang.Integer')
+        Integer = jpy.get_type('java.lang.Integer')
         self.intObj = Integer(value)
 
     def run(self):
