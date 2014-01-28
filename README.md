@@ -65,11 +65,11 @@ the command-line by using the ``setenv`` tool of the Windows SDK. In order to in
 
 Open the command-line and execute
 
-    > C:\Program Files\Microsoft SDKs\Windows\v7.1\bin\setenv /x64 /release
+    > "C:\Program Files\Microsoft SDKs\Windows\v7.1\bin\setenv" /x64 /release
 
 to prepare a build of the 64-bit version of jpy. Use
 
-    > C:\Program Files\Microsoft SDKs\Windows\v7.1\bin\setenv /x86 /release
+    > "C:\Program Files\Microsoft SDKs\Windows\v7.1\bin\setenv" /x86 /release
 
 to prepare a build of the 32-bit version of jpy. Now set other environment variables.
 
