@@ -44,7 +44,7 @@ Instantiate Python objects from Java classes and call their public methods and f
 
     import jpy
 
-    File = jpy.get_class('java.io.File')
+    File = jpy.get_type('java.io.File')
 
     file = File('test/it')
     name = file.getName()

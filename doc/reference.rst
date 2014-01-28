@@ -50,15 +50,17 @@ jpy Functions
     been destroyed. No return value.
 
 
-.. py:function:: get_class(name)
+.. py:function:: get_type(name)
     :module: jpy
 
-    Return a type object for the given, fully qualified Java class *name*, e.g. ``'java.lang.System'``.
-    If the type does not already exists in :py:data:`jpy.jtypes`, the class is loaded from the JVM. If the Java
-    class has public constructors, these can be used to create instances of the class just like from any other Python
+    Return a type object for the given, fully qualified Java type which is typically a class *name*,
+    e.g. ``'java.lang.System'`` or one of the Java primitive types (``'boolean'``, ``'char'``, ``'byte'``, ``'short'``,
+    ``'int'``, ``'long'``, ``'float'``, and ``'double'``).
+    If the type does not already exists in :py:data:`jpy.types`, the class is loaded from the JVM. If the Java type is
+    a class with public constructors, these can be used to create object instances just like from any other Python
     class, e.g.::
 
-        String = jpy.get_class('java.lang.String')
+        String = jpy.get_type('java.lang.String')
         s = String(‘Hello jpy!’)
         s = s.substring(0, 5)
 
@@ -67,12 +69,12 @@ jpy Functions
     exception.
 
 
-.. py:function:: cast(jobj, jtype)
+.. py:function:: cast(jobj, type)
     :module: jpy
 
-    Convert a Java object to a Java object with the given Java type. If *jobj* is already of type *jtype*, *jobj* is
-    returned. If *jobj* is an instance of *jtype*, a new wrapper object will be created for this type, otherwise
-    ``None`` is returned.
+    Convert a Java object to a Java object with the given Java *type* (type object or type name, see
+    :py:func:`jpy.get_type()`). If *jobj* is already of *type*, *jobj* is returned. If *jobj* is an instance of
+    *type*, a new wrapper object will be created for this type, otherwise ``None`` is returned.
 
     Make sure that :py:func:`jpy.create_jvm()` has already been called. Otherwise the function fails with a runtime
     exception.
@@ -101,6 +103,10 @@ Variables
 
 .. py:data:: type_callbacks
     :module: jpy
+
+    Contains callbacks which are called before jpy translates Java methods to Python methods while Java classes are
+    being loaded. These callbacks can be used to annotate Java methods so that jpy can better translate them to
+    Python. This is a powerful but advanced jpy feature that you usually don't have to use.
 
     Consider a Java method::
 
@@ -135,7 +141,7 @@ Variables
         class_name = 'com.acme.Reader'
         jpy.type_callbacks[class_name] = annotate_Reader_readData_methods
         # This will invoke the callback above
-        Reader = jpy.get_class(class_name)
+        Reader = jpy.get_type(class_name)
 
     Once a method parameter is annotated that way, jpy can transfer the semantics of a Java method to Python.
     For example::
@@ -162,7 +168,7 @@ referred to, e.g. in error messages.
 
     This type is the base class for all type representing Java classes. It is actually a meta-type used to dynamically
     create Python type instances from loaded Java classes. Such derived types are returned by
-    :py:func:`jpy.get_class` instead or can be directly looked up in :py:data:`jpy.types`.
+    :py:func:`jpy.get_type` instead or can be directly looked up in :py:data:`jpy.types`.
 
 
 .. py:class:: JOverloadedMethod
