@@ -17,14 +17,24 @@ class TestJavaArrays(unittest.TestCase):
         return a
 
 
-    def do_test_array_protocol(self, type, initial, expected):
+    def do_test_array_protocol(self, type_name, initial, expected):
+        self.do_test_array_protocol2(type_name, initial, expected)
+        self.do_test_array_protocol2(jpy.get_type(type_name), initial, expected)
+
+
+    def do_test_array_protocol2(self, type, initial, expected):
         a = self.do_test_basic_array_protocol(type, initial, expected)
         self.assertEqual(a[0], expected[0])
         self.assertEqual(a[1], expected[1])
         self.assertEqual(a[2], expected[2])
 
 
-    def do_test_array_protocol_float(self, type, initial, expected, places):
+    def do_test_array_protocol_float(self, type_name, initial, expected, places):
+        self.do_test_array_protocol_float2(type_name, initial, expected, places)
+        self.do_test_array_protocol_float2(jpy.get_type(type_name), initial, expected, places)
+
+
+    def do_test_array_protocol_float2(self, type, initial, expected, places):
         a = self.do_test_basic_array_protocol(type, initial, expected)
         self.assertAlmostEqual(a[0], expected[0], places=places)
         self.assertAlmostEqual(a[1], expected[1], places=places)
@@ -64,10 +74,14 @@ class TestJavaArrays(unittest.TestCase):
 
 
     def test_array_object(self):
+        File = jpy.get_type('java.io.File')
+        String = jpy.get_type('java.lang.String')
+        Integer = jpy.get_type('java.lang.Integer')
+        self.do_test_array_protocol('java.lang.Integer', [None, None, None], [1, None, 3])
         self.do_test_array_protocol('java.lang.String', [None, None, None], ['A', 'B', 'C'])
-        F = jpy.get_type('java.io.File')
-        self.do_test_array_protocol('java.io.File', [None, None, None], [F('A'), F('B'), F('C')])
-
+        self.do_test_array_protocol('java.io.File', [None, None, None], [File('A'), File('B'), File('C')])
+        self.do_test_array_protocol('java.lang.Object', [None, None, None], [None, None, None])
+        self.do_test_array_protocol('java.lang.Object', [None, None, None], [File('A'), String('B'), Integer(3)])
 
 
     def do_test_basic_buffer_protocol(self, type, itemsize, values):
@@ -93,13 +107,23 @@ class TestJavaArrays(unittest.TestCase):
         return m
 
 
-    def do_test_buffer_protocol(self, type, itemsize, values):
+    def do_test_buffer_protocol(self, type_name, itemsize, values):
+        self.do_test_buffer_protocol2(type_name, itemsize, values)
+        self.do_test_buffer_protocol2(jpy.get_type(type_name), itemsize, values)
+
+
+    def do_test_buffer_protocol2(self, type, itemsize, values):
         m = self.do_test_basic_buffer_protocol(type, itemsize, values)
         self.assertEqual(m.tolist(), values)
         m.release()
 
 
-    def do_test_buffer_protocol_float(self, type, itemsize, values, places):
+    def do_test_buffer_protocol_float(self, type_name, itemsize, values, places):
+        self.do_test_buffer_protocol_float2(type_name, itemsize, values, places)
+        self.do_test_buffer_protocol_float2(jpy.get_type(type_name), itemsize, values, places)
+
+
+    def do_test_buffer_protocol_float2(self, type, itemsize, values, places):
         m = self.do_test_basic_buffer_protocol(type, itemsize, values)
         self.assertAlmostEqual(m[0], values[0], places=places)
         self.assertAlmostEqual(m[1], values[1], places=places)
@@ -138,6 +162,7 @@ class TestJavaArrays(unittest.TestCase):
 
     def test_buffer_double(self):
         self.do_test_buffer_protocol_float('double', 8, [0.12345678, 0.0, -100.123456, 54.3], 8)
+
 
 
 if __name__ == '__main__':
