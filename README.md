@@ -31,8 +31,8 @@ then the jyp Java library.
 ### Unix/Darwin
 
 You will need
-* Python 3.3 Dev (!)
-* JDK 1.7
+* Python 3.3 or higher (*dev* version)
+* JDK 1.7 or higher
 * Maven 3
 * gcc
 
@@ -47,8 +47,8 @@ To build and test the jpy Python module use the following commands:
 ### Microsoft Windows
 
 You will need
-* [Python 3.3](http://www.python.org/)
-* [JDK 1.7](http://www.oracle.com/technetwork/java/javase/downloads/)
+* [Python 3.3](http://www.python.org/) or higher
+* [JDK 1.7](http://www.oracle.com/technetwork/java/javase/downloads/) or higher
 * [Maven 3](http://maven.apache.org/)
 * [Microsoft Windows SDK 7.1](http://www.microsoft.com/en-us/download/details.aspx?id=8279)
 
