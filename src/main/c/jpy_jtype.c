@@ -397,12 +397,14 @@ int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobjec
             for (index = 0; index < itemCount; index++) {
                 pyItem = PySequence_GetItem(pyArg, index);
                 if (pyItem == NULL) {
+                    (*jenv)->ReleaseBooleanArrayElements(jenv, arrayRef, items, 0);
                     (*jenv)->DeleteLocalRef(jenv, arrayRef);
                     return -1;
                 }
                 items[index] = JPy_AS_JBOOLEAN(pyItem);
                 Py_DECREF(pyItem);
                 if (PyErr_Occurred()) {
+                    (*jenv)->ReleaseBooleanArrayElements(jenv, arrayRef, items, 0);
                     (*jenv)->DeleteLocalRef(jenv, arrayRef);
                     return -1;
                 }
@@ -425,12 +427,14 @@ int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobjec
             for (index = 0; index < itemCount; index++) {
                 pyItem = PySequence_GetItem(pyArg, index);
                 if (pyItem == NULL) {
+                    (*jenv)->ReleaseByteArrayElements(jenv, arrayRef, items, 0);
                     (*jenv)->DeleteLocalRef(jenv, arrayRef);
                     return -1;
                 }
                 items[index] = JPy_AS_JBYTE(pyItem);
                 Py_DECREF(pyItem);
                 if (PyErr_Occurred()) {
+                    (*jenv)->ReleaseByteArrayElements(jenv, arrayRef, items, 0);
                     (*jenv)->DeleteLocalRef(jenv, arrayRef);
                     return -1;
                 }
@@ -453,12 +457,14 @@ int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobjec
             for (index = 0; index < itemCount; index++) {
                 pyItem = PySequence_GetItem(pyArg, index);
                 if (pyItem == NULL) {
+                    (*jenv)->ReleaseCharArrayElements(jenv, arrayRef, items, 0);
                     (*jenv)->DeleteLocalRef(jenv, arrayRef);
                     return -1;
                 }
                 items[index] = JPy_AS_JCHAR(pyItem);
                 Py_DECREF(pyItem);
                 if (PyErr_Occurred()) {
+                    (*jenv)->ReleaseCharArrayElements(jenv, arrayRef, items, 0);
                     (*jenv)->DeleteLocalRef(jenv, arrayRef);
                     return -1;
                 }
@@ -481,12 +487,14 @@ int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobjec
             for (index = 0; index < itemCount; index++) {
                 pyItem = PySequence_GetItem(pyArg, index);
                 if (pyItem == NULL) {
+                    (*jenv)->ReleaseShortArrayElements(jenv, arrayRef, items, 0);
                     (*jenv)->DeleteLocalRef(jenv, arrayRef);
                     return -1;
                 }
                 items[index] = JPy_AS_JSHORT(pyItem);
                 Py_DECREF(pyItem);
                 if (PyErr_Occurred()) {
+                    (*jenv)->ReleaseShortArrayElements(jenv, arrayRef, items, 0);
                     (*jenv)->DeleteLocalRef(jenv, arrayRef);
                     return -1;
                 }
@@ -509,12 +517,14 @@ int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobjec
             for (index = 0; index < itemCount; index++) {
                 pyItem = PySequence_GetItem(pyArg, index);
                 if (pyItem == NULL) {
+                    (*jenv)->ReleaseIntArrayElements(jenv, arrayRef, items, 0);
                     (*jenv)->DeleteLocalRef(jenv, arrayRef);
                     return -1;
                 }
                 items[index] = JPy_AS_JINT(pyItem);
                 Py_DECREF(pyItem);
                 if (PyErr_Occurred()) {
+                    (*jenv)->ReleaseIntArrayElements(jenv, arrayRef, items, 0);
                     (*jenv)->DeleteLocalRef(jenv, arrayRef);
                     return -1;
                 }
@@ -537,12 +547,14 @@ int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobjec
             for (index = 0; index < itemCount; index++) {
                 pyItem = PySequence_GetItem(pyArg, index);
                 if (pyItem == NULL) {
+                    (*jenv)->ReleaseLongArrayElements(jenv, arrayRef, items, 0);
                     (*jenv)->DeleteLocalRef(jenv, arrayRef);
                     return -1;
                 }
                 items[index] = JPy_AS_JLONG(pyItem);
                 Py_DECREF(pyItem);
                 if (PyErr_Occurred()) {
+                    (*jenv)->ReleaseLongArrayElements(jenv, arrayRef, items, 0);
                     (*jenv)->DeleteLocalRef(jenv, arrayRef);
                     return -1;
                 }
@@ -565,12 +577,14 @@ int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobjec
             for (index = 0; index < itemCount; index++) {
                 pyItem = PySequence_GetItem(pyArg, index);
                 if (pyItem == NULL) {
+                    (*jenv)->ReleaseFloatArrayElements(jenv, arrayRef, items, 0);
                     (*jenv)->DeleteLocalRef(jenv, arrayRef);
                     return -1;
                 }
                 items[index] = JPy_AS_JFLOAT(pyItem);
                 Py_DECREF(pyItem);
                 if (PyErr_Occurred()) {
+                    (*jenv)->ReleaseFloatArrayElements(jenv, arrayRef, items, 0);
                     (*jenv)->DeleteLocalRef(jenv, arrayRef);
                     return -1;
                 }
@@ -593,12 +607,14 @@ int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobjec
             for (index = 0; index < itemCount; index++) {
                 pyItem = PySequence_GetItem(pyArg, index);
                 if (pyItem == NULL) {
+                    (*jenv)->ReleaseDoubleArrayElements(jenv, arrayRef, items, 0);
                     (*jenv)->DeleteLocalRef(jenv, arrayRef);
                     return -1;
                 }
                 items[index] = JPy_AS_JDOUBLE(pyItem);
                 Py_DECREF(pyItem);
                 if (PyErr_Occurred()) {
+                    (*jenv)->ReleaseDoubleArrayElements(jenv, arrayRef, items, 0);
                     (*jenv)->DeleteLocalRef(jenv, arrayRef);
                     return -1;
                 }
