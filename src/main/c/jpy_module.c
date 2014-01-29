@@ -474,66 +474,77 @@ PyObject* JPy_cast(PyObject* self, PyObject* args)
 PyObject* JPy_array(PyObject* self, PyObject* args)
 {
     JNIEnv* jenv;
-    JPy_JType* type;
-    const char* name;
-    int length;
+    JPy_JType* componentType;
     jarray arrayRef;
     PyObject* objType;
+    PyObject* objInit;
 
     JPy_GET_JNI_ENV_OR_RETURN(jenv, NULL)
 
-    if (!PyArg_ParseTuple(args, "Oi:array", &objType, &length)) {
+    if (!PyArg_ParseTuple(args, "OO:array", &objType, &objInit)) {
         return NULL;
     }
 
-    if (length < 0) {
-        PyErr_SetString(PyExc_ValueError, "argument 2 (length) must not be negative");
-    }
-
     if (PyUnicode_Check(objType)) {
-        name = PyUnicode_AsUTF8(objType);
-        type = JType_GetTypeForName(jenv, name, JNI_FALSE);
-        if (type == NULL) {
+        const char* typeName;
+        typeName = PyUnicode_AsUTF8(objType);
+        componentType = JType_GetTypeForName(jenv, typeName, JNI_FALSE);
+        if (componentType == NULL) {
             return NULL;
         }
     } else if (JType_Check(objType)) {
-        type = (JPy_JType*) objType;
+        componentType = (JPy_JType*) objType;
     } else {
         PyErr_SetString(PyExc_ValueError, "argument 1 (type) must by a type name or Java type object");
         return NULL;
     }
 
-    if (type == JPy_JVoid) {
+    if (componentType == JPy_JVoid) {
         PyErr_SetString(PyExc_ValueError, "argument 1 (type) must not be 'void'");
         return NULL;
     }
 
-    if (type == JPy_JBoolean) {
-        arrayRef = (*jenv)->NewBooleanArray(jenv, length);
-    } else if (type == JPy_JChar) {
-        arrayRef = (*jenv)->NewCharArray(jenv, length);
-    } else if (type == JPy_JByte) {
-        arrayRef = (*jenv)->NewByteArray(jenv, length);
-    } else if (type == JPy_JShort) {
-        arrayRef = (*jenv)->NewShortArray(jenv, length);
-    } else if (type == JPy_JInt) {
-        arrayRef = (*jenv)->NewIntArray(jenv, length);
-    } else if (type == JPy_JLong) {
-        arrayRef = (*jenv)->NewLongArray(jenv, length);
-    } else if (type == JPy_JFloat) {
-        arrayRef = (*jenv)->NewFloatArray(jenv, length);
-    } else if (type == JPy_JDouble) {
-        arrayRef = (*jenv)->NewDoubleArray(jenv, length);
+    if (PyLong_Check(objInit)) {
+        jint length;
+        length = PyLong_AsLong(objInit);
+        if (length < 0) {
+            PyErr_SetString(PyExc_ValueError, "argument 2 (length) must not be negative");
+            return NULL;
+        }
+        if (componentType == JPy_JBoolean) {
+            arrayRef = (*jenv)->NewBooleanArray(jenv, length);
+        } else if (componentType == JPy_JChar) {
+            arrayRef = (*jenv)->NewCharArray(jenv, length);
+        } else if (componentType == JPy_JByte) {
+            arrayRef = (*jenv)->NewByteArray(jenv, length);
+        } else if (componentType == JPy_JShort) {
+            arrayRef = (*jenv)->NewShortArray(jenv, length);
+        } else if (componentType == JPy_JInt) {
+            arrayRef = (*jenv)->NewIntArray(jenv, length);
+        } else if (componentType == JPy_JLong) {
+            arrayRef = (*jenv)->NewLongArray(jenv, length);
+        } else if (componentType == JPy_JFloat) {
+            arrayRef = (*jenv)->NewFloatArray(jenv, length);
+        } else if (componentType == JPy_JDouble) {
+            arrayRef = (*jenv)->NewDoubleArray(jenv, length);
+        } else {
+            arrayRef = (*jenv)->NewObjectArray(jenv, length, componentType->classRef, NULL);
+        }
+        if (arrayRef == NULL) {
+            return PyErr_NoMemory();
+        }
+        return (PyObject*) JObj_New(jenv, arrayRef);
+    } else if (PySequence_Check(objInit)) {
+        if (JType_CreateJavaArray(jenv, componentType, objInit, &arrayRef) < 0) {
+            return NULL;
+        }
+        return (PyObject*) JObj_New(jenv, arrayRef);
     } else {
-        arrayRef = (*jenv)->NewObjectArray(jenv, length, ((JPy_JType*) type)->classRef, NULL);
+        PyErr_SetString(PyExc_ValueError, "argument 2 (init) must be either an integer array length or any sequence");
+        return NULL;
     }
-
-    if (arrayRef == NULL) {
-        return PyErr_NoMemory();
-    }
-
-    return (PyObject*) JObj_New(jenv, arrayRef);
 }
+
 
 JPy_JType* JPy_GetNonObjectJType(JNIEnv* jenv, jclass classRef)
 {

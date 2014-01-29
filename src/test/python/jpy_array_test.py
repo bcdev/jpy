@@ -5,7 +5,7 @@ jpy.create_jvm(options=['-Djava.class.path=target/test-classes', '-Xmx512M'])
 
 class TestJavaArrays(unittest.TestCase):
 
-    def do_test_basic_array_protocol(self, type, initial, expected):
+    def do_test_basic_array_protocol_with_length(self, type, initial, expected):
         a = jpy.array(type, 3)
         self.assertEqual(len(a), 3)
         self.assertEqual(a[0], initial[0])
@@ -16,14 +16,22 @@ class TestJavaArrays(unittest.TestCase):
         a[2] = expected[2]
         return a
 
+    def do_test_array_with_initializer(self, type, expected):
+        a = jpy.array(type, expected)
+        self.assertEqual(len(a), 3)
+        self.assertEqual(a[0], expected[0])
+        self.assertEqual(a[1], expected[1])
+        self.assertEqual(a[2], expected[2])
 
     def do_test_array_protocol(self, type_name, initial, expected):
         self.do_test_array_protocol2(type_name, initial, expected)
         self.do_test_array_protocol2(jpy.get_type(type_name), initial, expected)
+        self.do_test_array_with_initializer(type_name, expected)
+        #self.do_test_array_with_initializer(jpy.get_type(type_name), expected)
 
 
     def do_test_array_protocol2(self, type, initial, expected):
-        a = self.do_test_basic_array_protocol(type, initial, expected)
+        a = self.do_test_basic_array_protocol_with_length(type, initial, expected)
         self.assertEqual(a[0], expected[0])
         self.assertEqual(a[1], expected[1])
         self.assertEqual(a[2], expected[2])
@@ -35,7 +43,7 @@ class TestJavaArrays(unittest.TestCase):
 
 
     def do_test_array_protocol_float2(self, type, initial, expected, places):
-        a = self.do_test_basic_array_protocol(type, initial, expected)
+        a = self.do_test_basic_array_protocol_with_length(type, initial, expected)
         self.assertAlmostEqual(a[0], expected[0], places=places)
         self.assertAlmostEqual(a[1], expected[1], places=places)
         self.assertAlmostEqual(a[2], expected[2], places=places)

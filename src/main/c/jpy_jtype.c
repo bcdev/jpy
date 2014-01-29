@@ -361,7 +361,7 @@ int JType_CreateJavaPyObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, job
     return JType_CreateJavaObject(jenv, type, pyArg, type->classRef, JPy_PyObject_Init_MID, value, objectRef);
 }
 
-int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
+int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* componentType, PyObject* pyArg, jobject* objectRef)
 {
     jint itemCount;
     jarray arrayRef;
@@ -376,12 +376,13 @@ int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobjec
             return -1;
         }
     } else {
-        return JType_PythonToJavaConversionError(type, pyArg);
+        PyErr_Format(PyExc_ValueError, "cannot convert a Python %s to a Java array of type %s", Py_TYPE(pyArg)->tp_name, componentType->javaName);
+        return -1;
     }
 
     arrayRef = NULL;
 
-    if (type->componentType == JPy_JBoolean) {
+    if (componentType == JPy_JBoolean) {
         arrayRef = (*jenv)->NewBooleanArray(jenv, itemCount);
         if (arrayRef == NULL || (*jenv)->ExceptionCheck(jenv)) {
             JPy_HandleJavaException(jenv);
@@ -411,7 +412,7 @@ int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobjec
             }
             (*jenv)->ReleaseBooleanArrayElements(jenv, arrayRef, items, 0);
         }
-    } else if (type->componentType == JPy_JByte) {
+    } else if (componentType == JPy_JByte) {
         arrayRef = (*jenv)->NewByteArray(jenv, itemCount);
         if (arrayRef == NULL || (*jenv)->ExceptionCheck(jenv)) {
             JPy_HandleJavaException(jenv);
@@ -441,7 +442,7 @@ int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobjec
             }
             (*jenv)->ReleaseByteArrayElements(jenv, arrayRef, items, 0);
         }
-    } else if (type->componentType == JPy_JChar) {
+    } else if (componentType == JPy_JChar) {
         arrayRef = (*jenv)->NewCharArray(jenv, itemCount);
         if (arrayRef == NULL || (*jenv)->ExceptionCheck(jenv)) {
             JPy_HandleJavaException(jenv);
@@ -471,7 +472,7 @@ int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobjec
             }
             (*jenv)->ReleaseCharArrayElements(jenv, arrayRef, items, 0);
         }
-    } else if (type->componentType == JPy_JShort) {
+    } else if (componentType == JPy_JShort) {
         arrayRef = (*jenv)->NewShortArray(jenv, itemCount);
         if (arrayRef == NULL || (*jenv)->ExceptionCheck(jenv)) {
             JPy_HandleJavaException(jenv);
@@ -501,7 +502,7 @@ int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobjec
             }
             (*jenv)->ReleaseShortArrayElements(jenv, arrayRef, items, 0);
         }
-    } else if (type->componentType == JPy_JInt) {
+    } else if (componentType == JPy_JInt) {
         arrayRef = (*jenv)->NewIntArray(jenv, itemCount);
         if (arrayRef == NULL || (*jenv)->ExceptionCheck(jenv)) {
             JPy_HandleJavaException(jenv);
@@ -531,7 +532,7 @@ int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobjec
             }
             (*jenv)->ReleaseIntArrayElements(jenv, arrayRef, items, 0);
         }
-    } else if (type->componentType->componentType == JPy_JLong) {
+    } else if (componentType == JPy_JLong) {
         arrayRef = (*jenv)->NewLongArray(jenv, itemCount);
         if (arrayRef == NULL || (*jenv)->ExceptionCheck(jenv)) {
             JPy_HandleJavaException(jenv);
@@ -561,7 +562,7 @@ int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobjec
             }
             (*jenv)->ReleaseLongArrayElements(jenv, arrayRef, items, 0);
         }
-    } else if (type->componentType == JPy_JFloat) {
+    } else if (componentType == JPy_JFloat) {
         arrayRef = (*jenv)->NewFloatArray(jenv, itemCount);
         if (arrayRef == NULL || (*jenv)->ExceptionCheck(jenv)) {
             JPy_HandleJavaException(jenv);
@@ -591,7 +592,7 @@ int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobjec
             }
             (*jenv)->ReleaseFloatArrayElements(jenv, arrayRef, items, 0);
         }
-    } else if (type->componentType == JPy_JDouble) {
+    } else if (componentType == JPy_JDouble) {
         arrayRef = (*jenv)->NewDoubleArray(jenv, itemCount);
         if (arrayRef == NULL || (*jenv)->ExceptionCheck(jenv)) {
             JPy_HandleJavaException(jenv);
@@ -621,9 +622,9 @@ int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobjec
             }
             (*jenv)->ReleaseDoubleArrayElements(jenv, arrayRef, items, 0);
         }
-    } else if (!type->componentType->isPrimitive) {
+    } else if (!componentType->isPrimitive) {
         jobject jItem;
-        arrayRef = (*jenv)->NewObjectArray(jenv, itemCount, type->componentType->classRef, NULL);
+        arrayRef = (*jenv)->NewObjectArray(jenv, itemCount, componentType->classRef, NULL);
         if (arrayRef == NULL || (*jenv)->ExceptionCheck(jenv)) {
             JPy_HandleJavaException(jenv);
             return -1;
@@ -634,7 +635,7 @@ int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobjec
                 (*jenv)->DeleteLocalRef(jenv, arrayRef);
                 return -1;
             }
-            if (JType_ConvertPythonToJavaObject(jenv, type->componentType, pyItem, &jItem) < 0) {
+            if (JType_ConvertPythonToJavaObject(jenv, componentType, pyItem, &jItem) < 0) {
                 (*jenv)->DeleteLocalRef(jenv, arrayRef);
                 Py_DECREF(pyItem);
                 return -1;
@@ -649,7 +650,8 @@ int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobjec
             }
         }
     } else {
-        return JType_PythonToJavaConversionError(type, pyArg);
+        PyErr_Format(PyExc_ValueError, "illegal Java array component type %s", componentType->javaName);
+        return -1;
     }
 
     *objectRef = arrayRef;
@@ -674,7 +676,7 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
         return 0;
     } else if (type->componentType != NULL) {
         // For any other Python argument create a Java object (a new local reference)
-        return JType_CreateJavaArray(jenv, type, pyArg, objectRef);
+        return JType_CreateJavaArray(jenv, type->componentType, pyArg, objectRef);
     } else if (type == JPy_JBoolean || type == JPy_JBooleanObj) {
         return JType_CreateJavaBooleanObject(jenv, type, pyArg, objectRef);
     } else if (type == JPy_JChar || type == JPy_JCharacterObj) {
