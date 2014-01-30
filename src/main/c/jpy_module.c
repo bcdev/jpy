@@ -586,7 +586,7 @@ jclass JPy_GetClass(JNIEnv* jenv, const char* name)
 
     localClassRef = (*jenv)->FindClass(jenv, name);
     if (localClassRef == NULL) {
-        PyErr_Format(PyExc_RuntimeError, "Java class '%s' not found", name);
+        PyErr_Format(PyExc_RuntimeError, "internal error: Java class '%s' not found", name);
         return NULL;
     }
 
@@ -605,7 +605,7 @@ jmethodID JPy_GetMethod(JNIEnv* jenv, jclass classRef, const char* name, const c
     jmethodID methodID;
     methodID = (*jenv)->GetMethodID(jenv, classRef, name, sig);
     if (methodID == NULL) {
-        PyErr_Format(PyExc_RuntimeError, "method not found: %s%s", name, sig);
+        PyErr_Format(PyExc_RuntimeError, "internal error: method not found: %s%s", name, sig);
         return NULL;
     }
     return methodID;
