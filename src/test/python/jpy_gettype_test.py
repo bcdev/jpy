@@ -44,8 +44,6 @@ class TestGetClass(unittest.TestCase):
             IntArray = jpy.get_type('int[]')
         self.assertEqual(str(e.exception), "Java class 'int[]' not found")
 
-
-
 if __name__ == '__main__':
     print('\nRunning', __file__)
     unittest.main()
