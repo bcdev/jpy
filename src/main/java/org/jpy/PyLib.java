@@ -203,6 +203,10 @@ public class PyLib {
          */
         public static final int F_MEM = 0x08;
         /**
+         * Print diagnostic information usage of the Java VM Invocation API.
+         */
+        public static final int F_JVM = 0x10;
+        /**
          * Print any diagnostic information.
          */
         public static final int F_ALL = 0xff;
@@ -243,7 +247,11 @@ public class PyLib {
 
             String libPath = getProperty(JPY_LIB_KEY, true);
             // E.g. libPath = "/usr/local/lib/python3.3/dist-packages/jpy.cpython-33m.so";
-            //System.out.println(JPY_LIB_KEY + " = " + libPath);
+
+            //System.out.println("PyLib: loading library from: " + libPath);
+            //System.out.println("PyLib: context class loader: " + Thread.currentThread().getContextClassLoader());
+            //System.out.println("PyLib: class class loader:   " + PyLib.class.getClassLoader());
+
             System.load(libPath);
             sharedLibraryProblem = null;
             sharedLibraryLoaded = true;
