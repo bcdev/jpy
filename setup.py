@@ -35,7 +35,7 @@ python_tests = [
     'src/test/python/jpy_typeconv_test.py',
     'src/test/python/jpy_typeres_test.py',
     'src/test/python/jpy_modretparam_test.py',
-    'src/test/python/jpy_getclass_test.py',
+    'src/test/python/jpy_gettype_test.py',
     'src/test/python/jpy_diag_test.py',
 ]
 
@@ -58,13 +58,6 @@ WIN32 = platform.system() == 'Windows'
 LINUX = platform.system() == 'Linux'
 DARWIN = platform.system() == 'Darwin'
 print('Building a %s-bit library for a %s system' % ('64' if IS64 else '32', platform.system()))
-
-if WIN32 and os.environ.get('VS90COMNTOOLS', None) is None:
-    print('Note: If you get an error saying "Unable to find vcvarsall.bat",')
-    print('      you may need to set environment variable VS90COMNTOOLS.')
-    print('      If you use Visual Studio 2011, then: SET VS90COMNTOOLS=%VS100COMNTOOLS%,')
-    print('      if you use Visual Studio 2012, then: SET VS90COMNTOOLS=%VS110COMNTOOLS%.')
-
 
 include_dirs = ['src/main/c']
 library_dirs = []

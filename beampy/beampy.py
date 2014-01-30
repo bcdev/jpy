@@ -15,17 +15,26 @@ You can place beampy.ini next to <python3>/site-packages/beampy.py or put it in 
 
 """
 
-import jpy
+__author__ = "Norman Fomferra, Brockmann Consult GmbH"
+
 import os
 import configparser
 
-__author__ = "Norman Fomferra, Brockmann Consult GmbH"
+module_dir = os.path.dirname(os.path.realpath(__file__))
+config = configparser.ConfigParser()
+config.read(['./beampy.ini', os.path.join(module_dir, 'beampy.ini')])
+
+debug = config.getboolean('DEFAULT', 'debug', fallback=False)
+
+# todo - determine path to JVM shared library and extend PATH / LD_LIBRARY_PATH env vars so that jpy can load it
+
+import jpy
+
+if debug:
+    jpy.diag.flags = jpy.diag.F_ALL
 
 
 def _get_beam_jar_locations():
-
-    if beam_home is None:
-        raise RuntimeError('environment variable "BEAM_HOME" must be set to a valid BEAM installation directory')
 
     beam_bin = os.path.join(beam_home, 'bin')
     beam_lib = os.path.join(beam_home, 'lib')
@@ -58,44 +67,44 @@ def _create_classpath(searchpath):
     return classpath
 
 
-module_dir = os.path.dirname(os.path.realpath(__file__))
+def _get_jvm_options():
+    global beam_home, searchpath, classpath, extra_classpath, max_mem, options, extra_options
+    beam_home = config.get('DEFAULT', 'beam_home',
+                           fallback=os.getenv('BEAM_HOME',
+                                              os.getenv('BEAM4_HOME',
+                                                        os.getenv('BEAM5_HOME'))))
+    if beam_home is None or not os.path.exists(beam_home):
+        raise RuntimeError('environment variable "BEAM_HOME" must be set to a valid BEAM installation directory')
 
-config = configparser.ConfigParser()
-config.read(['./beampy.ini', os.path.join(module_dir, 'beampy.ini')])
-beam_home = config.get('DEFAULT', 'beam_home',
-                       fallback=os.getenv('BEAM_HOME',
-                                          os.getenv('BEAM4_HOME',
-                                                    os.getenv('BEAM5_HOME'))))
 
-#import pprint
-searchpath = _get_beam_jar_locations()
-#pprint.pprint(searchpath)
-classpath = _create_classpath(searchpath)
+    #import pprint
+    searchpath = _get_beam_jar_locations()
+    #pprint.pprint(searchpath)
+    classpath = _create_classpath(searchpath)
+    extra_classpath = config.get('DEFAULT', 'extra_classpath', fallback=None)
+    if extra_classpath:
+        classpath += extra_classpath.split(sep=os.pathsep)
 
-extra_classpath = config.get('DEFAULT', 'extra_classpath', fallback=None)
-if extra_classpath:
-    classpath += extra_classpath.split(sep=os.pathsep)
+    #pprint.pprint(classpath)
+    max_mem = config.get('DEFAULT', 'max_mem', fallback='512M')
+    options = ['-Djava.class.path=' + os.pathsep.join(classpath), '-Xmx' + max_mem]
+    extra_options = config.get('DEFAULT', 'extra_options', fallback=None)
+    if extra_options:
+        options += extra_options.split(sep='|')
 
-#pprint.pprint(classpath)
+    return options
+
+
+if not jpy.has_jvm():
+    jpy.create_jvm(options=_get_jvm_options())
+
 
 # Don't need these functions anymore
+del _get_jvm_options
 del _get_beam_jar_locations
 del _create_classpath
 del _collect_classpath
 
-debug = config.getboolean('DEFAULT', 'debug', fallback=False)
-max_mem = config.get('DEFAULT', 'max_mem', fallback='512M')
-
-options=['-Djava.class.path=' + os.pathsep.join(classpath), '-Xmx' + max_mem]
-
-extra_options = config.get('DEFAULT', 'extra_options', fallback=None)
-if extra_options:
-    options += extra_options.split(sep='|')
-
-if debug:
-    jpy.diag.flags = jpy.diag.F_ALL
-
-jpy.create_jvm(options=options)
 
 def annotate_RasterDataNode_methods(type, method):
     index = -1
@@ -134,6 +143,7 @@ try:
 
     String = jpy.get_type('java.lang.String')
     File = jpy.get_type('java.io.File')
+    Rectangle = jpy.get_type('java.awt.Rectangle')
 
     ProductIO = jpy.get_type('org.esa.beam.framework.dataio.ProductIO')
     Product = jpy.get_type('org.esa.beam.framework.datamodel.Product')
@@ -152,7 +162,6 @@ try:
     #SubsetOp = jpy.get_type('org.esa.beam.gpf.operators.standard.SubsetOp')
     #JtsGeometryConverter = jpy.get_type('org.esa.beam.util.converters.JtsGeometryConverter')
 
-    Rectangle = jpy.get_type('java.awt.Rectangle')
 
 
 except Exception:
