@@ -55,6 +55,8 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* jvm, void* reserved)
     if (JPy_JNI_DEBUG) printf("JNI_OnLoad: exit: jvm=%p, JPy_JVM=%p, JPy_MustDestroyJVM=%d, Py_IsInitialized()=%d\n",
                               jvm, JPy_JVM, JPy_MustDestroyJVM, Py_IsInitialized());
 
+    if (JPy_JNI_DEBUG) fflush(stdout);
+
     return JPY_JNI_VERSION;
 }
 
@@ -104,7 +106,7 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_startPython
   (JNIEnv* jenv, jclass jLibClass, jobjectArray options)
 {
 
-    JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "PyLib_startPython: entered: JPy_Module=%p\n", JPy_Module);
+    JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "PyLib_startPython: entered: jenv=%p, JPy_Module=%p\n", jenv, JPy_Module);
 
 
     if (!Py_IsInitialized()) {
@@ -131,7 +133,7 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_startPython
         }
     }
 
-    JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "PyLib_startPython: exiting: JPy_Module=%p\n", JPy_Module);
+    JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "PyLib_startPython: exiting: jenv=%p, JPy_Module=%p\n", jenv, JPy_Module);
 }
   
 
