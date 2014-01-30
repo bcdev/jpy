@@ -193,8 +193,9 @@ JNIEnv* JPy_GetJNIEnv(void)
 
     status = (*jvm)->GetEnv(jvm, (void**) &jenv, JPY_JNI_VERSION);
     if (status == JNI_EDETACHED) {
-        JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "JPy_GetJNIEnv: Attaching current thread to JVM.\n");
-        if ((*jvm)->AttachCurrentThread(jvm, (void**) &jenv, NULL) != 0) {
+        if ((*jvm)->AttachCurrentThread(jvm, (void**) &jenv, NULL) == 0) {
+            JPy_DIAG_PRINT(JPy_DIAG_F_JVM, "JPy_GetJNIEnv: Attached current thread to JVM: jenv=%p\n", jenv);
+        } else {
             PyErr_SetString(PyExc_RuntimeError, "jpy: Failed to attach current thread to JVM.");
             return NULL;
         }
@@ -203,6 +204,9 @@ JNIEnv* JPy_GetJNIEnv(void)
         return NULL;
     } else if (status == JNI_OK) {
         // ok!
+        JPy_DIAG_PRINT(JPy_DIAG_F_JVM, "JPy_GetJNIEnv: jenv=%p\n", jenv);
+    } else {
+        JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "JPy_GetJNIEnv: Received unhandled status code from JVM GetEnv(): status=%d\n", status);
     }
 
     return jenv;
