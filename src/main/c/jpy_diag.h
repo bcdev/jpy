@@ -14,6 +14,7 @@ typedef struct JPy_Diag
     int F_METH;
     int F_EXEC;
     int F_MEM;
+    int F_JVM;
     int F_ALL;
 }
 JPy_Diag;
@@ -24,6 +25,7 @@ JPy_Diag;
 #define JPy_DIAG_F_METH   0x02
 #define JPy_DIAG_F_EXEC   0x04
 #define JPy_DIAG_F_MEM    0x08
+#define JPy_DIAG_F_JVM    0x10
 #define JPy_DIAG_F_ALL    0xff
 
 extern PyTypeObject Diag_Type;
