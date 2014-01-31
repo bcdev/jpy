@@ -9,8 +9,8 @@ import static org.jpy.PyLibConfig.getProperty;
 /**
  * Represents the library that provides the Python interpreter (CPython).
  * <p/>
- * When the {@code PyLib} calss is loaded, it reads its configuration from a Java properties file called {@code .jpy}
- * which must exist in the current user's home directory. The confifuration file has been written to this location
+ * When the {@code PyLib} class is loaded, it reads its configuration from a Java properties file called {@code .jpy}
+ * which must exist in the current user's home directory. The configuration file has been written to this location
  * by installing the Python jpy module using {@code python3 setup.py install --user} on Unix
  * and {@code python setup.py install}) on Windows.
  * <p/>
