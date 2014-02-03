@@ -102,7 +102,7 @@ public class PyObject {
 
     public Object createProxy(PyLib.CallableKind callableKind, Class<?>... types) {
         assertPythonRuns();
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        ClassLoader classLoader = types[0].getClassLoader();
         InvocationHandler invocationHandler = new PyProxyHandler(this, callableKind);
         return Proxy.newProxyInstance(classLoader, types, invocationHandler);
     }
