@@ -76,6 +76,9 @@ jpy Functions
     :py:func:`jpy.get_type()`). If *jobj* is already of *type*, *jobj* is returned. If *jobj* is an instance of
     *type*, a new wrapper object will be created for this type, otherwise ``None`` is returned.
 
+    This function is useful if you need to convert the `java.util.Object` values returned e.g. by Java collections
+    (implementations of the `java.util.Set`, `java.util.Map`, `java.util.List` & Co.) to specific types.
+
     Make sure that :py:func:`jpy.create_jvm()` has already been called. Otherwise the function fails with a runtime
     exception.
 
