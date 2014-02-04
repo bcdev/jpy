@@ -241,8 +241,19 @@ PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject
         }
     }
 
-    // For all types we create a Java object wrapper
+    // For all other types than the ones handled above (namely primitive types, PyObject+PyModule, and String),
+    // we create a Java object wrapper
     return (PyObject*) JObj_FromType(jenv, type, objectRef);
+
+    // Tried the following in order to return objects that have the actual type instead of the declared return type.
+    // Problem occurs if Java collections are used: These return java.lang.Object items and must be explicitly
+    // cast to the desired type in Python using jpy.cast(obj, type).
+    // Anyway, JObj_New() is 2x slower than JObj_FromType() and it may require definition of Java type wrappers for
+    // actually private implementation classes. For example: A java.util.List is filled with java.nio.file.Path objects,
+    // but List.get() returns a java.lang.Object. Returning the actual type is platform dependent. E.g. on
+    // Windows, it returns an instance of the internal sun.nio.fs.WindowsPath class.
+    //
+    //return (PyObject*) JObj_New(jenv, objectRef);
 }
 
 int JType_PythonToJavaConversionError(JPy_JType* type, PyObject* pyArg)
