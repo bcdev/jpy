@@ -77,7 +77,18 @@ jpy Functions
     *type*, a new wrapper object will be created for this type, otherwise ``None`` is returned.
 
     This function is useful if you need to convert the `java.util.Object` values returned e.g. by Java collections
-    (implementations of the `java.util.Set`, `java.util.Map`, `java.util.List` & Co.) to specific types.
+    (implementations of the `java.util.Set`, `java.util.Map`, `java.util.List` & Co.) to specific types. For example::
+
+        ArrayList = jpy.get_type('java.util.ArrayList')
+        File = jpy.get_type('java.io.File')
+        al = ArrayList()
+        al.add(File('/home/bibo/.jpy'))
+        item = al.get(0)
+        # item has type java.util.Object, but actually is a java.io.File
+        print(type(item))
+        item = jpy.cast(item, File)
+        # item has now type java.io.File
+        print(type(item))
 
     Make sure that :py:func:`jpy.create_jvm()` has already been called. Otherwise the function fails with a runtime
     exception.
