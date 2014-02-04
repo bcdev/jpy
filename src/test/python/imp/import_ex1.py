@@ -1,3 +1,10 @@
+"""
+Testing Python import machinery with the goal to let users import Java class like this:
+    from jpy.java.io import File
+or
+    from jpy import java.io.File as File
+"""
+
 __author__ = 'Norman'
 
 import sys
