@@ -141,9 +141,9 @@ if sys.argv[1] == 'install':
     print("Executing Python unit tests...")
     result = 0
     for test in python_tests:
-        result = os.system(sys.executable + ' ' + test)
-        if result != 0:
-            break
+        r = os.system(sys.executable + ' ' + test)
+        if r != 0:
+            result = 1
 
     if result == 0:
         print("Installing compiled Java code...")
