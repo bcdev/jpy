@@ -16,12 +16,14 @@ class TestJavaArrays(unittest.TestCase):
         a[2] = expected[2]
         return a
 
+
     def do_test_array_with_initializer(self, type, expected):
         a = jpy.array(type, expected)
         self.assertEqual(len(a), 3)
         self.assertEqual(a[0], expected[0])
         self.assertEqual(a[1], expected[1])
         self.assertEqual(a[2], expected[2])
+
 
     def do_test_array_protocol(self, type_name, initial, expected):
         self.do_test_array_protocol2(type_name, initial, expected)
@@ -89,7 +91,7 @@ class TestJavaArrays(unittest.TestCase):
         self.do_test_array_protocol('java.lang.String', [None, None, None], ['A', 'B', 'C'])
         self.do_test_array_protocol('java.io.File', [None, None, None], [File('A'), File('B'), File('C')])
         self.do_test_array_protocol('java.lang.Object', [None, None, None], [None, None, None])
-        self.do_test_array_protocol('java.lang.Object', [None, None, None], [File('A'), String('B'), Integer(3)])
+        self.do_test_array_protocol('java.lang.Object', [None, None, None], [File('A'), 'B', 3])
 
 
     def do_test_basic_buffer_protocol(self, type, itemsize, values):

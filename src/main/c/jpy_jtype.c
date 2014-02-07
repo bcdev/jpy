@@ -24,6 +24,18 @@ void JType_DisposeLocalObjectRefArg(JNIEnv* jenv, jvalue* value, void* data);
 void JType_DisposeReadOnlyBufferArg(JNIEnv* jenv, jvalue* value, void* data);
 void JType_DisposeWritableBufferArg(JNIEnv* jenv, jvalue* value, void* data);
 
+
+JPy_JType* JType_GetTypeForObject(JNIEnv* jenv, jobject objectRef)
+{
+    JPy_JType* type;
+    jclass classRef;
+    classRef = (*jenv)->GetObjectClass(jenv, objectRef);
+    type = JType_GetType(jenv, classRef, JNI_FALSE);
+    (*jenv)->DeleteLocalRef(jenv, classRef);
+    return type;
+}
+
+
 JPy_JType* JType_GetTypeForName(JNIEnv* jenv, const char* typeName, jboolean resolve)
 {
     const char* resourceName;
@@ -238,6 +250,11 @@ PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject
             return (PyObject*) value;
         } else if (type == JPy_JString) {
             return JPy_FromJString(jenv, objectRef);
+        } else if (type == JPy_JObject) {
+            type = JType_GetTypeForObject(jenv, objectRef);
+            if (type != JPy_JObject) {
+                return JType_ConvertJavaToPythonObject(jenv, type, objectRef);
+            }
         }
     }
 

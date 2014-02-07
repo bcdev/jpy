@@ -116,51 +116,73 @@ class TestArrayList(unittest.TestCase):
 
     def setUp(self):
         self.ArrayList = jpy.get_type('java.util.ArrayList')
+        self.File = jpy.get_type('java.io.File')
 
-        array_list = ArrayList()
+
+    def test_ArrayList(self):
+
+        f = self.File('/usr/local/bibo')
+
+        array_list = self.ArrayList()
         array_list.add('A')
         array_list.add(12)
         array_list.add(3.4)
+        array_list.add(f)
 
-        self.assertEqual(array_list.size(), 3)
+        self.assertEqual(array_list.size(), 4)
         self.assertEqual(array_list.get(0), 'A')
         self.assertEqual(array_list.get(1), 12)
         self.assertEqual(array_list.get(2), 3.4)
+        self.assertEqual(array_list.get(3), f)
+        self.assertEqual(type(array_list.get(3)), type(f))
 
-        array_list = ArrayList(array_list)
-        self.assertEqual(array_list.size(), 3)
+        array_list = self.ArrayList(array_list)
+        self.assertEqual(array_list.size(), 4)
         self.assertEqual(array_list.get(0), 'A')
         self.assertEqual(array_list.get(1), 12)
         self.assertEqual(array_list.get(2), 3.4)
+        self.assertEqual(array_list.get(3), f)
+        self.assertEqual(type(array_list.get(3)), type(f))
 
         array = array_list.toArray()
-        self.assertEqual(len(array), 3)
+        self.assertEqual(len(array), 4)
         self.assertEqual(array[0], 'A')
         self.assertEqual(array[1], 12)
         self.assertEqual(array[2], 3.4)
+        self.assertEqual(array[3], f)
+        self.assertEqual(type(array[3]), type(f))
 
 
 class TestHashMap(unittest.TestCase):
 
     def setUp(self):
         self.HashMap = jpy.get_type('java.util.HashMap')
+        self.File = jpy.get_type('java.io.File')
 
-        hash_map = HashMap()
+
+    def test_HashMap(self):
+        f = self.File('/usr/local/bibo')
+
+        hash_map = self.HashMap()
         hash_map.put(0, 'A')
         hash_map.put(1, 12)
         hash_map.put(2, 3.4)
+        hash_map.put(3, f)
 
-        self.assertEqual(hash_map.size(), 3)
+        self.assertEqual(hash_map.size(), 4)
         self.assertEqual(hash_map.get(0), 'A')
         self.assertEqual(hash_map.get(1), 12)
         self.assertEqual(hash_map.get(2), 3.4)
+        self.assertEqual(hash_map.get(3), f)
+        self.assertEqual(type(hash_map.get(3)), type(f))
 
-        hash_map = HashMap(hash_map)
-        self.assertEqual(hash_map.size(), 3)
+        hash_map = self.HashMap(hash_map)
+        self.assertEqual(hash_map.size(), 4)
         self.assertEqual(hash_map.get(0), 'A')
         self.assertEqual(hash_map.get(1), 12)
         self.assertEqual(hash_map.get(2), 3.4)
-
+        self.assertEqual(hash_map.get(3), f)
+        self.assertEqual(type(hash_map.get(3)), type(f))
 
 
 if __name__ == '__main__':
