@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+__author__ = "Norman Fomferra"
+__copyright__ = "Copyright (C) 2004 Brockmann Consult GmbH"
+__license__ = "GPL v3"
+__version__ = "1.0"
+
 sources = [
     'src/main/c/jpy_module.c',
     'src/main/c/jpy_diag.c',
