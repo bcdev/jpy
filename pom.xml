@@ -1,4 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (C) 2014 Brockmann Consult GmbH
+  ~
+  ~ This program is free software; you can redistribute it and/or modify it under the terms of the GNU
+  ~ General Public License as published by the Free Software Foundation; either version 3 of the License,
+  ~ or (at your option) any later version. This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+  ~ PARTICULAR PURPOSE. See the GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License along with this program; if not, see
+  ~ http://www.gnu.org/licenses/
+  -->
+
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -11,6 +24,20 @@
     <groupId>org.jpy</groupId>
     <artifactId>jpy</artifactId>
     <version>0.7-SNAPSHOT</version>
+
+    <description>
+        jpy is a bi-directional Java-Python bridge which you can use to embed Java code in Python programs or the other
+        way round.
+    </description>
+
+    <licenses>
+        <license>
+            <name>GPL 3</name>
+            <url>http://www.gnu.org/licenses/gpl-3.0</url>
+            <distribution>repo</distribution>
+            <comments>GNU General Public License</comments>
+        </license>
+    </licenses>
 
     <packaging>jar</packaging>
 
@@ -64,7 +91,26 @@
                     <excludeResources>true</excludeResources>
                 </configuration>
             </plugin>
-
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>2.3.7</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
+                        <Bundle-Name>${project.name}</Bundle-Name>
+                        <Bundle-Version>${project.version}</Bundle-Version>
+                        <Bundle-Description>${project.description}</Bundle-Description>
+                        <Bundle-Copyright>Copyright (C) 2014 Brockmann Consult GmbH</Bundle-Copyright>
+                        <Bundle-ContactAddress>Max-Planck-Str 2, 21502 Geesthacht, Germany</Bundle-ContactAddress>
+                        <!--<Bundle-DocURL>TODO</Bundle-DocURL>-->
+                        <Bundle-License>GPL v3</Bundle-License>
+                        <Bundle-Vendor>Brockmann Consult GmbH</Bundle-Vendor>
+                        <Export-Package>org.jpy</Export-Package>
+                    </instructions>
+                </configuration>
+            </plugin>
         </plugins>
         <extensions>
             <extension>
