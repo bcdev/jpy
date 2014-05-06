@@ -59,8 +59,8 @@ The Python setup tools (``distutils``) can make use of the command-line C/C++ co
 These will by used by distutils if the ``DISTUTILS_USE_SDK`` environment variable is set. The compilers are made accessible via
 the command-line by using the ``setenv`` tool of the Windows SDK. In order to install the Windows SDK do the following
 
-1. If you use Microsoft Visual Studio 2010, make sure to uninstall the x86 and amd64 compiler redistributables first. Otherwise the installation of the Windows SDK will definitely fail.
-2. Download and install [Windows SDK 7.1](http://www.microsoft.com/en-us/download/details.aspx?id=8279). This failed for me the first time. A second 'repair' install was successful.
+1. If you already use Microsoft Visual C++ 2010, make sure to uninstall the x86 and amd64 compiler redistributables first. Otherwise the installation of the Windows SDK will definitely fail. This may also apply to higher versions of Visual C++.
+2. Download and install [Windows SDK 7.1](http://www.microsoft.com/en-us/download/details.aspx?id=8279). (This step failed for me the first time. A second 'repair' install was successful.)
 3. Download and install [Windows SDK 7.1 SP1](http://www.microsoft.com/en-us/download/details.aspx?id=4422).
 
 Open the command-line and execute
