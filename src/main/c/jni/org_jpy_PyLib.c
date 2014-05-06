@@ -878,7 +878,7 @@ static PyObject* JPrint_write(PyObject* self, PyObject* args)
         if (!PyArg_ParseTuple(args, "s", &text)) {
             return NULL;
         }
-        fprintf(stdout, "%s", text);
+        fprintf(stdout, "%s\n", text);
     }
     return Py_BuildValue("");
 }
