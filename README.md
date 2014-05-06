@@ -28,7 +28,7 @@ window and cd into the check-out directory. Then you first have to build and ins
 then the jyp Java library.
 
 
-### Unix/Darwin
+### Unix / Darwin
 
 You will need
 * Python 3.3 or higher (*dev* version)
@@ -40,7 +40,7 @@ To build and test the jpy Python module use the following commands:
 
     > export JDK_HOME=<path to the JDK installation directory>
     > export JAVA_HOME=$JDK_HOME
-    > export path=$JDK_HOME\jre\bin\server;$path
+    > export path=$JDK_HOME/jre/bin/server;$path
     > python3.3 setup.py install --user
 
 
