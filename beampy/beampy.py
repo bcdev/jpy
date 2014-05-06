@@ -87,7 +87,9 @@ def _get_jvm_options():
 
     #pprint.pprint(classpath)
     max_mem = config.get('DEFAULT', 'max_mem', fallback='512M')
-    options = ['-Djava.class.path=' + os.pathsep.join(classpath), '-Xmx' + max_mem]
+    options = ['-Djava.awt.headless=true',
+               '-Djava.class.path=' + os.pathsep.join(classpath), 
+               '-Xmx' + max_mem]
     extra_options = config.get('DEFAULT', 'extra_options', fallback=None)
     if extra_options:
         options += extra_options.split(sep='|')
