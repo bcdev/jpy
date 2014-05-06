@@ -43,6 +43,10 @@ To build and test the jpy Python module use the following commands:
     > export PATH=$JDK_HOME/jre/bin/server:$PATH
     > python3.3 setup.py install --user
 
+On Darwin, you may find the current JDK/Java home using the following expression:
+
+    > export JDK_HOME=$(/usr/libexec/java_home)
+
 
 ### Microsoft Windows
 
