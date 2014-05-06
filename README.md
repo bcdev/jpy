@@ -28,10 +28,10 @@ window and cd into the check-out directory. Then you first have to build and ins
 then the jyp Java library.
 
 
-### Unix / Darwin
+### Linux / Darwin
 
 You will need
-* Python 3.3 or higher (*dev* version)
+* Python 3.3 or higher (make sure it is the *dev* version)
 * JDK 1.7 or higher
 * Maven 3
 * gcc
@@ -46,9 +46,9 @@ On Darwin, you may find the current JDK/Java home using the following expression
 
     > export JDK_HOME=$(/usr/libexec/java_home)
     
-If you encounter linkage errors during setup saying that something like a ``jvm.so`` cannot be found, then you can try adding its containing directory to the ``PATH`` variable, e.g.:
+If you encounter linkage errors during setup saying that something like a ``libjvm.so`` (Linux) or ``libjvm.dylib`` (Darwin) cannot be found, then you can try adding its containing directory to the ``LD_LIBRARY_PATH`` environment variable, e.g.:
 
-    > export PATH=$JDK_HOME/jre/bin/server:$PATH
+    > export LD_LIBRARY_PATH=$JDK_HOME/jre/lib/server:$LD_LIBRARY_PATH
 
 
 ### Microsoft Windows
