@@ -40,7 +40,7 @@ To build and test the jpy Python module use the following commands:
 
     > export JDK_HOME=<path to the JDK installation directory>
     > export JAVA_HOME=$JDK_HOME
-    > export path=$JDK_HOME/jre/bin/server;$path
+    > export PATH=$JDK_HOME/jre/bin/server:$PATH
     > python3.3 setup.py install --user
 
 
