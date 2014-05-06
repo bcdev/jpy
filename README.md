@@ -46,8 +46,7 @@ On Darwin, you may find the current JDK/Java home using the following expression
 
     > export JDK_HOME=$(/usr/libexec/java_home)
     
-If you encounter errors during setup saying that something like a ``jvm.so`` cannot be found, then you can try adding
-the path to it to the ``PATH`` variable:
+If you encounter linkage errors during setup saying that something like a ``jvm.so`` cannot be found, then you can try adding its containing directory to the ``PATH`` variable, e.g.:
 
     > export PATH=$JDK_HOME/jre/bin/server:$PATH
 
