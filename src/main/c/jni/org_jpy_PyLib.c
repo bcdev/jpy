@@ -873,17 +873,21 @@ void PyLib_HandlePythonException(JNIEnv* jenv)
 
 static PyObject* JPrint_write(PyObject* self, PyObject* args)
 {
-    const char* text;
-    if (!PyArg_ParseTuple(args, "s", &text)) {
-        return NULL;
+    if (stdout != NULL) {
+        const char* text;
+        if (!PyArg_ParseTuple(args, "s", &text)) {
+            return NULL;
+        }
+        fprintf(stdout, "%s", text);
     }
-    printf("%s", text);
     return Py_BuildValue("");
 }
 
 static PyObject* JPrint_flush(PyObject* self, PyObject* args)
 {
-    fflush(stdout);
+    if (stdout != NULL) {
+        fflush(stdout);
+    }
     return Py_BuildValue("");
 }
 
