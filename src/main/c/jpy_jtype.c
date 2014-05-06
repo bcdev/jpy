@@ -166,13 +166,15 @@ JPy_JType* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve)
 
         found = JNI_TRUE;
 
-        Py_DECREF(typeKey);
-
         if (!JType_Check(typeValue)) {
+            JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "JType_GetType: internal error: illegal value %p (of type '%s') for key %p (of type '%s') in 'jpy.%s': %s\n",
+                           typeValue, Py_TYPE(typeValue)->tp_name, typeKey, Py_TYPE(typeKey)->tp_name, JPy_MODULE_ATTR_NAME_TYPES);
             PyErr_Format(PyExc_RuntimeError, "attributes in 'jpy." JPy_MODULE_ATTR_NAME_TYPES "' must be of type 'jpy.JType'");
+            Py_DECREF(typeKey);
             return NULL;
         }
 
+        Py_DECREF(typeKey);
         type = (JPy_JType*) typeValue;
     }
 
