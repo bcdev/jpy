@@ -66,6 +66,9 @@ PyObject* JPy_FromJObject(JNIEnv* jenv, jobject objectRef)
     classRef = (*jenv)->GetObjectClass(jenv, objectRef);
     type = JType_GetType(jenv, classRef, JNI_FALSE);
     (*jenv)->DeleteLocalRef(jenv, classRef);
+    if (type == NULL) {
+        return NULL;
+    }
 
     return JPy_FromJObjectWithType(jenv, objectRef, type);
 }
