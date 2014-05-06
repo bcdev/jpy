@@ -148,9 +148,9 @@ try:
     Rectangle = jpy.get_type('java.awt.Rectangle')
 
     ProductIO = jpy.get_type('org.esa.beam.framework.dataio.ProductIO')
+
     Product = jpy.get_type('org.esa.beam.framework.datamodel.Product')
     ProductData = jpy.get_type('org.esa.beam.framework.datamodel.ProductData')
-    ProductUtils = jpy.get_type('org.esa.beam.util.ProductUtils')
     RasterDataNode = jpy.get_type('org.esa.beam.framework.datamodel.RasterDataNode')
     AbstractBand = jpy.get_type('org.esa.beam.framework.datamodel.AbstractBand')
     Band = jpy.get_type('org.esa.beam.framework.datamodel.Band')
@@ -160,7 +160,13 @@ try:
     PixelPos = jpy.get_type('org.esa.beam.framework.datamodel.PixelPos')
     FlagCoding = jpy.get_type('org.esa.beam.framework.datamodel.FlagCoding')
     ProductNodeGroup = jpy.get_type('org.esa.beam.framework.datamodel.ProductNodeGroup')
+
+    ProductUtils = jpy.get_type('org.esa.beam.util.ProductUtils')
+
+    GPF = jpy.get_type('org.esa.beam.framework.gpf.GPF')
     Operator = jpy.get_type('org.esa.beam.framework.gpf.Operator')
+    Tile = jpy.get_type('org.esa.beam.framework.gpf.Tile')
+
     #SubsetOp = jpy.get_type('org.esa.beam.gpf.operators.standard.SubsetOp')
     #JtsGeometryConverter = jpy.get_type('org.esa.beam.util.converters.JtsGeometryConverter')
 
