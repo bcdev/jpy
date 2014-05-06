@@ -8,6 +8,7 @@ You can configure beampy by using a file named beampy.ini as follows:
     [DEFAULT]
     beam_home: C:\Program Files\beam-4.11
     extra_classpath: target/classes
+    extra_options: -Djava.awt.headless=false
     max_mem: 4G
     debug: False
 
