@@ -15,9 +15,9 @@ It comes with a number of outstanding features:
 * Java API for accessing Python objects (`jpy.jar`)
 
 The initial development of jpy has been driven by the need to write Python extensions to an established scientific
-imaging application programmed in Java, namely ESA BEAM (http://www.brockmann-consult.de/beam/).
+imaging application that is entirely programmed in Java, namely ESA [BEAM](http://www.brockmann-consult.de/beam/).
 Writing such Python plug-ins for a Java application usually requires a bi-directional communication between Java and
-Python, namely the Python extension code must be able to calling back into the Java APIs.
+Python, thus the Python extension code must be able to calling back into the Java APIs.
 
 
 How to Build
@@ -31,6 +31,7 @@ then the jyp Java library.
 ### Linux / Darwin
 
 You will need
+
 * Python 3.3 or higher (make sure it is the *dev* version)
 * JDK 1.7 or higher
 * Maven 3
