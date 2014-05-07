@@ -119,7 +119,7 @@ JPy_JType* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve)
     jboolean found;
 
     if (JPy_Types == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "internal error: module 'jpy' not initialized");
+        PyErr_SetString(PyExc_RuntimeError, "jpy internal error: module 'jpy' not initialized");
         return NULL;
     }
 
@@ -140,8 +140,12 @@ JPy_JType* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve)
             return NULL;
         }
 
-        // In order to avoid infinite recursion, we have to register the new type first...
+        //printf("T1: type->tp_init=%p\n", ((PyTypeObject*)type)->tp_init);
+
+        // In order to avoid infinite recursion, we have to register the new (but yet incomplete) type first...
         PyDict_SetItem(JPy_Types, typeKey, (PyObject*) type);
+
+        //printf("T2: type->tp_init=%p\n", ((PyTypeObject*)type)->tp_init);
 
         // ... before we can continue processing the super type ...
         if (JType_InitSuperType(jenv, type, resolve) < 0) {
@@ -149,27 +153,43 @@ JPy_JType* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve)
             return NULL;
         }
 
+        //printf("T3: type->tp_init=%p\n", ((PyTypeObject*)type)->tp_init);
+
         // ... and processing the component type.
         if (JType_InitComponentType(jenv, type, resolve) < 0) {
             PyDict_DelItem(JPy_Types, typeKey);
             return NULL;
         }
 
+        //printf("T4: type->tp_init=%p\n", ((PyTypeObject*)type)->tp_init);
+
         // Finally we initialise the type's slots, so that our JObj instances behave pythonic.
         if (JType_InitSlots(type) < 0) {
-            JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_GetType: error: JType_InitSlots() failed for javaName='%s'\n", type->javaName);
+            JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_GetType: error: JType_InitSlots() failed for javaName=\"%s\"\n", type->javaName);
             PyDict_DelItem(JPy_Types, typeKey);
             return NULL;
         }
 
+        //printf("T5: type->tp_init=%p\n", ((PyTypeObject*)type)->tp_init);
+
     } else {
+        jboolean isTypeInProgress = typeValue->ob_type == &JType_Type;
+        jboolean isFinalizedType = PyType_Check(typeValue);
 
         found = JNI_TRUE;
 
-        if (!JType_Check(typeValue)) {
-            JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "JType_GetType: internal error: illegal value typeValue=%p (of type '%s') for typeKey=%p (of type '%s') in 'jpy.%s': typeValue->tp_init=%p\n",
-                           typeValue, Py_TYPE(typeValue)->tp_name, typeKey, Py_TYPE(typeKey)->tp_name, JPy_MODULE_ATTR_NAME_TYPES, Py_TYPE(typeValue)->tp_init);
-            PyErr_Format(PyExc_RuntimeError, "attributes in 'jpy." JPy_MODULE_ATTR_NAME_TYPES "' must be of type 'jpy.JType'");
+        if (!isTypeInProgress && !isFinalizedType) {
+                    printf("JType_GetType: INTERNAL ERROR: illegal typeValue=%p (type '%s') for typeKey=%p (type '%s') in 'jpy.%s'\n",
+                                   typeValue, Py_TYPE(typeValue)->tp_name,
+                                   typeKey, Py_TYPE(typeKey)->tp_name,
+                                   JPy_MODULE_ATTR_NAME_TYPES);
+            JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "JType_GetType: INTERNAL ERROR: illegal typeValue=%p (type '%s') for typeKey=%p (type '%s') in 'jpy.%s'\n",
+                           typeValue, Py_TYPE(typeValue)->tp_name,
+                           typeKey, Py_TYPE(typeKey)->tp_name,
+                           JPy_MODULE_ATTR_NAME_TYPES);
+            PyErr_Format(PyExc_RuntimeError,
+                         "jpy internal error: attributes in 'jpy.%s' must be of type '%s', but found a '%s'",
+                         JPy_MODULE_ATTR_NAME_TYPES, JType_Type.tp_name, Py_TYPE(typeValue)->tp_name);
             Py_DECREF(typeKey);
             return NULL;
         }
@@ -178,7 +198,7 @@ JPy_JType* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve)
         type = (JPy_JType*) typeValue;
     }
 
-    JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_GetType: javaName='%s', found=%d, resolve=%d, resolved=%d, type=%p\n", type->javaName, found, resolve, type->isResolved, type);
+    JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_GetType: javaName=\"%s\", found=%d, resolve=%d, resolved=%d, type=%p\n", type->javaName, found, resolve, type->isResolved, type);
 
     if (!type->isResolved && resolve) {
         if (JType_ResolveType(jenv, type) < 0) {
@@ -205,6 +225,8 @@ JPy_JType* JType_New(JNIEnv* jenv, jclass classRef, jboolean resolve)
         return NULL;
     }
 
+    // printf("=============================================== JType_New: type->ob_type=%p\n", ((PyObject*)type)->ob_type);
+
     type->classRef = NULL;
     type->isResolved = JNI_FALSE;
     type->isResolving = JNI_FALSE;
@@ -214,7 +236,10 @@ JPy_JType* JType_New(JNIEnv* jenv, jclass classRef, jboolean resolve)
         metaType->tp_free(type);
         return NULL;
     }
+    // The object type's name. Note that the reference is borrowed from type->javaName.
     type->typeObj.tp_name = type->javaName;
+    // tp_init is used to identify objects instances of type jpy.JType. Make sure it is initially NULL.
+    type->typeObj.tp_init = NULL;
 
     type->classRef = (*jenv)->NewGlobalRef(jenv, classRef);
     if (type->classRef == NULL) {
@@ -227,7 +252,7 @@ JPy_JType* JType_New(JNIEnv* jenv, jclass classRef, jboolean resolve)
 
     type->isPrimitive = (*jenv)->CallBooleanMethod(jenv, type->classRef, JPy_Class_IsPrimitive_MID);
 
-    JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_New: javaName='%s', resolve=%d, type=%p\n", type->javaName, resolve, type);
+    JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_New: javaName=\"%s\", resolve=%d, type=%p\n", type->javaName, resolve, type);
 
     return type;
 }
@@ -290,7 +315,7 @@ PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject
 
 int JType_PythonToJavaConversionError(JPy_JType* type, PyObject* pyArg)
 {
-    PyErr_Format(PyExc_ValueError, "cannot convert a Python %s to a Java %s", Py_TYPE(pyArg)->tp_name, type->javaName);
+    PyErr_Format(PyExc_ValueError, "cannot convert a Python '%s' to a Java '%s'", Py_TYPE(pyArg)->tp_name, type->javaName);
     return -1;
 }
 
@@ -419,7 +444,7 @@ int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* componentType, PyObject* pyAr
             return -1;
         }
     } else {
-        PyErr_Format(PyExc_ValueError, "cannot convert a Python %s to a Java array of type %s", Py_TYPE(pyArg)->tp_name, componentType->javaName);
+        PyErr_Format(PyExc_ValueError, "cannot convert a Python '%s' to a Java array of type '%s'", Py_TYPE(pyArg)->tp_name, componentType->javaName);
         return -1;
     }
 
@@ -843,11 +868,12 @@ int JType_ProcessMethod(JNIEnv* jenv, JPy_JType* type, PyObject* methodKey, cons
     JPy_JMethod* method;
 
     paramCount = (*jenv)->GetArrayLength(jenv, paramTypes);
-    JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_ProcessMethod: methodName=%s, paramCount=%d, isStatic=%d, mid=%p\n", methodName, paramCount, isStatic, mid);
+    JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_ProcessMethod: methodName=\"%s\", paramCount=%d, isStatic=%d, mid=%p\n", methodName, paramCount, isStatic, mid);
+
     if (paramCount > 0) {
         paramDescriptors = JType_CreateParamDescriptors(jenv, paramCount, paramTypes);
         if (paramDescriptors == NULL) {
-            JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "JType_ProcessMethod: error: Java method %s rejected because an error occurred during parameter type processing\n", methodName);
+            JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "JType_ProcessMethod: error: Java method '%s' rejected because an error occurred during parameter type processing\n", methodName);
             return -1;
         }
     } else {
@@ -858,7 +884,7 @@ int JType_ProcessMethod(JNIEnv* jenv, JPy_JType* type, PyObject* methodKey, cons
         returnDescriptor = JType_CreateReturnDescriptor(jenv, returnType);
         if (returnDescriptor == NULL) {
             PyMem_Del(paramDescriptors);
-            JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_ProcessMethod: error: Java method %s rejected because an error occurred during return type processing\n", methodName);
+            JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_ProcessMethod: error: Java method '%s' rejected because an error occurred during return type processing\n", methodName);
             return -1;
         }
     } else {
@@ -869,7 +895,7 @@ int JType_ProcessMethod(JNIEnv* jenv, JPy_JType* type, PyObject* methodKey, cons
     if (method == NULL) {
         PyMem_Del(paramDescriptors);
         PyMem_Del(returnDescriptor);
-        JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_ProcessMethod: error: Java method %s rejected because an error occurred during method instantiation\n", methodName);
+        JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_ProcessMethod: error: Java method '%s' rejected because an error occurred during method instantiation\n", methodName);
         return -1;
     }
 
@@ -1135,7 +1161,7 @@ int JType_ProcessField(JNIEnv* jenv, JPy_JType* declaringClass, PyObject* fieldK
 
     fieldType = JType_GetType(jenv, fieldClassRef, JNI_FALSE);
     if (fieldType == NULL) {
-        JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "JType_ProcessField: error: Java field %s rejected because an error occurred during type processing\n", fieldName);
+        JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "JType_ProcessField: error: Java field '%s' rejected because an error occurred during type processing\n", fieldName);
         return -1;
     }
 
@@ -1149,7 +1175,7 @@ int JType_ProcessField(JNIEnv* jenv, JPy_JType* declaringClass, PyObject* fieldK
         // Add instance field accessor to the JPy_JType's tp_dict, this will be evaluated in the JPy_JType's tp_setattro and tp_getattro slots.
         field = JField_New(declaringClass, fieldKey, fieldType, isStatic, isFinal, fid);
         if (field == NULL) {
-            JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_ProcessField: error: Java field %s rejected because an error occurred during field instantiation\n", fieldName);
+            JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_ProcessField: error: Java field '%s' rejected because an error occurred during field instantiation\n", fieldName);
             return -1;
         }
 
@@ -1159,7 +1185,7 @@ int JType_ProcessField(JNIEnv* jenv, JPy_JType* declaringClass, PyObject* fieldK
             JField_Del(field);
         }
     } else {
-        JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_ProcessField: warning: Java field %s rejected because is is static, but not final\n", fieldName);
+        JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_ProcessField: warning: Java field '%s' rejected because is is static, but not final\n", fieldName);
     }
 
     return 0;
@@ -1250,7 +1276,7 @@ JPy_ReturnDescriptor* JType_CreateReturnDescriptor(JNIEnv* jenv, jclass returnCl
     returnDescriptor->paramIndex = -1;
     Py_INCREF((PyObject*) type);
 
-    JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_ProcessReturnType: type->tp_name='%s', type=%p\n", Py_TYPE(type)->tp_name, type);
+    JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_ProcessReturnType: type->javaName=\"%s\", type=%p\n", type->javaName, type);
 
     return returnDescriptor;
 }
