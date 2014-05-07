@@ -55,7 +55,7 @@ from distutils.extension import Extension
 # e.g. JDK_HOME = '/home/marta/jdk1.7.0_15'
 JDK_HOME = os.environ.get('JDK_HOME', None)
 if JDK_HOME is None:
-    print('Error: Environment variable "JDK_HOME" must be set to a JDK (>= v1.6) installation directory')
+    print('Error: Environment variable "JDK_HOME" must be set to a JDK (>= v1.7) installation directory')
     exit(1)
 
 IS64 = sys.maxsize > 2 ** 32
