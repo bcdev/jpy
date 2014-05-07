@@ -179,10 +179,6 @@ JPy_JType* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve)
         found = JNI_TRUE;
 
         if (!isTypeInProgress && !isFinalizedType) {
-                    printf("JType_GetType: INTERNAL ERROR: illegal typeValue=%p (type '%s') for typeKey=%p (type '%s') in 'jpy.%s'\n",
-                                   typeValue, Py_TYPE(typeValue)->tp_name,
-                                   typeKey, Py_TYPE(typeKey)->tp_name,
-                                   JPy_MODULE_ATTR_NAME_TYPES);
             JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "JType_GetType: INTERNAL ERROR: illegal typeValue=%p (type '%s') for typeKey=%p (type '%s') in 'jpy.%s'\n",
                            typeValue, Py_TYPE(typeValue)->tp_name,
                            typeKey, Py_TYPE(typeKey)->tp_name,
@@ -873,7 +869,7 @@ int JType_ProcessMethod(JNIEnv* jenv, JPy_JType* type, PyObject* methodKey, cons
     if (paramCount > 0) {
         paramDescriptors = JType_CreateParamDescriptors(jenv, paramCount, paramTypes);
         if (paramDescriptors == NULL) {
-            JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "JType_ProcessMethod: error: Java method '%s' rejected because an error occurred during parameter type processing\n", methodName);
+            JPy_DIAG_PRINT(JPy_DIAG_F_TYPE + JPy_DIAG_F_ERR, "JType_ProcessMethod: WARNING: Java method '%s' rejected because an error occurred during parameter type processing\n", methodName);
             return -1;
         }
     } else {
@@ -884,7 +880,7 @@ int JType_ProcessMethod(JNIEnv* jenv, JPy_JType* type, PyObject* methodKey, cons
         returnDescriptor = JType_CreateReturnDescriptor(jenv, returnType);
         if (returnDescriptor == NULL) {
             PyMem_Del(paramDescriptors);
-            JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_ProcessMethod: error: Java method '%s' rejected because an error occurred during return type processing\n", methodName);
+            JPy_DIAG_PRINT(JPy_DIAG_F_TYPE + JPy_DIAG_F_ERR, "JType_ProcessMethod: WARNING: Java method '%s' rejected because an error occurred during return type processing\n", methodName);
             return -1;
         }
     } else {
@@ -895,7 +891,7 @@ int JType_ProcessMethod(JNIEnv* jenv, JPy_JType* type, PyObject* methodKey, cons
     if (method == NULL) {
         PyMem_Del(paramDescriptors);
         PyMem_Del(returnDescriptor);
-        JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_ProcessMethod: error: Java method '%s' rejected because an error occurred during method instantiation\n", methodName);
+        JPy_DIAG_PRINT(JPy_DIAG_F_TYPE + JPy_DIAG_F_ERR, "JType_ProcessMethod: WARNING: Java method '%s' rejected because an error occurred during method instantiation\n", methodName);
         return -1;
     }
 
@@ -1098,7 +1094,7 @@ int JType_AddField(JPy_JType* declaringClass, JPy_JField* field)
 
     typeDict = declaringClass->typeObj.tp_dict;
     if (typeDict == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "internal error: missing attribute '__dict__' in JType");
+        PyErr_SetString(PyExc_RuntimeError, "jpy internal error: missing attribute '__dict__' in JType");
         return -1;
     }
 
@@ -1113,7 +1109,7 @@ int JType_AddFieldAttribute(JNIEnv* jenv, JPy_JType* declaringClass, PyObject* f
 
     typeDict = declaringClass->typeObj.tp_dict;
     if (typeDict == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "internal error: missing attribute '__dict__' in JType");
+        PyErr_SetString(PyExc_RuntimeError, "jpy internal error: missing attribute '__dict__' in JType");
         return -1;
     }
 
@@ -1161,7 +1157,7 @@ int JType_ProcessField(JNIEnv* jenv, JPy_JType* declaringClass, PyObject* fieldK
 
     fieldType = JType_GetType(jenv, fieldClassRef, JNI_FALSE);
     if (fieldType == NULL) {
-        JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "JType_ProcessField: error: Java field '%s' rejected because an error occurred during type processing\n", fieldName);
+        JPy_DIAG_PRINT(JPy_DIAG_F_TYPE + JPy_DIAG_F_ERR, "JType_ProcessField: WARNING: Java field '%s' rejected because an error occurred during type processing\n", fieldName);
         return -1;
     }
 
@@ -1175,7 +1171,7 @@ int JType_ProcessField(JNIEnv* jenv, JPy_JType* declaringClass, PyObject* fieldK
         // Add instance field accessor to the JPy_JType's tp_dict, this will be evaluated in the JPy_JType's tp_setattro and tp_getattro slots.
         field = JField_New(declaringClass, fieldKey, fieldType, isStatic, isFinal, fid);
         if (field == NULL) {
-            JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_ProcessField: error: Java field '%s' rejected because an error occurred during field instantiation\n", fieldName);
+            JPy_DIAG_PRINT(JPy_DIAG_F_TYPE + JPy_DIAG_F_ERR, "JType_ProcessField: WARNING: Java field '%s' rejected because an error occurred during field instantiation\n", fieldName);
             return -1;
         }
 
@@ -1185,7 +1181,7 @@ int JType_ProcessField(JNIEnv* jenv, JPy_JType* declaringClass, PyObject* fieldK
             JField_Del(field);
         }
     } else {
-        JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_ProcessField: warning: Java field '%s' rejected because is is static, but not final\n", fieldName);
+        JPy_DIAG_PRINT(JPy_DIAG_F_TYPE + JPy_DIAG_F_ERR, "JType_ProcessField: WARNING: Java field '%s' rejected because is is static, but not final\n", fieldName);
     }
 
     return 0;
@@ -1208,7 +1204,7 @@ int JType_AddMethod(JPy_JType* type, JPy_JMethod* method)
 
     typeDict = type->typeObj.tp_dict;
     if (typeDict == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "internal error: missing attribute '__dict__' in JType");
+        PyErr_SetString(PyExc_RuntimeError, "jpy internal error: missing attribute '__dict__' in JType");
         return -1;
     }
 
@@ -1220,7 +1216,7 @@ int JType_AddMethod(JPy_JType* type, JPy_JMethod* method)
         overloadedMethod = (JPy_JOverloadedMethod*) methodValue;
         return JOverloadedMethod_AddMethod(overloadedMethod, method);
     } else {
-        PyErr_SetString(PyExc_RuntimeError, "internal error: expected type 'JOverloadedMethod' in '__dict__' of a JType");
+        PyErr_SetString(PyExc_RuntimeError, "jpy internal error: expected type 'JOverloadedMethod' in '__dict__' of a JType");
         return -1;
     }
 }
