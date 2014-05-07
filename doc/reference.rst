@@ -171,6 +171,34 @@ Variables
     same array instance as indicated by the Java method's specification.
 
 
+.. py:data:: diag
+    :module: jpy
+
+    An object used to control output of diagnostic information for debugging. This variable is only useful for jpy
+    modification and further development.
+
+.. py:data:: diag.flags
+    :module: jpy
+
+    Integer bit-combination of diagnostic flags (see following F_* constants).
+    If this value is not zero, diagnostic messages are printed to the standard output stream for any subsequent
+    jpy library calls. Its default value is ``jpy.diag.F_OFF`` which is zero.
+
+    For example::
+
+        jpy.diag.flags = jpy.diag.F_EXEC + jpy.diag.F_JVM
+
+    The following flags are defined:
+    * ``F_OFF`` - Don't print any diagnostic messages
+    * ``F_ERR`` - Errors: print diagnostic information when erroneous states are detected
+    * ``F_TYPE`` - Type resolution: print diagnostic messages while generating Python classes from Java classes
+    * ``F_METH`` - Method resolution: print diagnostic messages while resolving Java overloaded methods
+    * ``F_EXEC`` - Execution: print diagnostic messages when Java code is executed
+    * ``F_MEM`` - Memory: print diagnostic messages when wrapped Java objects are allocated/deallocated
+    * ``F_JVM`` - JVM: print diagnostic information usage of the Java VM Invocation API
+    * ``F_ALL`` - Print all possible diagnostic messages
+
+
 Types
 =====
 

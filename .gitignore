@@ -13,3 +13,5 @@ jpy.dll
 libjpy.so
 hs_err_pid*
 *.N1
+
+src/main/c/jni/org_jpy_PyLib.c

@@ -3,7 +3,6 @@ import jpy
 import time
 import random
 
-#jpy.diag_flags.value = 0xff
 jpy.create_jvm(options=['-Xmx512M'])
 
 

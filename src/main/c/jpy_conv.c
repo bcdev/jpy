@@ -66,6 +66,9 @@ PyObject* JPy_FromJObject(JNIEnv* jenv, jobject objectRef)
     classRef = (*jenv)->GetObjectClass(jenv, objectRef);
     type = JType_GetType(jenv, classRef, JNI_FALSE);
     (*jenv)->DeleteLocalRef(jenv, classRef);
+    if (type == NULL) {
+        return NULL;
+    }
 
     return JPy_FromJObjectWithType(jenv, objectRef, type);
 }
@@ -179,6 +182,8 @@ PyObject* JPy_FromTypeName(JNIEnv* jenv, jclass classRef)
     JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
 
     jTypeNameChars = (*jenv)->GetStringUTFChars(jenv, jTypeName, NULL);
+    JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JPy_FromTypeName: classRef=%p, jTypeNameChars=\"%s\"\n", classRef, jTypeNameChars);
+
     if (jTypeNameChars == NULL) {
         PyErr_NoMemory();
         pyTypeName = NULL;

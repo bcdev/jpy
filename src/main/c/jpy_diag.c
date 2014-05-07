@@ -42,6 +42,7 @@ PyObject* Diag_New(void)
     self->F_EXEC  = JPy_DIAG_F_EXEC;
     self->F_MEM   = JPy_DIAG_F_MEM;
     self->F_JVM   = JPy_DIAG_F_JVM;
+    self->F_ERR   = JPy_DIAG_F_ERR;
     self->F_ALL   = JPy_DIAG_F_ALL;
 
     return (PyObject*) self;
@@ -85,6 +86,7 @@ static PyMemberDef Diag_members[] =
     {"F_EXEC",   T_INT, offsetof(JPy_Diag, F_EXEC),  READONLY, "Execution: print diagnostic messages when Java code is executed"},
     {"F_MEM",    T_INT, offsetof(JPy_Diag, F_MEM),   READONLY, "Memory: print diagnostic messages when wrapped Java objects are allocated/deallocated"},
     {"F_JVM",    T_INT, offsetof(JPy_Diag, F_JVM),   READONLY, "JVM: print diagnostic information usage of the Java VM Invocation API"},
+    {"F_ERR",    T_INT, offsetof(JPy_Diag, F_ERR),   READONLY, "Errors: print diagnostic information when erroneous states are detected"},
     {"F_ALL",    T_INT, offsetof(JPy_Diag, F_ALL),   READONLY, "Print any diagnostic messages"},
     {NULL}  /* Sentinel */
 };
