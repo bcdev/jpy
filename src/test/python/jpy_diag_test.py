@@ -15,6 +15,7 @@ class TestJavaArrays(unittest.TestCase):
         self.assertEqual(jpy.diag.F_EXEC, 0x04)
         self.assertEqual(jpy.diag.F_MEM,  0x08)
         self.assertEqual(jpy.diag.F_JVM,  0x10)
+        self.assertEqual(jpy.diag.F_ERR,  0x20)
         self.assertEqual(jpy.diag.F_ALL,  0xff)
 
 

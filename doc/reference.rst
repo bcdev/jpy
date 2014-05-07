@@ -190,6 +190,7 @@ Variables
 
     The following flags are defined:
     * ``F_OFF`` - Don't print any diagnostic messages
+    * ``F_ERR`` - Errors: print diagnostic information when erroneous states are detected
     * ``F_TYPE`` - Type resolution: print diagnostic messages while generating Python classes from Java classes
     * ``F_METH`` - Method resolution: print diagnostic messages while resolving Java overloaded methods
     * ``F_EXEC`` - Execution: print diagnostic messages when Java code is executed
