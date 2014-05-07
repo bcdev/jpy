@@ -734,14 +734,17 @@ int JType_InitSlots(JPy_JType* type)
     // Check if we should set type.__module__ to the to the first part (up to the last dot) of the tp_name.
     // See http://docs.python.org/3/c-api/exceptions.html?highlight=pyerr_newexception#PyErr_NewException
 
-    //printf("JType_InitSlots: finalizing type...\n");
+    // Note that PyType_Ready() will set our typeObj->ob_type to &PyType_Type, while JType_New() created
+    // the typeObj with an typeObj->ob_type set to &JType_Type.
     if (PyType_Ready(typeObj) < 0) {
-        //printf("JType_InitSlots: :-(\n");
+        JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_InitSlots: INTERNAL ERROR: PyType_Ready() failed\n");
         return -1;
     }
 
-    //printf("JType_InitSlots: typeObj=%p, Py_TYPE(typeObj)=%p, Py_TYPE(typeObj)->tp_base=%p, &JType_Type=%p, &PyType_Type=%p\n",
-    //       typeObj, Py_TYPE(typeObj), Py_TYPE(typeObj)->tp_base, &JType_Type, &PyType_Type);
+    //printf("+++++++++++++++++++++++++++++++++++++++++ typeObj->ob_type=%p\n", ((PyObject*)typeObj)->ob_type);
+
+    JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_InitSlots: typeObj=%p, Py_TYPE(typeObj)=%p, typeObj->tp_name=\"%s\", typeObj->tp_base=%p, typeObj->tp_init=%p, &JType_Type=%p, &PyType_Type=%p, JObj_init=%p\n",
+                   typeObj, Py_TYPE(typeObj), typeObj->tp_name, typeObj->tp_base, typeObj->tp_init, &JType_Type, &PyType_Type, JObj_init);
 
     return 0;
 }
