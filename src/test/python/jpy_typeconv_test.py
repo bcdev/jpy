@@ -21,7 +21,7 @@ class TestTypeConversions(unittest.TestCase):
 
         with self.assertRaises(ValueError) as e:
             fixture.stringifyObjectArg(1 + 2j)
-        self.assertEqual(str(e.exception), 'cannot convert a Python complex to a Java java.lang.Object')
+        self.assertEqual(str(e.exception), 'cannot convert a Python \'complex\' to a Java \'java.lang.Object\'')
 
 
     def test_ToPrimitiveArrayConversion(self):
