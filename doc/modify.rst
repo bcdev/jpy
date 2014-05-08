@@ -16,7 +16,7 @@ jpy's source distribution directory layout uses the `Maven common directory stru
 * ``src/test/java`` - Java API test cases
 
 
-After changing any source code just run setup again as indicated in the installation process.
+After changing any source code just run setup again as indicated in the :ref:`build` process.
 
 
 After changing signatures of native methods in ``src/main/java/org/jpy/PyLib.java``, you need to compile the Java classes

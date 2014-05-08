@@ -1,4 +1,5 @@
 
+
 ############
 Installation
 ############
@@ -24,11 +25,18 @@ If you like to clone (recommended), use the git tool::
 
     git clone https://github.com/bcdev/jpy.git
 
-Now change into the checkout directory (``cd jpy``) and follow the setup steps below.
 
-************************
-Setup for Linux / Darwin
-************************
+.. _build:
+
+******************
+Build from Sources
+******************
+
+Now change into the checkout directory (``cd jpy``) and follow the build steps below.
+
+========================
+Build for Linux / Darwin
+========================
 
 You will need
 
@@ -52,9 +60,9 @@ If you encounter linkage errors during setup saying that something like a ``libj
     export LD_LIBRARY_PATH=$JDK_HOME/jre/lib/server:$LD_LIBRARY_PATH
 
 
-***************************
-Setup for Microsoft Windows
-***************************
+===========================
+Build for Microsoft Windows
+===========================
 
 You will need
 
