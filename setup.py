@@ -3,7 +3,7 @@
 __author__ = "Norman Fomferra, Brockmann Consult GmbH"
 __copyright__ = "Copyright (C) 2014 Brockmann Consult GmbH"
 __license__ = "GPL v3"
-__version__ = "0.7"
+__version__ = "0.7.1"
 
 sources = [
     'src/main/c/jpy_module.c',
@@ -94,7 +94,7 @@ elif DARWIN:
                     os.path.join(sys.exec_prefix, 'lib')]
 
 
-with open('README.rst') as file:
+with open('README.txt') as file:
     long_description = file.read()
 
 setup(name='jpy',

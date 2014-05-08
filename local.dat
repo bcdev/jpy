@@ -1,0 +1,52 @@
+# 32-bit
+
+"C:\Program Files\Microsoft SDKs\Windows\v7.1\bin\setenv" /x86 /release
+SET JDK_HOME=%JDK32_HOME%
+SET JAVA_HOME=%JDK32_HOME%
+SET PATH=%JDK_HOME%\jre\bin\server;%PATH%
+python setup.py install
+
+# 64-bit
+
+"C:\Program Files\Microsoft SDKs\Windows\v7.1\bin\setenv" /x64 /release
+SET JAVA_HOME=%JDK_HOME%
+SET PATH=%JDK_HOME%\jre\bin\server;%PATH%
+python setup.py install
+
+# Windows installer
+
+python setup.py bdist_wininst
+
+
+# PyPI package upload
+
+
+python setup.py sdist --keep-temp
+
+python setup.py sdist --dry-run upload
+
+python setup.py sdist bdist_wininst upload
+
+
+
+import jpy
+
+jpy.diag.flags = jpy.diag.F_ALL
+jpy.create_jvm(options=['-Djava.class.path=target/test-classes', '-Xmx512M'])
+
+python -m unittest discover . *_test.py
+
+
+
+# 64-bit
+
+SET JDK_HOME=C:\Program Files\Java\jdk1.7.0_07
+SET PATH=%JDK_HOME%\jre\bin\server;%PATH%
+SET VS90COMNTOOLS=%VS100COMNTOOLS%
+
+C:\Python33-amd64\Python.exe setup.py install
+
+
+python examples/beampy_ndvi.py .\TEST.N1
+python examples\beampy_subset.py .\TEST.N1 "POLYGON((15.786082 45.30223, 11.798364 46.118263, 10.878688 43.61961, 14.722727 42.85818, 15.786082 45.30223))"
+

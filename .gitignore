@@ -1,6 +1,8 @@
 target
 build
-local.txt
+dist
+MANIFEST
+local.dat
 beampy.ini
 .idea
 *.iml
@@ -14,3 +16,5 @@ jpy.dll
 libjpy.so
 hs_err_pid*
 *.N1
+
+
