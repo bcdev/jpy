@@ -15,7 +15,10 @@ It comes with a number of outstanding features:
 * Java API for accessing Python objects (`jpy.jar`)
 
 The initial development of jpy has been driven by the need to write Python extensions to an established scientific
-imaging application that is entirely programmed in Java, namely the ESA [BEAM](http://www.brockmann-consult.de/beam/) software. Writing such Python plug-ins for a Java application usually requires a bi-directional communication between Java and Python, thus the Python extension code must be able to calling back into the Java APIs.
+imaging application that is entirely programmed in Java, namely the ESA [BEAM](http://www.brockmann-consult.de/beam/).
+BEAM is an Earth observation data toolbox and development platform funded by the European Space Agency (ESA).
+Writing such Python plug-ins for a Java application usually requires a bi-directional communication between Java and
+Python, thus the Python extension code must be able to calling back into the Java APIs.
 
 For more information please have a look into the [jpy documentation](http://jpy.readthedocs.org/en/latest/).
 
