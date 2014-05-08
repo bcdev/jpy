@@ -104,23 +104,18 @@ then we can call the Python code from Java as follows ::
 Current limitations
 *******************
 
-*Java non-final, static class fields are currently not supported:*
-Reason: In jpy, Java classes are represented in Python as (dynamically allocated) built-in
+* Java non-final, static class fields are currently not supported:
+The reason is that Java classes are represented in jpy's Python API as dynamically allocated, built-in
 extension types. Built-in extension types cannot have (as of Python 3.3) static, computed
 attributes which we would need for getting/setting Java static class fields.
 
-See also
-
-* `Ref 1 <http://stackoverflow.com/questions/10161609/class-property-using-org.jpy.python-c-api>`_
-* `Ref 2 <http://joyrex.spc.uchicago.edu/bookshelves/org.jpy.python/cookbook/pythoncook-CHP-16-SECT-6.html>`_
-
-*Public final static fields are represented as normal (non-computed) type attributes:*
+* Public final static fields are represented as normal (non-computed) type attributes:
 Their values are Python representations of the final Java values. The limitation here is, that they
 can be overwritten from Python, because Python does not know final/constant attributes. This could
 only be achieved with computed attributes, but as said before, they are not supported for
 built-in extension types.
 
-*It is currently not possible to shutdown the Java VM from Python and then restart it.*
+* It is currently not possible to shutdown the Java VM from Python and then restart it.
 
 
 ********************************
