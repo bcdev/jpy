@@ -1,5 +1,3 @@
-
-
 ############
 Installation
 ############
@@ -20,10 +18,12 @@ locate the Python interpreter as well as the shared library representing the jpy
 Getting the Sources
 *******************
 
-The first step is to clone or download the jpy repository from the `jpy Project page <https://github.com/bcdev/jpy>`_.
-If you like to clone (recommended), use the git tool::
+The first step is to clone the jpy repository or download the sources from the `jpy Project page <https://github.com/bcdev/jpy>`_.
+We recommend you clone the repository using the `git <http://git-scm.com/>`_ tool::
 
     git clone https://github.com/bcdev/jpy.git
+
+In the following it is assumed that the jpy sources are either checked out or unpacked into a directory named ``jpy``.
 
 
 .. _build:
@@ -40,10 +40,11 @@ Build for Linux / Darwin
 
 You will need
 
-* Python 3.3 or higher (make sure it is the *dev* version)
-* JDK 1.7 or higher
-* Maven 3
-* gcc
+* `Python 3.3 <http://www.python.org/>`_ or higher
+* `Oracle JDK 1.7 <http://www.oracle.com/technetwork/java/javase/downloads/>`_ or higher
+* `Maven 3 <http://maven.apache.org/>`_ or higher
+* For Linux: ``gcc``
+* For Darwin: `Xcode <https://itunes.apple.com/de/app/xcode/id497799835?mt=12>`_
 
 To build and test the jpy Python module use the following commands::
 
