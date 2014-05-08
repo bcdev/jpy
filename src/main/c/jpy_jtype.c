@@ -1474,6 +1474,8 @@ int JType_MatchPyArgAsJObjectParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
                     return 80;
                 }
             }
+            // Honour that pyArg is compatible with paramType, but better matches may exist.
+            return 10;
         }
 
         // pyArg type does not match parameter type

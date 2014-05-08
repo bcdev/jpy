@@ -161,27 +161,33 @@ class TestHashMap(unittest.TestCase):
 
     def test_HashMap(self):
         f = self.File('/usr/local/bibo')
+        fa = jpy.array('java.io.File', 2)
+        fa[0] = f
+        fa[1] = f
 
         hash_map = self.HashMap()
         hash_map.put(0, 'A')
         hash_map.put(1, 12)
         hash_map.put(2, 3.4)
         hash_map.put(3, f)
+        hash_map.put(4, fa)
 
-        self.assertEqual(hash_map.size(), 4)
+        self.assertEqual(hash_map.size(), 5)
         self.assertEqual(hash_map.get(0), 'A')
         self.assertEqual(hash_map.get(1), 12)
         self.assertEqual(hash_map.get(2), 3.4)
         self.assertEqual(hash_map.get(3), f)
         self.assertEqual(type(hash_map.get(3)), type(f))
+        self.assertEqual(hash_map.get(4), fa)
 
         hash_map = self.HashMap(hash_map)
-        self.assertEqual(hash_map.size(), 4)
+        self.assertEqual(hash_map.size(), 5)
         self.assertEqual(hash_map.get(0), 'A')
         self.assertEqual(hash_map.get(1), 12)
         self.assertEqual(hash_map.get(2), 3.4)
         self.assertEqual(hash_map.get(3), f)
         self.assertEqual(type(hash_map.get(3)), type(f))
+        self.assertEqual(hash_map.get(4), fa)
 
 
 if __name__ == '__main__':
