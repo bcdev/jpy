@@ -93,9 +93,13 @@ elif DARWIN:
                     JDK_HOME + '/lib',
                     os.path.join(sys.exec_prefix, 'lib')]
 
+
+with open('README.rst') as file:
+    long_description = file.read()
+
 setup(name='jpy',
-      description='Python/Java Bridge',
-      long_description='A bidirectional Python-Java bridge',
+      description='Bi-directional Python-Java bridge',
+      long_description=long_description,
       version=__version__,
       platforms='Python 3.3, Java 1.7',
       author=__author__,
