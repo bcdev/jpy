@@ -6,7 +6,7 @@
 Welcome to jpy's documentation!
 ===============================
 
-*jpy* is a bi-directional Java-Python bridge allowing you to call Java from Python and Python from Java.
+jpy is a *bi-directional* Java-Python bridge allowing you to call Java from Python and Python from Java.
 
 Contents:
 
@@ -14,9 +14,10 @@ Contents:
    :maxdepth: 2
    
    intro
+   install
    tutorial
    reference
-
+   modify
 
 
 Indices and tables

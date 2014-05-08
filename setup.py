@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-__author__ = "Norman Fomferra"
-__copyright__ = "Copyright (C) 2004 Brockmann Consult GmbH"
+__author__ = "Norman Fomferra, Brockmann Consult GmbH"
+__copyright__ = "Copyright (C) 2014 Brockmann Consult GmbH"
 __license__ = "GPL v3"
-__version__ = "1.0"
+__version__ = "0.7"
 
 sources = [
     'src/main/c/jpy_module.c',
@@ -55,7 +55,7 @@ from distutils.extension import Extension
 # e.g. JDK_HOME = '/home/marta/jdk1.7.0_15'
 JDK_HOME = os.environ.get('JDK_HOME', None)
 if JDK_HOME is None:
-    print('Error: Environment variable "JDK_HOME" must be set to a JDK (>= v1.7) installation directory')
+    print('Error: Environment variable "JDK_HOME" must be set to a JDK (>= v1.6) installation directory')
     exit(1)
 
 IS64 = sys.maxsize > 2 ** 32
@@ -95,16 +95,16 @@ elif DARWIN:
 
 setup(name='jpy',
       description='Python/Java Bridge',
-      long_description='A bidirectional Python/Java bridge',
-      version='0.7',
+      long_description='A bidirectional Python-Java bridge',
+      version=__version__,
       platforms='Python 3.3, Java 1.7',
-      author='Norman Fomferra, Brockmann Consult GmbH',
-      author_email='beam@brockmann-consult.de',
+      author=__author__,
+      author_email='norman.fomferra@brockmann-consult.de',
       maintainer='Brockmann Consult GmbH',
-      maintainer_email='beam@brockmann-consult.de',
+      maintainer_email='norman.fomferra@brockmann-consult.de',
       license='GPL 3',
-      url='http://www.brockmann-consult.de/beam/',
-      download_url='http://www.brockmann-consult.de/beam/',
+      url='https://github.com/bcdev/jpy',
+      download_url='https://pypi.python.org/pypi/jpy/' + __version__,
       ext_modules=[Extension('jpy',
                              sources,
                              include_dirs=include_dirs,

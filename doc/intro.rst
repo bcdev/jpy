@@ -3,7 +3,7 @@
 Introduction
 ############
 
-jpy is a **bi-directional** Java-Python bridge which you can use to embed Java code in Python programs or the other
+jpy is a **bi-directional** Python-Java bridge which you can use to embed Java code in Python programs or the other
 way round. It has been designed particularly with regard to maximum data transfer speed between the two languages.
 It comes with a number of outstanding features:
 
@@ -17,7 +17,8 @@ It comes with a number of outstanding features:
 * Java API for accessing Python objects (``jpy.jar``)
 
 The initial development of jpy has been driven by the need to write Python extensions to an established scientific
-imaging application programmed in Java (`ESA BEAM <http://www.brockmann-consult.de/cms/web/beam/>`_).
+imaging application programmed in Java, namely `BEAM <http://www.brockmann-consult.de/beam/>`_.
+BEAM is an Earth observation data toolbox and development platform funded by the European Space Agency (ESA).
 Writing such Python plug-ins for a Java application usually requires a bi-directional communication between Java and
 Python, namely the Python extension code must be able to calling back into the Java APIs.
 
@@ -63,7 +64,7 @@ Access Python attributes and call Python functions from Java::
 
 
 Implementing Java interfaces using Python
-========================================
+=========================================
 
 With jpy you can implement Java interfaces using Python. We instantiating Java (proxy) objects from Python modules or
 classes. If you call methods of the resulting Java object, jpy will delegate the calls to the matching Python
@@ -109,6 +110,7 @@ extension types. Built-in extension types cannot have (as of Python 3.3) static,
 attributes which we would need for getting/setting Java static class fields.
 
 See also
+
 * `Ref 1 <http://stackoverflow.com/questions/10161609/class-property-using-org.jpy.python-c-api>`_
 * `Ref 2 <http://joyrex.spc.uchicago.edu/bookshelves/org.jpy.python/cookbook/pythoncook-CHP-16-SECT-6.html>`_
 
@@ -119,8 +121,6 @@ only be achieved with computed attributes, but as said before, they are not supp
 built-in extension types.
 
 *It is currently not possible to shutdown the Java VM from Python and then restart it.*
-
-
 
 
 ********************************
