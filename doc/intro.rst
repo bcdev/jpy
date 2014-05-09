@@ -104,16 +104,14 @@ Current limitations
 *******************
 
 * Java non-final, static class fields are currently not supported:
-The reason is that Java classes are represented in jpy's Python API as dynamically allocated, built-in
-extension types. Built-in extension types cannot have (as of Python 3.3) static, computed
-attributes which we would need for getting/setting Java static class fields.
-
+  The reason is that Java classes are represented in jpy's Python API as dynamically allocated, built-in
+  extension types. Built-in extension types cannot have (as of Python 3.3) static, computed
+  attributes which we would need for getting/setting Java static class fields.
 * Public final static fields are represented as normal (non-computed) type attributes:
-Their values are Python representations of the final Java values. The limitation here is, that they
-can be overwritten from Python, because Python does not know final/constant attributes. This could
-only be achieved with computed attributes, but as said before, they are not supported for
-built-in extension types.
-
+  Their values are Python representations of the final Java values. The limitation here is, that they
+  can be overwritten from Python, because Python does not know final/constant attributes. This could
+  only be achieved with computed attributes, but as said before, they are not supported for
+  built-in extension types.
 * It is currently not possible to shutdown the Java VM from Python and then restart it.
 
 
@@ -125,5 +123,3 @@ Other projects with similar aims
 * `Jython <http://www.jython.org/>`_ - Python for the Java Platform
 * `JyNI <http://jyni.org/>`_ - Jython Native Interface
 * `Jynx <https://code.google.com/p/jynx/>`_ - improve integration of Java with Python
-
-
