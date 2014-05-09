@@ -91,26 +91,6 @@
                     <excludeResources>true</excludeResources>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <version>2.3.7</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <instructions>
-                        <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>${project.name}</Bundle-Name>
-                        <Bundle-Version>${project.version}</Bundle-Version>
-                        <Bundle-Description>${project.description}</Bundle-Description>
-                        <Bundle-Copyright>Copyright (C) 2014 Brockmann Consult GmbH</Bundle-Copyright>
-                        <Bundle-ContactAddress>Max-Planck-Str 2, 21502 Geesthacht, Germany</Bundle-ContactAddress>
-                        <!--<Bundle-DocURL>TODO</Bundle-DocURL>-->
-                        <Bundle-License>GPL v3</Bundle-License>
-                        <Bundle-Vendor>Brockmann Consult GmbH</Bundle-Vendor>
-                        <Export-Package>org.jpy</Export-Package>
-                    </instructions>
-                </configuration>
-            </plugin>
         </plugins>
         <extensions>
             <extension>
