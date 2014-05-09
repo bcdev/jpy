@@ -22,7 +22,7 @@ import java.util.Properties;
  * Provides configuration for {@link org.jpy.PyLib}.
  *
  * @author Norman Fomferra
- * @since 1.0
+ * @since 0.7
  */
 class PyLibConfig {
     public static final File JPY_CONFIG_FILE = new File(System.getProperty("user.home"), ".jpy");

@@ -22,7 +22,7 @@ import static org.jpy.PyLib.assertPythonRuns;
  * Wraps a Python object (Python/C API type {@code PyObject*}).
  *
  * @author Norman Fomferra
- * @since 1.0
+ * @since 0.7
  */
 public class PyObject {
 

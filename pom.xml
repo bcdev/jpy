@@ -92,6 +92,36 @@
                 </configuration>
             </plugin>
         </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>2.9.1</version>
+                    <configuration>
+                        <links>
+                            <link>http://java.sun.com/javase/7/docs/api/</link>
+                        </links>
+                        <!--
+                        <aggregate>true</aggregate>
+                        <subpackages>
+                            com.bc.ceres:org.esa.beam.framework:org.esa.beam.util:org.esa.beam.visat:com.bc.jexp
+                        </subpackages>
+                        -->
+                        <excludePackageNames>
+                            *.annotations
+                        </excludePackageNames>
+                        <maxmemory>256m</maxmemory>
+                        <quiet>false</quiet>
+                        <doctitle>
+                            ${project.name} ${project.version} Java API
+                        </doctitle>
+                        <windowtitle>
+                            ${project.name} ${project.version} Java API
+                        </windowtitle>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <extensions>
             <extension>
                 <groupId>org.apache.maven.wagon</groupId>
@@ -100,6 +130,15 @@
             </extension>
         </extensions>
     </build>
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.9.1</version>
+            </plugin>
+        </plugins>
+    </reporting>
 
     <distributionManagement>
         <repository>

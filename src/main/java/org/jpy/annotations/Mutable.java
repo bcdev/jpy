@@ -21,9 +21,10 @@ import java.lang.annotation.Target;
 /**
  * Used to mark method parameters as mutable, that is, an argument's state is expected to be modified by the method.
  * <p/>
- * <i>Neither used nor implemented yet.</i>
+ * <i>Note: this class is not used yet.</i>
  *
  * @author Norman Fomferra
+ * @since 0.7 (not used)
  */
 @Target(value = ElementType.PARAMETER)
 @Retention(value = RetentionPolicy.RUNTIME)

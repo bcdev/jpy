@@ -27,23 +27,87 @@ import static org.jpy.PyLibConfig.getProperty;
  * by installing the Python jpy module using {@code python3 setup.py install --user} on Unix
  * and {@code python setup.py install}) on Windows.
  * <p/>
- * Currently, the following properties are expected in the {@code .jpy} file:
+ * Currently, the following properties are recognised in the {@code .jpy} file:
  * <ul>
  * <li>{@code python.lib} - the Python shared library (usually required on Unix only)</li>
- * <li>{@code jpy.lib} - the jpy shared library path (Unix: {@code jpy*.so}, Windows: {@code jpy*.pyd})</li>
+ * <li>{@code jpy.lib} - the jpy shared library path for Python (Unix: {@code jpy*.so}, Windows: {@code jpy*.pyd})</li>
  * </ul>
+ * <p/>
+ * jpy API clients should first call {@link #isPythonRunning()} in order to check if a Python interpreter is already available.
+ * If not, {@link #startPython(String...)} must be called before any other jpy API is used.
  * <p/>
  * <i>Important note for developers: If you change the signature of any of the native {@code PyLib} methods,
  * you must first run {@code javah} on the compiled class, and then adapt {@code src/main/c/jni/org_jpy_PyLib.c}.</i>
  *
  * @author Norman Fomferra
- * @since 1.0
+ * @since 0.7
  */
 public class PyLib {
 
+    /**
+     * The kind of callable Python objects.
+     */
     public enum CallableKind {
+        /**
+         * Function call without the Python {@code self} as first argument.
+         */
         FUNCTION,
+        /**
+         * An instance method call with the Python {@code self} (= the instance) as first argument.
+         */
         METHOD,
+    }
+
+    /**
+     * Controls output of diagnostic information for debugging.
+     */
+    @SuppressWarnings("UnusedDeclaration")
+    public static class Diag {
+
+        static {
+            PyLib.loadLib();
+        }
+
+        /**
+         * Print no diagnostic information at all.
+         */
+        public static final int F_OFF = 0x00;
+        /**
+         * Print diagnostic information while Java types are resolved.
+         */
+        public static final int F_TYPE = 0x01;
+        /**
+         * Print diagnostic information while Java methods overloads are selected.
+         */
+        public static final int F_METH = 0x02;
+        /**
+         * Print diagnostic information when code execution flow is passed from Java to Python or the other way round.
+         */
+        public static final int F_EXEC = 0x04;
+        /**
+         * Print diagnostic information about memory allocation/deallocation.
+         */
+        public static final int F_MEM = 0x08;
+        /**
+         * Print diagnostic information usage of the Java VM Invocation API.
+         */
+        public static final int F_JVM = 0x10;
+        /**
+         * Print any diagnostic information.
+         */
+        public static final int F_ALL = 0xff;
+
+        /**
+         * @return the current diagnostic flags.
+         */
+        public static native int getFlags();
+
+        /**
+         * Sets the current diagnostic flags.
+         *
+         * @param flags the current diagnostic flags.
+         */
+        public static native void setFlags(int flags);
     }
 
     private static Throwable sharedLibraryProblem;
@@ -185,58 +249,6 @@ public class PyLib {
                                            Class<?>[] paramTypes,
                                            Class<T> returnType);
 
-    /**
-     * Controls output of diagnostic information for debugging.
-     */
-    @SuppressWarnings("UnusedDeclaration")
-    public static class Diag {
-
-        static {
-            PyLib.loadLib();
-        }
-
-        /**
-         * Print no diagnostic information at all.
-         */
-        public static final int F_OFF = 0x00;
-        /**
-         * Print diagnostic information while Java types are resolved.
-         */
-        public static final int F_TYPE = 0x01;
-        /**
-         * Print diagnostic information while Java methods overloads are selected.
-         */
-        public static final int F_METH = 0x02;
-        /**
-         * Print diagnostic information when code execution flow is passed from Java to Python or the other way round.
-         */
-        public static final int F_EXEC = 0x04;
-        /**
-         * Print diagnostic information about memory allocation/deallocation.
-         */
-        public static final int F_MEM = 0x08;
-        /**
-         * Print diagnostic information usage of the Java VM Invocation API.
-         */
-        public static final int F_JVM = 0x10;
-        /**
-         * Print any diagnostic information.
-         */
-        public static final int F_ALL = 0xff;
-
-        /**
-         * @return the current diagnostic flags.
-         */
-        public static native int getFlags();
-
-        /**
-         * Sets the current diagnostic flags.
-         *
-         * @param flags the current diagnostic flags.
-         */
-        public static native void setFlags(int flags);
-    }
-
     private static void loadLib() {
         if (sharedLibraryLoaded || sharedLibraryProblem != null) {
             return;
@@ -277,7 +289,6 @@ public class PyLib {
     static {
         loadLib();
     }
-
 }
 
 

@@ -24,7 +24,7 @@ import static org.jpy.PyLib.assertPythonRuns;
  * {@link PyObject#createProxy(Class)} and {@link PyModule#createProxy(Class)} methods.
  *
  * @author Norman Fomferra
- * @since 1.0
+ * @since 0.7
  */
 class PyProxyHandler implements InvocationHandler {
     private final PyObject pyObject;

@@ -19,7 +19,7 @@ import static org.jpy.PyLib.assertPythonRuns;
  * Represents a Python module.
  *
  * @author Norman Fomferra
- * @since 1.0
+ * @since 0.7
  */
 public class PyModule extends PyObject {
     private final String name;
