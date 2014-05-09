@@ -22,6 +22,10 @@ import static org.jpy.PyLib.assertPythonRuns;
  * @since 0.7
  */
 public class PyModule extends PyObject {
+
+    /**
+     * The Python module's name.
+     */
     private final String name;
 
     PyModule(String name, long pointer) {
@@ -29,16 +33,34 @@ public class PyModule extends PyObject {
         this.name = name;
     }
 
+    /**
+     * @return The Python module's name.
+     */
     public String getName() {
         return name;
     }
 
+
+    /**
+     * Import a Python module into the Python interpreter and return its Java representation.
+     *
+     * @param name The Python module's name.
+     * @return The Python module's Java representation.
+     */
     public static PyModule importModule(String name) {
         assertPythonRuns();
         long pointer = PyLib.importModule(name);
         return pointer != 0 ? new PyModule(name, pointer) : null;
     }
 
+    /**
+     * Create a Java proxy instance of this Python module which contains compatible functions to the ones provided in the
+     * interface given by the {@code type} parameter.
+     *
+     * @param type The interface's type.
+     * @param <T> The interface name.
+     * @return A (proxy) instance implementing the given interface.
+     */
     public <T> T createProxy(Class<T> type) {
         assertPythonRuns();
         return (T) createProxy(PyLib.CallableKind.FUNCTION, type);

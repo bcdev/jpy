@@ -114,8 +114,13 @@ public class PyLib {
     private static boolean sharedLibraryLoaded;
 
     /**
-     * Throws a runtime exception if the shared Python library code could not be loaded
-     * or if the Python interpreter could not be initialised.
+     * Throws a runtime exception if Python interpreter is not running. Possible reasons for this are
+     * <ul>
+     *     <li>You have not called {@link #startPython(String...)} yet.</li>
+     *     <li>The Python shared library code for the Python interpreter could not be found or could not be be loaded.</li>
+     *     <li>The Python shared library code for the Python 'jpy' module could not be found or could not be be loaded.</li>
+     *     <li>The Python interpreter could not be initialised.</li>
+     * </ul>
      */
     public static void assertPythonRuns() {
         if (sharedLibraryProblem != null) {
@@ -139,6 +144,9 @@ public class PyLib {
      */
     public static native void startPython(String... options);
 
+    /**
+     * @return The Python interpreter version string.
+     */
     public static native String getPythonVersion();
 
     /**
