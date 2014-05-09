@@ -108,6 +108,9 @@ public class PyLib {
          * @param flags the current diagnostic flags.
          */
         public static native void setFlags(int flags);
+
+        private Diag() {
+        }
     }
 
     private static Throwable sharedLibraryProblem;
