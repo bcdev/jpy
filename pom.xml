@@ -96,13 +96,16 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>2.9.1</version>
                 <configuration>
-                    <doctitle>${project.name} ${project.version} Java API</doctitle>
-                    <windowtitle>${project.name} ${project.version} Java API</windowtitle>
                     <reportOutputDirectory>${project.basedir}/doc/_static</reportOutputDirectory>
                     <destDir>java-apidocs</destDir>
+                    <doctitle>${project.name} ${project.version} Java API</doctitle>
+                    <windowtitle>${project.name} ${project.version} Java API</windowtitle>
                     <excludePackageNames>org.jpy.annotations</excludePackageNames>
+                    <encoding>UTF-8</encoding>
                     <maxmemory>256m</maxmemory>
                     <quiet>false</quiet>
+                    <author>false</author>
+                    <version>true</version>
                     <links>
                         <link>http://java.sun.com/javase/7/docs/api/</link>
                     </links>
