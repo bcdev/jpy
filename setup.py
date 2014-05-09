@@ -94,7 +94,7 @@ elif DARWIN:
                     os.path.join(sys.exec_prefix, 'lib')]
 
 
-with open('README.txt') as file:
+with open('README.rst') as file:
     long_description = file.read()
 
 setup(name='jpy',
