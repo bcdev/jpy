@@ -360,4 +360,5 @@ todo
 Java API
 ********
 
-jpy's Java API has been generated from Java source code using the javadoc tool. It can be found `here <../java-api/index.html>`_.
+jpy's Java API documentation has been generated from Java source code using the javadoc tool.
+It can be found `here <_static/java-apidocs/index.html>`_.
