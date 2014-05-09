@@ -93,6 +93,10 @@ public class PyLib {
          */
         public static final int F_JVM = 0x10;
         /**
+         * Print diagnostic information if erroneous states are detected in the jpy Python module.
+         */
+        public static final int F_ERR = 0x20;
+        /**
          * Print any diagnostic information.
          */
         public static final int F_ALL = 0xff;
