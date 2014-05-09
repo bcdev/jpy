@@ -286,6 +286,9 @@ public class PyLib {
         }
     }
 
+    private PyLib() {
+    }
+
     static {
         loadLib();
     }
