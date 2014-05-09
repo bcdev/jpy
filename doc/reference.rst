@@ -189,6 +189,7 @@ Variables
         jpy.diag.flags = jpy.diag.F_EXEC + jpy.diag.F_JVM
 
     The following flags are defined:
+
     * ``F_OFF`` - Don't print any diagnostic messages
     * ``F_ERR`` - Errors: print diagnostic information when erroneous states are detected
     * ``F_TYPE`` - Type resolution: print diagnostic messages while generating Python classes from Java classes
