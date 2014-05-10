@@ -219,7 +219,7 @@ JNIEnv* JPy_GetJNIEnv(void)
         // ok!
         JPy_DIAG_PRINT(JPy_DIAG_F_JVM, "JPy_GetJNIEnv: jenv=%p\n", jenv);
     } else {
-        JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "JPy_GetJNIEnv: Received unhandled status code from JVM GetEnv(): status=%d\n", status);
+        JPy_DIAG_PRINT(JPy_DIAG_F_JVM + JPy_DIAG_F_ERR, "JPy_GetJNIEnv: Received unhandled status code from JVM GetEnv(): status=%d\n", status);
     }
 
     return jenv;
@@ -348,19 +348,19 @@ PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds)
     }
 
     if (JPy_JVM != NULL) {
-        JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "JPy_create_jvm: warning: Java VM is already running.\n");
+        JPy_DIAG_PRINT(JPy_DIAG_F_JVM + JPy_DIAG_F_ERR, "JPy_create_jvm: WARNING: Java VM is already running.\n");
         Py_DECREF(options);
         return Py_BuildValue("");
     }
 
     if (!PySequence_Check(options)) {
-        PyErr_SetString(PyExc_ValueError, "list of Java VM options expected");
+        PyErr_SetString(PyExc_ValueError, "create_jvm: argument 1 (options) must be a sequence of Java VM option strings");
         return NULL;
     }
 
     optionCount = PySequence_Length(options);
     if (optionCount == -1) {
-        PyErr_SetString(PyExc_ValueError, "can't retrieve number of Java VM options");
+        PyErr_SetString(PyExc_ValueError, "create_jvm: failed to determine sequence length of argument 1 (options)");
         return NULL;
     }
 
@@ -376,7 +376,7 @@ PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds)
             return NULL;
         }
         jvmOptions[i].optionString = PyUnicode_AsUTF8(option);
-        JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "JPy_create_jvm: jvmOptions[%d].optionString = '%s'\n", i, jvmOptions[i].optionString);
+        JPy_DIAG_PRINT(JPy_DIAG_F_JVM, "JPy_create_jvm: jvmOptions[%d].optionString = '%s'\n", i, jvmOptions[i].optionString);
         if (jvmOptions[i].optionString == NULL) {
             PyMem_Del(jvmOptions);
             return NULL;
@@ -391,19 +391,19 @@ PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds)
     jvmErrorCode = JNI_CreateJavaVM(&JPy_JVM, (void**) &jenv, &jvmInitArgs);
     JPy_MustDestroyJVM = JNI_TRUE;
 
-    JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "JPy_create_jvm: res=%d, JPy_JVM=%p, jenv=%p, JPy_MustDestroyJVM=%d\n", jvmErrorCode, JPy_JVM, jenv, JPy_MustDestroyJVM);
+    JPy_DIAG_PRINT(JPy_DIAG_F_JVM, "JPy_create_jvm: res=%d, JPy_JVM=%p, jenv=%p, JPy_MustDestroyJVM=%d\n", jvmErrorCode, JPy_JVM, jenv, JPy_MustDestroyJVM);
 
     PyMem_Del(jvmOptions);
 
     if (jvmErrorCode != JNI_OK) {
-        PyErr_SetString(PyExc_RuntimeError, "failed to create Java VM");
-        fprintf(stderr,
-                "Failed to create Java VM (JNI error code %d). Possible reasons are:\n"
-                "* The Java heap space setting is too high (option -Xmx). Try '256M' first, then increment.\n"
-                "* The JVM shared library (Unix: libjvm.so, Windows: jvm.dll) cannot be found or cannot be loaded.\n"
-                "  Make sure the shared library can be found via the 'PATH' environment variable.\n"
-                "  Also make sure that the JVM is compiled for the same architecture as Python.\n",
-                jvmErrorCode);
+        JPy_DIAG_PRINT(JPy_DIAG_F_JVM + JPy_DIAG_F_ERR,
+                       "JPy_create_jvm: INTERNAL ERROR: Failed to create Java VM (JNI error code %d). Possible reasons are:\n"
+                       "* The Java heap space setting is too high (option -Xmx). Try '256M' first, then increment.\n"
+                       "* The JVM shared library (Unix: libjvm.so, Windows: jvm.dll) cannot be found or cannot be loaded.\n"
+                       "  Make sure the shared library can be found via the 'PATH' environment variable.\n"
+                       "  Also make sure that the JVM is compiled for the same architecture as Python.\n",
+                       jvmErrorCode);
+        PyErr_SetString(PyExc_RuntimeError, "jpy: failed to create Java VM");
         return NULL;
     }
 
@@ -416,7 +416,7 @@ PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds)
 
 PyObject* JPy_destroy_jvm(PyObject* self, PyObject* args)
 {
-    JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "JPy_destroy_jvm: JPy_JVM=%p, JPy_MustDestroyJVM=%d\n", JPy_JVM, JPy_MustDestroyJVM);
+    JPy_DIAG_PRINT(JPy_DIAG_F_JVM, "JPy_destroy_jvm: JPy_JVM=%p, JPy_MustDestroyJVM=%d\n", JPy_JVM, JPy_MustDestroyJVM);
 
     if (JPy_JVM != NULL && JPy_MustDestroyJVM) {
         JPy_ClearGlobalVars(JPy_GetJNIEnv());
@@ -463,7 +463,7 @@ PyObject* JPy_cast(PyObject* self, PyObject* args)
     }
 
     if (!JObj_Check(obj)) {
-        PyErr_SetString(PyExc_ValueError, "argument 1 (obj) must be a Java object");
+        PyErr_SetString(PyExc_ValueError, "cast: argument 1 (obj) must be a Java object");
         return NULL;
     }
 
@@ -476,7 +476,7 @@ PyObject* JPy_cast(PyObject* self, PyObject* args)
     } else if (JType_Check(objType)) {
         type = (JPy_JType*) objType;
     } else {
-        PyErr_SetString(PyExc_ValueError, "argument 2 (obj_type) must be a Java type name or Java type object");
+        PyErr_SetString(PyExc_ValueError, "cast: argument 2 (obj_type) must be a Java type name or Java type object");
         return NULL;
     }
 
@@ -512,12 +512,12 @@ PyObject* JPy_array(PyObject* self, PyObject* args)
     } else if (JType_Check(objType)) {
         componentType = (JPy_JType*) objType;
     } else {
-        PyErr_SetString(PyExc_ValueError, "argument 1 (type) must by a type name or Java type object");
+        PyErr_SetString(PyExc_ValueError, "array: argument 1 (type) must by a type name or Java type object");
         return NULL;
     }
 
     if (componentType == JPy_JVoid) {
-        PyErr_SetString(PyExc_ValueError, "argument 1 (type) must not be 'void'");
+        PyErr_SetString(PyExc_ValueError, "array: argument 1 (type) must not be 'void'");
         return NULL;
     }
 
@@ -525,7 +525,7 @@ PyObject* JPy_array(PyObject* self, PyObject* args)
         jint length;
         length = PyLong_AsLong(objInit);
         if (length < 0) {
-            PyErr_SetString(PyExc_ValueError, "argument 2 (length) must not be negative");
+            PyErr_SetString(PyExc_ValueError, "array: argument 2 (init) must be either an integer array length or any sequence");
             return NULL;
         }
         if (componentType == JPy_JBoolean) {
@@ -557,7 +557,7 @@ PyObject* JPy_array(PyObject* self, PyObject* args)
         }
         return (PyObject*) JObj_New(jenv, arrayRef);
     } else {
-        PyErr_SetString(PyExc_ValueError, "argument 2 (init) must be either an integer array length or any sequence");
+        PyErr_SetString(PyExc_ValueError, "array: argument 2 (init) must be either an integer array length or any sequence");
         return NULL;
     }
 }
@@ -570,7 +570,7 @@ JPy_JType* JPy_GetNonObjectJType(JNIEnv* jenv, jclass classRef)
     JPy_JType* type;
 
     if (classRef == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "internal error: classRef == NULL");
+        PyErr_SetString(PyExc_RuntimeError, "jpy: internal error: classRef == NULL");
     }
 
     fid = (*jenv)->GetStaticFieldID(jenv, classRef, "TYPE", "Ljava/lang/Class;");
@@ -603,7 +603,7 @@ jclass JPy_GetClass(JNIEnv* jenv, const char* name)
 
     localClassRef = (*jenv)->FindClass(jenv, name);
     if (localClassRef == NULL) {
-        PyErr_Format(PyExc_RuntimeError, "internal error: Java class '%s' not found", name);
+        PyErr_Format(PyExc_RuntimeError, "jpy: internal error: Java class '%s' not found", name);
         return NULL;
     }
 
@@ -622,7 +622,7 @@ jmethodID JPy_GetMethod(JNIEnv* jenv, jclass classRef, const char* name, const c
     jmethodID methodID;
     methodID = (*jenv)->GetMethodID(jenv, classRef, name, sig);
     if (methodID == NULL) {
-        PyErr_Format(PyExc_RuntimeError, "internal error: method not found: %s%s", name, sig);
+        PyErr_Format(PyExc_RuntimeError, "jpy: internal error: method not found: %s%s", name, sig);
         return NULL;
     }
     return methodID;
