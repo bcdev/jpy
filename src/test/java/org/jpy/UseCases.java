@@ -13,50 +13,65 @@
 
 package org.jpy;
 
+import junit.framework.Assert;
 import org.junit.Test;
 
 /**
+ * Some (more complex) tests that represent possible API use cases.
+ *
  * @author Norman Fomferra
  */
 public class UseCases {
 
     @Test
     public void modifyPythonSysPath() {
+
         PyLib.startPython();
+        PyModule builtinsMod = PyModule.importModule("builtins");
 
-        PyModule builtins = PyModule.importModule("builtins");
+        PyModule sysMod = PyModule.importModule("sys");
+        PyObject pathObj = sysMod.getAttribute("path");
 
-        PyModule sys = PyModule.importModule("sys");
-        PyObject path = sys.getAttribute("path");
-        path.call("append", "/usr/home/norman/");
-        //String value = path.getStringValue();
+        PyObject lenObj1 = builtinsMod.call("len", pathObj);
+        pathObj.call("append", "/usr/home/norman/");
+        PyObject lenObj2 = builtinsMod.call("len", pathObj);
 
-        PyObject len = builtins.call("len", path);
-        int intValue = len.getIntValue();
+        int lenVal1 = lenObj1.getIntValue();
+        int lenVal2 = lenObj2.getIntValue();
+        String[] pathEntries = pathObj.getObjectArrayValue(String.class);
 
-        String[] objectArrayValue = path.getObjectArrayValue(String.class);
+        /////////////////////////////////////////////////
 
-        for (String s : objectArrayValue) {
-            System.out.println("s = " + s);
-        }
+        Assert.assertEquals(lenVal1 + 1, lenVal2);
+        Assert.assertEquals(pathEntries.length, lenVal2);
+        //for (int i = 0; i < pathEntries.length; i++) {
+        //    System.out.printf("pathEntries[%d] = %s%n", i, pathEntries[i]);
+        //}
 
-        System.out.println("intValue = " + intValue);
-        //System.out.println("value = " + value);
+        /////////////////////////////////////////////////
 
         //PyLib.stopPython();
     }
 
     @Test
-    public void executeScriptAsConfig() throws Exception {
+    public void setAndGetGlobalPythonVariables() throws Exception {
+
         PyLib.startPython();
-        PyModule module = PyModule.importModule("__main__");
-        System.out.println("module = " + module);
-        PyLib.execScript("a = 1234");
-        PyObject a = module.getAttribute("a");
-        System.out.println("a = " + a);
-        int intValue = a.getIntValue();
-        System.out.println("intValue = " + intValue);
+        PyLib.execScript("paramInt = 123");
+        PyLib.execScript("paramStr = 'abc'");
+        PyModule mainModule = PyModule.importModule("__main__");
+        PyObject paramIntObj = mainModule.getAttribute("paramInt");
+        PyObject paramStrObj = mainModule.getAttribute("paramStr");
+        int paramIntValue = paramIntObj.getIntValue();
+        String paramStrValue = paramStrObj.getStringValue();
 
+        /////////////////////////////////////////////////
 
+        Assert.assertEquals(123, paramIntValue);
+        Assert.assertEquals("abc", paramStrValue);
+
+        /////////////////////////////////////////////////
+
+        //PyLib.stopPython();
     }
 }
