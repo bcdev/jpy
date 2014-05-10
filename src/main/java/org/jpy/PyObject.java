@@ -87,7 +87,10 @@ public class PyObject {
 
     /**
      * Gets this Python object as Java {@code Object} value.
-     * If this Python object is a wrapped Java object, it will be unwrapped and returned.
+     * <p/>
+     * Appropriate type conversions from Python to Java will be performed as needed.
+     * If this Python object cannot be converted into a Java object, a Java wrapper of type {@link PyObject} will be returned.
+     * If this Python object is a wrapped Java object, it will be unwrapped.
      *
      * @return This Python object as a Java {@code Object} value.
      */
@@ -96,16 +99,26 @@ public class PyObject {
         return PyLib.getObjectValue(getPointer());
     }
 
+    /**
+     * Gets this Python object as Java {@code Object[]} value of the given item type.
+     * <p/>
+     * Appropriate type conversions from Python to Java will be performed as needed.
+     * If a Python item value cannot be converted into a Java item object, a Java wrapper of type {@link PyObject} will be returned.
+     * If a Python item value is a wrapped Java object, it will be unwrapped.
+     * If this Python object value is a wrapped Java array object of given type, it will be unwrapped.
+     *
+     * @return This Python object as a Java {@code Object[]} value.
+     */
     public <T> T[] getObjectArrayValue(Class<T> itemType) {
         assertPythonRuns();
         return PyLib.getObjectArrayValue(getPointer(), itemType);
     }
 
     /**
-     * Gets the value of a Python attribute.
+     * Gets the Python value of a Python attribute.
      *
      * @param name A name of the Python attribute.
-     * @return A wrapper for the returned Python object.
+     * @return A wrapper for the returned Python attribute value.
      */
     public PyObject getAttribute(String name) {
         assertPythonRuns();
@@ -114,11 +127,15 @@ public class PyObject {
     }
 
     /**
-     * Gets the value of a Python attribute which must be of a given type (if given).
+     * Gets the value of a Python attribute as Java object of a given type.
+     * <p/>
+     * Appropriate type conversions from Python to Java will be performed as needed.
+     * If the Python value cannot be converted into a Java object, a Java wrapper of type {@link PyObject} will be returned.
+     * If the Python value is a wrapped Java object, it will be unwrapped.
      *
-     * @param name A name of the Python attribute.
+     * @param name      A name of the Python attribute.
      * @param valueType The type of the value or {@code null}, if unknown
-     * @return A wrapper for the returned Python object.
+     * @return The Python attribute value as Java object.
      */
     public <T> T getAttribute(String name, Class<T> valueType) {
         assertPythonRuns();
@@ -126,10 +143,14 @@ public class PyObject {
     }
 
     /**
-     * Sets a Python attribute to the given value.
+     * Sets the value of a Python attribute from the given Java object.
+     * <p/>
+     * Appropriate type conversions from Java to Python will be performed as needed.
+     * If the Java value cannot be converted into a Python object, a Java wrapper will be created instead.
+     * If the Java value is a wrapped Python object of type {@link PyObject}, it will be unwrapped.
      *
-     * @param name A name of a Python attribute.
-     * @param value The new value.
+     * @param name  A name of the Python attribute.
+     * @param value The new attribute value as Java object.
      */
     public void setAttribute(String name, Object value) {
         assertPythonRuns();
@@ -137,11 +158,15 @@ public class PyObject {
     }
 
     /**
-     * Sets a Python attribute to the given value and an optional type.
+     * Sets the value of a Python attribute from the given Java object and Java type (if given).
+     * <p/>
+     * Appropriate type conversions from Java to Python will be performed as needed using the given value type.
+     * If the Java value cannot be converted into a Python object, a Java wrapper will be created instead.
+     * If the Java value is a wrapped Python object of type {@link PyObject}, it will be unwrapped.
      *
-     * @param name A name of a Python attribute.
-     * @param value The new value.
-     * @param valueType The type of the value or {@code null}, if unknown
+     * @param name      A name of the Python attribute.
+     * @param value     The new attribute value as Java object.
+     * @param valueType The value type used for the conversion. May be {@code null}.
      */
     public <T> void setAttribute(String name, T value, Class<T> valueType) {
         assertPythonRuns();
@@ -202,11 +227,24 @@ public class PyObject {
         return Proxy.newProxyInstance(classLoader, types, invocationHandler);
     }
 
+    /**
+     * Gets a string representation of the object using the format "PyObject(pointer=<value>)".
+     *
+     * @return A string representation of the object.
+     * @see #getPointer()
+     */
     @Override
     public final String toString() {
         return String.format("%s(pointer=0x%s)", getClass().getSimpleName(), Long.toHexString(pointer));
     }
 
+    /**
+     * Indicates whether some other object is "equal to" this one.
+     *
+     * @param o The other object.
+     * @return {@code true} if the other object is an instance of {@link org.jpy.PyObject} and if their pointers are equal, {@code false} otherwise.
+     * @see #getPointer()
+     */
     @Override
     public final boolean equals(Object o) {
         if (this == o) {
@@ -219,6 +257,12 @@ public class PyObject {
         return pointer == pyObject.pointer;
     }
 
+    /**
+     * Computes a hash code from this object's pointer value.
+     *
+     * @return A hash code value for this object.
+     * @see #getPointer()
+     */
     @Override
     public final int hashCode() {
         return (int) (pointer ^ (pointer >>> 32));
