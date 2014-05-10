@@ -42,15 +42,20 @@ class PyProxyHandler implements InvocationHandler {
     public Object invoke(Object proxyObject, Method method, Object[] args) throws Throwable {
         assertPythonRuns();
 
-        System.out.printf("PyProxyHandler: invoke: %s(%s) in thread %s\n", method.getName(), Arrays.toString(args), Thread.currentThread());
+        if ((PyLib.Diag.getFlags() & PyLib.Diag.F_METH) != 0) {
+            System.out.printf("org.jpy.PyProxyHandler: invoke: %s(%s) on pyObject=%s in thread %s\n",
+                              method.getName(),
+                              Arrays.toString(args),
+                              Long.toHexString(this.pyObject.getPointer()),
+                              Thread.currentThread());
+        }
 
-        return PyLib.callAndReturnValue(
-                this.pyObject.getPointer(),
-                callableKind == PyLib.CallableKind.METHOD,
-                method.getName(),
-                args != null ? args.length : 0,
-                args,
-                method.getParameterTypes(),
-                method.getReturnType());
+        return PyLib.callAndReturnValue(this.pyObject.getPointer(),
+                                        callableKind == PyLib.CallableKind.METHOD,
+                                        method.getName(),
+                                        args != null ? args.length : 0,
+                                        args,
+                                        method.getParameterTypes(),
+                                        method.getReturnType());
     }
 }

@@ -2,6 +2,7 @@ Changes from version 0.7.1 to 0.7.2-snapshot
 ============================================
 
 * <more to come, 0.7.2 hasn't been released yet>
+* Removed console dumps that occurred when calling from Java proxies into Python
 * Added Java API documentation (doc/_static/java-apidoc)
 * Added new diagnostic F_ERR flag to Java class PyLib.Diag
 * Java class PyLib is no longer instantiable

@@ -27,12 +27,16 @@ public class PyModuleTest {
     @BeforeClass
     public static void setUp() throws Exception {
         System.out.println("PyModuleTest: Current thread: " + Thread.currentThread());
+
         PyLib.startPython();
         assertEquals(true, PyLib.isPythonRunning());
+
+        PyLib.Diag.setFlags(PyLib.Diag.F_METH);
     }
 
     @AfterClass
     public static void tearDown() throws Exception {
+        PyLib.Diag.setFlags(PyLib.Diag.F_OFF);
         //PyLib.stopPython();
     }
 
