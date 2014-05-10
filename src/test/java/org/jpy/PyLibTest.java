@@ -23,7 +23,6 @@ public class PyLibTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        System.out.println("PyLibTest: Current thread: " + Thread.currentThread());
         PyLib.startPython();
         assertEquals(true, PyLib.isPythonRunning());
     }
@@ -48,7 +47,10 @@ public class PyLibTest {
 
     @Test
     public void testExecScriptInError() throws Exception {
-        int exitCode = PyLib.execScript("1 / 0");
+        int exitCode;
+        exitCode = PyLib.execScript("0 / 1");
+        assertEquals(0, exitCode);
+        exitCode = PyLib.execScript("1 / 0");
         assertEquals(-1, exitCode);
     }
 
