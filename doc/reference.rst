@@ -53,20 +53,78 @@ jpy Functions
 .. py:function:: get_type(name)
     :module: jpy
 
-    Return a type object for the given, fully qualified Java type which is typically a class *name*,
-    e.g. ``'java.lang.System'`` or one of the Java primitive types (``'boolean'``, ``'char'``, ``'byte'``, ``'short'``,
-    ``'int'``, ``'long'``, ``'float'``, and ``'double'``).
-    If the type does not already exists in :py:data:`jpy.types`, the class is loaded from the JVM. If the Java type is
-    a class with public constructors, these can be used to create object instances just like from any other Python
-    class, e.g.::
+    Return a type object for the given, fully qualified Java type *name* which is the name of a Java primitive type,
+    a Java class name, or a Java array type name.
+
+    Java class names must be fully qualified, e.g. ``'java.awt.Point'``. For inner classes a dollar sign is
+    used to separate it from its containing class, e.g. ``'java.awt.geom.Ellipse2D$Float'``.
+
+    Java array type names have a trailing opening bracket, followed by either a Java class name and a trailing semicolon
+    or followed by one of the primitive type indicators:
+
+    * ``'Z'``, the Java ``boolean`` type (an 8-bit Boolean value)
+    * ``'C'``, Java ``char`` type (a 16-bit unicode character)
+    * ``'B'``, Java ``byte`` type (an 8-bit signed integer number)
+    * ``'S'``, Java ``short`` type (a 16-bit signed integer number)
+    * ``'I'``, Java ``int`` type (a 32-bit signed integer number)
+    * ``'J'``, Java ``long`` type (a 64-bit signed integer number)
+    * ``'F'``, Java ``float`` type (a 32-bit floating point number)
+    * ``'D'``, Java ``double`` type (a 64-bit floating point number)
+
+    Examples: ``'[java.awt.Point;'`` (1d object array), ``'[[[F'`` (3d float array).
+
+    If the returned Java type has public constructors it can be used to create Java object instances in the same way
+    Python objects are created from their types, e.g.::
 
         String = jpy.get_type('java.lang.String')
         s = String(‘Hello jpy!’)
         s = s.substring(0, 5)
 
+    The returned Java types are also used to access the type's static fields and methods::
+
+        Runtime = jpy.get_type('java.lang.Runtime')
+        rt = Runtime.getRuntime()
+        tm = rt.totalMemory()
+
+    To instantiate Java array objects, the :py:func:`jpy.array()` function is used.
+
+    Implementation note: All types loaded so far from the Java VM are stored in the global :py:data:`jpy.types` variable.
+    If the requested type does not already exists in :py:data:`jpy.types`, the class is newly loaded from the Java VM.
     The root class of all Java types retrieved that way is :py:class:`jpy.JType`.
+
     Make sure that :py:func:`jpy.create_jvm()` has already been called. Otherwise the function fails with a runtime
     exception.
+
+
+.. py:function:: array(item_type, init)
+    :module: jpy
+
+    Create a Java array object for the given *item_type* and of the given initializer *init*.
+
+    *item_type* may be a *type* object as returned by the :py:func:`jpy.get_type()` function or a type *name* as it is
+    used for the :py:func:`jpy.get_type()` function. In addition, the name of a Java primitive type can be used:
+
+    * ``'boolean'`` (an 8-bit Boolean value)
+    * ``'char'`` (a 16-bit unicode character)
+    * ``'byte'`` (an 8-bit signed integer number)
+    * ``'short'`` (a 16-bit signed integer number)
+    * ``'int'`` (a 32-bit signed integer number)
+    * ``'long'`` (a 64-bit signed integer number)
+    * ``'float'`` (a 32-bit floating point number)
+    * ``'double'`` (a 64-bit floating point number)
+
+    The value for the *init* parameter may bei either an array length in the range ``0`` to ``2**31-1`` or a sequence
+    of objects which all must be convertible to the given *item_type*.
+
+    Make sure that :py:func:`jpy.create_jvm()` has already been called. Otherwise the function fails with a runtime
+    exception.
+
+    Examples:::
+
+        a = jpy.array('java.lang.String', ['A', 'B', 'C'])
+        a = jpy.array('int', [1, 2, 3])
+        a = jpy.array('float', 512)
+
 
 
 .. py:function:: cast(jobj, type)
@@ -92,19 +150,6 @@ jpy Functions
 
     Make sure that :py:func:`jpy.create_jvm()` has already been called. Otherwise the function fails with a runtime
     exception.
-
-
-.. py:function:: array(item_type, length)
-    :module: jpy
-
-    Create a Java array object for the given *item_type* name and of the given *length*. *item_type* may be one of the
-    primitive Java type names ``'boolean'``, ``'char'``, ``'byte'``, ``'short'``, ``'int'``, ``'long'``, ``'float'``,
-    or ``'double'`` or any Java class name.
-
-    Make sure that :py:func:`jpy.create_jvm()` has already been called. Otherwise the function fails with a runtime
-    exception.
-
-
 
 Variables
 =========

@@ -51,7 +51,7 @@ static PyMethodDef JPy_Functions[] = {
                     "Returns None if the cast is not possible."},
 
     {"array",       JPy_array, METH_VARARGS,
-                    "array(name, length) - Return a new Java array of given Java type (type name or type object) and length. "
+                    "array(name, init) - Return a new Java array of given Java type (type name or type object) and initializer (array length or sequence). "
                     "Possible primitive types are 'boolean', 'byte', 'char', 'short', 'int', 'long', 'float', and 'double'."},
 
     {NULL, NULL, 0, NULL} /*Sentinel*/
