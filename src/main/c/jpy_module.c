@@ -59,14 +59,17 @@ static PyMethodDef JPy_Functions[] = {
 
 void JPy_free(void* unused);
 
+#define JPY_MODULE_NAME "jpy"
+#define JPY_MODULE_DOC  "Bi-directional Python-Java Bridge"
+
 #ifdef IS_PYTHON_3_API
 static struct PyModuleDef JPy_ModuleDef =
 {
     PyModuleDef_HEAD_INIT,
-    "jpy",           /* Name of the Python JPy_Module */
-    "Java Python Bridge",  /* Module documentation */
-    -1,                 /* Size of per-interpreter state of the JPy_Module, or -1 if the JPy_Module keeps state in global variables. */
-    JPy_Functions,    /* Structure containing global jpy-functions */
+    JPY_MODULE_NAME,   /* Name of the Python JPy_Module */
+    JPY_MODULE_DOC,    /* Module documentation */
+    -1,                /* Size of per-interpreter state of the JPy_Module, or -1 if the JPy_Module keeps state in global variables. */
+    JPy_Functions,     /* Structure containing global jpy-functions */
     NULL,     // m_reload
     NULL,     // m_traverse
     NULL,     // m_clear
@@ -248,8 +251,7 @@ PyMODINIT_FUNC PyInit_jpy(void)
         JPY_RETURN(NULL);
     }
 #else
-    // todo: py27: add other module metadata from JPy_ModuleDef to 'jpy'
-    JPy_Module = Py_InitModule("jpy", JPy_Functions);
+    JPy_Module = Py_InitModule3(JPY_MODULE_NAME, JPy_Functions, JPY_MODULE_DOC);
     if (JPy_Module == NULL) {
         JPY_RETURN(NULL);
     }

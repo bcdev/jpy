@@ -902,12 +902,15 @@ static PyMethodDef JPrint_Functions[] = {
     {NULL, NULL, 0, NULL} /*Sentinel*/
 };
 
+#define JPY_STDOUT_MODULE_NAME "jpy_stdout"
+#define JPY_STDOUT_MODULE_DOC  "Redirect 'stdout' to the console in embedded mode"
+
 #ifdef IS_PYTHON_3_API
 static struct PyModuleDef JPrint_ModuleDef =
 {
     PyModuleDef_HEAD_INIT,
-    "jpy_stdout", /* Name of the Python JPy_Module */
-    "Used to redirect 'stdout' to the console in embedded mode",  /* Module documentation */
+    JPY_STDOUT_MODULE_NAME, /* Name of the Python JPy_Module */
+    JPY_STDOUT_MODULE_DOC,  /* Module documentation */
     -1,                 /* Size of per-interpreter state of the JPy_Module, or -1 if the JPy_Module keeps state in global variables. */
     JPrint_Functions,    /* Structure containing global jpy-functions */
     NULL,     // m_reload
@@ -923,7 +926,7 @@ void PyLib_RedirectStdOut(void)
 #ifdef IS_PYTHON_3_API
     module = PyModule_Create(&JPrint_ModuleDef);
 #else
-    module = Py_InitModule("jpy_stdout", JPrint_Functions);
+    module = Py_InitModule3(JPY_STDOUT_MODULE_NAME, JPrint_Functions, JPY_STDOUT_MODULE_DOC);
 #endif
     PySys_SetObject("stdout", module);
     PySys_SetObject("stderr", module);
