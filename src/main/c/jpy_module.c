@@ -59,6 +59,7 @@ static PyMethodDef JPy_Functions[] = {
 
 void JPy_free(void* unused);
 
+#ifdef IS_PYTHON_3_API
 static struct PyModuleDef JPy_ModuleDef =
 {
     PyModuleDef_HEAD_INIT,
@@ -71,6 +72,7 @@ static struct PyModuleDef JPy_ModuleDef =
     NULL,     // m_clear
     JPy_free  // m_free
 };
+#endif
 
 PyObject* JPy_Module = NULL;
 PyObject* JPy_Types = NULL;
@@ -225,6 +227,11 @@ JNIEnv* JPy_GetJNIEnv(void)
     return jenv;
 }
 
+#ifdef IS_PYTHON_3_API
+#define JPY_RETURN(V) return V
+#else
+#define JPY_RETURN(V) return
+#endif
 
 /**
  * Called by the Python interpreter's import machinery, e.g. using 'import jpy'.
@@ -235,15 +242,23 @@ PyMODINIT_FUNC PyInit_jpy(void)
 
     /////////////////////////////////////////////////////////////////////////
 
+#ifdef IS_PYTHON_3_API
     JPy_Module = PyModule_Create(&JPy_ModuleDef);
     if (JPy_Module == NULL) {
-        return NULL;
+        JPY_RETURN(NULL);
     }
+#else
+    // todo: py27: add other module metadata from JPy_ModuleDef to 'jpy'
+    JPy_Module = Py_InitModule("jpy", JPy_Functions);
+    if (JPy_Module == NULL) {
+        JPY_RETURN(NULL);
+    }
+#endif
 
     /////////////////////////////////////////////////////////////////////////
 
     if (PyType_Ready(&JType_Type) < 0) {
-        return NULL;
+        JPY_RETURN(NULL);
     }
     Py_INCREF(&JType_Type);
     PyModule_AddObject(JPy_Module, "JType", (PyObject*) &JType_Type);
@@ -251,7 +266,7 @@ PyMODINIT_FUNC PyInit_jpy(void)
     /////////////////////////////////////////////////////////////////////////
 
     if (PyType_Ready(&JMethod_Type) < 0) {
-        return NULL;
+        JPY_RETURN(NULL);
     }
     Py_INCREF(&JMethod_Type);
     PyModule_AddObject(JPy_Module, "JMethod", (PyObject*) &JMethod_Type);
@@ -259,7 +274,7 @@ PyMODINIT_FUNC PyInit_jpy(void)
     /////////////////////////////////////////////////////////////////////////
 
     if (PyType_Ready(&JOverloadedMethod_Type) < 0) {
-        return NULL;
+        JPY_RETURN(NULL);
     }
     Py_INCREF(&JOverloadedMethod_Type);
     PyModule_AddObject(JPy_Module, "JOverloadedMethod", (PyObject*) &JOverloadedMethod_Type);
@@ -267,7 +282,7 @@ PyMODINIT_FUNC PyInit_jpy(void)
     /////////////////////////////////////////////////////////////////////////
 
     if (PyType_Ready(&JField_Type) < 0) {
-        return NULL;
+        JPY_RETURN(NULL);
     }
     Py_INCREF(&JField_Type);
     PyModule_AddObject(JPy_Module, "JField", (PyObject*) &JField_Type);
@@ -293,7 +308,7 @@ PyMODINIT_FUNC PyInit_jpy(void)
     /////////////////////////////////////////////////////////////////////////
 
     if (PyType_Ready(&Diag_Type) < 0) {
-        return NULL;
+        JPY_RETURN(NULL);
     }
     //Py_INCREF(&DiagFlags_Type);
     {
@@ -308,11 +323,11 @@ PyMODINIT_FUNC PyInit_jpy(void)
         JNIEnv* jenv;
         jenv = JPy_GetJNIEnv();
         if (jenv == NULL) {
-            return NULL;
+            JPY_RETURN(NULL);
         }
         // If we have already a running VM, initialize global variables
         if (JPy_InitGlobalVars(jenv) < 0) {
-            return NULL;
+            JPY_RETURN(NULL);
         }
     }
 
@@ -320,7 +335,7 @@ PyMODINIT_FUNC PyInit_jpy(void)
 
     //printf("PyInit_jpy: exit\n");
 
-    return JPy_Module;
+    JPY_RETURN(JPy_Module);
 }
 
 PyObject* JPy_has_jvm(PyObject* self)
@@ -375,6 +390,7 @@ PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds)
             PyMem_Del(jvmOptions);
             return NULL;
         }
+        // todo: py27: replace PyUnicode_AsUTF8() for Python 2.7
         jvmOptions[i].optionString = PyUnicode_AsUTF8(option);
         JPy_DIAG_PRINT(JPy_DIAG_F_JVM, "JPy_create_jvm: jvmOptions[%d].optionString = '%s'\n", i, jvmOptions[i].optionString);
         if (jvmOptions[i].optionString == NULL) {
@@ -468,6 +484,7 @@ PyObject* JPy_cast(PyObject* self, PyObject* args)
     }
 
     if (PyUnicode_Check(objType)) {
+        // todo: py27: replace PyUnicode_AsUTF8() for Python 2.7
         const char* typeName = PyUnicode_AsUTF8(objType);
         type = JType_GetTypeForName(jenv, typeName, JNI_FALSE);
         if (type == NULL) {
@@ -504,6 +521,7 @@ PyObject* JPy_array(PyObject* self, PyObject* args)
 
     if (PyUnicode_Check(objType)) {
         const char* typeName;
+        // todo: py27: replace PyUnicode_AsUTF8() for Python 2.7
         typeName = PyUnicode_AsUTF8(objType);
         componentType = JType_GetTypeForName(jenv, typeName, JNI_FALSE);
         if (componentType == NULL) {

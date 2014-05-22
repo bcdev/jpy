@@ -902,6 +902,7 @@ static PyMethodDef JPrint_Functions[] = {
     {NULL, NULL, 0, NULL} /*Sentinel*/
 };
 
+#ifdef IS_PYTHON_3_API
 static struct PyModuleDef JPrint_ModuleDef =
 {
     PyModuleDef_HEAD_INIT,
@@ -914,11 +915,16 @@ static struct PyModuleDef JPrint_ModuleDef =
     NULL,     // m_clear
     NULL      // m_free
 };
+#endif
 
 void PyLib_RedirectStdOut(void)
 {
     PyObject* module;
+#ifdef IS_PYTHON_3_API
     module = PyModule_Create(&JPrint_ModuleDef);
+#else
+    module = Py_InitModule("jpy_stdout", JPrint_Functions);
+#endif
     PySys_SetObject("stdout", module);
     PySys_SetObject("stderr", module);
 }

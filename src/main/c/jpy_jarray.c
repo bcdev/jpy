@@ -218,6 +218,8 @@ void JArray_ReleaseBufferProc(JPy_JArray* self, Py_buffer* view, char javaType)
     //Py_DECREF(view->obj);
 }
 
+// todo: py27: fix all releasebufferproc() functions which have different parameter types in 2.7
+
 void JArray_releasebufferproc_boolean(JPy_JArray* self, Py_buffer* view)
 {
     JArray_ReleaseBufferProc(self, view, 'Z');

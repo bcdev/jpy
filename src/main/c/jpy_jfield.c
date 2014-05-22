@@ -59,6 +59,7 @@ void JField_Del(JPy_JField* field)
  */
 PyObject* JField_repr(JPy_JField* self)
 {
+    // todo: py27: replace PyUnicode_AsUTF8()
     const char* name = PyUnicode_AsUTF8(self->name);
     return PyUnicode_FromFormat("%s(name='%s', is_static=%d, is_final=%d, fid=%p)",
                                 ((PyObject*)self)->ob_type->tp_name,

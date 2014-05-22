@@ -1886,6 +1886,7 @@ void JType_dealloc(JPy_JType* self)
  */
 PyObject* JType_getattro(JPy_JType* self, PyObject* name)
 {
+    // todo: py27: replace PyUnicode_AsUTF8() for Python 2.7
     printf("JType_getattro: %s.%s\n", Py_TYPE(self)->tp_name, PyUnicode_AsUTF8(name));
 
     if (!self->isResolved && !self->isResolving) {
