@@ -17,6 +17,7 @@
 #include "jpy_jobj.h"
 #include "jpy_jfield.h"
 #include "jpy_conv.h"
+#include "jpy_compat.h"
 
 
 JPy_JField* JField_New(JPy_JType* declaringClass, PyObject* fieldName, JPy_JType* fieldType, jboolean isStatic, jboolean isFinal, jfieldID fid)
@@ -59,8 +60,7 @@ void JField_Del(JPy_JField* field)
  */
 PyObject* JField_repr(JPy_JField* self)
 {
-    // todo: py27: replace PyUnicode_AsUTF8()
-    const char* name = PyUnicode_AsUTF8(self->name);
+    const char* name = JPy_AS_UTF8(self->name);
     return PyUnicode_FromFormat("%s(name='%s', is_static=%d, is_final=%d, fid=%p)",
                                 ((PyObject*)self)->ob_type->tp_name,
                                 name,

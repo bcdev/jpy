@@ -11,6 +11,7 @@
  * http://www.gnu.org/licenses/
  */
 
+
 #include "jpy_module.h"
 #include "jpy_diag.h"
 #include "jpy_jtype.h"
@@ -18,6 +19,8 @@
 #include "jpy_jfield.h"
 #include "jpy_jobj.h"
 #include "jpy_conv.h"
+#include "jpy_compat.h"
+
 
 #include <stdlib.h>
 #include <string.h>
@@ -62,7 +65,7 @@ void JPy_free(void* unused);
 #define JPY_MODULE_NAME "jpy"
 #define JPY_MODULE_DOC  "Bi-directional Python-Java Bridge"
 
-#ifdef IS_PYTHON_3_API
+#if PY_MAJOR_VERSION >= 3
 static struct PyModuleDef JPy_ModuleDef =
 {
     PyModuleDef_HEAD_INIT,
@@ -230,22 +233,24 @@ JNIEnv* JPy_GetJNIEnv(void)
     return jenv;
 }
 
-#ifdef IS_PYTHON_3_API
+#if PY_MAJOR_VERSION >= 3
 #define JPY_RETURN(V) return V
+#define JPY_MODULE_INIT_FUNC PyInit_jpy
 #else
 #define JPY_RETURN(V) return
+#define JPY_MODULE_INIT_FUNC initjpy
 #endif
 
 /**
  * Called by the Python interpreter's import machinery, e.g. using 'import jpy'.
  */
-PyMODINIT_FUNC PyInit_jpy(void)
+PyMODINIT_FUNC JPY_MODULE_INIT_FUNC(void)
 {
     //printf("PyInit_jpy: JPy_JVM=%p\n", JPy_JVM);
 
     /////////////////////////////////////////////////////////////////////////
 
-#ifdef IS_PYTHON_3_API
+#if PY_MAJOR_VERSION >= 3
     JPy_Module = PyModule_Create(&JPy_ModuleDef);
     if (JPy_Module == NULL) {
         JPY_RETURN(NULL);
@@ -392,8 +397,7 @@ PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds)
             PyMem_Del(jvmOptions);
             return NULL;
         }
-        // todo: py27: replace PyUnicode_AsUTF8() for Python 2.7
-        jvmOptions[i].optionString = PyUnicode_AsUTF8(option);
+        jvmOptions[i].optionString = (char*) JPy_AS_UTF8(option);
         JPy_DIAG_PRINT(JPy_DIAG_F_JVM, "JPy_create_jvm: jvmOptions[%d].optionString = '%s'\n", i, jvmOptions[i].optionString);
         if (jvmOptions[i].optionString == NULL) {
             PyMem_Del(jvmOptions);
@@ -486,8 +490,7 @@ PyObject* JPy_cast(PyObject* self, PyObject* args)
     }
 
     if (PyUnicode_Check(objType)) {
-        // todo: py27: replace PyUnicode_AsUTF8() for Python 2.7
-        const char* typeName = PyUnicode_AsUTF8(objType);
+        const char* typeName = JPy_AS_UTF8(objType);
         type = JType_GetTypeForName(jenv, typeName, JNI_FALSE);
         if (type == NULL) {
             return NULL;
@@ -523,8 +526,7 @@ PyObject* JPy_array(PyObject* self, PyObject* args)
 
     if (PyUnicode_Check(objType)) {
         const char* typeName;
-        // todo: py27: replace PyUnicode_AsUTF8() for Python 2.7
-        typeName = PyUnicode_AsUTF8(objType);
+        typeName = JPy_AS_UTF8(objType);
         componentType = JType_GetTypeForName(jenv, typeName, JNI_FALSE);
         if (componentType == NULL) {
             return NULL;
@@ -532,7 +534,7 @@ PyObject* JPy_array(PyObject* self, PyObject* args)
     } else if (JType_Check(objType)) {
         componentType = (JPy_JType*) objType;
     } else {
-        PyErr_SetString(PyExc_ValueError, "array: argument 1 (type) must by a type name or Java type object");
+        PyErr_SetString(PyExc_ValueError, "array: argument 1 (type) must be a type name or Java type object");
         return NULL;
     }
 

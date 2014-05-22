@@ -16,6 +16,7 @@
 #include "jpy_jtype.h"
 #include "jpy_jobj.h"
 #include "jpy_conv.h"
+#include "jpy_compat.h"
 
 
 
@@ -195,9 +196,6 @@ PyObject* JPy_FromTypeName(JNIEnv* jenv, jclass classRef)
     return pyTypeName;
 }
 
-#ifndef IS_PYTHON_3_API
-#define PyUnicode_2BYTE_KIND 0
-#endif
 
 PyObject* JPy_FromJString(JNIEnv* jenv, jstring stringRef)
 {
@@ -220,8 +218,7 @@ PyObject* JPy_FromJString(JNIEnv* jenv, jstring stringRef)
         return NULL;
     }
 
-    // todo: py27: replace PyUnicode_FromKindAndData() for Python 2.7
-    returnValue = PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, jChars, length);
+    returnValue = JPy_FROM_WIDE_CHAR_STR(jChars, length);
     (*jenv)->ReleaseStringChars(jenv, stringRef, jChars);
     return returnValue;
 }
@@ -239,8 +236,7 @@ int JPy_AsJString(JNIEnv* jenv, PyObject* arg, jstring* stringRef)
         return 0;
     }
 
-    // todo: py27: replace PyUnicode_AsWideCharString() for Python 2.7
-    wChars = PyUnicode_AsWideCharString(arg, &length);
+    wChars = JPy_AS_WIDE_CHAR_STR(arg, &length);
     if (wChars == NULL) {
         *stringRef = NULL;
         return -1;

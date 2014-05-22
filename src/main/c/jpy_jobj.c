@@ -420,10 +420,10 @@ PyObject* JObj_getattro(JPy_JObj* self, PyObject* name)
     if (PyObject_TypeCheck(value, &JOverloadedMethod_Type)) {
         //JPy_JOverloadedMethod* overloadedMethod = (JPy_JOverloadedMethod*) value;
         //printf("JObj_getattro: wrapping JOverloadedMethod, overloadCount=%d\n", PyList_Size(overloadedMethod->methodList));
-#ifdef IS_PYTHON_3_API
+#if PY_MAJOR_VERSION >= 3
         return PyMethod_New(value, (PyObject*) self);
 #else
-        // todo: py27: 3rd arg must be class of self
+        // todo: py27: 3rd arg must be class of self, check if NULL is ok here
         return PyMethod_New(value, (PyObject*) self, NULL);
 #endif
     } else if (PyObject_TypeCheck(value, &JField_Type)) {

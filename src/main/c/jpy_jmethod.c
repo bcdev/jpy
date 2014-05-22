@@ -17,7 +17,7 @@
 #include "jpy_jobj.h"
 #include "jpy_jmethod.h"
 #include "jpy_conv.h"
-
+#include "jpy_compat.h"
 
 
 JPy_JMethod* JMethod_New(PyObject* name,
@@ -183,8 +183,7 @@ PyObject* JMethod_InvokeMethod(JNIEnv* jenv, JPy_JMethod* method, JPy_JType* typ
     if (method->isStatic) {
         jclass classRef = type->classRef;
 
-        // todo: py27: replace PyUnicode_AsUTF8()
-        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "JMethod_InvokeMethod: calling static Java method %s#%s\n", type->javaName, PyUnicode_AsUTF8(method->name));
+        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "JMethod_InvokeMethod: calling static Java method %s#%s\n", type->javaName, JPy_AS_UTF8(method->name));
 
         if (returnType == JPy_JVoid) {
             (*jenv)->CallStaticVoidMethodA(jenv, classRef, method->mid, jArgs);
@@ -238,7 +237,7 @@ PyObject* JMethod_InvokeMethod(JNIEnv* jenv, JPy_JMethod* method, JPy_JType* typ
         jobject objectRef;
         PyObject* self;
 
-        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "JMethod_InvokeMethod: calling Java method %s#%s\n", type->javaName, PyUnicode_AsUTF8(method->name));
+        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "JMethod_InvokeMethod: calling Java method %s#%s\n", type->javaName, JPy_AS_UTF8(method->name));
 
         self = PyTuple_GetItem(pyArgs, 0);
         // Note it is already ensured that self is a JPy_JObj*
@@ -385,8 +384,7 @@ void JMethod_DisposeJArgs(JNIEnv* jenv, int paramCount, jvalue* jArgs, JPy_ArgDi
 
 PyObject* JMethod_repr(JPy_JMethod* self)
 {
-    // todo: py27: replace PyUnicode_AsUTF8() for Python 2.7
-    const char* name = PyUnicode_AsUTF8(self->name);
+    const char* name = JPy_AS_UTF8(self->name);
     return PyUnicode_FromFormat("%s(name='%s', param_count=%d, is_static=%d, mid=%p)",
                                 ((PyObject*)self)->ob_type->tp_name,
                                 name,
@@ -573,9 +571,8 @@ JPy_JMethod* JOverloadedMethod_FindMethod0(JNIEnv* jenv, JPy_JOverloadedMethod* 
     matchValueMax = -1;
     bestMethod = NULL;
 
-    // todo: py27: replace PyUnicode_AsUTF8() for Python 2.7
     JPy_DIAG_PRINT(JPy_DIAG_F_METH, "JOverloadedMethod_FindMethod0: method '%s#%s': overloadCount=%d\n",
-                              overloadedMethod->declaringClass->javaName, PyUnicode_AsUTF8(overloadedMethod->name), overloadCount);
+                              overloadedMethod->declaringClass->javaName, JPy_AS_UTF8(overloadedMethod->name), overloadCount);
 
     for (i = 0; i < overloadCount; i++) {
         currMethod = (JPy_JMethod*) PyList_GetItem(overloadedMethod->methodList, i);
@@ -742,8 +739,7 @@ PyObject* JOverloadedMethod_call(JPy_JOverloadedMethod* self, PyObject *args, Py
  */
 PyObject* JOverloadedMethod_repr(JPy_JOverloadedMethod* self)
 {
-    // todo: py27: replace PyUnicode_AsUTF8() for Python 2.7
-    const char* name = PyUnicode_AsUTF8(self->name);
+    const char* name = JPy_AS_UTF8(self->name);
     int methodCount = PyList_Size(self->methodList);
     return PyUnicode_FromFormat("%s(name='%s', methodCount=%d)",
                                 ((PyObject*)self)->ob_type->tp_name,

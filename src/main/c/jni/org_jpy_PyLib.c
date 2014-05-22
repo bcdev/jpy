@@ -121,9 +121,12 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_startPython
 
     JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "PyLib_startPython: entered: jenv=%p, JPy_Module=%p\n", jenv, JPy_Module);
 
-
     if (!Py_IsInitialized()) {
+#if PY_MAJOR_VERSION >= 3
         Py_SetProgramName(L"java");
+#else
+        Py_SetProgramName("java");
+#endif
         Py_Initialize();
         PyLib_RedirectStdOut();
     }
@@ -805,7 +808,7 @@ void PyLib_HandlePythonException(JNIEnv* jenv)
         return;
     }
 
-    // todo - The traceback string generated here does not make sense. Convert it to the actual traceback that Python prints to stderr.
+    // todo - The traceback string generated here does not make much sense. Convert it to the actual traceback that Python prints to stderr.
 
     PyErr_Fetch(&pyType, &pyValue, &pyTraceback);
     PyErr_NormalizeException(&pyType, &pyValue, &pyTraceback);
@@ -905,7 +908,7 @@ static PyMethodDef JPrint_Functions[] = {
 #define JPY_STDOUT_MODULE_NAME "jpy_stdout"
 #define JPY_STDOUT_MODULE_DOC  "Redirect 'stdout' to the console in embedded mode"
 
-#ifdef IS_PYTHON_3_API
+#if PY_MAJOR_VERSION >= 3
 static struct PyModuleDef JPrint_ModuleDef =
 {
     PyModuleDef_HEAD_INIT,
@@ -923,7 +926,7 @@ static struct PyModuleDef JPrint_ModuleDef =
 void PyLib_RedirectStdOut(void)
 {
     PyObject* module;
-#ifdef IS_PYTHON_3_API
+#if PY_MAJOR_VERSION >= 3
     module = PyModule_Create(&JPrint_ModuleDef);
 #else
     module = Py_InitModule3(JPY_STDOUT_MODULE_NAME, JPrint_Functions, JPY_STDOUT_MODULE_DOC);

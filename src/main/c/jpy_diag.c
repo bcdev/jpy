@@ -14,6 +14,7 @@
 #include <Python.h>
 #include "structmember.h"
 #include "jpy_diag.h"
+#include "jpy_compat.h"
 
 int JPy_DiagFlags = JPy_DIAG_F_OFF;
 
@@ -52,8 +53,7 @@ PyObject* Diag_New(void)
 PyObject* Diag_getattro(JPy_Diag* self, PyObject *attr_name)
 {
     //printf("Diag_getattro: attr_name=%s\n", PyUnicode_AsUTF8(attr_name));
-    // todo: py27: replace PyUnicode_AsUTF8() for Python 2.7
-    if (strcmp(PyUnicode_AsUTF8(attr_name), "flags") == 0) {
+    if (strcmp(JPy_AS_UTF8(attr_name), "flags") == 0) {
         return PyLong_FromLong(JPy_DiagFlags);
     } else {
         return PyObject_GenericGetAttr((PyObject*) self, attr_name);
@@ -64,8 +64,7 @@ PyObject* Diag_getattro(JPy_Diag* self, PyObject *attr_name)
 int Diag_setattro(JPy_Diag* self, PyObject *attr_name, PyObject *v)
 {
     //printf("Diag_setattro: attr_name=%s\n", PyUnicode_AsUTF8(attr_name));
-    // todo: py27: replace PyUnicode_AsUTF8() for Python 2.7
-    if (strcmp(PyUnicode_AsUTF8(attr_name), "flags") == 0) {
+    if (strcmp(JPy_AS_UTF8(attr_name), "flags") == 0) {
         if (PyLong_Check(v)) {
             JPy_DiagFlags = self->flags = (int) PyLong_AsLong(v);
         } else {

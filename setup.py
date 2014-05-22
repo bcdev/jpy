@@ -9,6 +9,7 @@ sources = [
     'src/main/c/jpy_module.c',
     'src/main/c/jpy_diag.c',
     'src/main/c/jpy_conv.c',
+    'src/main/c/jpy_compat.c',
     'src/main/c/jpy_jtype.c',
     'src/main/c/jpy_jarray.c',
     'src/main/c/jpy_jobj.c',
@@ -21,6 +22,7 @@ headers = [
     'src/main/c/jpy_module.h',
     'src/main/c/jpy_diag.h',
     'src/main/c/jpy_conv.h',
+    'src/main/c/jpy_compat.h',
     'src/main/c/jpy_jtype.h',
     'src/main/c/jpy_jarray.h',
     'src/main/c/jpy_jobj.h',
@@ -137,7 +139,8 @@ if sys.argv[1] == 'install':
     from datetime import datetime
 
     print('Writing this information to file:', user_jpy)
-    with open(user_jpy, 'w', encoding='utf-8') as f:
+    # todo: py27: Python 3.3: with open(user_jpy, 'w', encoding='utf-8') as f:
+    with open(user_jpy, 'w') as f:
         f.write('# Created by jpy/setup.py on ' + str(datetime.now()) + '\n')
         f.write('# python.lib = \n')
         f.write('jpy.lib = ' + jpy_lib_path.replace('\\', '\\\\') + '\n')

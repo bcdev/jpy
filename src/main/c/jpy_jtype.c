@@ -18,6 +18,7 @@
 #include "jpy_jmethod.h"
 #include "jpy_jobj.h"
 #include "jpy_conv.h"
+#include "jpy_compat.h"
 
 
 JPy_JType* JType_New(JNIEnv* jenv, jclass classRef, jboolean resolve);
@@ -1886,8 +1887,7 @@ void JType_dealloc(JPy_JType* self)
  */
 PyObject* JType_getattro(JPy_JType* self, PyObject* name)
 {
-    // todo: py27: replace PyUnicode_AsUTF8() for Python 2.7
-    printf("JType_getattro: %s.%s\n", Py_TYPE(self)->tp_name, PyUnicode_AsUTF8(name));
+    printf("JType_getattro: %s.%s\n", Py_TYPE(self)->tp_name, JPy_AS_UTF8(name));
 
     if (!self->isResolved && !self->isResolving) {
         JNIEnv* jenv;
