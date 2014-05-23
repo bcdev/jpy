@@ -9,12 +9,11 @@ const char* JPy_AsUTF8_PriorToPy33(PyObject* pyStr)
 {
     if (PyUnicode_Check(pyStr)) {
         pyStr = PyUnicode_AsUTF8String(pyStr);
+        if (pyStr == NULL) {
+            return NULL;
+        }
     }
-    if (pyStr != NULL) {
-        return PyString_AsString(pyStr);
-    } else {
-        return NULL;
-    }
+    return PyString_AsString(pyStr);
 }
 
 // todo - py27: interim solution: JPy_AsWideCharString_PriorToPy33() is not correctly implemented, this is just for compatibility testing
