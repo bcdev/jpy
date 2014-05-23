@@ -18,7 +18,7 @@ extern "C" {
 // todo: py27: use the following macros where appropriate
 #define JPy_IS_STR(pyArg)        PyUnicode_Check(pyArg)
 #define JPy_FROM_CSTR(cstr)      PyUnicode_FromString(cstr)
-#define JPy_FROM_FORMAT(cstr)    PyUnicode_FromFormat(cstr)
+#define JPy_FROM_FORMAT          PyUnicode_FromFormat
 
 #else
 
@@ -30,7 +30,7 @@ extern "C" {
 // todo: py27: use the following macros where appropriate
 #define JPy_IS_STR(pyArg)        (PyString_Check(pyArg) || PyUnicode_Check(pyArg))
 #define JPy_FROM_CSTR(cstr)      PyString_FromString(cstr)
-#define JPy_FROM_FORMAT(cstr)    PyString_FromFormat(cstr)
+#define JPy_FROM_FORMAT          PyString_FromFormat
 
 #endif
 

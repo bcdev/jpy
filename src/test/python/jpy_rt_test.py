@@ -1,5 +1,6 @@
 import unittest
 import jpy
+import sys
 
 jpy.create_jvm(options=['-Xmx512M'])
 
@@ -51,7 +52,10 @@ class TestString(unittest.TestCase):
         s = self.String('Bibo')
         self.assertTrue('getBytes' in self.String.__dict__)
         array = s.getBytes()
-        self.assertEqual(str(type(array)), "<class '[B'>")
+        if sys.version_info >= (3,0,0):
+            self.assertEqual(str(type(array)), "<class '[B'>")
+        else:
+            self.assertEqual(str(type(array)), "<type '[B'>")
         self.assertEqual(len(array), 4)
         self.assertEqual(array[0], 66)
         self.assertEqual(array[1], 105)
@@ -100,7 +104,10 @@ class TestFile(unittest.TestCase):
         f = self.File('/usr/local/bibo')
         self.assertTrue('toPath' in self.File.__dict__)
         path = f.toPath()
-        self.assertEqual(str(type(path)), '<class \'java.nio.file.Path\'>')
+        if sys.version_info >= (3,0,0):
+            self.assertEqual(str(type(path)), '<class \'java.nio.file.Path\'>')
+        else:
+            self.assertEqual(str(type(path)), '<type \'java.nio.file.Path\'>')
 
         jpy.get_type('java.nio.file.Path')
         n1 = path.getName(0)

@@ -1,19 +1,25 @@
 import unittest
 import jpy
+import sys
 
 jpy.create_jvm(options=['-Djava.class.path=target/test-classes', '-Xmx512M'])
+
+if sys.version_info >= (3,0,0):
+    TYPE_STR_PREFIX = '<class '
+else:
+    TYPE_STR_PREFIX = '<type '
 
 class TestGetClass(unittest.TestCase):
 
     def test_get_class_of_primitive_array(self):
         IntArray1D = jpy.get_type('[I')
-        self.assertEqual(str(IntArray1D), "<class '[I'>")
+        self.assertEqual(str(IntArray1D), TYPE_STR_PREFIX + "'[I'>")
 
         IntArray2D = jpy.get_type('[[I')
-        self.assertEqual(str(IntArray2D), "<class '[[I'>")
+        self.assertEqual(str(IntArray2D), TYPE_STR_PREFIX + "'[[I'>")
 
         IntArray3D = jpy.get_type('[[[I')
-        self.assertEqual(str(IntArray3D), "<class '[[[I'>")
+        self.assertEqual(str(IntArray3D), TYPE_STR_PREFIX + "'[[[I'>")
 
         with self.assertRaises(RuntimeError) as e:
             IntArray1D()
@@ -22,13 +28,13 @@ class TestGetClass(unittest.TestCase):
 
     def test_get_class_of_object_array(self):
         StringArray1D = jpy.get_type('[Ljava.lang.String;')
-        self.assertEqual(str(StringArray1D), "<class '[Ljava.lang.String;'>")
+        self.assertEqual(str(StringArray1D), TYPE_STR_PREFIX + "'[Ljava.lang.String;'>")
 
         StringArray2D = jpy.get_type('[[Ljava.lang.String;')
-        self.assertEqual(str(StringArray2D), "<class '[[Ljava.lang.String;'>")
+        self.assertEqual(str(StringArray2D), TYPE_STR_PREFIX + "'[[Ljava.lang.String;'>")
 
         StringArray3D = jpy.get_type('[[[Ljava.lang.String;')
-        self.assertEqual(str(StringArray3D), "<class '[[[Ljava.lang.String;'>")
+        self.assertEqual(str(StringArray3D), TYPE_STR_PREFIX + "'[[[Ljava.lang.String;'>")
 
         with self.assertRaises(RuntimeError) as e:
             StringArray1D()

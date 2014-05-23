@@ -385,12 +385,12 @@ void JMethod_DisposeJArgs(JNIEnv* jenv, int paramCount, jvalue* jArgs, JPy_ArgDi
 PyObject* JMethod_repr(JPy_JMethod* self)
 {
     const char* name = JPy_AS_UTF8(self->name);
-    return PyUnicode_FromFormat("%s(name='%s', param_count=%d, is_static=%d, mid=%p)",
-                                ((PyObject*)self)->ob_type->tp_name,
-                                name,
-                                self->paramCount,
-                                self->isStatic,
-                                self->mid);
+    return JPy_FROM_FORMAT("%s(name='%s', param_count=%d, is_static=%d, mid=%p)",
+                           ((PyObject*)self)->ob_type->tp_name,
+                           name,
+                           self->paramCount,
+                           self->isStatic,
+                           self->mid);
 }
 
 PyObject* JMethod_str(JPy_JMethod* self)
@@ -741,10 +741,10 @@ PyObject* JOverloadedMethod_repr(JPy_JOverloadedMethod* self)
 {
     const char* name = JPy_AS_UTF8(self->name);
     int methodCount = PyList_Size(self->methodList);
-    return PyUnicode_FromFormat("%s(name='%s', methodCount=%d)",
-                                ((PyObject*)self)->ob_type->tp_name,
-                                name,
-                                methodCount);
+    return JPy_FROM_FORMAT("%s(name='%s', methodCount=%d)",
+                           ((PyObject*)self)->ob_type->tp_name,
+                           name,
+                           methodCount);
 }
 
 static PyMemberDef JOverloadedMethod_members[] =

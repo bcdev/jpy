@@ -52,7 +52,7 @@ PyObject* Diag_New(void)
 
 PyObject* Diag_getattro(JPy_Diag* self, PyObject *attr_name)
 {
-    //printf("Diag_getattro: attr_name=%s\n", PyUnicode_AsUTF8(attr_name));
+    //printf("Diag_getattro: attr_name=%s\n", JPy_AS_UTF8(attr_name));
     if (strcmp(JPy_AS_UTF8(attr_name), "flags") == 0) {
         return JPy_FROM_CLONG(JPy_DiagFlags);
     } else {
@@ -63,7 +63,7 @@ PyObject* Diag_getattro(JPy_Diag* self, PyObject *attr_name)
 
 int Diag_setattro(JPy_Diag* self, PyObject *attr_name, PyObject *v)
 {
-    //printf("Diag_setattro: attr_name=%s\n", PyUnicode_AsUTF8(attr_name));
+    //printf("Diag_setattro: attr_name=%s\n", JPy_AS_UTF8(attr_name));
     if (strcmp(JPy_AS_UTF8(attr_name), "flags") == 0) {
         if (JPy_IS_CLONG(v)) {
             JPy_DiagFlags = self->flags = (int) JPy_AS_CLONG(v);

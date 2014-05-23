@@ -767,11 +767,11 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
             return JType_CreateJavaIntegerObject(jenv, type, pyArg, objectRef);
         } else if (PyFloat_Check(pyArg)) {
             return JType_CreateJavaDoubleObject(jenv, type, pyArg, objectRef);
-        } else if (PyUnicode_Check(pyArg)) {
+        } else if (JPy_IS_STR(pyArg)) {
             return JPy_AsJString(jenv, pyArg, objectRef);
         }
     } else if (type == JPy_JString) {
-        if (PyUnicode_Check(pyArg)) {
+        if (JPy_IS_STR(pyArg)) {
             return JPy_AsJString(jenv, pyArg, objectRef);
         }
     }
@@ -1423,7 +1423,7 @@ int JType_MatchPyArgAsJStringParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
         // Signal it is possible, but give low priority since we cannot perform any type checks on 'None'
         return 1;
     }
-    if (PyUnicode_Check(pyArg)) {
+    if (JPy_IS_STR(pyArg)) {
         return 100;
     }
     return 0;
@@ -1827,9 +1827,9 @@ void JType_InitParamDescriptorFunctions(JPy_ParamDescriptor* paramDescriptor)
 PyObject* JType_repr(JPy_JType* self)
 {
     printf("JType_repr: self=%p\n", self);
-    return PyUnicode_FromFormat("%s(%p)",
-                                self->javaName,
-                                self->classRef);
+    return JPy_FROM_FORMAT("%s(%p)",
+                           self->javaName,
+                           self->classRef);
 }
 
 /**
@@ -1849,7 +1849,7 @@ PyObject* JType_str(JPy_JType* self)
 
     strJObj = (*jenv)->CallObjectMethod(jenv, self->classRef, JPy_Object_ToString_MID);
     utfChars = (*jenv)->GetStringUTFChars(jenv, strJObj, &isCopy);
-    strPyObj = PyUnicode_FromFormat("%s", utfChars);
+    strPyObj = JPy_FROM_FORMAT("%s", utfChars);
     (*jenv)->ReleaseStringUTFChars(jenv, strJObj, utfChars);
     (*jenv)->DeleteLocalRef(jenv, strJObj);
 

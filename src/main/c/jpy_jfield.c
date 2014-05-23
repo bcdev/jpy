@@ -61,12 +61,12 @@ void JField_Del(JPy_JField* field)
 PyObject* JField_repr(JPy_JField* self)
 {
     const char* name = JPy_AS_UTF8(self->name);
-    return PyUnicode_FromFormat("%s(name='%s', is_static=%d, is_final=%d, fid=%p)",
-                                ((PyObject*)self)->ob_type->tp_name,
-                                name,
-                                self->isStatic,
-                                self->isFinal,
-                                self->fid);
+    return JPy_FROM_FORMAT("%s(name='%s', is_static=%d, is_final=%d, fid=%p)",
+                           ((PyObject*)self)->ob_type->tp_name,
+                           name,
+                           self->isStatic,
+                           self->isFinal,
+                           self->fid);
 }
 
 /**

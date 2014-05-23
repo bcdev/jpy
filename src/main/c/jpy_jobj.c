@@ -291,7 +291,7 @@ long JObj_hash(JPy_JObj* self)
  */
 PyObject* JObj_repr(JPy_JObj* self)
 {
-    return PyUnicode_FromFormat("%s(objectRef=%p)", Py_TYPE(self)->tp_name, self->objectRef);
+    return JPy_FROM_FORMAT("%s(objectRef=%p)", Py_TYPE(self)->tp_name, self->objectRef);
 }
 
 /**
@@ -328,7 +328,7 @@ int JObj_setattro(JPy_JObj* self, PyObject* name, PyObject* value)
 {
     PyObject* oldValue;
 
-    //printf("JObj_setattro: %s.%s\n", Py_TYPE(self)->tp_name, PyUnicode_AsUTF8(name));
+    //printf("JObj_setattro: %s.%s\n", Py_TYPE(self)->tp_name, JPy_AS_UTF8(name));
 
     oldValue = PyObject_GenericGetAttr((PyObject*) self, name);
     if (oldValue != NULL && PyObject_TypeCheck(oldValue, &JField_Type)) {
@@ -397,7 +397,7 @@ PyObject* JObj_getattro(JPy_JObj* self, PyObject* name)
     JPy_JType* selfType;
     PyObject* value;
 
-    //printf("JObj_getattro: %s.%s\n", Py_TYPE(self)->tp_name, PyUnicode_AsUTF8(name));
+    //printf("JObj_getattro: %s.%s\n", Py_TYPE(self)->tp_name, JPy_AS_UTF8(name));
 
     // First make sure that the Java type is resolved, otherwise we won't find any methods at all.
     selfType = (JPy_JType*) Py_TYPE(self);

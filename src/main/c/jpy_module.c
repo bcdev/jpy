@@ -489,7 +489,7 @@ PyObject* JPy_cast(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    if (PyUnicode_Check(objType)) {
+    if (JPy_IS_STR(objType)) {
         const char* typeName = JPy_AS_UTF8(objType);
         type = JType_GetTypeForName(jenv, typeName, JNI_FALSE);
         if (type == NULL) {
@@ -524,7 +524,7 @@ PyObject* JPy_array(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    if (PyUnicode_Check(objType)) {
+    if (JPy_IS_STR(objType)) {
         const char* typeName;
         typeName = JPy_AS_UTF8(objType);
         componentType = JType_GetTypeForName(jenv, typeName, JNI_FALSE);

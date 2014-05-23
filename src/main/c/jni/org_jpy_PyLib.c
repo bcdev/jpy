@@ -452,7 +452,7 @@ JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_importModule
     nameChars = (*jenv)->GetStringUTFChars(jenv, jName, NULL);
     JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_importModule: name='%s'\n", nameChars);
     /* Note: pyName is a new reference */
-    pyName = PyUnicode_FromString(nameChars);
+    pyName = JPy_FROM_CSTR(nameChars);
     /* Note: pyModule is a new reference */
     pyModule = PyImport_Import(pyName);
     if (pyModule == NULL) {
