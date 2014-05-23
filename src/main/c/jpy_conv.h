@@ -14,30 +14,44 @@
 #ifndef JPY_CONV_H
 #define JPY_CONV_H
 
+#include "jpy_compat.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define JPy_AS_JBOOLEAN(pyArg)   (jboolean) (pyArg == Py_True ? 1 : (pyArg == Py_False || pyArg == Py_None) ? 0 : PyLong_AsLong(pyArg) != 0)
-#define JPy_AS_JCHAR(pyArg)      (jchar) (pyArg == Py_None ? 0 : PyLong_AsLong(pyArg))
-#define JPy_AS_JBYTE(pyArg)      (jbyte) (pyArg == Py_None ? 0 : PyLong_AsLong(pyArg))
-#define JPy_AS_JSHORT(pyArg)     (jshort) (pyArg == Py_None ? 0 : PyLong_AsLong(pyArg))
-#define JPy_AS_JINT(pyArg)       (jint) (pyArg == Py_None ? 0 : PyLong_AsLong(pyArg))
-#define JPy_AS_JLONG(pyArg)      (jlong) (pyArg == Py_None ? 0 : PyLong_AsLongLong(pyArg))
+#define JPy_AS_JBOOLEAN(pyArg)   (jboolean) (pyArg == Py_True ? 1 : (pyArg == Py_False || pyArg == Py_None) ? 0 : (JPy_AS_CLONG(pyArg)) != 0)
+#define JPy_AS_JCHAR(pyArg)      (jchar) (pyArg == Py_None ? 0 : JPy_AS_CLONG(pyArg))
+#define JPy_AS_JBYTE(pyArg)      (jbyte) (pyArg == Py_None ? 0 : JPy_AS_CLONG(pyArg))
+#define JPy_AS_JSHORT(pyArg)     (jshort) (pyArg == Py_None ? 0 : JPy_AS_CLONG(pyArg))
+#define JPy_AS_JINT(pyArg)       (jint) (pyArg == Py_None ? 0 : JPy_AS_CLONG(pyArg))
+#define JPy_AS_JLONG(pyArg)      (jlong) (pyArg == Py_None ? 0 : JPy_AS_CLONGLONG(pyArg))
 #define JPy_AS_JFLOAT(pyArg)     (jfloat) (pyArg == Py_None ? 0 : PyFloat_AsDouble(pyArg))
 #define JPy_AS_JDOUBLE(pyArg)    (jdouble) (pyArg == Py_None ? 0 : PyFloat_AsDouble(pyArg))
 
-
+#if PY_MAJOR_VERSION >= 3
 
 #define JPy_FROM_JBOOLEAN(jArg)  PyBool_FromLong(jArg)
 #define JPy_FROM_JCHAR(jArg)     PyLong_FromLong(jArg)
 #define JPy_FROM_JBYTE(jArg)     PyLong_FromLong(jArg)
 #define JPy_FROM_JSHORT(jArg)    PyLong_FromLong(jArg)
 #define JPy_FROM_JINT(jArg)      PyLong_FromLong(jArg)
-#define JPy_FROM_JSHORT(jArg)    PyLong_FromLong(jArg)
 #define JPy_FROM_JLONG(jArg)     PyLong_FromLongLong(jArg)
 #define JPy_FROM_JFLOAT(jArg)    PyFloat_FromDouble(jArg)
 #define JPy_FROM_JDOUBLE(jArg)   PyFloat_FromDouble(jArg)
+
+#else
+
+#define JPy_FROM_JBOOLEAN(jArg)  PyBool_FromLong(jArg)
+#define JPy_FROM_JCHAR(jArg)     PyInt_FromLong(jArg)
+#define JPy_FROM_JBYTE(jArg)     PyInt_FromLong(jArg)
+#define JPy_FROM_JSHORT(jArg)    PyInt_FromLong(jArg)
+#define JPy_FROM_JINT(jArg)      PyLong_FromLong(jArg)
+#define JPy_FROM_JLONG(jArg)     PyLong_FromLongLong(jArg)
+#define JPy_FROM_JFLOAT(jArg)    PyFloat_FromDouble(jArg)
+#define JPy_FROM_JDOUBLE(jArg)   PyFloat_FromDouble(jArg)
+
+#endif
 
 #define JPy_FROM_JVOID()         Py_BuildValue("")
 #define JPy_FROM_JNULL()         Py_BuildValue("")

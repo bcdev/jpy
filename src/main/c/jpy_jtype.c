@@ -330,7 +330,7 @@ int JType_CreateJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jclas
 int JType_CreateJavaBooleanObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
 {
     jvalue value;
-    if (PyBool_Check(pyArg) || PyLong_Check(pyArg)) {
+    if (PyBool_Check(pyArg) || JPy_IS_CLONG(pyArg)) {
         value.z = JPy_AS_JBOOLEAN(pyArg);
     } else {
         return JType_PythonToJavaConversionError(type, pyArg);
@@ -341,7 +341,7 @@ int JType_CreateJavaBooleanObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg
 int JType_CreateJavaCharacterObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
 {
     jvalue value;
-    if (PyLong_Check(pyArg)) {
+    if (JPy_IS_CLONG(pyArg)) {
         value.c = JPy_AS_JCHAR(pyArg);
     } else {
         return JType_PythonToJavaConversionError(type, pyArg);
@@ -352,7 +352,7 @@ int JType_CreateJavaCharacterObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
 int JType_CreateJavaByteObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
 {
     jvalue value;
-    if (PyLong_Check(pyArg)) {
+    if (JPy_IS_CLONG(pyArg)) {
         value.b = JPy_AS_JBYTE(pyArg);
     } else {
         return JType_PythonToJavaConversionError(type, pyArg);
@@ -363,7 +363,7 @@ int JType_CreateJavaByteObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, j
 int JType_CreateJavaShortObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
 {
     jvalue value;
-    if (PyLong_Check(pyArg)) {
+    if (JPy_IS_CLONG(pyArg)) {
         value.s = JPy_AS_JSHORT(pyArg);
     } else {
         return JType_PythonToJavaConversionError(type, pyArg);
@@ -374,7 +374,7 @@ int JType_CreateJavaShortObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, 
 int JType_CreateJavaIntegerObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
 {
     jvalue value;
-    if (PyLong_Check(pyArg)) {
+    if (JPy_IS_CLONG(pyArg)) {
         value.i = JPy_AS_JINT(pyArg);
     } else {
         return JType_PythonToJavaConversionError(type, pyArg);
@@ -385,7 +385,7 @@ int JType_CreateJavaIntegerObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg
 int JType_CreateJavaLongObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
 {
     jvalue value;
-    if (PyLong_Check(pyArg)) {
+    if (JPy_IS_CLONG(pyArg)) {
         value.j = JPy_AS_JLONG(pyArg);
     } else {
         return JType_PythonToJavaConversionError(type, pyArg);
@@ -396,7 +396,7 @@ int JType_CreateJavaLongObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, j
 int JType_CreateJavaFloatObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
 {
     jvalue value;
-    if (PyLong_Check(pyArg)) {
+    if (JPy_IS_CLONG(pyArg)) {
         value.f = (jfloat) JPy_AS_JLONG(pyArg);
     } else if (PyFloat_Check(pyArg)) {
         value.f = JPy_AS_JFLOAT(pyArg);
@@ -409,7 +409,7 @@ int JType_CreateJavaFloatObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, 
 int JType_CreateJavaDoubleObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
 {
     jvalue value;
-    if (PyLong_Check(pyArg)) {
+    if (JPy_IS_CLONG(pyArg)) {
         value.d = (jdouble) JPy_AS_JLONG(pyArg);
     } else if (PyFloat_Check(pyArg)) {
         value.d = JPy_AS_JDOUBLE(pyArg);
@@ -763,7 +763,7 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
     } else if (type == JPy_JObject) {
         if (PyBool_Check(pyArg)) {
             return JType_CreateJavaBooleanObject(jenv, type, pyArg, objectRef);
-        } else if (PyLong_Check(pyArg)) {
+        } else if (JPy_IS_CLONG(pyArg)) {
             return JType_CreateJavaIntegerObject(jenv, type, pyArg, objectRef);
         } else if (PyFloat_Check(pyArg)) {
             return JType_CreateJavaDoubleObject(jenv, type, pyArg, objectRef);
@@ -1312,7 +1312,7 @@ JPy_ParamDescriptor* JType_CreateParamDescriptors(JNIEnv* jenv, int paramCount, 
 int JType_MatchPyArgAsJBooleanParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
     if (PyBool_Check(pyArg)) return 100;
-    else if (PyLong_Check(pyArg)) return 10;
+    else if (JPy_IS_CLONG(pyArg)) return 10;
     else return 0;
 }
 
@@ -1324,7 +1324,7 @@ int JType_ConvertPyArgToJBooleanArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDesc
 
 int JType_MatchPyArgAsJByteParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
-    if (PyLong_Check(pyArg)) return 100;
+    if (JPy_IS_CLONG(pyArg)) return 100;
     else if (PyBool_Check(pyArg)) return 10;
     else return 0;
 }
@@ -1337,7 +1337,7 @@ int JType_ConvertPyArgToJByteArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescrip
 
 int JType_MatchPyArgAsJCharParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
-    if (PyLong_Check(pyArg)) return 100;
+    if (JPy_IS_CLONG(pyArg)) return 100;
     else if (PyBool_Check(pyArg)) return 10;
     else return 0;
 }
@@ -1350,7 +1350,7 @@ int JType_ConvertPyArgToJCharArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescrip
 
 int JType_MatchPyArgAsJShortParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
-    if (PyLong_Check(pyArg)) return 100;
+    if (JPy_IS_CLONG(pyArg)) return 100;
     else if (PyBool_Check(pyArg)) return 10;
     else return 0;
 }
@@ -1363,7 +1363,7 @@ int JType_ConvertPyArgToJShortArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescri
 
 int JType_MatchPyArgAsJIntParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
-    if (PyLong_Check(pyArg)) return 100;
+    if (JPy_IS_CLONG(pyArg)) return 100;
     else if (PyBool_Check(pyArg)) return 10;
     else return 0;
 }
@@ -1376,7 +1376,7 @@ int JType_ConvertPyArgToJIntArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescript
 
 int JType_MatchPyArgAsJLongParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
-    if (PyLong_Check(pyArg)) return 100;
+    if (JPy_IS_CLONG(pyArg)) return 100;
     else if (PyBool_Check(pyArg)) return 10;
     else return 0;
 }
@@ -1391,7 +1391,7 @@ int JType_MatchPyArgAsJFloatParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescri
 {
     if (PyFloat_Check(pyArg)) return 90; // not 100, in order to give 'double' a chance
     else if (PyNumber_Check(pyArg)) return 50;
-    else if (PyLong_Check(pyArg)) return 10;
+    else if (JPy_IS_CLONG(pyArg)) return 10;
     else if (PyBool_Check(pyArg)) return 1;
     else return 0;
 }
@@ -1406,7 +1406,7 @@ int JType_MatchPyArgAsJDoubleParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
 {
     if (PyFloat_Check(pyArg)) return 100;
     else if (PyNumber_Check(pyArg)) return 50;
-    else if (PyLong_Check(pyArg)) return 10;
+    else if (JPy_IS_CLONG(pyArg)) return 10;
     else if (PyBool_Check(pyArg)) return 1;
     else return 0;
 }
@@ -1570,7 +1570,7 @@ int JType_MatchPyArgAsJObjectParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
     } else if (paramType == JPy_JBooleanObj) {
         if (PyBool_Check(pyArg)) {
             return 100;
-        } else if (PyLong_Check(pyArg)) {
+        } else if (JPy_IS_CLONG(pyArg)) {
             return 10;
         }
     } else if (paramType == JPy_JCharacterObj
@@ -1578,7 +1578,7 @@ int JType_MatchPyArgAsJObjectParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
                || paramType == JPy_JShortObj
                || paramType == JPy_JIntegerObj
                || paramType == JPy_JLongObj) {
-        if (PyLong_Check(pyArg)) {
+        if (JPy_IS_CLONG(pyArg)) {
             return 100;
         } else if (PyBool_Check(pyArg)) {
             return 10;
@@ -1587,7 +1587,7 @@ int JType_MatchPyArgAsJObjectParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
                || paramType == JPy_JDoubleObj) {
         if (PyFloat_Check(pyArg)) {
             return 100;
-        } else if (PyLong_Check(pyArg)) {
+        } else if (JPy_IS_CLONG(pyArg)) {
             return 90;
         } else if (PyBool_Check(pyArg)) {
             return 10;

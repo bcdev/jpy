@@ -543,9 +543,8 @@ PyObject* JPy_array(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    if (PyLong_Check(objInit)) {
-        jint length;
-        length = PyLong_AsLong(objInit);
+    if (JPy_IS_CLONG(objInit)) {
+        jint length = JPy_AS_CLONG(objInit);
         if (length < 0) {
             PyErr_SetString(PyExc_ValueError, "array: argument 2 (init) must be either an integer array length or any sequence");
             return NULL;

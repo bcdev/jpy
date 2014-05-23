@@ -54,7 +54,7 @@ PyObject* Diag_getattro(JPy_Diag* self, PyObject *attr_name)
 {
     //printf("Diag_getattro: attr_name=%s\n", PyUnicode_AsUTF8(attr_name));
     if (strcmp(JPy_AS_UTF8(attr_name), "flags") == 0) {
-        return PyLong_FromLong(JPy_DiagFlags);
+        return JPy_FROM_CLONG(JPy_DiagFlags);
     } else {
         return PyObject_GenericGetAttr((PyObject*) self, attr_name);
     }
@@ -65,8 +65,8 @@ int Diag_setattro(JPy_Diag* self, PyObject *attr_name, PyObject *v)
 {
     //printf("Diag_setattro: attr_name=%s\n", PyUnicode_AsUTF8(attr_name));
     if (strcmp(JPy_AS_UTF8(attr_name), "flags") == 0) {
-        if (PyLong_Check(v)) {
-            JPy_DiagFlags = self->flags = (int) PyLong_AsLong(v);
+        if (JPy_IS_CLONG(v)) {
+            JPy_DiagFlags = self->flags = (int) JPy_AS_CLONG(v);
         } else {
             PyErr_SetString(PyExc_ValueError, "value for 'flags' must be an integer number");
             return -1;

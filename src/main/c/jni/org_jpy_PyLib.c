@@ -289,7 +289,7 @@ JNIEXPORT jint JNICALL Java_org_jpy_PyLib_getIntValue
     JPy_BEGIN_GIL_STATE
 
     pyObject = (PyObject*) objId;
-    value = (jint) PyLong_AsLong(pyObject);
+    value = (jint) JPy_AS_CLONG(pyObject);
 
     JPy_END_GIL_STATE
 
