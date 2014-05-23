@@ -24,10 +24,6 @@ extern "C" {
 
 #define JPY_JNI_VERSION JNI_VERSION_1_6
 
-#if PY_MAJOR_VERSION >= 3
-#define IS_PYTHON_3_API
-#endif
-
 extern PyObject* JPy_Module;
 extern PyObject* JPy_Types;
 extern PyObject* JPy_Type_Callbacks;
