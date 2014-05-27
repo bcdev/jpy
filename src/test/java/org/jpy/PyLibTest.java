@@ -87,9 +87,19 @@ public class PyLibTest {
     public void testCallAndReturnValue() throws Exception {
         long builtins;
 
-        builtins = PyLib.importModule("builtins");
+        try {
+            //Python 3.3
+            builtins = PyLib.importModule("builtins");
+        } catch (Exception e) {
+            //Python 2.7
+            builtins = PyLib.importModule("__builtin__");
+        }
         assertTrue(builtins != 0);
 
+        long max = PyLib.getAttributeObject(builtins, "max");
+        assertTrue(max != 0);
+
+        //PyLib.Diag.setFlags(PyLib.Diag.F_ALL);
         String result = PyLib.callAndReturnValue(builtins, false, "max", 2, new Object[]{"A", "Z"}, new Class[]{String.class, String.class}, String.class);
 
         assertEquals("Z", result);
@@ -100,12 +110,22 @@ public class PyLibTest {
         long builtins;
         long pointer;
 
-        builtins = PyLib.importModule("builtins");
+        try {
+            //Python 3.3
+            builtins = PyLib.importModule("builtins");
+        } catch (Exception e) {
+            //Python 2.7
+            builtins = PyLib.importModule("__builtin__");
+        }
         assertTrue(builtins != 0);
+
+        long max = PyLib.getAttributeObject(builtins, "max");
+        assertTrue(max != 0);
 
         pointer = PyLib.callAndReturnObject(builtins, false, "max", 2, new Object[]{"A", "Z"}, null);
         assertTrue(pointer != 0);
 
+        //PyLib.Diag.setFlags(PyLib.Diag.F_ALL);
         assertEquals("Z", new PyObject(pointer).getStringValue());
     }
 }

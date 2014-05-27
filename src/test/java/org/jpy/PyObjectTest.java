@@ -92,7 +92,14 @@ public class PyObjectTest {
         // >>> builtins.max('A', 'Z')
         // 'Z'
         //
-        PyModule builtins = PyModule.importModule("builtins");
+        PyModule builtins;
+        try {
+            //Python 3.3
+            builtins = PyModule.importModule("builtins");
+        } catch (Exception e) {
+            //Python 2.7
+            builtins = PyModule.importModule("__builtin__");
+        }
         PyObject value = builtins.call("max", "A", "Z");
         Assert.assertEquals("Z", value.getStringValue());
     }

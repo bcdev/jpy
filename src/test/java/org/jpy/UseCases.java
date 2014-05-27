@@ -27,7 +27,14 @@ public class UseCases {
     public void modifyPythonSysPath() {
 
         PyLib.startPython();
-        PyModule builtinsMod = PyModule.importModule("builtins");
+        PyModule builtinsMod;
+        try {
+            //Python 3.3
+            builtinsMod = PyModule.importModule("builtins");
+        } catch (Exception e) {
+            //Python 2.7
+            builtinsMod = PyModule.importModule("__builtin__");
+        }
 
         PyModule sysMod = PyModule.importModule("sys");
         PyObject pathObj = sysMod.getAttribute("path");
