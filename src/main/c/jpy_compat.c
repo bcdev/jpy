@@ -24,7 +24,7 @@ wchar_t* JPy_AsWideCharString_PriorToPy33(PyObject* pyUnicode, Py_ssize_t* size)
     if (!PyUnicode_Check(pyUnicode)) {
         pyUnicode = PyUnicode_FromObject(pyUnicode);
     }
-    *size = PyUnicode_AsWideChar((PyObject*) pyUnicode, buffer, 4096);
+    *size = PyUnicode_AsWideChar((PyUnicodeObject*) pyUnicode, buffer, 4096);
     return buffer;
 }
 

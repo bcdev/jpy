@@ -1,10 +1,11 @@
 import unittest
+import sys
 import jpy
 
 jpy.create_jvm(options=['-Djava.class.path=target/test-classes', '-Xmx512M'])
 
-class TestJavaArrays(unittest.TestCase):
 
+class TestJavaArrays(unittest.TestCase):
     def do_test_basic_array_protocol_with_length(self, type, initial, expected):
         a = jpy.array(type, 3)
         self.assertEqual(len(a), 3)
@@ -29,7 +30,7 @@ class TestJavaArrays(unittest.TestCase):
         self.do_test_array_protocol2(type_name, initial, expected)
         self.do_test_array_protocol2(jpy.get_type(type_name), initial, expected)
         self.do_test_array_with_initializer(type_name, expected)
-        #self.do_test_array_with_initializer(jpy.get_type(type_name), expected)
+        # self.do_test_array_with_initializer(jpy.get_type(type_name), expected)
 
 
     def do_test_array_protocol2(self, type, initial, expected):
@@ -108,12 +109,16 @@ class TestJavaArrays(unittest.TestCase):
         self.assertEqual(len(m), 4)
         self.assertEqual(m.ndim, 1)
         self.assertEqual(m.itemsize, itemsize)
-        self.assertEqual(m.nbytes, 4 * itemsize)
         self.assertEqual(m.shape, (4,))
         self.assertEqual(m.strides, (itemsize,))
-        self.assertEqual(m.contiguous, True)
-        self.assertEqual(m.c_contiguous, True)
         self.assertEqual(m.readonly, True)
+        if sys.version_info >= (3, 0, 0):
+            # Python 2.7: AttributeError: 'memoryview' object has no attribute 'nbytes'
+            self.assertEqual(m.nbytes, 4 * itemsize)
+            # Python 2.7: AttributeError: 'memoryview' object has no attribute 'contiguous'
+            self.assertEqual(m.contiguous, True)
+            # Python 2.7: AttributeError: 'memoryview' object has no attribute 'c_contiguous'
+            self.assertEqual(m.c_contiguous, True)
         return m
 
 
@@ -124,22 +129,31 @@ class TestJavaArrays(unittest.TestCase):
 
     def do_test_buffer_protocol2(self, type, itemsize, values):
         m = self.do_test_basic_buffer_protocol(type, itemsize, values)
-        self.assertEqual(m.tolist(), values)
-        m.release()
+        # With Python 2.7, we cannot use the returned memoryview object for further tests
+        if sys.version_info >= (3, 0, 0):
+            # Python 2.7: NotImplementedError: tolist() only supports byte views
+            self.assertEqual(m.tolist(), values)
+            # Python 2.7: AttributeError: 'memoryview' object has no attribute 'release'
+            m.release()
 
 
     def do_test_buffer_protocol_float(self, type_name, itemsize, values, places):
         self.do_test_buffer_protocol_float2(type_name, itemsize, values, places)
         self.do_test_buffer_protocol_float2(jpy.get_type(type_name), itemsize, values, places)
+        pass
 
 
     def do_test_buffer_protocol_float2(self, type, itemsize, values, places):
         m = self.do_test_basic_buffer_protocol(type, itemsize, values)
-        self.assertAlmostEqual(m[0], values[0], places=places)
-        self.assertAlmostEqual(m[1], values[1], places=places)
-        self.assertAlmostEqual(m[2], values[2], places=places)
-        self.assertAlmostEqual(m[3], values[3], places=places)
-        m.release()
+        # With Python 2.7, we cannot use the returned memoryview object for further tests
+        if sys.version_info >= (3, 0, 0):
+            # Python 2.7: TypeError: unsupported operand type(s) for -: 'float' and 'str'
+            self.assertAlmostEqual(m[0], values[0], places=places)
+            self.assertAlmostEqual(m[1], values[1], places=places)
+            self.assertAlmostEqual(m[2], values[2], places=places)
+            self.assertAlmostEqual(m[3], values[3], places=places)
+            # Python 2.7: AttributeError: 'memoryview' object has no attribute 'release'
+            m.release()
 
 
     def test_buffer_boolean(self):
@@ -172,7 +186,6 @@ class TestJavaArrays(unittest.TestCase):
 
     def test_buffer_double(self):
         self.do_test_buffer_protocol_float('double', 8, [0.12345678, 0.0, -100.123456, 54.3], 8)
-
 
 
 if __name__ == '__main__':

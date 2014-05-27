@@ -444,7 +444,11 @@ PyObject* JMethod_set_param_mutable(JPy_JMethod* self, PyObject* args)
 {
     int index;
     int value;
+#if PY_MAJOR_VERSION >= 3 && PY_MINOR_VERSION >= 3
     if (!PyArg_ParseTuple(args, "ip:set_param_mutable", &index, &value)) {
+#else
+    if (!PyArg_ParseTuple(args, "ii:set_param_mutable", &index, &value)) {
+#endif
         return NULL;
     }
     JMethod_CHECK_PARAMETER_INDEX(self, index);
@@ -468,7 +472,11 @@ PyObject* JMethod_set_param_return(JPy_JMethod* self, PyObject* args)
 {
     int index = 0;
     int value = 0;
+#if PY_MAJOR_VERSION >= 3 && PY_MINOR_VERSION >= 3
     if (!PyArg_ParseTuple(args, "ip:set_param_return", &index, &value)) {
+#else
+    if (!PyArg_ParseTuple(args, "ii:set_param_return", &index, &value)) {
+#endif
         return NULL;
     }
     JMethod_CHECK_PARAMETER_INDEX(self, index);

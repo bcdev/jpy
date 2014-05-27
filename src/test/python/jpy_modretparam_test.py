@@ -1,12 +1,13 @@
 import unittest
 import array
 import jpy
+import sys
 
 jpy.create_jvm(options=['-Djava.class.path=target/test-classes', '-Xmx512M'])
 
 
 def annotate_fixture_methods(type, method):
-    #print('annotate_fixture_methods: type =', type, ', method =', method.name)
+    # print('annotate_fixture_methods: type =', type, ', method =', method.name)
     if method.name == 'modifyThing':
         method.set_param_mutable(0, True)
     elif method.name == 'returnThing':
@@ -29,7 +30,6 @@ jpy.type_callbacks['org.jpy.fixtures.ModifyAndReturnParametersTestFixture'] = an
 
 
 class TestMutableAndReturnParameters(unittest.TestCase):
-
     def setUp(self):
         self.Fixture = jpy.get_type('org.jpy.fixtures.ModifyAndReturnParametersTestFixture')
         self.assertIsNotNone(self.Fixture)
@@ -80,11 +80,21 @@ class TestMutableAndReturnParameters(unittest.TestCase):
     def test_modifyIntArray(self):
         fixture = self.Fixture()
 
-        a = array.array('i', [0, 0, 0])
-        fixture.modifyIntArray(a, 12, 13, 14)
-        self.assertEqual(a[0], 12)
-        self.assertEqual(a[1], 13)
-        self.assertEqual(a[2], 14)
+        # See https://docs.python.org/2/c-api/buffer.html
+        #   "An array can only expose its contents via the old-style buffer interface.
+        #    This limitation does not apply to Python 3, where memoryview objects can be
+        #    constructed from arrays, too."
+        # >>> import array
+        # >>> a = array.array('i', [1,2,3])
+        # >>> m = memoryview(a)
+        # TypeError: cannot make memory view because object does not have the buffer interface
+        #
+        if sys.version_info >= (3, 0, 0):
+            a = array.array('i', [0, 0, 0])
+            fixture.modifyIntArray(a, 12, 13, 14)
+            self.assertEqual(a[0], 12)
+            self.assertEqual(a[1], 13)
+            self.assertEqual(a[2], 14)
 
         a = jpy.array('int', 3)
         fixture.modifyIntArray(a, 12, 13, 14)
@@ -107,9 +117,20 @@ class TestMutableAndReturnParameters(unittest.TestCase):
     def test_returnIntArray(self):
         fixture = self.Fixture()
 
-        a1 = array.array('i', [0, 0, 0])
-        a2 = fixture.returnIntArray(a1)
-        self.assertIs(a1, a2)
+        # See https://docs.python.org/2/c-api/buffer.html
+        #   "An array can only expose its contents via the old-style buffer interface.
+        #    This limitation does not apply to Python 3, where memoryview objects can be
+        #    constructed from arrays, too."
+        # >>> import array
+        # >>> a = array.array('i', [1,2,3])
+        # >>> m = memoryview(a)
+        # TypeError: cannot make memory view because object does not have the buffer interface
+        #
+        if sys.version_info >= (3, 0, 0):
+            a1 = array.array('i', [0, 0, 0])
+            a2 = fixture.returnIntArray(a1)
+            # AssertionError: array('i', [0, 0, 0]) is not [I(objectRef=0x0778C364)
+            self.assertIs(a1, a2)
 
         a1 = jpy.array('int', 3)
         a2 = fixture.returnIntArray(a1)
@@ -127,12 +148,23 @@ class TestMutableAndReturnParameters(unittest.TestCase):
     def test_modifyAndReturnIntArray(self):
         fixture = self.Fixture()
 
-        a1 = array.array('i', [0, 0, 0])
-        a2 = fixture.modifyAndReturnIntArray(a1, 16, 17, 18)
-        self.assertIs(a1, a2)
-        self.assertEqual(a2[0], 16)
-        self.assertEqual(a2[1], 17)
-        self.assertEqual(a2[2], 18)
+        # See https://docs.python.org/2/c-api/buffer.html
+        #   "An array can only expose its contents via the old-style buffer interface.
+        #    This limitation does not apply to Python 3, where memoryview objects can be
+        #    constructed from arrays, too."
+        # >>> import array
+        # >>> a = array.array('i', [1,2,3])
+        # >>> m = memoryview(a)
+        # TypeError: cannot make memory view because object does not have the buffer interface
+        #
+        if sys.version_info >= (3, 0, 0):
+            a1 = array.array('i', [0, 0, 0])
+            # Python 2.7: TypeError: must be impossible<bad format char>, not bool
+            a2 = fixture.modifyAndReturnIntArray(a1, 16, 17, 18)
+            self.assertIs(a1, a2)
+            self.assertEqual(a2[0], 16)
+            self.assertEqual(a2[1], 17)
+            self.assertEqual(a2[2], 18)
 
         a1 = jpy.array('int', 3)
         a2 = fixture.modifyAndReturnIntArray(a1, 16, 17, 18)
@@ -154,9 +186,6 @@ class TestMutableAndReturnParameters(unittest.TestCase):
         self.assertEqual(a2[0], 16)
         self.assertEqual(a2[1], 17)
         self.assertEqual(a2[2], 18)
-
-
-
 
 
 if __name__ == '__main__':

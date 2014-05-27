@@ -688,6 +688,12 @@ int JType_InitSlots(JPy_JType* type)
     // (see also http://stackoverflow.com/questions/8066438/how-to-dynamically-create-a-derived-type-in-the-python-c-api)
     //typeObj->tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HEAPTYPE;
 
+    #if PY_MAJOR_VERSION < 3
+    if (isPrimitiveArray) {
+        typeObj->tp_flags |= Py_TPFLAGS_HAVE_NEWBUFFER;
+    }
+    #endif
+
     typeObj->tp_getattro = (getattrofunc) JObj_getattro;
     typeObj->tp_setattro = (setattrofunc) JObj_setattro;
 

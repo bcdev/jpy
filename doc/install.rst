@@ -40,8 +40,8 @@ Build for Linux / Darwin
 
 You will need
 
-* `Python 3.3 <http://www.python.org/>`_ or higher
-* `Oracle JDK 1.7 <http://www.oracle.com/technetwork/java/javase/downloads/>`_ or higher
+* `Python 2.7 or 3.3 <http://www.python.org/>`_ or higher (2.6 and 3.2 may work as well but are not tested)
+* `Oracle JDK 7 <http://www.oracle.com/technetwork/java/javase/downloads/>`_ or higher (JDK 6 may work as well)
 * `Maven 3 <http://maven.apache.org/>`_ or higher
 * For Linux: ``gcc``
 * For Darwin: `Xcode <https://itunes.apple.com/de/app/xcode/id497799835?mt=12>`_
@@ -50,7 +50,7 @@ To build and test the jpy Python module use the following commands::
 
     export JDK_HOME=<path to the JDK installation directory>
     export JAVA_HOME=$JDK_HOME
-    python3.3 setup.py install --user
+    python setup.py install --user
 
 On Darwin, you may find the current JDK/Java home using the following expression::
 
@@ -67,8 +67,8 @@ Build for Microsoft Windows
 
 You will need
 
-* `Python 3.3 <http://www.python.org/>`_ or higher
-* `Oracle JDK 1.7 <http://www.oracle.com/technetwork/java/javase/downloads/>`_ or higher
+* `Python 2.7 or 3.3 <http://www.python.org/>`_ or higher (2.6 and 3.2 may work as well but are not tested)
+* `Oracle JDK 7 <http://www.oracle.com/technetwork/java/javase/downloads/>`_ or higher (JDK 6 may work as well)
 * `Maven 3 <http://maven.apache.org/>`_ or higher
 * `Microsoft Windows SDK 7.1 <http://www.microsoft.com/en-us/download/details.aspx?id=8279>`_ or higher
 

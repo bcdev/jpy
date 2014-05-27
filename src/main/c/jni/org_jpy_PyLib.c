@@ -33,8 +33,8 @@ void PyLib_RedirectStdOut(void);
 
 static int JPy_InitThreads = 0;
 
-#define JPy_JNI_DEBUG 1
-//#define JPy_JNI_DEBUG 0
+//#define JPy_JNI_DEBUG 1
+#define JPy_JNI_DEBUG 0
 
 #define JPy_GIL_AWARE
 

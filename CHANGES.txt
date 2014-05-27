@@ -1,7 +1,9 @@
-Changes from version 0.7.1 to 0.7.2-snapshot
-============================================
+Version 0.7.2
+=============
 
 * <more to come, 0.7.2 hasn't been released yet>
+* Added backward compatibility with Python 2.7
+* Removed debugging prints of the form "JNI_OnLoad: ..."
 * Corrected documentation of jpy.array(type, init) function, which was said to be jpy.array(type, length)
 * Removed console dumps that occurred when calling from Java proxies into Python
 * Updated Java API documentation and added it to Sphinx doc folder (doc/_static/java-apidoc)
@@ -9,10 +11,15 @@ Changes from version 0.7.1 to 0.7.2-snapshot
 * Java class PyLib is no longer instantiable
 
 
-Changes from version 0.7.0 to 0.7.1
-===================================
+Version 0.7.1
+=============
 
 * Updated README and added MANIFEST.in after recognising that the jpy-0.7.zip distribution misses most of the
   required source files and learning what to do on this case.
 
+
+Version 0.7.0
+=============
+
+* Initial version.
 

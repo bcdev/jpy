@@ -139,7 +139,6 @@ if sys.argv[1] == 'install':
     from datetime import datetime
 
     print('Writing this information to file:', user_jpy)
-    # todo: py27: Python 3.3: with open(user_jpy, 'w', encoding='utf-8') as f:
     with open(user_jpy, 'w') as f:
         f.write('# Created by jpy/setup.py on ' + str(datetime.now()) + '\n')
         f.write('# python.lib = \n')
