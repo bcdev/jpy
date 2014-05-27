@@ -235,7 +235,7 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_incRef
         JPy_BEGIN_GIL_STATE
 
         refCount = pyObject->ob_refcnt;
-        JPy_DIAG_PRINT(JPy_DIAG_F_MEM, "Java_org_jpy_PyLib_incRef: pyObject=%p, refCount=%d, type=%s\n", pyObject, refCount, Py_TYPE(pyObject)->tp_name);
+        JPy_DIAG_PRINT(JPy_DIAG_F_MEM, "Java_org_jpy_PyLib_incRef: pyObject=%p, refCount=%d, type='%s'\n", pyObject, refCount, Py_TYPE(pyObject)->tp_name);
         Py_INCREF(pyObject);
 
         JPy_END_GIL_STATE
@@ -264,7 +264,7 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_decRef
         if (refCount <= 0) {
             JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_decRef: error: refCount <= 0: pyObject=%p, refCount=%d\n", pyObject, refCount);
         } else {
-            JPy_DIAG_PRINT(JPy_DIAG_F_MEM, "Java_org_jpy_PyLib_decRef: pyObject=%p, refCount=%d, type=%s\n", pyObject, refCount, Py_TYPE(pyObject)->tp_name);
+            JPy_DIAG_PRINT(JPy_DIAG_F_MEM, "Java_org_jpy_PyLib_decRef: pyObject=%p, refCount=%d, type='%s'\n", pyObject, refCount, Py_TYPE(pyObject)->tp_name);
             Py_DECREF(pyObject);
         }
 
