@@ -236,6 +236,14 @@ int JPy_AsJString(JNIEnv* jenv, PyObject* arg, jstring* stringRef)
         return 0;
     }
 
+#if PY_MAJOR_VERSION < 3
+    if (PyString_Check(arg)) {
+        char* cstr = PyString_AsString(arg);
+        *stringRef = (*jenv)->NewStringUTF(jenv, cstr);
+        return *stringRef != NULL ? 0 : -1;
+    }
+#endif
+
     wChars = JPy_AS_WIDE_CHAR_STR(arg, &length);
     if (wChars == NULL) {
         *stringRef = NULL;
