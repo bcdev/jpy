@@ -200,6 +200,7 @@ PyObject* JPy_FromTypeName(JNIEnv* jenv, jclass classRef)
 PyObject* JPy_FromJString(JNIEnv* jenv, jstring stringRef)
 {
     PyObject* returnValue;
+#if PY_MAJOR_VERSION >= 3
     const jchar* jChars;
     jint length;
 
@@ -220,6 +221,22 @@ PyObject* JPy_FromJString(JNIEnv* jenv, jstring stringRef)
 
     returnValue = JPy_FROM_WIDE_CHAR_STR(jChars, length);
     (*jenv)->ReleaseStringChars(jenv, stringRef, jChars);
+#else
+    const char* utfChars;
+
+    if (stringRef == NULL) {
+        return Py_BuildValue("");
+    }
+
+    utfChars = (*jenv)->GetStringUTFChars(jenv, stringRef, NULL);
+    if (utfChars != NULL) {
+        returnValue = Py_BuildValue("s", utfChars);
+        (*jenv)->ReleaseStringUTFChars(jenv, stringRef, utfChars);
+    } else {
+        PyErr_NoMemory();
+        returnValue = NULL;
+    }
+#endif
     return returnValue;
 }
 
