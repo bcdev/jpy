@@ -294,6 +294,15 @@ referred to, e.g. in error messages.
 
         Set if arguments passed to the *i*-th Java method parameter will be the return value of the method, with *value* being a Boolean.
 
+    .. py:method:: JMethod.is_param_output(i) -> bool
+
+        Return ``True`` if the arguments passed to the *i*-th Java method parameter is a mere output (and not read from), ``False`` otherwise.
+
+    .. py:method:: JMethod.set_param_output(i, value)
+
+        Set if arguments passed to the *i*-th Java method parameter is a mere output (and not read from), with *value* being a Boolean.
+        Used to optimise Python buffer to Java array parameter passing.
+
     .. py:method:: JMethod.is_param_mutable(i) -> bool
 
         Return ``True`` if the arguments passed to the *i*-th Java method parameter is mutable, ``False`` otherwise.

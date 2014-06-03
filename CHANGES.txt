@@ -1,8 +1,9 @@
 Version 0.7.2
 =============
 
-* <more to come, 0.7.2 hasn't been released yet>
-* Added backward compatibility with Python 2.7
+* Added backward compatibility with Python 2.7 (issue #34).
+* Added Java parameter annotation 'output' (issue #36).
+  This is used to optimise passing Python buffer arguments where Java primitive arrays are expected.
 * Removed debugging prints of the form "JNI_OnLoad: ..."
 * Corrected documentation of jpy.array(type, init) function, which was said to be jpy.array(type, length)
 * Removed console dumps that occurred when calling from Java proxies into Python

@@ -1692,16 +1692,18 @@ int JType_ConvertPyArgToJObjectArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
                 return -1;
             }
 
-            arrayItems = (*jenv)->GetPrimitiveArrayCritical(jenv, jArray, NULL);
-            if (arrayItems == NULL) {
-                PyBuffer_Release(pyBuffer);
-                PyMem_Del(pyBuffer);
-                PyErr_NoMemory();
-                return -1;
+            if (!paramDescriptor->isOutput) {
+                arrayItems = (*jenv)->GetPrimitiveArrayCritical(jenv, jArray, NULL);
+                if (arrayItems == NULL) {
+                    PyBuffer_Release(pyBuffer);
+                    PyMem_Del(pyBuffer);
+                    PyErr_NoMemory();
+                    return -1;
+                }
+                JPy_DIAG_PRINT(JPy_DIAG_F_EXEC|JPy_DIAG_F_MEM, "JType_ConvertPyArgToJObjectArg: moving Python buffer into Java array: pyBuffer->buf=%p, pyBuffer->len=%d\n", pyBuffer->buf, pyBuffer->len);
+                memcpy(arrayItems, pyBuffer->buf, itemCount * itemSize);
+                (*jenv)->ReleasePrimitiveArrayCritical(jenv, jArray, arrayItems, 0);
             }
-            JPy_DIAG_PRINT(JPy_DIAG_F_EXEC|JPy_DIAG_F_MEM, "JType_ConvertPyArgToJObjectArg: moving Python buffer into Java array: pyBuffer->buf=%p, pyBuffer->len=%d\n", pyBuffer->buf, pyBuffer->len);
-            memcpy(arrayItems, pyBuffer->buf, itemCount * itemSize);
-            (*jenv)->ReleasePrimitiveArrayCritical(jenv, jArray, arrayItems, 0);
 
             value->l = jArray;
             disposer->data = pyBuffer;

@@ -456,6 +456,34 @@ PyObject* JMethod_set_param_mutable(JPy_JMethod* self, PyObject* args)
     return Py_BuildValue("");
 }
 
+PyObject* JMethod_is_param_output(JPy_JMethod* self, PyObject* args)
+{
+    int index = 0;
+    int value = 0;
+    if (!PyArg_ParseTuple(args, "i:is_param_output", &index)) {
+        return NULL;
+    }
+    JMethod_CHECK_PARAMETER_INDEX(self, index);
+    value = self->paramDescriptors[index].isOutput;
+    return PyBool_FromLong(value);
+}
+
+PyObject* JMethod_set_param_output(JPy_JMethod* self, PyObject* args)
+{
+    int index = 0;
+    int value = 0;
+#if PY_MAJOR_VERSION >= 3 && PY_MINOR_VERSION >= 3
+    if (!PyArg_ParseTuple(args, "ip:set_param_output", &index, &value)) {
+#else
+    if (!PyArg_ParseTuple(args, "ii:set_param_output", &index, &value)) {
+#endif
+        return NULL;
+    }
+    JMethod_CHECK_PARAMETER_INDEX(self, index);
+    self->paramDescriptors[index].isOutput = value;
+    return Py_BuildValue("");
+}
+
 PyObject* JMethod_is_param_return(JPy_JMethod* self, PyObject* args)
 {
     int index = 0;
@@ -492,8 +520,10 @@ static PyMethodDef JMethod_methods[] =
 {
     {"get_param_type",    (PyCFunction) JMethod_get_param_type,    METH_VARARGS, "Gets the type of the parameter given by index"},
     {"is_param_mutable",  (PyCFunction) JMethod_is_param_mutable,  METH_VARARGS, "Tests if the method parameter given by index is mutable"},
+    {"is_param_output",   (PyCFunction) JMethod_is_param_output,   METH_VARARGS, "Tests if the method parameter given by index is a mere output value (and not read from)"},
     {"is_param_return",   (PyCFunction) JMethod_is_param_return,   METH_VARARGS, "Tests if the method parameter given by index is the return value"},
     {"set_param_mutable", (PyCFunction) JMethod_set_param_mutable, METH_VARARGS, "Sets whether the method parameter given by index is mutable"},
+    {"set_param_output",  (PyCFunction) JMethod_set_param_output,  METH_VARARGS, "Sets whether the method parameter given by index is a mere output value (and not read from)"},
     {"set_param_return",  (PyCFunction) JMethod_set_param_return,  METH_VARARGS, "Sets whether the method parameter given by index is the return value"},
     {NULL}  /* Sentinel */
 };

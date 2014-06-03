@@ -3,6 +3,11 @@ import array
 import jpy
 import sys
 
+try:
+    import numpy as np
+except:
+    np = None
+
 jpy.create_jvm(options=['-Djava.class.path=target/test-classes', '-Xmx512M'])
 
 
@@ -23,6 +28,9 @@ def annotate_fixture_methods(type, method):
     elif method.name == 'modifyAndReturnIntArray':
         method.set_param_mutable(0, True)
         method.set_param_return(0, True)
+    elif method.name == 'modifyAndOutputIntArray':
+        method.set_param_mutable(0, True)
+        method.set_param_output(0, True)
     return True
 
 
@@ -96,6 +104,13 @@ class TestMutableAndReturnParameters(unittest.TestCase):
             self.assertEqual(a[1], 13)
             self.assertEqual(a[2], 14)
 
+        if np:
+            a = np.array([0, 0, 0], dtype='int32')
+            fixture.modifyIntArray(a, 10, 11, 12)
+            self.assertEqual(a[0], 10)
+            self.assertEqual(a[1], 11)
+            self.assertEqual(a[2], 12)
+
         a = jpy.array('int', 3)
         fixture.modifyIntArray(a, 12, 13, 14)
         self.assertEqual(a[0], 12)
@@ -132,6 +147,11 @@ class TestMutableAndReturnParameters(unittest.TestCase):
             # AssertionError: array('i', [0, 0, 0]) is not [I(objectRef=0x0778C364)
             self.assertIs(a1, a2)
 
+        if np:
+            a1 = np.array([0, 0, 0], dtype='int32')
+            a2 = fixture.returnIntArray(a1)
+            self.assertIs(a1, a2)
+
         a1 = jpy.array('int', 3)
         a2 = fixture.returnIntArray(a1)
         self.assertIs(a1, a2)
@@ -166,6 +186,14 @@ class TestMutableAndReturnParameters(unittest.TestCase):
             self.assertEqual(a2[1], 17)
             self.assertEqual(a2[2], 18)
 
+        if np:
+            a1 = np.array([0, 0, 0], dtype='int32')
+            a2 = fixture.modifyAndReturnIntArray(a1, 10, 11, 12)
+            self.assertIs(a1, a2)
+            self.assertEqual(a2[0], 10)
+            self.assertEqual(a2[1], 11)
+            self.assertEqual(a2[2], 12)
+
         a1 = jpy.array('int', 3)
         a2 = fixture.modifyAndReturnIntArray(a1, 16, 17, 18)
         self.assertIs(a1, a2)
@@ -186,6 +214,50 @@ class TestMutableAndReturnParameters(unittest.TestCase):
         self.assertEqual(a2[0], 16)
         self.assertEqual(a2[1], 17)
         self.assertEqual(a2[2], 18)
+
+
+    # See https://github.com/bcdev/jpy/issues/36
+    #
+    def test_modifyAndOutputIntArray(self):
+        fixture = self.Fixture()
+
+        # See https://docs.python.org/2/c-api/buffer.html
+        #   "An array can only expose its contents via the old-style buffer interface.
+        #    This limitation does not apply to Python 3, where memoryview objects can be
+        #    constructed from arrays, too."
+        # >>> import array
+        # >>> a = array.array('i', [1,2,3])
+        # >>> m = memoryview(a)
+        # TypeError: cannot make memory view because object does not have the buffer interface
+        #
+        if sys.version_info >= (3, 0, 0):
+            a = array.array('i', [0, 0, 0])
+            fixture.modifyAndOutputIntArray(a, 16, 17, 18)
+            self.assertEqual(a[0], 16)
+            self.assertEqual(a[1], 17)
+            self.assertEqual(a[2], 18)
+
+        if np:
+            a = np.array([0, 0, 0], dtype='int32')
+            fixture.modifyIntArray(a, 10, 11, 12)
+            self.assertEqual(a[0], 10)
+            self.assertEqual(a[1], 11)
+            self.assertEqual(a[2], 12)
+
+        a = jpy.array('int', 3)
+        fixture.modifyAndOutputIntArray(a, 15, 16, 17)
+        self.assertEqual(a[0], 15)
+        self.assertEqual(a[1], 16)
+        self.assertEqual(a[2], 17)
+
+        a = None
+        fixture.modifyAndOutputIntArray(a, 16, 17, 18)
+
+        a = [0, 0, 0]
+        fixture.modifyAndOutputIntArray(a, 16, 17, 18)
+        self.assertEqual(a[0], 0)
+        self.assertEqual(a[1], 0)
+        self.assertEqual(a[2], 0)
 
 
 if __name__ == '__main__':

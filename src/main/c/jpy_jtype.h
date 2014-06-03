@@ -95,6 +95,7 @@ typedef struct JPy_ParamDescriptor
 {
     JPy_JType* type;
     jboolean isMutable;
+    jboolean isOutput;
     jboolean isReturn;
     JPy_MatchPyArg MatchPyArg;
     JPy_ConvertPyArg ConvertPyArg;

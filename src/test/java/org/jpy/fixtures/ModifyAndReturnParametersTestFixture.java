@@ -14,6 +14,7 @@
 package org.jpy.fixtures;
 
 import org.jpy.annotations.Mutable;
+import org.jpy.annotations.Output;
 import org.jpy.annotations.Return;
 
 /**
@@ -64,5 +65,14 @@ public class ModifyAndReturnParametersTestFixture {
         array[1] = item1;
         array[2] = item2;
         return array;
+    }
+
+    public void modifyAndOutputIntArray(@Mutable @Output int[] array, int item0, int item1, int item2) {
+        if (array == null) {
+            return;
+        }
+        array[0] = item0;
+        array[1] = item1;
+        array[2] = item2;
     }
 }
