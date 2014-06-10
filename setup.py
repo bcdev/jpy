@@ -54,6 +54,7 @@ import platform
 from distutils.core import setup
 from distutils.extension import Extension
 
+
 # e.g. JDK_HOME = '/home/marta/jdk1.7.0_15'
 JDK_HOME = os.environ.get('JDK_HOME', None)
 if JDK_HOME is None:
@@ -84,14 +85,9 @@ if WIN32:
 elif LINUX:
     include_dirs += [JDK_HOME + '/include', JDK_HOME + '/include/linux']
     libraries = ['jvm', 'python' + sysconfig.get_config_var('VERSION') + (sys.abiflags if ISPY3 else '')]
-    if IS64:
-        library_dirs = [JDK_HOME + '/jre/lib/amd64/server',
-                        JDK_HOME + '/jre/lib/amd64/client',
-                        JDK_HOME + '/lib']
-    else:
-        library_dirs = [JDK_HOME + '/jre/lib/i386/server',
-                        JDK_HOME + '/jre/lib/i386/client',
-                        JDK_HOME + '/lib']
+    library_dirs = [JDK_HOME + '/jre/lib/' + ('amd64' if IS64 else 'i386') + '/server',
+                    JDK_HOME + '/jre/lib/' + ('amd64' if IS64 else 'i386') + '/client',
+                    JDK_HOME + '/lib']
 elif DARWIN:
     include_dirs += [JDK_HOME + '/include', JDK_HOME + '/include/darwin']
     libraries = ['jvm', 'python' + sysconfig.get_config_var('VERSION') + (sys.abiflags if ISPY3 else '')]
@@ -103,6 +99,7 @@ elif DARWIN:
 
 with open('README.rst') as file:
     long_description = file.read()
+
 
 setup(name='jpy',
       description='Bi-directional Python-Java bridge',
@@ -127,6 +124,7 @@ setup(name='jpy',
                              depends=headers
       )]
 )
+
 
 if sys.argv[1] == 'install':
 
