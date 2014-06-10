@@ -79,7 +79,8 @@ if WIN32:
     include_dirs += [JDK_HOME + '/include', JDK_HOME + '/include/win32']
     libraries = ['jvm']
     library_dirs = [JDK_HOME + '/jre/lib/server',
-                    JDK_HOME + '/jre/lib/client']
+                    JDK_HOME + '/jre/lib/client',
+                    JDK_HOME + '/lib']
 elif LINUX:
     include_dirs += [JDK_HOME + '/include', JDK_HOME + '/include/linux']
     libraries = ['jvm', 'python' + sysconfig.get_config_var('VERSION') + (sys.abiflags if ISPY3 else '')]
