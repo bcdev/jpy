@@ -61,6 +61,7 @@ if JDK_HOME is None:
     exit(1)
 
 IS64 = sys.maxsize > 2 ** 32
+ISPY3 = sys.version_info >= (3, 0, 0,)
 WIN32 = platform.system() == 'Windows'
 LINUX = platform.system() == 'Linux'
 DARWIN = platform.system() == 'Darwin'
@@ -77,21 +78,24 @@ if WIN32:
     define_macros += [('WIN32', '1')]
     include_dirs += [JDK_HOME + '/include', JDK_HOME + '/include/win32']
     libraries = ['jvm']
-    library_dirs = [JDK_HOME + '/jre/lib/i386/server',
-                    JDK_HOME + '/lib']
+    library_dirs = [JDK_HOME + '/jre/lib/server',
+                    JDK_HOME + '/jre/lib/client']
 elif LINUX:
     include_dirs += [JDK_HOME + '/include', JDK_HOME + '/include/linux']
-    libraries = ['jvm', 'python' + sysconfig.get_config_var('VERSION') + sys.abiflags]
+    libraries = ['jvm', 'python' + sysconfig.get_config_var('VERSION') + (sys.abiflags if ISPY3 else '')]
     if IS64:
         library_dirs = [JDK_HOME + '/jre/lib/amd64/server',
+                        JDK_HOME + '/jre/lib/amd64/client',
                         JDK_HOME + '/lib']
     else:
         library_dirs = [JDK_HOME + '/jre/lib/i386/server',
+                        JDK_HOME + '/jre/lib/i386/client',
                         JDK_HOME + '/lib']
 elif DARWIN:
     include_dirs += [JDK_HOME + '/include', JDK_HOME + '/include/darwin']
-    libraries = ['jvm', 'python' + sysconfig.get_config_var('VERSION') + sys.abiflags]
+    libraries = ['jvm', 'python' + sysconfig.get_config_var('VERSION') + (sys.abiflags if ISPY3 else '')]
     library_dirs = [JDK_HOME + '/jre/lib/server',
+                    JDK_HOME + '/jre/lib/client',
                     JDK_HOME + '/lib',
                     os.path.join(sys.exec_prefix, 'lib')]
 
@@ -103,7 +107,7 @@ setup(name='jpy',
       description='Bi-directional Python-Java bridge',
       long_description=long_description,
       version=__version__,
-      platforms='Python 3.3, Java 1.7',
+      platforms='Python ' + ('3.3' if ISPY3 else '2.7') + ', Java 1.7',
       author=__author__,
       author_email='norman.fomferra@brockmann-consult.de',
       maintainer='Brockmann Consult GmbH',
