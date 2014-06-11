@@ -65,9 +65,39 @@ If you encounter linkage errors during setup saying that something like a ``libj
 Build for Microsoft Windows
 ===========================
 
+
+Python 2.7
+----------
+
 You will need
 
-* `Python 2.7 or 3.3 <http://www.python.org/>`_ or higher (2.6 and 3.2 may work as well but are not tested)
+* `Python 2.7 <http://www.python.org/>`_ or higher (2.6 may work as well but is not tested)
+* `Oracle JDK 7 <http://www.oracle.com/technetwork/java/javase/downloads/>`_ or higher (JDK 6 may work as well)
+* `Maven 3 <http://maven.apache.org/>`_ or higher
+* `Microsoft Visual C++ 10 <http://www.microsoft.com/en-us/download/details.aspx?id=8279>`_ or higher
+
+Note that if you build for a 32-bit Python, make sure to also install a 32-bit JDK. Accordingly, for a 64-bit Python,
+you will need a 64-bit JDK. If you use the free Microsoft Visual C++ Express edition, then you only can build for
+a 32-bit Python.
+
+Open the command-line and execute::
+
+    SET VS90COMNTOOLS=%VS100COMNTOOLS%
+    SET JDK_HOME=<path to the JDK installation directory>
+    SET JAVA_HOME=%JDK_HOME%
+    SET PATH=%JDK_HOME%\jre\bin\server;%PATH%
+
+Then, to actually build and test the jpy Python module use the following command::
+
+    python setup.py install
+
+
+Python 3.3 and higher
+---------------------
+
+You will need
+
+* `Python 3.3 <http://www.python.org/>`_ or higher (3.2 may work as well but is not tested)
 * `Oracle JDK 7 <http://www.oracle.com/technetwork/java/javase/downloads/>`_ or higher (JDK 6 may work as well)
 * `Maven 3 <http://maven.apache.org/>`_ or higher
 * `Microsoft Windows SDK 7.1 <http://www.microsoft.com/en-us/download/details.aspx?id=8279>`_ or higher
@@ -94,7 +124,7 @@ to prepare a build of the 64-bit version of jpy. Use::
 to prepare a build of the 32-bit version of jpy. Now set other environment variables::
 
     SET DISTUTILS_USE_SDK=1
-    SET JDK_HOME=<path to the JDK installation directory>
+    <path to the JDK installation directory>
     SET JAVA_HOME=%JDK_HOME%
     SET PATH=%JDK_HOME%\jre\bin\server;%PATH%
 
@@ -102,15 +132,14 @@ Then, to actually build and test the jpy Python module use the following command
 
     python setup.py install
 
-To create a jpy Windows executable installer, use::
-
-    python setup.py bdist_wininst
-
-
 
 ****************
 Typical Problems
 ****************
+
+==============================================
+Binary incompatibility between Python and Java
+==============================================
 
 When used from Python, jpy must be able to find an installed Java Virtual Machine (JVM) on your computer. This is
 usually the one that has been linked to the Python module during the build process.
@@ -124,4 +153,50 @@ Otherwise the JVM may be found but you will get error similar to the following o
     >>> import jpy
     Exception in thread "main" java.lang.UnsatisfiedLinkError: C:\Python33-amd64\Lib\site-packages\jpy.pyd: Can't load AMD 64-bit .dll on a IA 32-bit platform
 
+
+======================================
+Unable to find vcvarsall.bat (Windows)
+======================================
+
+If you build for Python 2.7, ``setup.py`` may fail with the following message::
+
+    C:\Users\Norman\JavaProjects\jpy>c:\Python27-amd64\python.exe setup.py install
+    Building a 64-bit library for a Windows system
+    running install
+    running build
+    running build_ext
+    building 'jpy' extension
+    error: Unable to find vcvarsall.bat
+
+This happens, because ``distutils`` uses an environment variable of an older Microsoft Visual C++ version,
+namely ``VS90COMNTOOLS``. Make sure to it to the value of your current version. For example::
+
+    SET VS90COMNTOOLS=%VS100COMNTOOLS%
+
+
+=========================
+DLL load failed (Windows)
+=========================
+
+``setup.py`` may fail with the following message::
+
+    C:\Users\Norman\JavaProjects\jpy>c:\Python27\python.exe setup.py install
+    Building a 32-bit library for a Windows system
+    running install
+    running build
+    running build_ext
+    ...
+    running install_lib
+    running install_egg_info
+    Removing c:\Python27\Lib\site-packages\jpy-0.7.2-py2.7.egg-info
+    Writing c:\Python27\Lib\site-packages\jpy-0.7.2-py2.7.egg-info
+    Importing module 'jpy' in order to retrieve its shared library location...
+    Traceback (most recent call last):
+      File "setup.py", line 133, in <module>
+        import jpy
+    ImportError: DLL load failed: %1 is not a valid Win32 application
+
+Fix this by adding the path to the Java VM shared library (``jvm.dll``) to the ``PATH`` environment variable::
+
+    SET PATH=%JDK_HOME%\jre\bin\server;%PATH%
 

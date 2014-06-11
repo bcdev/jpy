@@ -3,7 +3,7 @@
 __author__ = "Norman Fomferra, Brockmann Consult GmbH"
 __copyright__ = "Copyright (C) 2014 Brockmann Consult GmbH"
 __license__ = "GPL v3"
-__version__ = "0.7.2-snapshot"
+__version__ = "0.7.2"
 
 sources = [
     'src/main/c/jpy_module.c',
@@ -128,7 +128,7 @@ setup(name='jpy',
 
 if sys.argv[1] == 'install':
 
-    print("Importing module 'jpy' in order get its shared library location...")
+    print("Importing module 'jpy' in order to retrieve its shared library location...")
 
     import jpy
 
@@ -162,4 +162,5 @@ if sys.argv[1] == 'install':
     if result == 0:
         print("Installing compiled Java code...")
         os.system('mvn install')
+
 
