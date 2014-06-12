@@ -23,8 +23,10 @@ We recommend you clone the repository using the `git <http://git-scm.com/>`_ too
 
     git clone https://github.com/bcdev/jpy.git
 
-In the following it is assumed that the jpy sources are either checked out or unpacked into a directory named ``jpy``.
+If you don't want to use git, you can also download stable source releases from the
+`jpy releases page <https://github.com/bcdev/jpy/releases>`_ on GitHub.
 
+In the following it is assumed that the jpy sources are either checked out or unpacked into a directory named ``jpy``.
 
 .. _build:
 
