@@ -398,6 +398,7 @@ PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds)
             return NULL;
         }
         jvmOptions[i].optionString = (char*) JPy_AS_UTF8(option);
+        jvmOptions[i].extraInfo = NULL;
         JPy_DIAG_PRINT(JPy_DIAG_F_JVM, "JPy_create_jvm: jvmOptions[%d].optionString = '%s'\n", i, jvmOptions[i].optionString);
         if (jvmOptions[i].optionString == NULL) {
             PyMem_Del(jvmOptions);
