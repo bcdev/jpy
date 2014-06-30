@@ -1304,6 +1304,12 @@ JPy_ParamDescriptor* JType_CreateParamDescriptors(JNIEnv* jenv, int paramCount, 
 
         paramDescriptor->type = type;
         Py_INCREF((PyObject*) paramDescriptor->type);
+
+        paramDescriptor->isMutable = 0;
+        paramDescriptor->isOutput = 0;
+        paramDescriptor->isReturn = 0;
+        paramDescriptor->MatchPyArg = NULL;
+        paramDescriptor->ConvertPyArg = NULL;
     }
 
     return paramDescriptors;

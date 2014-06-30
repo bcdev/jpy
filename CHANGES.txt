@@ -1,3 +1,9 @@
+Version 0.7.3
+=============
+
+* Fixed problem where a Java primitive array argument has occasionally not been initialised by a
+  related Python buffer argument (issue #37)
+
 Version 0.7.2
 =============
 
