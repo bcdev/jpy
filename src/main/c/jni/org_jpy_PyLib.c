@@ -780,93 +780,110 @@ error:
     return pyReturnValue;
 }
 
+char* PyLib_ObjToChars(PyObject* pyObj, PyObject** pyObjUtf8)
+{
+    char* chars = NULL;
+    if (pyObj != NULL) {
+        PyObject* pyObjStr = PyObject_Str(pyObj);
+        if (pyObjStr != NULL) {
+            *pyObjUtf8 = PyUnicode_AsEncodedString(pyObjStr, "utf-8", "replace");
+            if (*pyObjUtf8 != NULL) {
+                chars = PyBytes_AsString(*pyObjUtf8);
+            }
+            Py_XDECREF(pyObjStr);
+        }
+    }
+    return chars;
+}
+
+#define JPY_NOT_AVAILABLE_MSG "<not available>"
+#define JPY_NOT_AVAILABLE_MSG_LEN strlen(JPY_NOT_AVAILABLE_MSG)
+#define JPY_ERR_BASE_MSG "Error in Python interpreter"
+#define JPY_NO_INFO_MSG JPY_ERR_BASE_MSG ", no information available"
+#define JPY_INFO_ALLOC_FAILED_MSG JPY_ERR_BASE_MSG ", failed to allocate information text"
 
 void PyLib_HandlePythonException(JNIEnv* jenv)
 {
-    PyObject* pyType;
-    PyObject* pyValue;
-    PyObject* pyTraceback;
+    PyObject* pyType = NULL;
+    PyObject* pyValue = NULL;
+    PyObject* pyTraceback = NULL;
 
-    PyObject* pyTypeStr;
-    PyObject* pyValueStr;
-    PyObject* pyTracebackStr;
-
-    PyObject* pyTypeUtf8;
-    PyObject* pyValueUtf8;
-    PyObject* pyTracebackUtf8;
-
-    char* typeChars;
-    char* valueChars;
-    char* tracebackChars;
-    char* javaMessage;
-
-    //jint ret;
-
-    //printf("PyLib_HandlePythonException 0: jenv=%p\n", jenv);
+    PyObject* pyTypeUtf8 = NULL;
+    PyObject* pyValueUtf8 = NULL;
+    PyObject* pyLinenoUtf8 = NULL;
+    PyObject* pyFilenameUtf8 = NULL;
+    PyObject* pyFuncnameUtf8 = NULL;
+    char* typeChars = NULL;
+    char* valueChars = NULL;
+    char* linenoChars = NULL;
+    char* filenameChars = NULL;
+    char* funcnameChars = NULL;
 
     if (PyErr_Occurred() == NULL) {
         return;
     }
 
-    // todo - The traceback string generated here does not make much sense. Convert it to the actual traceback that Python prints to stderr.
-
     PyErr_Fetch(&pyType, &pyValue, &pyTraceback);
     PyErr_NormalizeException(&pyType, &pyValue, &pyTraceback);
 
-    //printf("PyLib_HandlePythonException 1: %p, %p, %p\n", pyType, pyValue, pyTraceback);
+    typeChars = PyLib_ObjToChars(pyType, &pyTypeUtf8);
+    valueChars = PyLib_ObjToChars(pyValue, &pyValueUtf8);
 
-    pyTypeStr = pyType != NULL ? PyObject_Str(pyType) : NULL;
-    pyValueStr = pyValue != NULL ? PyObject_Str(pyValue) : NULL;
-    pyTracebackStr = pyTraceback != NULL ? PyObject_Str(pyTraceback) : NULL;
-
-    //printf("PyLib_HandlePythonException 2: %p, %p, %p\n", pyTypeStr, pyValueStr, pyTracebackStr);
-
-    pyTypeUtf8 = pyTypeStr != NULL ? PyUnicode_AsEncodedString(pyTypeStr, "utf-8", "replace") : NULL;
-    pyValueUtf8 = pyValueStr != NULL ? PyUnicode_AsEncodedString(pyValueStr, "utf-8", "replace") : NULL;
-    pyTracebackUtf8 = pyTracebackStr != NULL ? PyUnicode_AsEncodedString(pyTracebackStr, "utf-8", "replace") : NULL;
-
-    //printf("PyLib_HandlePythonException 3: %p, %p, %p\n", pyTypeUtf8, pyValueUtf8, pyTracebackUtf8);
-
-    typeChars = pyTypeUtf8 != NULL ? PyBytes_AsString(pyTypeUtf8) : NULL;
-    valueChars = pyValueUtf8 != NULL ? PyBytes_AsString(pyValueUtf8) : NULL;
-    tracebackChars = pyTracebackUtf8 != NULL ? PyBytes_AsString(pyTracebackUtf8) : NULL;
-
-    //printf("PyLib_HandlePythonException 4: %s, %s, %s\n", typeChars, valueChars, tracebackChars);
-
-    javaMessage = PyMem_New(char,
-                            (typeChars != NULL ? strlen(typeChars) : 8)
-                           + (valueChars != NULL ? strlen(valueChars) : 8)
-                           + (tracebackChars != NULL ? strlen(tracebackChars) : 8) + 80);
-    if (javaMessage != NULL) {
-        if (tracebackChars != NULL) {
-            sprintf(javaMessage, "Python error: %s: %s\nTraceback: %s", typeChars, valueChars, tracebackChars);
-        } else {
-            sprintf(javaMessage, "Python error: %s: %s", typeChars, valueChars);
+    if (pyTraceback != NULL) {
+        PyObject* pyFrame = NULL;
+        PyObject* pyCode = NULL;
+        linenoChars = PyLib_ObjToChars(PyObject_GetAttrString(pyTraceback, "tb_lineno"), &pyLinenoUtf8);
+        pyFrame = PyObject_GetAttrString(pyTraceback, "tb_frame");
+        if (pyFrame != NULL) {
+            pyCode = PyObject_GetAttrString(pyFrame, "f_code");
+            if (pyCode != NULL) {
+                filenameChars = PyLib_ObjToChars(PyObject_GetAttrString(pyCode, "co_filename"), &pyFilenameUtf8);
+                funcnameChars = PyLib_ObjToChars(PyObject_GetAttrString(pyCode, "co_name"), &pyFuncnameUtf8);
+            }
         }
-        //printf("PyLib_HandlePythonException 4a: JPy_RuntimeException_JClass=%p, javaMessage=\"%s\"\n", JPy_RuntimeException_JClass, javaMessage);
-        //ret =
-        (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, javaMessage);
-    } else {
-        //printf("PyLib_HandlePythonException 4b: JPy_RuntimeException_JClass=%p, valueChars=\"%s\"\n", JPy_RuntimeException_JClass, valueChars);
-        //ret =
-        (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, valueChars);
+        Py_XDECREF(pyCode);
+        Py_XDECREF(pyFrame);
     }
 
-    PyMem_Del(javaMessage);
+    if (typeChars != NULL || valueChars != NULL
+        || linenoChars != NULL || filenameChars != NULL || funcnameChars != NULL) {
+        char* javaMessage;
+        javaMessage = PyMem_New(char,
+                                (typeChars != NULL ? strlen(typeChars) : JPY_NOT_AVAILABLE_MSG_LEN)
+                               + (valueChars != NULL ? strlen(valueChars) : JPY_NOT_AVAILABLE_MSG_LEN)
+                               + (linenoChars != NULL ? strlen(linenoChars) : JPY_NOT_AVAILABLE_MSG_LEN)
+                               + (filenameChars != NULL ? strlen(filenameChars) : JPY_NOT_AVAILABLE_MSG_LEN)
+                               + (funcnameChars != NULL ? strlen(funcnameChars) : JPY_NOT_AVAILABLE_MSG_LEN) + 80);
+        if (javaMessage != NULL) {
+            sprintf(javaMessage,
+                    JPY_ERR_BASE_MSG ":\n"
+                    "Type: %s\n"
+                    "Value: %s\n"
+                    "Line: %s\n"
+                    "Function: %s\n"
+                    "File: %s",
+                    typeChars != NULL ? typeChars : JPY_NOT_AVAILABLE_MSG,
+                    valueChars != NULL ? valueChars : JPY_NOT_AVAILABLE_MSG,
+                    linenoChars != NULL ? linenoChars : JPY_NOT_AVAILABLE_MSG,
+                    funcnameChars != NULL ? funcnameChars : JPY_NOT_AVAILABLE_MSG,
+                    filenameChars != NULL ? filenameChars : JPY_NOT_AVAILABLE_MSG);
+            (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, javaMessage);
+            PyMem_Del(javaMessage);
+        } else {
+            (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, JPY_NO_INFO_MSG);
+        }
+    } else {
+        (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, JPY_INFO_ALLOC_FAILED_MSG);
+    }
 
     Py_XDECREF(pyType);
     Py_XDECREF(pyValue);
     Py_XDECREF(pyTraceback);
-
-    Py_XDECREF(pyTypeStr);
-    Py_XDECREF(pyValueStr);
-    Py_XDECREF(pyTracebackStr);
-
     Py_XDECREF(pyTypeUtf8);
     Py_XDECREF(pyValueUtf8);
-    Py_XDECREF(pyTracebackUtf8);
-
-    //printf("PyLib_HandlePythonException 5: ret=%d\n", ret);
+    Py_XDECREF(pyLinenoUtf8);
+    Py_XDECREF(pyFilenameUtf8);
+    Py_XDECREF(pyFuncnameUtf8);
 
     PyErr_Clear();
 }

@@ -14,10 +14,13 @@
 package org.jpy;
 
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Norman Fomferra
@@ -53,5 +56,30 @@ public class PyModuleTest {
         PyObjectTest.addTestDirToPythonSysPath();
         PyModule procModule = PyModule.importModule("proc_module");
         PyObjectTest.testCallProxyMultiThreaded(procModule);
+    }
+
+    // see: https://github.com/bcdev/jpy/issues/39: Improve Java exception messages on Python errors #39
+    @Test
+    public void testPythonErrorMessages() throws Exception {
+        PyObjectTest.addTestDirToPythonSysPath();
+        PyModule raiserModule = PyModule.importModule("raise_errors");
+        for (int i=0;i < 10;i++) {
+            try {
+                raiserModule.call("raise_if_zero", 0);
+                Assert.fail();
+            } catch (RuntimeException e) {
+                //e.printStackTrace();
+                String message = e.getMessage();
+                assertNotNull(message);
+                assertTrue(message.startsWith("Error in Python interpreter:\n"));
+                assertTrue(message.contains("Type: <class 'IndexError'>\n"));
+                assertTrue(message.contains("Value: arg wasn't there\n"));
+                assertTrue(message.contains("Line: 3\n"));
+                assertTrue(message.contains("Function: raise_if_zero\n"));
+                assertTrue(message.contains("File: "));
+            }
+            // ok
+            raiserModule.call("raise_if_zero", 1);
+        }
     }
 }
