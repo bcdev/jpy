@@ -75,7 +75,7 @@ public class PyModuleTest {
                 assertTrue(message.contains("Type: <class 'IndexError'>\n"));
                 assertTrue(message.contains("Value: arg wasn't there\n"));
                 assertTrue(message.contains("Line: 3\n"));
-                assertTrue(message.contains("Function: raise_if_zero\n"));
+                assertTrue(message.contains("Namespace: raise_if_zero\n"));
                 assertTrue(message.contains("File: "));
             }
             // ok

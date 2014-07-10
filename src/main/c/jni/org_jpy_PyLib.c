@@ -812,12 +812,12 @@ void PyLib_HandlePythonException(JNIEnv* jenv)
     PyObject* pyValueUtf8 = NULL;
     PyObject* pyLinenoUtf8 = NULL;
     PyObject* pyFilenameUtf8 = NULL;
-    PyObject* pyFuncnameUtf8 = NULL;
+    PyObject* pyNamespaceUtf8 = NULL;
     char* typeChars = NULL;
     char* valueChars = NULL;
     char* linenoChars = NULL;
     char* filenameChars = NULL;
-    char* funcnameChars = NULL;
+    char* namespaceChars = NULL;
 
     if (PyErr_Occurred() == NULL) {
         return;
@@ -838,7 +838,7 @@ void PyLib_HandlePythonException(JNIEnv* jenv)
             pyCode = PyObject_GetAttrString(pyFrame, "f_code");
             if (pyCode != NULL) {
                 filenameChars = PyLib_ObjToChars(PyObject_GetAttrString(pyCode, "co_filename"), &pyFilenameUtf8);
-                funcnameChars = PyLib_ObjToChars(PyObject_GetAttrString(pyCode, "co_name"), &pyFuncnameUtf8);
+                namespaceChars = PyLib_ObjToChars(PyObject_GetAttrString(pyCode, "co_name"), &pyNamespaceUtf8);
             }
         }
         Py_XDECREF(pyCode);
@@ -846,26 +846,26 @@ void PyLib_HandlePythonException(JNIEnv* jenv)
     }
 
     if (typeChars != NULL || valueChars != NULL
-        || linenoChars != NULL || filenameChars != NULL || funcnameChars != NULL) {
+        || linenoChars != NULL || filenameChars != NULL || namespaceChars != NULL) {
         char* javaMessage;
         javaMessage = PyMem_New(char,
                                 (typeChars != NULL ? strlen(typeChars) : JPY_NOT_AVAILABLE_MSG_LEN)
                                + (valueChars != NULL ? strlen(valueChars) : JPY_NOT_AVAILABLE_MSG_LEN)
                                + (linenoChars != NULL ? strlen(linenoChars) : JPY_NOT_AVAILABLE_MSG_LEN)
                                + (filenameChars != NULL ? strlen(filenameChars) : JPY_NOT_AVAILABLE_MSG_LEN)
-                               + (funcnameChars != NULL ? strlen(funcnameChars) : JPY_NOT_AVAILABLE_MSG_LEN) + 80);
+                               + (namespaceChars != NULL ? strlen(namespaceChars) : JPY_NOT_AVAILABLE_MSG_LEN) + 80);
         if (javaMessage != NULL) {
             sprintf(javaMessage,
                     JPY_ERR_BASE_MSG ":\n"
                     "Type: %s\n"
                     "Value: %s\n"
                     "Line: %s\n"
-                    "Function: %s\n"
+                    "Namespace: %s\n"
                     "File: %s",
                     typeChars != NULL ? typeChars : JPY_NOT_AVAILABLE_MSG,
                     valueChars != NULL ? valueChars : JPY_NOT_AVAILABLE_MSG,
                     linenoChars != NULL ? linenoChars : JPY_NOT_AVAILABLE_MSG,
-                    funcnameChars != NULL ? funcnameChars : JPY_NOT_AVAILABLE_MSG,
+                    namespaceChars != NULL ? namespaceChars : JPY_NOT_AVAILABLE_MSG,
                     filenameChars != NULL ? filenameChars : JPY_NOT_AVAILABLE_MSG);
             (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, javaMessage);
             PyMem_Del(javaMessage);
@@ -883,7 +883,7 @@ void PyLib_HandlePythonException(JNIEnv* jenv)
     Py_XDECREF(pyValueUtf8);
     Py_XDECREF(pyLinenoUtf8);
     Py_XDECREF(pyFilenameUtf8);
-    Py_XDECREF(pyFuncnameUtf8);
+    Py_XDECREF(pyNamespaceUtf8);
 
     PyErr_Clear();
 }
