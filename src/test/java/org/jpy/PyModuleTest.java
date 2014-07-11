@@ -70,8 +70,9 @@ public class PyModuleTest {
             } catch (RuntimeException e) {
                 //e.printStackTrace();
                 String message = e.getMessage();
+                System.out.println("message = " + message);
                 assertNotNull(message);
-                assertTrue(message.startsWith("Error in Python interpreter:\n"));
+                assertTrue(message.startsWith("Error in Python interpreter"));
                 assertTrue(message.contains("Type: <class 'IndexError'>\n"));
                 assertTrue(message.contains("Value: arg wasn't there\n"));
                 assertTrue(message.contains("Line: 3\n"));

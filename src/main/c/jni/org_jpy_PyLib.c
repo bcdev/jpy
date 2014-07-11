@@ -780,21 +780,41 @@ error:
     return pyReturnValue;
 }
 
-char* PyLib_ObjToChars(PyObject* pyObj, PyObject** pyObjUtf8)
+#if PY_MAJOR_VERSION >= 3
+
+char* PyLib_ObjToChars(PyObject* pyObj, PyObject** pyNewRef)
 {
     char* chars = NULL;
     if (pyObj != NULL) {
         PyObject* pyObjStr = PyObject_Str(pyObj);
         if (pyObjStr != NULL) {
-            *pyObjUtf8 = PyUnicode_AsEncodedString(pyObjStr, "utf-8", "replace");
-            if (*pyObjUtf8 != NULL) {
+            PyObject* pyObjUtf8 = PyUnicode_AsEncodedString(pyObjStr, "utf-8", "replace");
+            if (pyObjUtf8 != NULL) {
                 chars = PyBytes_AsString(*pyObjUtf8);
+                *pyNewRef = pyObjUtf8;
             }
             Py_XDECREF(pyObjStr);
         }
     }
     return chars;
 }
+
+#else
+
+char* PyLib_ObjToChars(PyObject* pyObj, PyObject** pyNewRef)
+{
+    char* chars = NULL;
+    if (pyObj != NULL) {
+        PyObject* pyObjStr = PyObject_Str(pyObj);
+        if (pyObjStr != NULL) {
+            chars = PyBytes_AsString(pyObjStr);
+            *pyNewRef = pyObjStr;
+        }
+    }
+    return chars;
+}
+
+#endif
 
 #define JPY_NOT_AVAILABLE_MSG "<not available>"
 #define JPY_NOT_AVAILABLE_MSG_LEN strlen(JPY_NOT_AVAILABLE_MSG)
@@ -824,7 +844,11 @@ void PyLib_HandlePythonException(JNIEnv* jenv)
     }
 
     PyErr_Fetch(&pyType, &pyValue, &pyTraceback);
+    //printf("M1: pyType=%p, pyValue=%p, pyTraceback=%p\n", pyType, pyValue, pyTraceback);
+    //printf("U1: pyType=%s, pyValue=%s, pyTraceback=%s\n", Py_TYPE(pyType)->tp_name, Py_TYPE(pyValue)->tp_name, pyTraceback != NULL ? Py_TYPE(pyTraceback)->tp_name : "?");
     PyErr_NormalizeException(&pyType, &pyValue, &pyTraceback);
+    //printf("M2: pyType=%p, pyValue=%p, pyTraceback=%p\n", pyType, pyValue, pyTraceback);
+    //printf("U2: pyType=%s, pyValue=%s, pyTraceback=%s\n", Py_TYPE(pyType)->tp_name, Py_TYPE(pyValue)->tp_name, pyTraceback != NULL ? Py_TYPE(pyTraceback)->tp_name : "?");
 
     typeChars = PyLib_ObjToChars(pyType, &pyTypeUtf8);
     valueChars = PyLib_ObjToChars(pyValue, &pyValueUtf8);
@@ -844,6 +868,9 @@ void PyLib_HandlePythonException(JNIEnv* jenv)
         Py_XDECREF(pyCode);
         Py_XDECREF(pyFrame);
     }
+
+    //printf("U2: typeChars=%s, valueChars=%s, linenoChars=%s, filenameChars=%s, namespaceChars=%s\n",
+    //       typeChars, valueChars, linenoChars, filenameChars, namespaceChars);
 
     if (typeChars != NULL || valueChars != NULL
         || linenoChars != NULL || filenameChars != NULL || namespaceChars != NULL) {
@@ -870,10 +897,10 @@ void PyLib_HandlePythonException(JNIEnv* jenv)
             (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, javaMessage);
             PyMem_Del(javaMessage);
         } else {
-            (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, JPY_NO_INFO_MSG);
+            (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, JPY_INFO_ALLOC_FAILED_MSG);
         }
     } else {
-        (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, JPY_INFO_ALLOC_FAILED_MSG);
+        (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, JPY_NO_INFO_MSG);
     }
 
     Py_XDECREF(pyType);
