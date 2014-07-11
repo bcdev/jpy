@@ -4,6 +4,9 @@ import sys
 
 jpy.create_jvm(options=['-Xmx512M'])
 
+'''
+Tests various Java SE classes from rt.jar
+'''
 class TestString(unittest.TestCase):
 
 
@@ -14,6 +17,13 @@ class TestString(unittest.TestCase):
 
     def test_constructor(self):
         s = self.String('Bibo')
+        self.assertEqual(type(s), self.String)
+        self.assertEqual(str(s), 'Bibo')
+
+
+    def test_unicode_constructor_with_py27(self):
+        # This test is actually the same as test_constructor(), but 'str' is not 'unicode' in Python 2.7
+        s = self.String(u'Bibo')
         self.assertEqual(type(s), self.String)
         self.assertEqual(str(s), 'Bibo')
 

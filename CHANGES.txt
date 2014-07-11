@@ -1,6 +1,7 @@
 Version 0.7.4
 =============
 
+* Fixed a problem where jpy crashes with unicode arguments (issue #42)
 * Fixed segmentation fault occurring occasionally during installation of jpy (issue #40)
 * Improved Java exception messages on Python errors (issue #39)
 
