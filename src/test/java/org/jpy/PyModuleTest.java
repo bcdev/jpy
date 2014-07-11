@@ -73,7 +73,8 @@ public class PyModuleTest {
                 System.out.println("message = " + message);
                 assertNotNull(message);
                 assertTrue(message.startsWith("Error in Python interpreter"));
-                assertTrue(message.contains("Type: <class 'IndexError'>\n"));
+                assertTrue(message.contains("Type: <"));
+                assertTrue(message.contains("IndexError'>\n"));
                 assertTrue(message.contains("Value: arg wasn't there\n"));
                 assertTrue(message.contains("Line: 3\n"));
                 assertTrue(message.contains("Namespace: raise_if_zero\n"));
