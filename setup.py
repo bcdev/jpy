@@ -3,7 +3,7 @@
 __author__ = "Norman Fomferra, Brockmann Consult GmbH"
 __copyright__ = "Copyright (C) 2014 Brockmann Consult GmbH"
 __license__ = "GPL v3"
-__version__ = "0.7.4-SNAPSHOT"
+__version__ = "0.7.4"
 
 sources = [
     'src/main/c/jpy_module.c',
