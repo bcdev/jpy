@@ -23,7 +23,7 @@
 
     <groupId>org.jpy</groupId>
     <artifactId>jpy</artifactId>
-    <version>0.7.4</version>
+    <version>0.7.5-SNAPSHOT</version>
 
     <description>
         jpy is a bi-directional Java-Python bridge which you can use to embed Java code in Python programs or the other
