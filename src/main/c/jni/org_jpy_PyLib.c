@@ -790,7 +790,7 @@ char* PyLib_ObjToChars(PyObject* pyObj, PyObject** pyNewRef)
         if (pyObjStr != NULL) {
             PyObject* pyObjUtf8 = PyUnicode_AsEncodedString(pyObjStr, "utf-8", "replace");
             if (pyObjUtf8 != NULL) {
-                chars = PyBytes_AsString(*pyObjUtf8);
+                chars = PyBytes_AsString(pyObjUtf8);
                 *pyNewRef = pyObjUtf8;
             }
             Py_XDECREF(pyObjStr);
