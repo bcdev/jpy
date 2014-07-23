@@ -34,7 +34,7 @@ public class PyModuleTest {
         PyLib.startPython();
         assertEquals(true, PyLib.isPythonRunning());
 
-        PyLib.Diag.setFlags(PyLib.Diag.F_METH);
+        //PyLib.Diag.setFlags(PyLib.Diag.F_METH);
     }
 
     @AfterClass
