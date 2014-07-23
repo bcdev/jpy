@@ -7,42 +7,44 @@ extern "C" {
 
 #include <Python.h>
 
+#define JPY_VERSION_ERROR "jpy requires either Python 2.7 or Python 3.3+"
 
-#if PY_MAJOR_VERSION >= 3
+#if PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION == 7
+#define JPY_COMPAT_27 1
+#undef JPY_COMPAT_33P
+#elif PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 3
+#define JPY_COMPAT_33P 1
+#undef JPY_COMPAT_27
+#else
+#error JPY_VERSION_ERROR
+#endif
+
+
+#if defined(JPY_COMPAT_33P)
 
 #define JPy_IS_CLONG(pyArg)      PyLong_Check(pyArg)
 #define JPy_AS_CLONG(pyArg)      PyLong_AsLong(pyArg)
 #define JPy_AS_CLONGLONG(pyArg)  PyLong_AsLongLong(pyArg)
 #define JPy_FROM_CLONG(cl)       PyLong_FromLong(cl)
 
-// todo: py27: use the following macros where appropriate
 #define JPy_IS_STR(pyArg)        PyUnicode_Check(pyArg)
 #define JPy_FROM_CSTR(cstr)      PyUnicode_FromString(cstr)
 #define JPy_FROM_FORMAT          PyUnicode_FromFormat
 
-#else
+#define JPy_AS_UTF8(unicode)                 PyUnicode_AsUTF8(unicode)
+#define JPy_AS_WIDE_CHAR_STR(unicode, size)  PyUnicode_AsWideCharString(unicode, size)
+#define JPy_FROM_WIDE_CHAR_STR(wc, size)     PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, wc, size)
+
+#elif defined(JPY_COMPAT_27)
 
 #define JPy_IS_CLONG(pyArg)      (PyInt_Check(pyArg) || PyLong_Check(pyArg))
 #define JPy_AS_CLONG(pyArg)      (PyInt_Check(pyArg) ? PyInt_AsLong(pyArg) : PyLong_AsLong(pyArg))
 #define JPy_AS_CLONGLONG(pyArg)  (PyInt_Check(pyArg) ? PyInt_AsLong(pyArg) : PyLong_AsLongLong(pyArg))
 #define JPy_FROM_CLONG(cl)        PyInt_FromLong(cl)
 
-// todo: py27: use the following macros where appropriate
 #define JPy_IS_STR(pyArg)        (PyString_Check(pyArg) || PyUnicode_Check(pyArg))
 #define JPy_FROM_CSTR(cstr)      PyString_FromString(cstr)
 #define JPy_FROM_FORMAT          PyString_FromFormat
-
-#endif
-
-
-
-#if PY_MAJOR_VERSION >= 3 && PY_MINOR_VERSION >= 3
-
-#define JPy_AS_UTF8(unicode)                 PyUnicode_AsUTF8(unicode)
-#define JPy_AS_WIDE_CHAR_STR(unicode, size)  PyUnicode_AsWideCharString(unicode, size)
-#define JPy_FROM_WIDE_CHAR_STR(wc, size)     PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND, wc, size)
-
-#else
 
 // Implement conversion rules from Python 2 to 3 as given here:
 // https://docs.python.org/3.3/howto/cporting.html

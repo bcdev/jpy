@@ -18,6 +18,7 @@
 extern "C" {
 #endif
 
+#include "jpy_compat.h"
 
 /**
  * Python object representing a Java method. It's type is 'JMethod'.

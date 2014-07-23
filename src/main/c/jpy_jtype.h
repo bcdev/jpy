@@ -18,7 +18,7 @@
 extern "C" {
 #endif
 
-
+#include "jpy_compat.h"
 
 /**
  * The Python type 'JType' representing a Java type.

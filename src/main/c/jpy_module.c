@@ -65,7 +65,7 @@ void JPy_free(void* unused);
 #define JPY_MODULE_NAME "jpy"
 #define JPY_MODULE_DOC  "Bi-directional Python-Java Bridge"
 
-#if PY_MAJOR_VERSION >= 3
+#if defined(JPY_COMPAT_33P)
 static struct PyModuleDef JPy_ModuleDef =
 {
     PyModuleDef_HEAD_INIT,
@@ -233,12 +233,14 @@ JNIEnv* JPy_GetJNIEnv(void)
     return jenv;
 }
 
-#if PY_MAJOR_VERSION >= 3
+#if defined(JPY_COMPAT_33P)
 #define JPY_RETURN(V) return V
 #define JPY_MODULE_INIT_FUNC PyInit_jpy
-#else
+#elif defined(JPY_COMPAT_27)
 #define JPY_RETURN(V) return
 #define JPY_MODULE_INIT_FUNC initjpy
+#else
+#error JPY_VERSION_ERROR
 #endif
 
 /**
@@ -250,16 +252,18 @@ PyMODINIT_FUNC JPY_MODULE_INIT_FUNC(void)
 
     /////////////////////////////////////////////////////////////////////////
 
-#if PY_MAJOR_VERSION >= 3
+#if defined(JPY_COMPAT_33P)
     JPy_Module = PyModule_Create(&JPy_ModuleDef);
     if (JPy_Module == NULL) {
         JPY_RETURN(NULL);
     }
-#else
+#elif defined(JPY_COMPAT_27)
     JPy_Module = Py_InitModule3(JPY_MODULE_NAME, JPy_Functions, JPY_MODULE_DOC);
     if (JPy_Module == NULL) {
         JPY_RETURN(NULL);
     }
+#else
+    #error JPY_VERSION_ERROR
 #endif
 
     /////////////////////////////////////////////////////////////////////////

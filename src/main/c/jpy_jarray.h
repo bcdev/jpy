@@ -18,6 +18,8 @@
 extern "C" {
 #endif
 
+#include "jpy_compat.h"
+
 /**
  * The Java primitive array representation in Python.
  *

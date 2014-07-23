@@ -22,6 +22,8 @@ extern "C" {
 #include <structmember.h>
 #include <jni.h>
 
+#include "jpy_compat.h"
+
 #define JPY_JNI_VERSION JNI_VERSION_1_6
 
 extern PyObject* JPy_Module;

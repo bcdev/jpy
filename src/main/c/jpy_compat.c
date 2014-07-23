@@ -1,9 +1,7 @@
 #include "jpy_compat.h"
 
 
-#if PY_MAJOR_VERSION >= 3 && PY_MINOR_VERSION >= 3
-    // ok
-#else
+#ifdef JPY_COMPAT_27
 
 const char* JPy_AsUTF8_PriorToPy33(PyObject* pyStr)
 {

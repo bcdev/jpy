@@ -29,7 +29,7 @@ extern "C" {
 #define JPy_AS_JFLOAT(pyArg)     (jfloat) (pyArg == Py_None ? 0 : PyFloat_AsDouble(pyArg))
 #define JPy_AS_JDOUBLE(pyArg)    (jdouble) (pyArg == Py_None ? 0 : PyFloat_AsDouble(pyArg))
 
-#if PY_MAJOR_VERSION >= 3
+#if defined(JPY_COMPAT_33P)
 
 #define JPy_FROM_JBOOLEAN(jArg)  PyBool_FromLong(jArg)
 #define JPy_FROM_JCHAR(jArg)     PyLong_FromLong(jArg)
@@ -40,7 +40,7 @@ extern "C" {
 #define JPy_FROM_JFLOAT(jArg)    PyFloat_FromDouble(jArg)
 #define JPy_FROM_JDOUBLE(jArg)   PyFloat_FromDouble(jArg)
 
-#else
+#elif defined(JPY_COMPAT_27)
 
 #define JPy_FROM_JBOOLEAN(jArg)  PyBool_FromLong(jArg)
 #define JPy_FROM_JCHAR(jArg)     PyInt_FromLong(jArg)
@@ -50,6 +50,10 @@ extern "C" {
 #define JPy_FROM_JLONG(jArg)     PyLong_FromLongLong(jArg)
 #define JPy_FROM_JFLOAT(jArg)    PyFloat_FromDouble(jArg)
 #define JPy_FROM_JDOUBLE(jArg)   PyFloat_FromDouble(jArg)
+
+#else
+
+#error JPY_VERSION_ERROR
 
 #endif
 

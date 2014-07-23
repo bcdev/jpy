@@ -122,10 +122,12 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_startPython
     JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "PyLib_startPython: entered: jenv=%p, JPy_Module=%p\n", jenv, JPy_Module);
 
     if (!Py_IsInitialized()) {
-#if PY_MAJOR_VERSION >= 3
+#if defined(JPY_COMPAT_33P)
         Py_SetProgramName(L"java");
-#else
+#elif defined(JPY_COMPAT_27)
         Py_SetProgramName("java");
+#else
+        #error JPY_VERSION_ERROR
 #endif
         Py_Initialize();
         PyLib_RedirectStdOut();
@@ -780,7 +782,7 @@ error:
     return pyReturnValue;
 }
 
-#if PY_MAJOR_VERSION >= 3
+#if defined(JPY_COMPAT_33P)
 
 char* PyLib_ObjToChars(PyObject* pyObj, PyObject** pyNewRef)
 {
@@ -799,7 +801,7 @@ char* PyLib_ObjToChars(PyObject* pyObj, PyObject** pyNewRef)
     return chars;
 }
 
-#else
+#elif defined(JPY_COMPAT_27)
 
 char* PyLib_ObjToChars(PyObject* pyObj, PyObject** pyNewRef)
 {
@@ -813,6 +815,10 @@ char* PyLib_ObjToChars(PyObject* pyObj, PyObject** pyNewRef)
     }
     return chars;
 }
+
+#else
+
+#error JPY_VERSION_ERROR
 
 #endif
 
@@ -952,7 +958,7 @@ static PyMethodDef JPrint_Functions[] = {
 #define JPY_STDOUT_MODULE_NAME "jpy_stdout"
 #define JPY_STDOUT_MODULE_DOC  "Redirect 'stdout' to the console in embedded mode"
 
-#if PY_MAJOR_VERSION >= 3
+#if defined(JPY_COMPAT_33P)
 static struct PyModuleDef JPrint_ModuleDef =
 {
     PyModuleDef_HEAD_INIT,
@@ -970,10 +976,12 @@ static struct PyModuleDef JPrint_ModuleDef =
 void PyLib_RedirectStdOut(void)
 {
     PyObject* module;
-#if PY_MAJOR_VERSION >= 3
+#if defined(JPY_COMPAT_33P)
     module = PyModule_Create(&JPrint_ModuleDef);
-#else
+#elif defined(JPY_COMPAT_27)
     module = Py_InitModule3(JPY_STDOUT_MODULE_NAME, JPrint_Functions, JPY_STDOUT_MODULE_DOC);
+#else
+    #error JPY_VERSION_ERROR
 #endif
     PySys_SetObject("stdout", module);
     PySys_SetObject("stderr", module);

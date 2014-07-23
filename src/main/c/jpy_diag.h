@@ -18,6 +18,8 @@
 extern "C" {
 #endif
 
+#include "jpy_compat.h"
+
 typedef struct JPy_Diag
 {
     PyObject_HEAD

@@ -200,7 +200,9 @@ PyObject* JPy_FromTypeName(JNIEnv* jenv, jclass classRef)
 PyObject* JPy_FromJString(JNIEnv* jenv, jstring stringRef)
 {
     PyObject* returnValue;
-#if PY_MAJOR_VERSION >= 3
+
+#if defined(JPY_COMPAT_33P)
+
     const jchar* jChars;
     jint length;
 
@@ -221,7 +223,9 @@ PyObject* JPy_FromJString(JNIEnv* jenv, jstring stringRef)
 
     returnValue = JPy_FROM_WIDE_CHAR_STR(jChars, length);
     (*jenv)->ReleaseStringChars(jenv, stringRef, jChars);
-#else
+
+#elif defined(JPY_COMPAT_27)
+
     const char* utfChars;
 
     if (stringRef == NULL) {
@@ -236,6 +240,8 @@ PyObject* JPy_FromJString(JNIEnv* jenv, jstring stringRef)
         PyErr_NoMemory();
         returnValue = NULL;
     }
+#else
+    #error JPY_VERSION_ERROR
 #endif
     return returnValue;
 }
@@ -253,7 +259,7 @@ int JPy_AsJString(JNIEnv* jenv, PyObject* arg, jstring* stringRef)
         return 0;
     }
 
-#if PY_MAJOR_VERSION < 3
+#if defined(JPY_COMPAT_27)
     if (PyString_Check(arg)) {
         char* cstr = PyString_AsString(arg);
         *stringRef = (*jenv)->NewStringUTF(jenv, cstr);

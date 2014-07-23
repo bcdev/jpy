@@ -287,17 +287,21 @@ void JArray_releasebufferproc_double(JPy_JArray* self, Py_buffer* view)
 //    charbufferproc bf_getcharbuffer;
 // }
 
-#if PY_MAJOR_VERSION >= 3
+#if defined(JPY_COMPAT_33P)
 
 #define JPY_PY27_OLD_BUFFER_PROCS
 
-#else
+#elif defined(JPY_COMPAT_27)
 
 #define JPY_PY27_OLD_BUFFER_PROCS \
     (getreadbufferproc) NULL, \
     (getwritebufferproc) NULL, \
     (segcountproc) NULL, \
     (getcharbufferproc) NULL,
+
+#else
+
+#error JPY_VERSION_ERROR
 
 #endif
 
