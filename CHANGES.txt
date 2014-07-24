@@ -1,7 +1,11 @@
+*************
+jpy Changelog
+*************
+
 Version 0.7.5
 =============
 
-* Fixed compile error on OS X with Python 3.4 (issue #43)
+* Fixed bad pointer in C-code which caused unpredictable crashes (issue #43)
 
 Version 0.7.4
 =============

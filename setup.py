@@ -3,7 +3,7 @@
 __author__ = "Norman Fomferra, Brockmann Consult GmbH"
 __copyright__ = "Copyright (C) 2014 Brockmann Consult GmbH"
 __license__ = "GPL v3"
-__version__ = "0.7.5-SNAPSHOT"
+__version__ = "0.7.5"
 
 sources = [
     'src/main/c/jpy_module.c',
@@ -100,10 +100,13 @@ elif DARWIN:
 with open('README.rst') as file:
     long_description = file.read()
 
+with open('CHANGES.txt') as file:
+    changelog = file.read()
+
 
 setup(name='jpy',
       description='Bi-directional Python-Java bridge',
-      long_description=long_description,
+      long_description=long_description + '\n\n' + changelog,
       version=__version__,
       platforms='Python ' + ('3.3+' if ISPY3 else '2.7') + ', Java 1.7',
       author=__author__,

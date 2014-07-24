@@ -23,4 +23,8 @@ funded by the European Space Agency (ESA).
 Writing such Python plug-ins for a Java application usually requires a bi-directional communication between Python and
 Java since the Python extension code must be able to call back into the Java APIs.
 
-For more information please have a look into the `jpy documentation <http://jpy.readthedocs.org/en/latest/>`_.
+For more information please have a look into jpy's
+
+* `documentation <http://jpy.readthedocs.org/en/latest/>`_
+* `source repository <https://github.com/bcdev/jpy>`_
+* `issue tracker <https://github.com/bcdev/jpy/issues?state=open>`_

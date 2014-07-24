@@ -15,7 +15,7 @@ It comes with a number of outstanding features:
 * Java arrays translate into Python sequence objects
 * Java API for accessing Python objects (``jpy.jar``)
 
-jpy has been tested with Python 2.7 and 3.3 and an Oracle Java 7 JDK. It will presumably also work with Python 2.6 or
+jpy has been tested with Python 2.7, 3.3, 3.4 and  Oracle Java 7 and 8 JDKs. It will presumably also work with Python 2.6 or
 3.2 and a Java 6 JDK.
 
 The initial development of jpy has been driven by the need to write Python extensions to an established scientific
