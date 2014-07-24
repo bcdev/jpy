@@ -15,5 +15,6 @@ jpy.dll
 libjpy.so
 hs_err_pid*
 *.N1
+sysconfig.properties
 
 
