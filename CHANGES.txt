@@ -2,6 +2,12 @@
 jpy Changelog
 *************
 
+Version 0.8 (SNAPSHOT)
+======================
+
+*  Simplify jpy installation (issue #15): removed need to add JVM path to LD_LIBRARY_PATH on Unix
+
+
 Version 0.7.5
 =============
 
