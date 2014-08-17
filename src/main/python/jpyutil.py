@@ -2,9 +2,28 @@ import sys
 import sysconfig
 import os.path
 import platform
+import ctypes
+import ctypes.util
 # import pprint
 
 # pprint.pprint(sysconfig.get_config_vars())
+
+IS64BIT = sys.maxsize > 2 ** 32
+
+
+def _get_python_lib_name():
+    if platform.system() is 'Windows':
+        return 'python' + str(sys.version_info.major) + str(sys.version_info.minor)
+    else:
+        if sys.version_info.major >= 3:
+            return 'python' + sysconfig.get_config_var('VERSION') + sys.abiflags
+        else:
+            return 'python' + sysconfig.get_config_var('VERSION')
+
+
+PYTHON_LIB_NAME = _get_python_lib_name()
+JVM_LIB_NAME = 'jvm'
+
 
 def _get_unique_config_values(names):
     values = []
@@ -21,8 +40,6 @@ def preload_jvm_dll(lib_path=None, java_home_dir=None):
 
     if not lib_path:
         raise ValueError('JVM shared library not found')
-
-    import ctypes
 
     return ctypes.CDLL(lib_path)
 
@@ -60,12 +77,11 @@ def find_jvm_dll_path(java_home_dir=None):
             if jvm_dll_path:
                 return jvm_dll_path
 
-    return None
+    return ctypes.util.find_library(JVM_LIB_NAME)
 
 
 def _get_jvm_lib_dirs(java_home_dir):
-    is64 = sys.maxsize > 2 ** 32
-    arch = 'amd64' if is64 else 'i386'
+    arch = 'amd64' if IS64BIT else 'i386'
     return (os.path.join(java_home_dir, 'bin'),
             os.path.join(java_home_dir, 'bin', 'server'),
             os.path.join(java_home_dir, 'bin', 'client'),
@@ -119,10 +135,9 @@ def find_python_dll_path():
     search_dirs.append(sys.prefix)
 
     if platform.system() is 'Windows':
-        if sys.version_info.major >= 3:
-            filenames.append('python' + str(sys.version_info.major) + '.dll')
-        else:
-            filenames.append('python.dll')
+        filenames += ['python' + str(sys.version_info.major) + str(sys.version_info.minor) + '.dll',
+                      'python' + str(sys.version_info.major) + '.dll',
+                      'python.dll']
         lib_dirs_extra = [os.path.join(lib, 'DLLs') for lib in search_dirs]
         search_dirs = lib_dirs_extra + search_dirs
     else:
@@ -130,15 +145,19 @@ def find_python_dll_path():
         if multiarchsubdir:
             while multiarchsubdir.startswith('/'):
                 multiarchsubdir = multiarchsubdir[1:]
-            lib_dirs_extra = [os.path.join(lib, multiarchsubdir) for lib in search_dirs]
-            search_dirs = lib_dirs_extra + search_dirs
+        lib_dirs_extra = [os.path.join(lib, multiarchsubdir) for lib in search_dirs]
+        search_dirs = lib_dirs_extra + search_dirs
 
     search_dirs = _add_paths_if_exists([], *search_dirs)
 
     # pprint.pprint(search_dirs)
     # pprint.pprint(filenames)
 
-    return _find_file(search_dirs, *filenames)
+    python_dll_path = _find_file(search_dirs, *filenames)
+    if not python_dll_path:
+        python_dll_path = ctypes.util.find_library(PYTHON_LIB_NAME)
+
+    return python_dll_path
 
 
 class Properties:
