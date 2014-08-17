@@ -9,7 +9,10 @@ int main(int argc, const char** argv)
 	void* handle;
 	mypy_run_fn mypy_run;
 
-	handle = dlopen("./mypydl.so", RTLD_NOW);
+    // This one works
+	handle = dlopen("./mypydl.so", RTLD_LAZY | RTLD_GLOBAL);
+	// This one not
+	//handle = dlopen("./mypydl.so", RTLD_LAZY);
 	if (handle == NULL) {
 		fprintf(stderr, "mypy: error: %s\n", dlerror());
 		return 1;	
