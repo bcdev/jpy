@@ -87,14 +87,14 @@ define_macros = []
 extra_link_args = []
 extra_compile_args = []
 
-if platform.system() is 'Windows':
+if platform.system() == 'Windows':
     define_macros += [('WIN32', '1')]
     include_dirs += [os.path.join(jdk_home_dir, 'include', 'win32')]
     library_dirs += [os.path.join(jdk_home_dir, 'lib')]
-elif platform.system() is 'Linux':
+elif platform.system() == 'Linux':
     include_dirs += [os.path.join(jdk_home_dir, 'include', 'linux')]
     extra_link_args += ['-Xlinker', '-rpath', jvm_dll_dir]
-elif platform.system() is 'Darwin':
+elif platform.system() == 'Darwin':
     include_dirs += [os.path.join(jdk_home_dir, 'include', 'darwin')]
     library_dirs += [os.path.join(sys.exec_prefix, 'lib')]
     extra_link_args += ['-Xlinker', '-rpath', jvm_dll_dir]
