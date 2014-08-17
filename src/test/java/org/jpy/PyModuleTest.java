@@ -70,7 +70,7 @@ public class PyModuleTest {
             } catch (RuntimeException e) {
                 //e.printStackTrace();
                 String message = e.getMessage();
-                System.out.println("message = " + message);
+                //System.out.println("message = " + message);
                 assertNotNull(message);
                 assertTrue(message.startsWith("Error in Python interpreter"));
                 assertTrue(message.contains("Type: <"));
