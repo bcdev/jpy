@@ -6,104 +6,105 @@ __license__ = "GPL v3"
 __version__ = "0.8-SNAPSHOT"
 
 import sys
-import sysconfig
 import os
+import os.path
+import sysconfig
 import platform
-import dllconfig
 from distutils.core import setup
 from distutils.extension import Extension
+
+import src.main.python.jpyutil as jpyutil
 
 IS64 = sys.maxsize > 2 ** 32
 ISPY3 = sys.version_info >= (3, 0, 0,)
 WIN32 = platform.system() == 'Windows'
 LINUX = platform.system() == 'Linux'
 DARWIN = platform.system() == 'Darwin'
-print('Building a %s-bit library for a %s system' % ('64' if IS64 else '32', platform.system()))
 
-# e.g. JDK_HOME = '/home/marta/jdk1.7.0_15'
-JDK_HOME = os.environ.get('JDK_HOME', None)
-if JDK_HOME is None:
-    print('Error: Environment variable "JDK_HOME" must be set to a JDK (>= v1.6) installation directory')
+# e.g. java_home_dir = '/home/marta/jdk1.7.0_15'
+jdk_home_dir = os.environ.get('JAVA_HOME', None)
+if jdk_home_dir is None:
+    jdk_home_dir = os.environ.get('JDK_HOME', None)
+    if jdk_home_dir:
+        os.environ['JAVA_HOME'] = jdk_home_dir
+        print('Warning: Environment variable "JAVA_HOME" not set, using "JDK_HOME" instead')
+if jdk_home_dir is None:
+    print('Error: Environment variable "JAVA_HOME" must be set to a JDK (>= v1.6) installation directory')
     exit(1)
 
-jvm_search_dirs = [JDK_HOME + '/jre/lib/server',
-                   JDK_HOME + '/jre/lib/client',
-                   JDK_HOME + '/jre/lib/' + ('amd64' if IS64 else 'i386') + '/server',
-                   JDK_HOME + '/jre/lib/' + ('amd64' if IS64 else 'i386') + '/client',
-                   JDK_HOME + '/lib']
-jvm_shared_lib_path = dllconfig.find_jvm_shared_lib(jvm_search_dirs)
-if not jvm_shared_lib_path:
-    print('Error: Cannot find any Java shared library')
+print('Building a %s-bit library for a %s system with Java at %s' % ('64' if IS64 else '32', platform.system(), jdk_home_dir))
+
+jvm_dll_path = jpyutil.find_jvm_dll_path(jdk_home_dir)
+if not jvm_dll_path:
+    print('Error: Cannot find any JVM shared library')
     exit(1)
 
-jvm_shared_lib_dir = os.path.dirname(jvm_shared_lib_path)
+jvm_dll_dir = os.path.dirname(jvm_dll_path)
 
+src_main_c_dir = os.path.join('src', 'main', 'c')
+src_test_py_dir = os.path.join('src', 'test', 'python')
 
 sources = [
-    'src/main/c/jpy_module.c',
-    'src/main/c/jpy_diag.c',
-    'src/main/c/jpy_conv.c',
-    'src/main/c/jpy_compat.c',
-    'src/main/c/jpy_jtype.c',
-    'src/main/c/jpy_jarray.c',
-    'src/main/c/jpy_jobj.c',
-    'src/main/c/jpy_jmethod.c',
-    'src/main/c/jpy_jfield.c',
-    'src/main/c/jni/org_jpy_PyLib.c',
+    os.path.join(src_main_c_dir, 'jpy_module.c'),
+    os.path.join(src_main_c_dir, 'jpy_diag.c'),
+    os.path.join(src_main_c_dir, 'jpy_conv.c'),
+    os.path.join(src_main_c_dir, 'jpy_compat.c'),
+    os.path.join(src_main_c_dir, 'jpy_jtype.c'),
+    os.path.join(src_main_c_dir, 'jpy_jarray.c'),
+    os.path.join(src_main_c_dir, 'jpy_jobj.c'),
+    os.path.join(src_main_c_dir, 'jpy_jmethod.c'),
+    os.path.join(src_main_c_dir, 'jpy_jfield.c'),
+    os.path.join(src_main_c_dir, 'jni/org_jpy_PyLib.c'),
     ]
 
 headers = [
-    'src/main/c/jpy_module.h',
-    'src/main/c/jpy_diag.h',
-    'src/main/c/jpy_conv.h',
-    'src/main/c/jpy_compat.h',
-    'src/main/c/jpy_jtype.h',
-    'src/main/c/jpy_jarray.h',
-    'src/main/c/jpy_jobj.h',
-    'src/main/c/jpy_jmethod.h',
-    'src/main/c/jpy_jfield.h',
-    'src/main/c/jni/org_jpy_PyLib.h',
+    os.path.join(src_main_c_dir, 'jpy_module.h'),
+    os.path.join(src_main_c_dir, 'jpy_diag.h'),
+    os.path.join(src_main_c_dir, 'jpy_conv.h'),
+    os.path.join(src_main_c_dir, 'jpy_compat.h'),
+    os.path.join(src_main_c_dir, 'jpy_jtype.h'),
+    os.path.join(src_main_c_dir, 'jpy_jarray.h'),
+    os.path.join(src_main_c_dir, 'jpy_jobj.h'),
+    os.path.join(src_main_c_dir, 'jpy_jmethod.h'),
+    os.path.join(src_main_c_dir, 'jpy_jfield.h'),
+    os.path.join(src_main_c_dir, 'jni/org_jpy_PyLib.h'),
     ]
 
 python_tests = [
-    'src/test/python/jpy_array_test.py',
-    'src/test/python/jpy_field_test.py',
-    'src/test/python/jpy_retval_test.py',
-    'src/test/python/jpy_rt_test.py',
-    'src/test/python/jpy_mt_test.py',
-    'src/test/python/jpy_exception_test.py',
-    'src/test/python/jpy_overload_test.py',
-    'src/test/python/jpy_typeconv_test.py',
-    'src/test/python/jpy_typeres_test.py',
-    'src/test/python/jpy_modretparam_test.py',
-    'src/test/python/jpy_gettype_test.py',
-    'src/test/python/jpy_diag_test.py',
+    os.path.join(src_test_py_dir, 'jpy_array_test.py'),
+    os.path.join(src_test_py_dir, 'jpy_field_test.py'),
+    os.path.join(src_test_py_dir, 'jpy_retval_test.py'),
+    os.path.join(src_test_py_dir, 'jpy_rt_test.py'),
+    os.path.join(src_test_py_dir, 'jpy_mt_test.py'),
+    os.path.join(src_test_py_dir, 'jpy_exception_test.py'),
+    os.path.join(src_test_py_dir, 'jpy_overload_test.py'),
+    os.path.join(src_test_py_dir, 'jpy_typeconv_test.py'),
+    os.path.join(src_test_py_dir, 'jpy_typeres_test.py'),
+    os.path.join(src_test_py_dir, 'jpy_modretparam_test.py'),
+    os.path.join(src_test_py_dir, 'jpy_gettype_test.py'),
+    os.path.join(src_test_py_dir, 'jpy_diag_test.py'),
     ]
 
-include_dirs = ['src/main/c']
-library_dirs = []
-libraries = []
+include_dirs = [src_main_c_dir, os.path.join(jdk_home_dir, 'include')]
+library_dirs = [jvm_dll_dir]
+libraries = ['jvm']
 define_macros = []
 extra_link_args = []
 extra_compile_args = []
 
-
 if WIN32:
     define_macros += [('WIN32', '1')]
-    include_dirs += [JDK_HOME + '/include', JDK_HOME + '/include/win32']
-    libraries = ['jvm']
-    library_dirs = [jvm_shared_lib_dir]
+    include_dirs += [os.path.join(jdk_home_dir, 'include', 'win32')]
+    library_dirs += [os.path.join(jdk_home_dir, 'lib')]
 elif LINUX:
-    include_dirs += [JDK_HOME + '/include', JDK_HOME + '/include/linux']
-    libraries = ['jvm', 'python' + sysconfig.get_config_var('VERSION') + (sys.abiflags if ISPY3 else '')]
-    library_dirs = [jvm_shared_lib_dir]
-    extra_link_args = ['-Xlinker', '-rpath', jvm_shared_lib_dir]
+    include_dirs += [os.path.join(jdk_home_dir, 'include', 'linux')]
+    libraries += ['python' + sysconfig.get_config_var('VERSION') + (sys.abiflags if ISPY3 else '')]
+    extra_link_args += ['-Xlinker', '-rpath', jvm_dll_dir]
 elif DARWIN:
-    include_dirs += [JDK_HOME + '/include', JDK_HOME + '/include/darwin']
-    libraries = ['jvm', 'python' + sysconfig.get_config_var('VERSION') + (sys.abiflags if ISPY3 else '')]
-    library_dirs = [jvm_shared_lib_dir,
-                    os.path.join(sys.exec_prefix, 'lib')]
-    extra_link_args = ['-Xlinker', '-rpath', jvm_shared_lib_dir]
+    include_dirs += [os.path.join(jdk_home_dir, 'include', 'darwin')]
+    libraries =+ ['python' + sysconfig.get_config_var('VERSION') + (sys.abiflags if ISPY3 else '')]
+    library_dirs += [os.path.join(sys.exec_prefix, 'lib')]
+    extra_link_args += ['-Xlinker', '-rpath', jvm_dll_dir]
 
 
 with open('README.rst') as file:
@@ -117,7 +118,7 @@ setup(name='jpy',
       description='Bi-directional Python-Java bridge',
       long_description=long_description + '\n\n' + changelog,
       version=__version__,
-      platforms='Python ' + ('3.3+' if ISPY3 else '2.7') + ', Java 1.7',
+      platforms='Windows, Linux, Darwin',
       author=__author__,
       author_email='norman.fomferra@brockmann-consult.de',
       maintainer='Brockmann Consult GmbH',
@@ -125,6 +126,8 @@ setup(name='jpy',
       license='GPL 3',
       url='https://github.com/bcdev/jpy',
       download_url='https://pypi.python.org/pypi/jpy/' + __version__,
+      package_dir = {'': os.path.join('src', 'main', 'python')},
+      py_modules = ['jpyutil'],
       ext_modules=[Extension('jpy',
                              sources,
                              include_dirs=include_dirs,
@@ -138,10 +141,11 @@ setup(name='jpy',
 )
 
 
-if sys.argv[1] == 'install':
+if 'install' in sys.argv:
 
     print("Importing module 'jpy' in order to retrieve its shared library location...")
 
+    jpyutil.preload_jvm_dll(jvm_dll_path)
     import jpy
 
     jpy_lib_path = jpy.__file__
@@ -150,20 +154,20 @@ if sys.argv[1] == 'install':
 
     user_home = os.path.expanduser('~')
     user_jpy = os.path.join(user_home, '.jpy')
-    python_shared_lib_path = dllconfig.find_python_shared_lib()
+    python_dll_path = jpyutil.find_python_dll_path()
 
-    print('python_shared_lib_path =', python_shared_lib_path)
+    print('python_dll_path =', python_dll_path)
 
     from datetime import datetime
 
     print('Writing this information to file:', user_jpy)
     with open(user_jpy, 'w') as f:
         f.write('# Created by jpy/setup.py on ' + str(datetime.now()) + '\n')
-        if python_shared_lib_path:
-            f.write('python.lib = ' + python_shared_lib_path.replace('\\', '\\\\') + '\n')
+        if python_dll_path:
+            f.write('python.lib = ' + python_dll_path.replace('\\', '\\\\') + '\n')
         else:
             f.write('# python.lib = \n')
-        f.write('jvm.lib = ' + jvm_shared_lib_path.replace('\\', '\\\\') + '\n')
+        f.write('jvm.lib = ' + jvm_dll_path.replace('\\', '\\\\') + '\n')
         f.write('jpy.lib = ' + jpy_lib_path.replace('\\', '\\\\') + '\n')
         f.write('jpy.exec_path = ' + jpy_exec_path.replace('\\', '\\\\') + '\n')
 

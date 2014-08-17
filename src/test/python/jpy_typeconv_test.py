@@ -1,6 +1,8 @@
 import unittest
-import jpy
 import array
+import jpyutil
+jpyutil.preload_jvm_dll()
+import jpy
 
 jpy.create_jvm(options=['-Djava.class.path=target/test-classes', '-Xmx512M'])
 

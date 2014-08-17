@@ -1,6 +1,8 @@
 import unittest
-import jpy
 import sys
+import jpyutil
+jpyutil.preload_jvm_dll()
+import jpy
 
 jpy.create_jvm(options=['-Xmx512M'])
 

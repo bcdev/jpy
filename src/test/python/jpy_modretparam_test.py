@@ -1,7 +1,9 @@
 import unittest
 import array
-import jpy
 import sys
+import jpyutil
+jpyutil.preload_jvm_dll()
+import jpy
 
 try:
     import numpy as np
