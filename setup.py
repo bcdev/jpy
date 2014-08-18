@@ -13,7 +13,8 @@ import datetime
 from distutils import log
 from distutils.core import setup
 from distutils.extension import Extension
-import src.main.python.jpyutil as jpyutil
+sys.path = [os.path.join('src', 'main', 'python')] + sys.path
+import jpyutil
 
 src_main_c_dir = os.path.join('src', 'main', 'c')
 src_test_py_dir = os.path.join('src', 'test', 'python')
