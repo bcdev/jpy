@@ -54,5 +54,5 @@ class TestGetClass(unittest.TestCase):
         self.assertEqual(str(e.exception), "Java class 'int[]' not found")
 
 if __name__ == '__main__':
-    print('\nRunning', __file__)
+    print('\nRunning ' + __file__)
     unittest.main()

@@ -95,5 +95,5 @@ class TestMethodOverloads(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    print('\nRunning', __file__)
+    print('\nRunning ' + __file__)
     unittest.main()
