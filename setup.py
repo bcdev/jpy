@@ -65,9 +65,9 @@ if jdk_home_dir is None:
     jdk_home_dir = os.environ.get('JDK_HOME', None)
     if jdk_home_dir:
         os.environ['JAVA_HOME'] = jdk_home_dir
-        log.warn('warning: environment variable "JAVA_HOME" not set, using "JDK_HOME" instead')
+        log.warn('Warning: environment variable "JAVA_HOME" not set, using "JDK_HOME" instead')
 if jdk_home_dir is None:
-    log.error('error: environment variable "JAVA_HOME" must be set to a JDK (>= v1.6) installation directory')
+    log.error('Error: environment variable "JAVA_HOME" must be set to a JDK (>= v1.6) installation directory')
     exit(1)
 
 log.info(
@@ -76,14 +76,13 @@ log.info(
 
 jvm_dll_path = jpyutil.find_jvm_dll_path(jdk_home_dir)
 if not jvm_dll_path:
-    log.error('error: Cannot find any JVM shared library')
+    log.error('Error: Cannot find any JVM shared library')
     exit(1)
 
 jvm_dll_dir = os.path.dirname(jvm_dll_path)
 
 include_dirs = [src_main_c_dir, os.path.join(jdk_home_dir, 'include')]
 library_dirs = [jvm_dll_dir]
-#libraries = [jpyutil.JVM_LIB_NAME, jpyutil.PYTHON_LIB_NAME]
 libraries = [jpyutil.JVM_LIB_NAME]
 define_macros = []
 extra_link_args = []
@@ -108,39 +107,39 @@ with open('README.rst') as file:
 with open('CHANGES.txt') as file:
     changelog = file.read()
 
-dist=setup(name='jpy',
-      description='Bi-directional Python-Java bridge',
-      long_description=long_description + '\n\n' + changelog,
-      version=__version__,
-      platforms='Windows, Linux, Darwin',
-      author=__author__,
-      author_email='norman.fomferra@brockmann-consult.de',
-      maintainer='Brockmann Consult GmbH',
-      maintainer_email='norman.fomferra@brockmann-consult.de',
-      license='GPL 3',
-      url='https://github.com/bcdev/jpy',
-      download_url='https://pypi.python.org/pypi/jpy/' + __version__,
-      package_dir={'': os.path.join('src', 'main', 'python')},
-      py_modules=['jpyutil'],
-      ext_modules=[Extension('jpy',
-                             sources,
-                             include_dirs=include_dirs,
-                             library_dirs=library_dirs,
-                             libraries=libraries,
-                             extra_link_args=extra_link_args,
-                             extra_compile_args=extra_compile_args,
-                             define_macros=define_macros,
-                             depends=headers),
-                   Extension('jdl',
-                             sources = [os.path.join(src_main_c_dir, 'jni/org_jpy_DL.c')],
-                             include_dirs=include_dirs,
-                             library_dirs=library_dirs,
-                             libraries=libraries,
-                             extra_link_args=extra_link_args,
-                             extra_compile_args=extra_compile_args,
-                             define_macros=define_macros,
-                             )
-      ]
+dist = setup(name='jpy',
+             description='Bi-directional Python-Java bridge',
+             long_description=long_description + '\n\n' + changelog,
+             version=__version__,
+             platforms='Windows, Linux, Darwin',
+             author=__author__,
+             author_email='norman.fomferra@brockmann-consult.de',
+             maintainer='Brockmann Consult GmbH',
+             maintainer_email='norman.fomferra@brockmann-consult.de',
+             license='GPL 3',
+             url='https://github.com/bcdev/jpy',
+             download_url='https://pypi.python.org/pypi/jpy/' + __version__,
+             package_dir={'': os.path.join('src', 'main', 'python')},
+             py_modules=['jpyutil'],
+             ext_modules=[Extension('jpy',
+                                    sources,
+                                    include_dirs=include_dirs,
+                                    library_dirs=library_dirs,
+                                    libraries=libraries,
+                                    extra_link_args=extra_link_args,
+                                    extra_compile_args=extra_compile_args,
+                                    define_macros=define_macros,
+                                    depends=headers),
+                          Extension('jdl',
+                                    sources=[os.path.join(src_main_c_dir, 'jni/org_jpy_DL.c')],
+                                    include_dirs=include_dirs,
+                                    library_dirs=library_dirs,
+                                    libraries=libraries,
+                                    extra_link_args=extra_link_args,
+                                    extra_compile_args=extra_compile_args,
+                                    define_macros=define_macros,
+                          )
+             ]
 )
 
 if 'install' in sys.argv:
@@ -151,7 +150,6 @@ if 'install' in sys.argv:
         outputs = f.readlines()
         for output in outputs:
             output = output.strip()
-            print('output=', output)
             filename = os.path.basename(output)
             if filename.endswith('.so') or filename.endswith('.pyd'):
                 if 'jpy' in filename:
@@ -160,13 +158,15 @@ if 'install' in sys.argv:
                     jdl_dll_path = output
 
     if not jpy_dll_path:
-        log.info("importing module jpy in order to retrieve its shared library location...")
+        log.info("Importing module jpy in order to retrieve its shared library location...")
         jpyutil.preload_jvm_dll(jvm_dll_path)
         import jpy
+
         jpy_dll_path = jpy.__file__
 
     if not jdl_dll_path:
-        log.warn("warning: can't find module path for jdl. You will not be able to call Python from Java on Unix platforms.")
+        log.warn(
+            "Warning: can't find module path for jdl. You will not be able to call Python from Java on Unix platforms.")
 
     jpy_config_file_path = jpyutil.get_jpy_config_file_path()
     jpy_config = jpyutil.Properties()
@@ -183,12 +183,12 @@ if 'install' in sys.argv:
         comment = 'Created by jpy/setup.py on ' + str(datetime.datetime.now())
     jpy_config.store(jpy_config_file_path, comment)
 
-    log.info('written jpy configuration to %s' % (jpy_config_file_path,))
+    log.info('Written jpy configuration to %s' % (jpy_config_file_path,))
 
     for key in jpy_config.keys:
-        print('  ', key, '=', jpy_config.values[key])
+        log.info('  %s = %s' % (key, jpy_config.values[key],))
 
-    log.info('compiling Java code...')
+    log.info('Compiling Java code...')
     os.system('mvn clean test-compile')
 
     log.info('executing Python unit tests...')
@@ -199,7 +199,7 @@ if 'install' in sys.argv:
             failures += 1
 
     if failures > 0:
-        log.error('one or more Python unit tests failed. Installation is likely broken.')
+        log.error('One or more Python unit tests failed. Installation is likely broken.')
         exit(1)
 
     log.info("installing compiled Java code...")

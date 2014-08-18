@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * Provides configuration for {@link org.jpy.PyLib}.
@@ -43,12 +44,23 @@ class PyLibConfig {
             try {
                 try (FileReader reader = new FileReader(JPY_CONFIG_FILE)) {
                     properties.load(reader);
+                    Set<String> propertyNames = properties.stringPropertyNames();
+                    for (String propertyName : propertyNames) {
+                        String propertyValue = properties.getProperty(propertyName);
+                        if (propertyValue != null) {
+                            System.setProperty(propertyName, propertyValue);
+                        }
+                    }
                 }
             } catch (IOException e) {
                 System.err.printf("%s: failed to read from '%s'\n", PyLibConfig.class.getName(), JPY_CONFIG_FILE);
                 //e.printStackTrace(System.err);
             }
         }
+    }
+
+    public static Properties getProperties() {
+        return new Properties(properties);
     }
 
     public static String getProperty(String key, boolean mustHave) {

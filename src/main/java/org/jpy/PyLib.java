@@ -123,10 +123,10 @@ public class PyLib {
     /**
      * Throws a runtime exception if Python interpreter is not running. Possible reasons for this are
      * <ul>
-     *     <li>You have not called {@link #startPython(String...)} yet.</li>
-     *     <li>The Python shared library code for the Python interpreter could not be found or could not be be loaded.</li>
-     *     <li>The Python shared library code for the Python 'jpy' module could not be found or could not be be loaded.</li>
-     *     <li>The Python interpreter could not be initialised.</li>
+     * <li>You have not called {@link #startPython(String...)} yet.</li>
+     * <li>The Python shared library code for the Python interpreter could not be found or could not be be loaded.</li>
+     * <li>The Python shared library code for the Python 'jpy' module could not be found or could not be be loaded.</li>
+     * <li>The Python interpreter could not be initialised.</li>
      * </ul>
      */
     public static void assertPythonRuns() {
@@ -270,9 +270,6 @@ public class PyLib {
         }
         try {
             String pythonLibPath = getProperty(PYTHON_LIB_KEY, false);
-            if (pythonLibPath != null) {
-                System.setProperty(PYTHON_LIB_KEY, pythonLibPath);
-            }
 
             if (pythonLibPath != null && getOS() != OS.WINDOWS) {
                 // For PyLib, we load the shared library that was generated for the Python extension module 'jpy'.
@@ -285,8 +282,15 @@ public class PyLib {
                 //      /usr/local/lib/python3.3/dist-packages/jpy.cpython-33m.so: undefined symbol: PyFloat_Type
                 System.out.println("PyLib: loading library: " + pythonLibPath);
 
-                DL.dlopen(pythonLibPath, DL.RTLD_GLOBAL + DL.RTLD_LAZY);
-                //System.load(pythonLibPath);
+                long handle = DL.dlopen(pythonLibPath, DL.RTLD_GLOBAL + DL.RTLD_LAZY);
+                if (handle == 0) {
+                    String dlerror = DL.dlerror();
+                    String message = "Failed to load Python shared library. Use system property 'python.lib' to specify it.";
+                    if (dlerror != null) {
+                        message += " Error: " + dlerror;
+                    }
+                    throw new RuntimeException(message);
+                }
             }
 
 

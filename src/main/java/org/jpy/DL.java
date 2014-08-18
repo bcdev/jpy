@@ -24,7 +24,7 @@ public class DL {
                 System.out.print("DL: load library " + jdlLibPath + "\n");
                 System.load(jdlLibPath);
             } else {
-                throw new RuntimeException("Failed to load 'jdl' shared library. Use system property 'jdl.lib' to specify it.", t);
+                throw new RuntimeException("Failed to load 'jdl' shared library. You can use system property 'jdl.lib' to specify it.", t);
             }
         }
     }
