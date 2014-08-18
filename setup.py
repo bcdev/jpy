@@ -182,7 +182,7 @@ if 'install' in sys.argv:
         comment = 'Updated by jpy/setup.py on ' + str(datetime.datetime.now())
     else:
         comment = 'Created by jpy/setup.py on ' + str(datetime.datetime.now())
-    jpy_config.store(jpy_config_file_path, comment)
+    jpy_config.store(jpy_config_file_path, comments=[comment])
 
     log.info('Written jpy configuration to %s' % (jpy_config_file_path,))
 
