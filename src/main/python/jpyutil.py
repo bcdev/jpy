@@ -4,25 +4,19 @@ import os.path
 import platform
 import ctypes
 import ctypes.util
-# import pprint
-
-# pprint.pprint(sysconfig.get_config_vars())
-
-IS64BIT = sys.maxsize > 2 ** 32
 
 
 def _get_python_lib_name():
-    if platform.system() is 'Windows':
-        return 'python' + str(sys.version_info.major) + str(sys.version_info.minor)
-    else:
-        if sys.version_info.major >= 3:
-            return 'python' + sysconfig.get_config_var('VERSION') + sys.abiflags
-        else:
-            return 'python' + sysconfig.get_config_var('VERSION')
+    try:
+        abiflags = sys.abiflags
+    except AttributeError:
+        abiflags = ''
+    return 'python' + sysconfig.get_config_var('VERSION') + abiflags
 
 
 PYTHON_LIB_NAME = _get_python_lib_name()
 JVM_LIB_NAME = 'jvm'
+IS64BIT = sys.maxsize > 2 ** 32
 
 
 def _get_unique_config_values(names):
@@ -120,9 +114,7 @@ def _find_file(search_dirs, *filenames):
         dir = os.path.normpath(dir)
         for filename in filenames:
             path = os.path.join(dir, filename)
-            print('Check:', path)
             if os.path.exists(path):
-                print('Found:', path)
                 return path
     return None
 
