@@ -1,6 +1,5 @@
 #include "org_jpy_DL.h"
 
-
 #if !defined(_WIN32) && !defined(__CYGWIN__)
 
 #include <dlfcn.h>
@@ -72,6 +71,12 @@ JNIEXPORT jstring JNICALL Java_org_jpy_DL_dlerror
 }
 
 #else /* !defined(_WIN32) && !defined(__CYGWIN__) */
+
+// Dummy DLL entry point for Python 2.7 (Windows requires it)
+__declspec(dllexport) void initjdl(void) { }
+
+// Dummy DLL entry point for Python 3.3+ (Windows requires it)
+__declspec(dllexport) void* PyInit_jdl(void) { return NULL; }
 
 /*
  * Class:     org_jpy_DL
