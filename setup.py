@@ -10,6 +10,7 @@ import os
 import os.path
 import platform
 import datetime
+from distutils import log
 from distutils.core import setup
 from distutils.extension import Extension
 import src.main.python.jpyutil as jpyutil
@@ -64,25 +65,26 @@ if jdk_home_dir is None:
     jdk_home_dir = os.environ.get('JDK_HOME', None)
     if jdk_home_dir:
         os.environ['JAVA_HOME'] = jdk_home_dir
-        print('Warning: Environment variable "JAVA_HOME" not set, using "JDK_HOME" instead')
+        log.warn('warning: environment variable "JAVA_HOME" not set, using "JDK_HOME" instead')
 if jdk_home_dir is None:
-    print('Error: Environment variable "JAVA_HOME" must be set to a JDK (>= v1.6) installation directory')
+    log.error('error: environment variable "JAVA_HOME" must be set to a JDK (>= v1.6) installation directory')
     exit(1)
 
-print(
+log.info(
     'Building a %s-bit library for a %s system with Java at %s' % (
         '64' if jpyutil.IS64BIT else '32', platform.system(), jdk_home_dir))
 
 jvm_dll_path = jpyutil.find_jvm_dll_path(jdk_home_dir)
 if not jvm_dll_path:
-    print('Error: Cannot find any JVM shared library')
+    log.error('error: Cannot find any JVM shared library')
     exit(1)
 
 jvm_dll_dir = os.path.dirname(jvm_dll_path)
 
 include_dirs = [src_main_c_dir, os.path.join(jdk_home_dir, 'include')]
 library_dirs = [jvm_dll_dir]
-libraries = [jpyutil.JVM_LIB_NAME, jpyutil.PYTHON_LIB_NAME]
+#libraries = [jpyutil.JVM_LIB_NAME, jpyutil.PYTHON_LIB_NAME]
+libraries = [jpyutil.JVM_LIB_NAME]
 define_macros = []
 extra_link_args = []
 extra_compile_args = []
@@ -93,6 +95,7 @@ if platform.system() == 'Windows':
     library_dirs += [os.path.join(jdk_home_dir, 'lib')]
 elif platform.system() == 'Linux':
     include_dirs += [os.path.join(jdk_home_dir, 'include', 'linux')]
+    libraries += ['dl']
     extra_link_args += ['-Xlinker', '-rpath', jvm_dll_dir]
 elif platform.system() == 'Darwin':
     include_dirs += [os.path.join(jdk_home_dir, 'include', 'darwin')]
@@ -105,7 +108,7 @@ with open('README.rst') as file:
 with open('CHANGES.txt') as file:
     changelog = file.read()
 
-setup(name='jpy',
+dist=setup(name='jpy',
       description='Bi-directional Python-Java bridge',
       long_description=long_description + '\n\n' + changelog,
       version=__version__,
@@ -127,22 +130,50 @@ setup(name='jpy',
                              extra_link_args=extra_link_args,
                              extra_compile_args=extra_compile_args,
                              define_macros=define_macros,
-                             depends=headers
-      )]
+                             depends=headers),
+                   Extension('jdl',
+                             sources = [os.path.join(src_main_c_dir, 'jni/org_jpy_DL.c')],
+                             include_dirs=include_dirs,
+                             library_dirs=library_dirs,
+                             libraries=libraries,
+                             extra_link_args=extra_link_args,
+                             extra_compile_args=extra_compile_args,
+                             define_macros=define_macros,
+                             )
+      ]
 )
 
 if 'install' in sys.argv:
+    jpy_dll_path = None
+    jdl_dll_path = None
 
-    print("Importing module 'jpy' in order to retrieve its shared library location...")
+    with open('setup.out') as f:
+        outputs = f.readlines()
+        for output in outputs:
+            output = output.strip()
+            print('output=', output)
+            filename = os.path.basename(output)
+            if filename.endswith('.so') or filename.endswith('.pyd'):
+                if 'jpy' in filename:
+                    jpy_dll_path = output
+                if 'jdl' in filename:
+                    jdl_dll_path = output
 
-    jpyutil.preload_jvm_dll(jvm_dll_path)
-    import jpy
+    if not jpy_dll_path:
+        log.info("importing module jpy in order to retrieve its shared library location...")
+        jpyutil.preload_jvm_dll(jvm_dll_path)
+        import jpy
+        jpy_dll_path = jpy.__file__
+
+    if not jdl_dll_path:
+        log.warn("warning: can't find module path for jdl. You will not be able to call Python from Java on Unix platforms.")
 
     jpy_config_file_path = jpyutil.get_jpy_config_file_path()
     jpy_config = jpyutil.Properties()
     if os.path.exists(jpy_config_file_path):
         jpy_config.load(jpy_config_file_path)
-    jpy_config.set_property('jpy.lib', jpy.__file__)
+    jpy_config.set_property('jpy.lib', jpy_dll_path)
+    jpy_config.set_property('jdl.lib', jdl_dll_path)
     jpy_config.set_property('jvm.lib', jvm_dll_path)
     jpy_config.set_property('python.lib', jpyutil.find_python_dll_path())
     jpy_config.set_property('python.prefix', sys.prefix)
@@ -152,15 +183,15 @@ if 'install' in sys.argv:
         comment = 'Created by jpy/setup.py on ' + str(datetime.datetime.now())
     jpy_config.store(jpy_config_file_path, comment)
 
-    print('Written jpy configuration to ', jpy_config_file_path, ':')
+    log.info('written jpy configuration to %s' % (jpy_config_file_path,))
 
     for key in jpy_config.keys:
         print('  ', key, '=', jpy_config.values[key])
 
-    print('Compiling Java code...')
+    log.info('compiling Java code...')
     os.system('mvn clean test-compile')
 
-    print('Executing Python unit tests...')
+    log.info('executing Python unit tests...')
     failures = 0
     for test in python_tests:
         result = os.system(sys.executable + ' ' + test)
@@ -168,8 +199,8 @@ if 'install' in sys.argv:
             failures += 1
 
     if failures > 0:
-        print('One or more Python unit tests failed. Installation is likely broken.')
+        log.error('one or more Python unit tests failed. Installation is likely broken.')
         exit(1)
 
-    print("Installing compiled Java code...")
+    log.info("installing compiled Java code...")
     os.system('mvn install')

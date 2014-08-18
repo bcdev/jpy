@@ -269,7 +269,12 @@ public class PyLib {
             return;
         }
         try {
-            if (getOS() != OS.WINDOWS) {
+            String pythonLibPath = getProperty(PYTHON_LIB_KEY, false);
+            if (pythonLibPath != null) {
+                System.setProperty(PYTHON_LIB_KEY, pythonLibPath);
+            }
+
+            if (pythonLibPath != null && getOS() != OS.WINDOWS) {
                 // For PyLib, we load the shared library that was generated for the Python extension module 'jpy'.
                 // However, to use 'jpy' from Java we also need the Python shared library to be loaded as well.
                 // On Windows, this is done auto-magically, on Linux and Darwin we have to either change 'setup.py'
@@ -278,21 +283,21 @@ public class PyLib {
                 // If the Python shared lib is not found, we get error messages similar to the following:
                 // java.lang.UnsatisfiedLinkError: /usr/local/lib/python3.3/dist-packages/jpy.cpython-33m.so:
                 //      /usr/local/lib/python3.3/dist-packages/jpy.cpython-33m.so: undefined symbol: PyFloat_Type
-                String libPath = getProperty(PYTHON_LIB_KEY, false);
-                if (libPath != null) {
-                    // E.g. libPath = "/usr/lib/libpython3.3m.so";
-                    System.load(libPath);
-                }
+                System.out.println("PyLib: loading library: " + pythonLibPath);
+
+                DL.dlopen(pythonLibPath, DL.RTLD_GLOBAL + DL.RTLD_LAZY);
+                //System.load(pythonLibPath);
             }
 
-            String libPath = getProperty(JPY_LIB_KEY, true);
-            // E.g. libPath = "/usr/local/lib/python3.3/dist-packages/jpy.cpython-33m.so";
 
-            //System.out.println("PyLib: loading library from: " + libPath);
+            String jpyLibPath = getProperty(JPY_LIB_KEY, true);
+            // E.g. jpyLibPath = "/usr/local/lib/python3.3/dist-packages/jpy.cpython-33m.so";
+
+            System.out.println("PyLib: loading library: " + jpyLibPath);
             //System.out.println("PyLib: context class loader: " + Thread.currentThread().getContextClassLoader());
             //System.out.println("PyLib: class class loader:   " + PyLib.class.getClassLoader());
 
-            System.load(libPath);
+            System.load(jpyLibPath);
             sharedLibraryProblem = null;
             sharedLibraryLoaded = true;
         } catch (Throwable t) {

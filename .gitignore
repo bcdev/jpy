@@ -3,6 +3,7 @@ build
 dist
 MANIFEST
 local.dat
+setup.out
 .idea
 *.iml
 *.class
