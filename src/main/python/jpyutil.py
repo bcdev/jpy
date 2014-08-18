@@ -35,7 +35,7 @@ def preload_jvm_dll(lib_path=None, java_home_dir=None):
     if not lib_path:
         raise ValueError('JVM shared library not found')
 
-    return ctypes.CDLL(lib_path)
+    return ctypes.CDLL(lib_path, mode=ctypes.RTLD_GLOBAL)
 
 
 def _add_paths_if_exists(path_list, *paths):
