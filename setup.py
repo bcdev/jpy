@@ -192,7 +192,7 @@ if 'install' in sys.argv:
     log.info('Compiling Java code...')
     os.system('mvn clean test-compile')
 
-    log.info('executing Python unit tests...')
+    log.info('Executing Python unit tests...')
     failures = 0
     for test in python_tests:
         result = os.system(sys.executable + ' ' + test)
@@ -203,5 +203,5 @@ if 'install' in sys.argv:
         log.error('One or more Python unit tests failed. Installation is likely broken.')
         exit(1)
 
-    log.info("installing compiled Java code...")
+    log.info("Installing compiled Java code...")
     os.system('mvn install')
