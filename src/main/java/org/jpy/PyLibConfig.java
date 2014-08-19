@@ -16,6 +16,7 @@ package org.jpy;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.Properties;
 import java.util.Set;
 
@@ -29,32 +30,42 @@ class PyLibConfig {
     public static final File JPY_CONFIG_FILE = new File(System.getProperty("user.home"), ".jpy");
     public static final String PYTHON_LIB_KEY = "python.lib";
     public static final String JPY_LIB_KEY = "jpy.lib";
+    public static final String JPY_CONFIG_KEY = "jpy.config";
 
     public enum OS {
         WINDOWS,
         UNIX,
         MAC_OS,
         SUNOS,
+
     }
 
     private static final Properties properties = new Properties();
 
     static {
-        if (JPY_CONFIG_FILE.exists()) {
-            try {
-                try (FileReader reader = new FileReader(JPY_CONFIG_FILE)) {
-                    properties.load(reader);
-                    Set<String> propertyNames = properties.stringPropertyNames();
-                    for (String propertyName : propertyNames) {
-                        String propertyValue = properties.getProperty(propertyName);
-                        if (propertyValue != null) {
-                            System.setProperty(propertyName, propertyValue);
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                System.err.printf("%s: failed to read from '%s'\n", PyLibConfig.class.getName(), JPY_CONFIG_FILE);
-                //e.printStackTrace(System.err);
+        File file = new File(System.getProperty(JPY_CONFIG_KEY, JPY_CONFIG_FILE.getPath()));
+        if (file.exists()) {
+            loadConfig(file);
+        }
+    }
+
+    private static void loadConfig(File file) {
+        try {
+            try (Reader reader = new FileReader(file)) {
+                loadConfig(reader);
+            }
+        } catch (IOException e) {
+            System.err.printf("%s: %s: %s\n", PyLibConfig.class.getName(), file, e.getMessage());
+        }
+    }
+
+    private static void loadConfig(Reader reader) throws IOException {
+        properties.load(reader);
+        Set<String> propertyNames = properties.stringPropertyNames();
+        for (String propertyName : propertyNames) {
+            String propertyValue = properties.getProperty(propertyName);
+            if (propertyValue != null) {
+                System.setProperty(propertyName, propertyValue);
             }
         }
     }
