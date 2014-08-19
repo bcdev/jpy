@@ -246,3 +246,23 @@ class Properties:
                     else:
                         raise ValueError('illegal Java properties format ' + line)
 
+
+
+if __name__ == '__main__':
+
+    if len(sys.argv) > 3:
+        print('Usage: ' + __file__ + ' [<jpy_config_file> [<java_home_dir>]]')
+        exit(1)
+
+    jpy_config_file = 'jpy.properties'
+    if len(sys.argv) == 2:
+        jpy_config_file = sys.argv[1]
+
+    java_home_dir = None
+    if len(sys.argv) == 3:
+        java_home_dir = sys.argv[2]
+
+    jpy_config = write_jpy_config_file(jpy_config_file, java_home_dir=java_home_dir)
+    print('Written jpy configuration to %s' % (jpy_config_file,))
+    for key in jpy_config.keys:
+        print('  %s = %s' % (key, jpy_config.values[key],))

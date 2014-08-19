@@ -15,7 +15,4 @@ __pycache__/
 jpy.dll
 libjpy.so
 hs_err_pid*
-*.N1
-sysconfig.properties
-
-
+jpy.properties

@@ -12,8 +12,6 @@ import platform
 from distutils import log
 from distutils.core import setup
 from distutils.extension import Extension
-
-sys.path = [os.path.join('src', 'main', 'python')] + sys.path
 import jpyutil
 
 maven = False
@@ -75,12 +73,12 @@ log.info(
     'Building a %s-bit library for a %s system with JDK at %s' % (
         '64' if jpyutil.IS64BIT else '32', platform.system(), jdk_home_dir))
 
-jvm_dll = jpyutil.find_jvm_dll_file(jdk_home_dir)
-if not jvm_dll:
+jvm_dll_file = jpyutil.find_jvm_dll_file(jdk_home_dir)
+if not jvm_dll_file:
     log.error('Error: Cannot find any JVM shared library')
     exit(1)
 
-jvm_dll_dir = os.path.dirname(jvm_dll)
+jvm_dll_dir = os.path.dirname(jvm_dll_file)
 
 include_dirs = [src_main_c_dir, os.path.join(jdk_home_dir, 'include')]
 library_dirs = [jvm_dll_dir]
@@ -102,7 +100,7 @@ elif platform.system() == 'Darwin':
     library_dirs += [os.path.join(sys.exec_prefix, 'lib')]
     extra_link_args += ['-Xlinker', '-rpath', jvm_dll_dir]
 
-with open('README.rst') as file:
+with open('README.txt') as file:
     long_description = file.read()
 
 with open('CHANGES.txt') as file:
@@ -120,26 +118,26 @@ dist = setup(name='jpy',
              license='GPL 3',
              url='https://github.com/bcdev/jpy',
              download_url='https://pypi.python.org/pypi/jpy/' + __version__,
-             package_dir={'': os.path.join('src', 'main', 'python')},
+             #package_dir={'': os.path.join('src', 'main', 'python')},
              py_modules=['jpyutil'],
              ext_modules=[Extension('jpy',
-                                    sources,
+                                    sources=sources,
+                                    depends=headers,
                                     include_dirs=include_dirs,
                                     library_dirs=library_dirs,
                                     libraries=libraries,
                                     extra_link_args=extra_link_args,
                                     extra_compile_args=extra_compile_args,
-                                    define_macros=define_macros,
-                                    depends=headers),
+                                    define_macros=define_macros),
                           Extension('jdl',
                                     sources=[os.path.join(src_main_c_dir, 'jni/org_jpy_DL.c')],
+                                    depends=[os.path.join(src_main_c_dir, 'jni/org_jpy_DL.h')],
                                     include_dirs=include_dirs,
                                     library_dirs=library_dirs,
                                     libraries=libraries,
                                     extra_link_args=extra_link_args,
                                     extra_compile_args=extra_compile_args,
-                                    define_macros=define_macros,
-                          )
+                                    define_macros=define_macros),
              ]
 )
 
@@ -148,11 +146,10 @@ if 'install' in sys.argv:
     ## jpy Configuration
     ##
 
+    import subprocess
+
     jpy_config_file = jpyutil.get_jpy_config_file()
-    jpy_config = jpyutil.write_jpy_config_file(jpy_config_file, java_home_dir=jdk_home_dir)
-    log.info('Written jpy configuration to %s' % (jpy_config_file,))
-    for key in jpy_config.keys:
-        log.info('  %s = %s' % (key, jpy_config.values[key],))
+    code = subprocess.call([sys.executable, 'jpyutil.py', jpy_config_file, jdk_home_dir], shell=True)
 
 if maven:
     ##
@@ -161,6 +158,9 @@ if maven:
 
     import subprocess
     import shutil
+
+    if not os.getenv('JAVA_HOME'):
+        os.environ['JAVA_HOME'] = jdk_home_dir
 
     log.info('Compiling Java code...')
     code = subprocess.call('mvn clean test-compile', shell=True)
@@ -175,7 +175,7 @@ if maven:
             failures += 1
 
     if failures > 0:
-        log.error('One or more Python unit tests failed. Installation is likely broken.')
+        log.error(failures + ' Python unit test(s) failed. Installation is likely broken.')
         exit(1)
 
     log.info("Installing compiled Java code...")
@@ -190,5 +190,5 @@ if maven:
         os.mkdir(lib_dir)
     jar_src_dir = os.path.join('target', jpy_version_jar_filename)
     jar_dst_dir = os.path.join(lib_dir, jpy_plain_jar_filename)
-    log.info("Copying " + jar_src_dir + " to " + jar_dst_dir + "")
+    log.info("Copying " + jar_src_dir + " -> " + jar_dst_dir + "")
     shutil.copy(jar_src_dir, jar_dst_dir)
