@@ -1648,7 +1648,7 @@ int JType_ConvertPyArgToJObjectArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
             if (itemCount <= 0) {
                 PyBuffer_Release(pyBuffer);
                 PyMem_Del(pyBuffer);
-                PyErr_Format(PyExc_ValueError, "illegal buffer configuration, negative item count: %d", itemCount);
+                PyErr_Format(PyExc_ValueError, "illegal buffer argument: negative item count: %d", itemCount);
                 return -1;
             }
 
@@ -1684,10 +1684,14 @@ int JType_ConvertPyArgToJObjectArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
             }
 
             if (pyBuffer->len != itemCount * itemSize) {
+                Py_ssize_t bufferLen = pyBuffer->len;
+                Py_ssize_t bufferItemSize = pyBuffer->itemsize;
                 //printf("%ld, %ld, %ld, %ld\n", pyBuffer->len , pyBuffer->itemsize, itemCount, itemSize);
                 PyBuffer_Release(pyBuffer);
                 PyMem_Del(pyBuffer);
-                PyErr_Format(PyExc_ValueError, "invalid buffer value: expected %d, got %d bytes", itemCount * itemSize, pyBuffer->len);
+                PyErr_Format(PyExc_ValueError,
+                             "illegal buffer argument: expected size was %d bytes, but got %d (expected item size was %d bytes, got %d)",
+                             itemCount * itemSize, bufferLen, itemSize, bufferItemSize);
                 return -1;
             }
 
