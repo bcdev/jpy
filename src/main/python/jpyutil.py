@@ -4,6 +4,7 @@ import os.path
 import platform
 import ctypes
 import ctypes.util
+import datetime
 
 
 def _get_python_lib_name():
@@ -30,7 +31,7 @@ def _get_unique_config_values(names):
 
 def preload_jvm_dll(lib_path=None, java_home_dir=None):
     if not lib_path:
-        lib_path = find_jvm_dll_path(java_home_dir)
+        lib_path = find_jvm_dll_file(java_home_dir)
 
     if not lib_path:
         raise ValueError('JVM shared library not found')
@@ -45,18 +46,59 @@ def _add_paths_if_exists(path_list, *paths):
     return path_list
 
 
-def get_jpy_config_file_path():
+def get_jpy_config_file():
     user_home = os.path.expanduser('~')
     return os.path.join(user_home, '.jpy')
 
 
-def find_jvm_dll_path(java_home_dir=None):
+def _get_module_path(name, fail = False):
+    import imp
+    module = imp.find_module(name)
+    if not module and fail:
+        raise RuntimeError("can't find module '" + name + "'")
+    path = module[1]
+    if not path and fail:
+        raise RuntimeError("module '" + name + "' is missing a file path")
+    return path
+
+
+def write_jpy_config_file(jpy_config_file, java_home_dir=None):
+    if not jpy_config_file:
+        jpy_config_file = get_jpy_config_file()
+    jpy_config = Properties()
+    if os.path.exists(jpy_config_file):
+        jpy_config.load(jpy_config_file)
+    jpy_config.set_property('jpy.lib', _get_module_path('jpy', fail=True))
+    jpy_config.set_property('jdl.lib', _get_module_path('jdl', fail=True))
+    jpy_config.set_property('jvm.lib', find_jvm_dll_file(java_home_dir, fail=True))
+    jpy_config.set_property('python.lib', find_python_dll_file(fail=True))
+    jpy_config.set_property('python.prefix', sys.prefix)
+    jpy_config.set_property('python.executable', sys.executable)
+    if os.path.exists(jpy_config_file):
+        comment = 'Updated by jpy/setup.py on ' + str(datetime.datetime.now())
+    else:
+        comment = 'Created by jpy/setup.py on ' + str(datetime.datetime.now())
+    jpy_config.store(jpy_config_file, comments=[comment])
+    return jpy_config
+
+
+def find_jdk_home_dir():
+    for name in ('JPY_JDK_HOME', 'JDK_HOME', 'JPY_JAVA_HOME', 'JAVA_HOME', ):
+        jdk_home_dir = os.environ.get(name, None)
+        if jdk_home_dir \
+                and os.path.exists(os.path.join(jdk_home_dir, 'include')) \
+                and os.path.exists(os.path.join(jdk_home_dir, 'lib')):
+            return jdk_home_dir
+    return None
+
+
+def find_jvm_dll_file(java_home_dir=None, fail=False):
     if java_home_dir:
-        jvm_dll_path = _find_jvm_dll_path(java_home_dir)
+        jvm_dll_path = _find_jvm_dll_file(java_home_dir)
         if jvm_dll_path:
             return jvm_dll_path
 
-    jpy_config_file_path = get_jpy_config_file_path()
+    jpy_config_file_path = get_jpy_config_file()
     if os.path.exists(jpy_config_file_path):
         jpy_config = Properties()
         jpy_config.load(jpy_config_file_path)
@@ -64,14 +106,18 @@ def find_jvm_dll_path(java_home_dir=None):
         if jvm_dll_path:
             return jvm_dll_path
 
-    for name in ('JPY_JAVA_HOME', 'JAVA_HOME', 'JDK_HOME', 'JRE_HOME', 'JAVA_JRE'):
+    for name in ('JPY_JAVA_HOME', 'JPY_JDK_HOME', 'JPY_JRE_HOME', 'JAVA_HOME', 'JDK_HOME', 'JRE_HOME', 'JAVA_JRE'):
         java_home_dir = os.environ.get(name, None)
         if java_home_dir:
-            jvm_dll_path = _find_jvm_dll_path(java_home_dir)
+            jvm_dll_path = _find_jvm_dll_file(java_home_dir)
             if jvm_dll_path:
                 return jvm_dll_path
 
-    return ctypes.util.find_library(JVM_LIB_NAME)
+    jvm_dll_path = ctypes.util.find_library(JVM_LIB_NAME)
+    if not jvm_dll_path and fail:
+        raise RuntimeError("can't find any JVM shared library")
+
+    return jvm_dll_path
 
 
 def _get_jvm_lib_dirs(java_home_dir):
@@ -91,7 +137,7 @@ def _get_jvm_lib_dirs(java_home_dir):
     )
 
 
-def _find_jvm_dll_path(java_home_dir):
+def _find_jvm_dll_file(java_home_dir):
     if not os.path.exists(java_home_dir):
         return None
 
@@ -119,7 +165,7 @@ def _find_file(search_dirs, *filenames):
     return None
 
 
-def find_python_dll_path():
+def find_python_dll_file(fail=False):
     filenames = _get_unique_config_values(('LDLIBRARY', 'INSTSONAME', 'PY3LIBRARY', 'DLLLIBRARY',))
     search_dirs = _get_unique_config_values(('LDLIBRARYDIR', 'srcdir', 'BINDIR', 'DESTLIB', 'DESTSHARED',
                                              'BINLIBDEST', 'LIBDEST', 'LIBDIR', 'MACHDESTLIB',))
@@ -148,6 +194,9 @@ def find_python_dll_path():
     python_dll_path = _find_file(search_dirs, *filenames)
     if not python_dll_path:
         python_dll_path = ctypes.util.find_library(PYTHON_LIB_NAME)
+
+    if not python_dll_path and fail:
+        raise RuntimeError("can't find any Python shared library")
 
     return python_dll_path
 

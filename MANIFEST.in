@@ -9,3 +9,4 @@ recursive-include src/main/c *.c
 recursive-include src/main/java *.java
 recursive-include src/test/python *.py
 recursive-include src/test/java *.java
+recursive-include lib *.jar

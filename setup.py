@@ -9,12 +9,17 @@ import sys
 import os
 import os.path
 import platform
-import datetime
 from distutils import log
 from distutils.core import setup
 from distutils.extension import Extension
+
 sys.path = [os.path.join('src', 'main', 'python')] + sys.path
 import jpyutil
+
+maven = False
+if 'install' in sys.argv and '--maven' in sys.argv:
+    maven = True
+    sys.argv.remove('--maven')
 
 src_main_c_dir = os.path.join('src', 'main', 'c')
 src_test_py_dir = os.path.join('src', 'test', 'python')
@@ -61,26 +66,21 @@ python_tests = [
 ]
 
 # e.g. java_home_dir = '/home/marta/jdk1.7.0_15'
-jdk_home_dir = os.environ.get('JAVA_HOME', None)
-if jdk_home_dir is None:
-    jdk_home_dir = os.environ.get('JDK_HOME', None)
-    if jdk_home_dir:
-        os.environ['JAVA_HOME'] = jdk_home_dir
-        log.warn('Warning: environment variable "JAVA_HOME" not set, using "JDK_HOME" instead')
+jdk_home_dir = jpyutil.find_jdk_home_dir()
 if jdk_home_dir is None:
     log.error('Error: environment variable "JAVA_HOME" must be set to a JDK (>= v1.6) installation directory')
     exit(1)
 
 log.info(
-    'Building a %s-bit library for a %s system with Java at %s' % (
+    'Building a %s-bit library for a %s system with JDK at %s' % (
         '64' if jpyutil.IS64BIT else '32', platform.system(), jdk_home_dir))
 
-jvm_dll_path = jpyutil.find_jvm_dll_path(jdk_home_dir)
-if not jvm_dll_path:
+jvm_dll = jpyutil.find_jvm_dll_file(jdk_home_dir)
+if not jvm_dll:
     log.error('Error: Cannot find any JVM shared library')
     exit(1)
 
-jvm_dll_dir = os.path.dirname(jvm_dll_path)
+jvm_dll_dir = os.path.dirname(jvm_dll)
 
 include_dirs = [src_main_c_dir, os.path.join(jdk_home_dir, 'include')]
 library_dirs = [jvm_dll_dir]
@@ -144,59 +144,34 @@ dist = setup(name='jpy',
 )
 
 if 'install' in sys.argv:
-    jpy_dll_path = None
-    jdl_dll_path = None
+    ##
+    ## jpy Configuration
+    ##
 
-    with open('setup.out') as f:
-        outputs = f.readlines()
-        for output in outputs:
-            output = output.strip()
-            filename = os.path.basename(output)
-            if filename.endswith('.so') or filename.endswith('.pyd'):
-                if 'jpy' in filename:
-                    jpy_dll_path = output
-                if 'jdl' in filename:
-                    jdl_dll_path = output
-
-    if not jpy_dll_path:
-        log.info("Importing module jpy in order to retrieve its shared library location...")
-        jpyutil.preload_jvm_dll(jvm_dll_path)
-        import jpy
-
-        jpy_dll_path = jpy.__file__
-
-    if not jdl_dll_path:
-        log.warn(
-            "Warning: can't find module path for jdl. You will not be able to call Python from Java on Unix platforms.")
-
-    jpy_config_file_path = jpyutil.get_jpy_config_file_path()
-    jpy_config = jpyutil.Properties()
-    if os.path.exists(jpy_config_file_path):
-        jpy_config.load(jpy_config_file_path)
-    jpy_config.set_property('jpy.lib', jpy_dll_path)
-    jpy_config.set_property('jdl.lib', jdl_dll_path)
-    jpy_config.set_property('jvm.lib', jvm_dll_path)
-    jpy_config.set_property('python.lib', jpyutil.find_python_dll_path())
-    jpy_config.set_property('python.prefix', sys.prefix)
-    if os.path.exists(jpy_config_file_path):
-        comment = 'Updated by jpy/setup.py on ' + str(datetime.datetime.now())
-    else:
-        comment = 'Created by jpy/setup.py on ' + str(datetime.datetime.now())
-    jpy_config.store(jpy_config_file_path, comments=[comment])
-
-    log.info('Written jpy configuration to %s' % (jpy_config_file_path,))
-
+    jpy_config_file = jpyutil.get_jpy_config_file()
+    jpy_config = jpyutil.write_jpy_config_file(jpy_config_file, java_home_dir=jdk_home_dir)
+    log.info('Written jpy configuration to %s' % (jpy_config_file,))
     for key in jpy_config.keys:
         log.info('  %s = %s' % (key, jpy_config.values[key],))
 
+if maven:
+    ##
+    ## Java build
+    ##
+
+    import subprocess
+    import shutil
+
     log.info('Compiling Java code...')
-    os.system('mvn clean test-compile')
+    code = subprocess.call('mvn clean test-compile', shell=True)
+    if code:
+        exit(code)
 
     log.info('Executing Python unit tests...')
     failures = 0
     for test in python_tests:
-        result = os.system(sys.executable + ' ' + test)
-        if result != 0:
+        code = subprocess.call([sys.executable, test], shell=True)
+        if code:
             failures += 1
 
     if failures > 0:
@@ -204,4 +179,16 @@ if 'install' in sys.argv:
         exit(1)
 
     log.info("Installing compiled Java code...")
-    os.system('mvn install')
+    code = subprocess.call('mvn package install', shell=True)
+    if code:
+        exit(code)
+
+    jpy_version_jar_filename = 'jpy-' + __version__ + '.jar'
+    jpy_plain_jar_filename = 'jpy.jar'
+    lib_dir = 'lib'
+    if not os.path.exists(lib_dir):
+        os.mkdir(lib_dir)
+    jar_src_dir = os.path.join('target', jpy_version_jar_filename)
+    jar_dst_dir = os.path.join(lib_dir, jpy_plain_jar_filename)
+    log.info("Copying " + jar_src_dir + " to " + jar_dst_dir + "")
+    shutil.copy(jar_src_dir, jar_dst_dir)
