@@ -9,9 +9,16 @@ import sys
 import os
 import os.path
 import platform
+import subprocess
 from distutils import log
 from distutils.core import setup
 from distutils.extension import Extension
+
+src_main_c_dir = os.path.join('src', 'main', 'c')
+src_main_py_dir = os.path.join('src', 'main', 'python')
+src_test_py_dir = os.path.join('src', 'test', 'python')
+
+sys.path = [src_main_py_dir] + sys.path
 import jpyutil
 
 do_build = 'build' in sys.argv
@@ -20,9 +27,6 @@ do_maven = False
 if '--maven' in sys.argv:
     do_maven = True
     sys.argv.remove('--maven')
-
-src_main_c_dir = os.path.join('src', 'main', 'c')
-src_test_py_dir = os.path.join('src', 'test', 'python')
 
 sources = [
     os.path.join(src_main_c_dir, 'jpy_module.c'),
@@ -50,19 +54,26 @@ headers = [
     os.path.join(src_main_c_dir, 'jni/org_jpy_PyLib.h'),
 ]
 
-python_tests = [
+# Python unit tests that just use Java runtime classes (rt.jar)
+python_java_rt_tests = [
+    os.path.join(src_test_py_dir, 'jpy_rt_test.py'),
+    os.path.join(src_test_py_dir, 'jpy_mt_test.py'),
+    os.path.join(src_test_py_dir, 'jpy_diag_test.py'),
+    #os.path.join(src_test_py_dir, 'jpy_perf_test.py'),
+]
+
+# Python unit tests that require jpy test fixture classes to be accessible
+# via JRE system property '-Djava.class.path=target/test-classes'
+python_java_jpy_tests = [
     os.path.join(src_test_py_dir, 'jpy_array_test.py'),
     os.path.join(src_test_py_dir, 'jpy_field_test.py'),
     os.path.join(src_test_py_dir, 'jpy_retval_test.py'),
-    os.path.join(src_test_py_dir, 'jpy_rt_test.py'),
-    os.path.join(src_test_py_dir, 'jpy_mt_test.py'),
     os.path.join(src_test_py_dir, 'jpy_exception_test.py'),
     os.path.join(src_test_py_dir, 'jpy_overload_test.py'),
     os.path.join(src_test_py_dir, 'jpy_typeconv_test.py'),
     os.path.join(src_test_py_dir, 'jpy_typeres_test.py'),
     os.path.join(src_test_py_dir, 'jpy_modretparam_test.py'),
     os.path.join(src_test_py_dir, 'jpy_gettype_test.py'),
-    os.path.join(src_test_py_dir, 'jpy_diag_test.py'),
 ]
 
 # e.g. java_home_dir = '/home/marta/jdk1.7.0_15'
@@ -120,7 +131,7 @@ dist = setup(name='jpy',
              license='GPL 3',
              url='https://github.com/bcdev/jpy',
              download_url='https://pypi.python.org/pypi/jpy/' + __version__,
-             #package_dir={'': os.path.join('src', 'main', 'python')},
+             package_dir={'': src_main_py_dir},
              py_modules=['jpyutil'],
              ext_modules=[Extension('jpy',
                                     sources=sources,
@@ -151,11 +162,30 @@ if do_install:
     ##
 
     jpy_config_file = jpyutil.get_jpy_config_file()
-    code = os.system(sys.executable + ' jpyutil.py "' + jpy_config_file + '" "' + jdk_home_dir + '"')
+    code = subprocess.call([sys.executable, 'jpyutil.py', jpy_config_file, jdk_home_dir])
 
+
+def _execute_python_scripts(scripts):
+    failures = 0
+    for script in scripts:
+        exit_code = subprocess.call([sys.executable, script])
+        if exit_code:
+            failures += 1
+    return failures
+
+
+if do_build or do_install:
+    ##
+    ## Python unit tests with Java runtime classes
+    ##
+
+    log.info('Executing Python unit tests (against Java runtime classes)...')
+    fails = _execute_python_scripts(python_java_rt_tests)
+    if fails > 0:
+        log.error(str(fails) + ' Python unit test(s) failed. Installation is likely broken.')
+        exit(1)
 
 if (do_build or do_install) and do_maven:
-    import subprocess
     import shutil
     import sysconfig
 
@@ -171,26 +201,22 @@ if (do_build or do_install) and do_maven:
     ##
 
     if not os.getenv('JAVA_HOME'):
+        # make sure Maven uses the same JDK which we have used to compile and link the C-code
         os.environ['JAVA_HOME'] = jdk_home_dir
 
     log.info('Compiling Java code...')
-    code = os.system('mvn clean test-compile')
+    code = subprocess.call(['mvn', 'clean', 'test-compile'], shell=True)
     if code:
         exit(code)
 
     ##
-    ## Python unit tests
+    ## Python unit tests with jpy test classes
     ##
 
-    log.info('Executing Python unit tests...')
-    failures = 0
-    for test in python_tests:
-        code = os.system(sys.executable + ' "' + test + '"')
-        if code:
-            failures += 1
-
-    if failures > 0:
-        log.error(failures + ' Python unit test(s) failed. Installation is likely broken.')
+    log.info('Executing Python unit tests (against jpy test classes)...')
+    fails = _execute_python_scripts(python_java_jpy_tests)
+    if fails > 0:
+        log.error(str(fails) + ' Python unit test(s) failed. Installation is likely broken.')
         exit(1)
 
     ##
@@ -198,7 +224,11 @@ if (do_build or do_install) and do_maven:
     ##
 
     log.info("Installing compiled Java code...")
-    code = os.system('mvn ' + ('install' if 'install' in sys.argv else 'package'))
+    if do_install:
+        goal = 'install'
+    else:
+        goal = 'package'
+    code = subprocess.call(['mvn', goal], shell=True)
     if code:
         exit(code)
 
