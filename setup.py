@@ -30,6 +30,7 @@ if '--maven' in sys.argv:
     do_maven = True
     sys.argv.remove('--maven')
 
+
 sources = [
     os.path.join(src_main_c_dir, 'jpy_module.c'),
     os.path.join(src_main_c_dir, 'jpy_diag.c'),
@@ -61,7 +62,7 @@ python_java_rt_tests = [
     os.path.join(src_test_py_dir, 'jpy_rt_test.py'),
     os.path.join(src_test_py_dir, 'jpy_mt_test.py'),
     os.path.join(src_test_py_dir, 'jpy_diag_test.py'),
-    #os.path.join(src_test_py_dir, 'jpy_perf_test.py'),
+    # os.path.join(src_test_py_dir, 'jpy_perf_test.py'),
 ]
 
 # Python unit tests that require jpy test fixture classes to be accessible
@@ -93,6 +94,37 @@ if not jvm_dll_file:
     log.error('Error: Cannot find any JVM shared library')
     exit(1)
 
+lib_dir = 'lib'
+jpy_jar_file = os.path.join(lib_dir, 'jpy.jar')
+
+
+if do_maven:
+
+    ##
+    ## Java packaging with Maven
+    ##
+
+    if not os.getenv('JAVA_HOME'):
+        # make sure Maven uses the same JDK which we have used to compile and link the C-code
+        os.environ['JAVA_HOME'] = jdk_home_dir
+
+    goal = 'package'
+    log.info("Executing Maven goal '" + goal + "'")
+    code = subprocess.call(['mvn', 'clean', goal, '-DskipTests'], shell=platform.system() == 'Windows')
+    if code:
+        exit(code)
+
+    ##
+    ## Copy result to lib/jpy.jar
+    ##
+
+    if not os.path.exists(lib_dir):
+        os.mkdir(lib_dir)
+    built_jpy_jar_file = os.path.join('target', 'jpy-' + __version__ + '.jar')
+    log.info("Copying " + built_jpy_jar_file + " -> " + jpy_jar_file + "")
+    shutil.copy(built_jpy_jar_file, jpy_jar_file)
+
+
 jvm_dll_dir = os.path.dirname(jvm_dll_file)
 
 include_dirs = [src_main_c_dir, os.path.join(jdk_home_dir, 'include')]
@@ -121,39 +153,40 @@ with open('README.txt') as file:
 with open('CHANGES.txt') as file:
     changelog = file.read()
 
-dist = setup(name='jpy',
-             description='Bi-directional Python-Java bridge',
-             long_description=long_description + '\n\n' + changelog,
-             version=__version__,
-             platforms='Windows, Linux, Darwin',
-             author=__author__,
-             author_email='norman.fomferra@brockmann-consult.de',
-             maintainer='Brockmann Consult GmbH',
-             maintainer_email='norman.fomferra@brockmann-consult.de',
-             license='GPL 3',
-             url='https://github.com/bcdev/jpy',
-             download_url='https://pypi.python.org/pypi/jpy/' + __version__,
-             package_dir={'': src_main_py_dir},
-             py_modules=['jpyutil'],
-             ext_modules=[Extension('jpy',
-                                    sources=sources,
-                                    depends=headers,
-                                    include_dirs=include_dirs,
-                                    library_dirs=library_dirs,
-                                    libraries=libraries,
-                                    extra_link_args=extra_link_args,
-                                    extra_compile_args=extra_compile_args,
-                                    define_macros=define_macros),
-                          Extension('jdl',
-                                    sources=[os.path.join(src_main_c_dir, 'jni/org_jpy_DL.c')],
-                                    depends=[os.path.join(src_main_c_dir, 'jni/org_jpy_DL.h')],
-                                    include_dirs=include_dirs,
-                                    library_dirs=library_dirs,
-                                    libraries=libraries,
-                                    extra_link_args=extra_link_args,
-                                    extra_compile_args=extra_compile_args,
-                                    define_macros=define_macros),
-             ]
+setup(name='jpy',
+      description='Bi-directional Python-Java bridge',
+      long_description=long_description + '\n\n' + changelog,
+      version=__version__,
+      platforms='Windows, Linux, Darwin',
+      author=__author__,
+      author_email='norman.fomferra@brockmann-consult.de',
+      maintainer='Brockmann Consult GmbH',
+      maintainer_email='norman.fomferra@brockmann-consult.de',
+      license='GPL 3',
+      url='https://github.com/bcdev/jpy',
+      download_url='https://pypi.python.org/pypi/jpy/' + __version__,
+      package_dir={'': src_main_py_dir},
+      py_modules=['jpyutil'],
+      package_data=[('', [jpy_jar_file])],
+      ext_modules=[Extension('jpy',
+                             sources=sources,
+                             depends=headers,
+                             include_dirs=include_dirs,
+                             library_dirs=library_dirs,
+                             libraries=libraries,
+                             extra_link_args=extra_link_args,
+                             extra_compile_args=extra_compile_args,
+                             define_macros=define_macros),
+                   Extension('jdl',
+                             sources=[os.path.join(src_main_c_dir, 'jni/org_jpy_DL.c')],
+                             depends=[os.path.join(src_main_c_dir, 'jni/org_jpy_DL.h')],
+                             include_dirs=include_dirs,
+                             library_dirs=library_dirs,
+                             libraries=libraries,
+                             extra_link_args=extra_link_args,
+                             extra_compile_args=extra_compile_args,
+                             define_macros=define_macros),
+      ]
 )
 
 
@@ -169,7 +202,7 @@ def _execute_python_scripts(scripts):
 if do_build or do_install:
     build_dir = os.path.join('build', 'lib.' + sysconfig.get_platform() + '-' + sysconfig.get_python_version())
 
-    # If we don't install we need add current build output dir to PYTHONPATH
+    # If we don't install we need add current build output dir to PYTHONPATH, because we need it for testing
     if do_build and not do_install:
         # Make accessible the build jpy package
         os.environ['PYTHONPATH'] = build_dir
@@ -198,23 +231,11 @@ if do_build or do_install:
         log.error(str(fails) + ' Python unit test(s) failed. Installation is likely broken.')
         exit(1)
 
+
     if do_maven:
 
         ##
-        ## Java compilation with Maven
-        ##
-
-        if not os.getenv('JAVA_HOME'):
-            # make sure Maven uses the same JDK which we have used to compile and link the C-code
-            os.environ['JAVA_HOME'] = jdk_home_dir
-
-        log.info('Compiling Java code...')
-        code = subprocess.call(['mvn', 'clean', 'test-compile'], shell=platform.system() == 'Windows')
-        if code:
-            exit(code)
-
-        ##
-        ## Python unit tests with jpy test classes
+        ## Python unit tests with jpy test classes built by Maven
         ##
 
         log.info('Executing Python unit tests (against jpy test classes)...')
@@ -227,26 +248,14 @@ if do_build or do_install:
         ## Java package or install with Maven
         ##
 
-        log.info("Installing compiled Java code...")
         if do_install:
             goal = 'install'
         else:
-            goal = 'package'
+            goal = 'test'
+        log.info("Executing Maven goal '" + goal + "'")
         arg_line = '-DargLine=-Xmx512m -Djpy.config=' + jpy_config_file + ''
         code = subprocess.call(['mvn', goal, arg_line], shell=platform.system() == 'Windows')
         if code:
             exit(code)
 
-        ##
-        ## Result: lib/jpy.jar
-        ##
 
-        jpy_version_jar_filename = 'jpy-' + __version__ + '.jar'
-        jpy_plain_jar_filename = 'jpy.jar'
-        lib_dir = 'lib'
-        if not os.path.exists(lib_dir):
-            os.mkdir(lib_dir)
-        jar_src_dir = os.path.join('target', jpy_version_jar_filename)
-        jar_dst_dir = os.path.join(lib_dir, jpy_plain_jar_filename)
-        log.info("Copying " + jar_src_dir + " -> " + jar_dst_dir + "")
-        shutil.copy(jar_src_dir, jar_dst_dir)
