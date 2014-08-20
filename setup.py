@@ -176,7 +176,7 @@ if (do_build or do_install) and do_maven:
         os.environ['JAVA_HOME'] = jdk_home_dir
 
     log.info('Compiling Java code...')
-    code = subprocess.call('mvn clean test-compile', shell=True)
+    code = subprocess.call('mvn clean test-compile')
     if code:
         exit(code)
 
@@ -187,7 +187,7 @@ if (do_build or do_install) and do_maven:
     log.info('Executing Python unit tests...')
     failures = 0
     for test in python_tests:
-        code = subprocess.call([sys.executable, test], shell=True)
+        code = subprocess.call([sys.executable, test])
         if code:
             failures += 1
 
@@ -200,7 +200,7 @@ if (do_build or do_install) and do_maven:
     ##
 
     log.info("Installing compiled Java code...")
-    code = subprocess.call(['mvn', 'install' if 'install' in sys.argv else 'package'], shell=True)
+    code = subprocess.call(['mvn', 'install' if 'install' in sys.argv else 'package'])
     if code:
         exit(code)
 
