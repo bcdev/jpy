@@ -14,9 +14,11 @@ from distutils.core import setup
 from distutils.extension import Extension
 import jpyutil
 
-maven = False
-if 'install' in sys.argv and '--maven' in sys.argv:
-    maven = True
+do_build = 'build' in sys.argv
+do_install = 'install' in sys.argv
+do_maven = False
+if '--maven' in sys.argv:
+    do_maven = True
     sys.argv.remove('--maven')
 
 src_main_c_dir = os.path.join('src', 'main', 'c')
@@ -141,23 +143,33 @@ dist = setup(name='jpy',
              ]
 )
 
-if 'install' in sys.argv:
-    ##
-    ## jpy Configuration
-    ##
 
+if do_install:
     import subprocess
+
+    ##
+    ## Default jpy Configuration file
+    ##
 
     jpy_config_file = jpyutil.get_jpy_config_file()
     code = subprocess.call([sys.executable, 'jpyutil.py', jpy_config_file, jdk_home_dir], shell=True)
 
-if maven:
-    ##
-    ## Java build
-    ##
 
+if (do_build or do_install) and do_maven:
     import subprocess
     import shutil
+    import sysconfig
+
+    # If we don't install we need add current build output dir to PYTHONPATH
+    if do_build and not do_install:
+        # Make accessible the build jpy package
+        build_dir = os.path.join('build', 'lib.' + sysconfig.get_platform() + '-' + sysconfig.get_python_version())
+        os.environ['PYTHONPATH'] = build_dir
+        log.info('set PYTHONPATH = ' + build_dir)
+
+    ##
+    ## Java compilation with Maven
+    ##
 
     if not os.getenv('JAVA_HOME'):
         os.environ['JAVA_HOME'] = jdk_home_dir
@@ -166,6 +178,10 @@ if maven:
     code = subprocess.call('mvn clean test-compile', shell=True)
     if code:
         exit(code)
+
+    ##
+    ## Python unit tests
+    ##
 
     log.info('Executing Python unit tests...')
     failures = 0
@@ -178,10 +194,18 @@ if maven:
         log.error(failures + ' Python unit test(s) failed. Installation is likely broken.')
         exit(1)
 
+    ##
+    ## Java package or install with Maven
+    ##
+
     log.info("Installing compiled Java code...")
-    code = subprocess.call('mvn package install', shell=True)
+    code = subprocess.call(['mvn', 'install' if 'install' in sys.argv else 'package'], shell=True)
     if code:
         exit(code)
+
+    ##
+    ## Result: lib/jpy.jar
+    ##
 
     jpy_version_jar_filename = 'jpy-' + __version__ + '.jar'
     jpy_plain_jar_filename = 'jpy.jar'
