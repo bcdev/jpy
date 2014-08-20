@@ -46,13 +46,34 @@ def _add_paths_if_exists(path_list, *paths):
     return path_list
 
 
-def get_jpy_config_file():
+def get_jpy_user_config_file():
     user_home = os.path.expanduser('~')
     return os.path.join(user_home, '.jpy')
 
 
-def _get_module_path(name, fail = False):
+def find_jpy_config_file():
+    """
+    :return: pathname to an existing jpy config file or None
+    """
+    config_file = os.environ.get('JPY_CONFIG')
+    if config_file and os.path.isfile(config_file):
+        return config_file
+
+    module_dir = os.path.dirname(__file__)
+    config_file = os.path.join(module_dir, 'jpy.properties')
+    if os.path.isfile(config_file):
+        return config_file
+
+    config_file = get_jpy_user_config_file()
+    if os.path.isfile(config_file):
+        return config_file
+
+    return None
+
+
+def _get_module_path(name, fail=False):
     import imp
+
     module = imp.find_module(name)
     if not module and fail:
         raise RuntimeError("can't find module '" + name + "'")
@@ -62,9 +83,23 @@ def _get_module_path(name, fail = False):
     return path
 
 
-def write_jpy_config_file(jpy_config_file, java_home_dir=None):
+def read_jpy_config(jpy_config_file, fail=False):
     if not jpy_config_file:
-        jpy_config_file = get_jpy_config_file()
+        jpy_config_file = find_jpy_config_file()
+
+    if not jpy_config_file:
+        if fail:
+            raise RuntimeError("can't find any jpy configuration file")
+        return None
+
+    jpy_config = Properties()
+    jpy_config.load(jpy_config_file)
+    return jpy_config
+
+
+def write_jpy_config(jpy_config_file, java_home_dir=None):
+    if not jpy_config_file:
+        jpy_config_file = get_jpy_user_config_file()
     jpy_config = Properties()
     if os.path.exists(jpy_config_file):
         jpy_config.load(jpy_config_file)
@@ -98,12 +133,10 @@ def find_jvm_dll_file(java_home_dir=None, fail=False):
         if jvm_dll_path:
             return jvm_dll_path
 
-    jpy_config_file_path = get_jpy_config_file()
-    if os.path.exists(jpy_config_file_path):
-        jpy_config = Properties()
-        jpy_config.load(jpy_config_file_path)
+    jpy_config = read_jpy_config(None, fail=fail)
+    if jpy_config:
         jvm_dll_path = jpy_config.get_property('jvm.lib')
-        if jvm_dll_path:
+        if jvm_dll_path and os.path.isfile(jvm_dll_path):
             return jvm_dll_path
 
     for name in ('JPY_JAVA_HOME', 'JPY_JDK_HOME', 'JPY_JRE_HOME', 'JAVA_HOME', 'JDK_HOME', 'JRE_HOME', 'JAVA_JRE'):
@@ -247,7 +280,6 @@ class Properties:
                         raise ValueError('illegal Java properties format ' + line)
 
 
-
 if __name__ == '__main__':
 
     if len(sys.argv) > 3:
@@ -255,14 +287,14 @@ if __name__ == '__main__':
         exit(1)
 
     jpy_config_file = 'jpy.properties'
-    if len(sys.argv) == 2:
+    if len(sys.argv) >= 2:
         jpy_config_file = sys.argv[1]
 
     java_home_dir = None
     if len(sys.argv) == 3:
         java_home_dir = sys.argv[2]
 
-    jpy_config = write_jpy_config_file(jpy_config_file, java_home_dir=java_home_dir)
-    print('Written jpy configuration to %s' % (jpy_config_file,))
+    jpy_config = write_jpy_config(jpy_config_file, java_home_dir=java_home_dir)
+    print('Written jpy configuration to %s:' % (jpy_config_file,))
     for key in jpy_config.keys:
         print('  %s = %s' % (key, jpy_config.values[key],))

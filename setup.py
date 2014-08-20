@@ -10,6 +10,8 @@ import os
 import os.path
 import platform
 import subprocess
+import shutil
+import sysconfig
 from distutils import log
 from distutils.core import setup
 from distutils.extension import Extension
@@ -155,16 +157,6 @@ dist = setup(name='jpy',
 )
 
 
-if do_install:
-    ##
-    ## Default jpy Configuration file
-    ## todo - for do_build write build-local jpy Configuration file
-    ##
-
-    jpy_config_file = jpyutil.get_jpy_config_file()
-    code = subprocess.call([sys.executable, 'jpyutil.py', jpy_config_file, jdk_home_dir])
-
-
 def _execute_python_scripts(scripts):
     failures = 0
     for script in scripts:
@@ -175,6 +167,27 @@ def _execute_python_scripts(scripts):
 
 
 if do_build or do_install:
+    build_dir = os.path.join('build', 'lib.' + sysconfig.get_platform() + '-' + sysconfig.get_python_version())
+
+    # If we don't install we need add current build output dir to PYTHONPATH
+    if do_build and not do_install:
+        # Make accessible the build jpy package
+        os.environ['PYTHONPATH'] = build_dir
+        log.info('set PYTHONPATH = ' + build_dir)
+
+    ##
+    ## Write jpy configuration file
+    ##
+
+    if do_install:
+        jpy_config_file = jpyutil.get_jpy_user_config_file()
+    else:
+        jpy_config_file = os.path.join(build_dir, 'jpy.properties')
+    log.info('Writing jpy configuration to ' + jpy_config_file)
+    code = subprocess.call([sys.executable, os.path.join(src_main_py_dir, 'jpyutil.py'), jpy_config_file, jdk_home_dir])
+    if code:
+        exit(code)
+
     ##
     ## Python unit tests with Java runtime classes
     ##
@@ -186,15 +199,6 @@ if do_build or do_install:
         exit(1)
 
 if (do_build or do_install) and do_maven:
-    import shutil
-    import sysconfig
-
-    # If we don't install we need add current build output dir to PYTHONPATH
-    if do_build and not do_install:
-        # Make accessible the build jpy package
-        build_dir = os.path.join('build', 'lib.' + sysconfig.get_platform() + '-' + sysconfig.get_python_version())
-        os.environ['PYTHONPATH'] = build_dir
-        log.info('set PYTHONPATH = ' + build_dir)
 
     ##
     ## Java compilation with Maven
