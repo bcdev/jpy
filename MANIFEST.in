@@ -2,6 +2,7 @@ include *.txt
 include *.xml
 include doc/make.bat
 include doc/Makefile
+include lib/*.jar
 recursive-include doc *.py
 recursive-include doc *.rst
 recursive-include src/main/c *.h
@@ -10,4 +11,3 @@ recursive-include src/main/java *.java
 recursive-include src/main/python *.py
 recursive-include src/test/java *.java
 recursive-include src/test/python *.py
-recursive-include lib *.jar
