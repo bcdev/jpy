@@ -153,7 +153,7 @@ if do_install:
     ##
 
     jpy_config_file = jpyutil.get_jpy_config_file()
-    code = subprocess.call([sys.executable, 'jpyutil.py', jpy_config_file, jdk_home_dir], shell=True)
+    code = subprocess.call([sys.executable, 'jpyutil.py', jpy_config_file, jdk_home_dir])
 
 
 if (do_build or do_install) and do_maven:
@@ -176,7 +176,7 @@ if (do_build or do_install) and do_maven:
         os.environ['JAVA_HOME'] = jdk_home_dir
 
     log.info('Compiling Java code...')
-    code = subprocess.call('mvn clean test-compile')
+    code = subprocess.call(['mvn', 'clean', 'test-compile'])
     if code:
         exit(code)
 
