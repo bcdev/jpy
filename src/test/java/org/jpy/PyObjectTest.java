@@ -33,12 +33,12 @@ import static org.junit.Assert.*;
 public class PyObjectTest {
     @BeforeClass
     public static void setUp() throws Exception {
-        System.out.println("PyModuleTest: Current thread: " + Thread.currentThread());
+        //System.out.println("PyModuleTest: Current thread: " + Thread.currentThread());
 
         PyLib.startPython();
         assertEquals(true, PyLib.isPythonRunning());
 
-        PyLib.Diag.setFlags(PyLib.Diag.F_METH);
+        //PyLib.Diag.setFlags(PyLib.Diag.F_METH);
     }
 
     @AfterClass

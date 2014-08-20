@@ -29,7 +29,7 @@ public class PyModuleTest {
 
     @BeforeClass
     public static void setUp() throws Exception {
-        System.out.println("PyModuleTest: Current thread: " + Thread.currentThread());
+        //System.out.println("PyModuleTest: Current thread: " + Thread.currentThread());
 
         PyLib.startPython();
         assertEquals(true, PyLib.isPythonRunning());
