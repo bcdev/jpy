@@ -149,6 +149,7 @@ if do_install:
 
     ##
     ## Default jpy Configuration file
+    ## todo - for do_build write build-local jpy Configuration file
     ##
 
     jpy_config_file = jpyutil.get_jpy_config_file()
