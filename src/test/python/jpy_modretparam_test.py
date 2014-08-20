@@ -10,7 +10,7 @@ try:
 except:
     np = None
 
-jpy.create_jvm(options=['-Djava.class.path=target/test-classes', '-Xmx512M'])
+jpy.create_jvm(options=jpyutil.get_jvm_options('-Djava.class.path=target/test-classes', '-Xmx512M'))
 
 
 def annotate_fixture_methods(type, method):

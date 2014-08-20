@@ -198,54 +198,55 @@ if do_build or do_install:
         log.error(str(fails) + ' Python unit test(s) failed. Installation is likely broken.')
         exit(1)
 
-if (do_build or do_install) and do_maven:
+    if do_maven:
 
-    ##
-    ## Java compilation with Maven
-    ##
+        ##
+        ## Java compilation with Maven
+        ##
 
-    if not os.getenv('JAVA_HOME'):
-        # make sure Maven uses the same JDK which we have used to compile and link the C-code
-        os.environ['JAVA_HOME'] = jdk_home_dir
+        if not os.getenv('JAVA_HOME'):
+            # make sure Maven uses the same JDK which we have used to compile and link the C-code
+            os.environ['JAVA_HOME'] = jdk_home_dir
 
-    log.info('Compiling Java code...')
-    code = subprocess.call(['mvn', 'clean', 'test-compile'], shell=True)
-    if code:
-        exit(code)
+        log.info('Compiling Java code...')
+        code = subprocess.call(['mvn', 'clean', 'test-compile'], shell=platform.system() == 'Windows')
+        if code:
+            exit(code)
 
-    ##
-    ## Python unit tests with jpy test classes
-    ##
+        ##
+        ## Python unit tests with jpy test classes
+        ##
 
-    log.info('Executing Python unit tests (against jpy test classes)...')
-    fails = _execute_python_scripts(python_java_jpy_tests)
-    if fails > 0:
-        log.error(str(fails) + ' Python unit test(s) failed. Installation is likely broken.')
-        exit(1)
+        log.info('Executing Python unit tests (against jpy test classes)...')
+        fails = _execute_python_scripts(python_java_jpy_tests)
+        if fails > 0:
+            log.error(str(fails) + ' Python unit test(s) failed. Installation is likely broken.')
+            exit(1)
 
-    ##
-    ## Java package or install with Maven
-    ##
+        ##
+        ## Java package or install with Maven
+        ##
 
-    log.info("Installing compiled Java code...")
-    if do_install:
-        goal = 'install'
-    else:
-        goal = 'package'
-    code = subprocess.call(['mvn', goal], shell=True)
-    if code:
-        exit(code)
+        log.info("Installing compiled Java code...")
+        if do_install:
+            goal = 'install'
+        else:
+            goal = 'package'
+        arg_line = '-DargLine=-Xmx512m -Djpy.config=' + jpy_config_file + ''
+        code = subprocess.call(['mvn', goal, arg_line], shell=platform.system() == 'Windows')
+        if code:
+            exit(code)
 
-    ##
-    ## Result: lib/jpy.jar
-    ##
+        ##
+        ## Result: lib/jpy.jar
+        ##
 
-    jpy_version_jar_filename = 'jpy-' + __version__ + '.jar'
-    jpy_plain_jar_filename = 'jpy.jar'
-    lib_dir = 'lib'
-    if not os.path.exists(lib_dir):
-        os.mkdir(lib_dir)
-    jar_src_dir = os.path.join('target', jpy_version_jar_filename)
-    jar_dst_dir = os.path.join(lib_dir, jpy_plain_jar_filename)
-    log.info("Copying " + jar_src_dir + " -> " + jar_dst_dir + "")
-    shutil.copy(jar_src_dir, jar_dst_dir)
+        jpy_version_jar_filename = 'jpy-' + __version__ + '.jar'
+        jpy_plain_jar_filename = 'jpy.jar'
+        lib_dir = 'lib'
+        if not os.path.exists(lib_dir):
+            os.mkdir(lib_dir)
+        jar_src_dir = os.path.join('target', jpy_version_jar_filename)
+        jar_dst_dir = os.path.join(lib_dir, jpy_plain_jar_filename)
+        log.info("Copying " + jar_src_dir + " -> " + jar_dst_dir + "")
+        shutil.copy(jar_src_dir, jar_dst_dir)

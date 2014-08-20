@@ -39,6 +39,26 @@ def preload_jvm_dll(lib_path=None, java_home_dir=None):
     return ctypes.CDLL(lib_path, mode=ctypes.RTLD_GLOBAL)
 
 
+def _has_jvm_option(options, prefix):
+    for option in options:
+        if option.startswith(prefix):
+            return True
+    return False
+
+
+def get_jvm_options(*options):
+    options = list(options)
+    if not _has_jvm_option(options, '-Djpy.lib='):
+        options.append('-Djpy.lib=' + _get_module_path('jpy', fail=True))
+    if not _has_jvm_option(options, '-Djdl.lib='):
+        options.append('-Djdl.lib=' + _get_module_path('jdl', fail=True))
+    if not _has_jvm_option(options, '-Dpython.lib='):
+        python_dll_file = find_python_dll_file()
+        if python_dll_file:
+            options.append('-Dpython.lib=' + python_dll_file)
+    return options
+
+
 def _add_paths_if_exists(path_list, *paths):
     for path in paths:
         if os.path.exists(path) and not path in path_list:
@@ -57,6 +77,10 @@ def find_jpy_config_file():
     """
     config_file = os.environ.get('JPY_CONFIG')
     if config_file and os.path.isfile(config_file):
+        return config_file
+
+    config_file = os.path.join('.', 'jpy.properties')
+    if os.path.isfile(config_file):
         return config_file
 
     module_dir = os.path.dirname(__file__)

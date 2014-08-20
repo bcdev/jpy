@@ -4,13 +4,14 @@ import jpyutil
 jpyutil.preload_jvm_dll()
 import jpy
 
+
 jpy.create_jvm(options=['-Xmx512M'])
 
-'''
-Tests various Java SE classes from rt.jar
-'''
-class TestString(unittest.TestCase):
 
+class TestString(unittest.TestCase):
+    """
+    Tests various Java SE classes from rt.jar
+    """
 
     def setUp(self):
         self.String = jpy.get_type('java.lang.String')

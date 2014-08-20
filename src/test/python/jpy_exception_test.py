@@ -4,7 +4,8 @@ jpyutil.preload_jvm_dll()
 import jpy
 
 
-jpy.create_jvm(options=['-Djava.class.path=target/test-classes', '-Xmx512M'])
+jpy.create_jvm(options=jpyutil.get_jvm_options('-Djava.class.path=target/test-classes', '-Xmx512M'))
+
 
 class TestExceptions(unittest.TestCase):
 
