@@ -144,12 +144,12 @@ public class PyLib {
     public static native boolean isPythonRunning();
 
     /**
-     * Starts the Python interpreter and imports the 'jpy' module.
+     * Starts the Python interpreter and imports the 'jpy' extension module.
      *
-     * @param options Python interpreter options (not used yet)
-     * @throws RuntimeException is Python could not be started or if the 'jpy' module could not be loaded.
+     * @param paths List of paths that well be prepended to Python's 'sys.path'.
+     * @throws RuntimeException if Python could not be started or if the 'jpy' extension module could not be loaded.
      */
-    public static native void startPython(String... options);
+    public static native void startPython(String... paths);
 
     /**
      * @return The Python interpreter version string.
