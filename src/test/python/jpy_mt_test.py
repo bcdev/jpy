@@ -1,10 +1,9 @@
 import threading
 import unittest
 import jpyutil
-jpyutil.preload_jvm_dll()
-import jpy
 
-jpy.create_jvm(options=['-Xmx512M'])
+jpyutil.init_jvm(jvm_maxmem='512M')
+import jpy
 
 
 class MyThread(threading.Thread):

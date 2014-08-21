@@ -16,6 +16,8 @@ package org.jpy;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Properties;
 import java.util.Set;
@@ -27,30 +29,59 @@ import java.util.Set;
  * @since 0.7
  */
 class PyLibConfig {
+    /**
+     * @deprecated No longer used.
+     */
+    @Deprecated
     public static final File JPY_CONFIG_FILE = new File(System.getProperty("user.home"), ".jpy");
-    public static final String PYTHON_LIB_KEY = "python.lib";
-    public static final String JPY_LIB_KEY = "jpy.lib";
+    public static final String PYTHON_LIB_KEY = "jpy.pythonLib";
+    public static final String JPY_LIB_KEY = "jpy.jpyLib";
+    public static final String JDL_LIB_KEY = "jpy.jdlLib";
     public static final String JPY_CONFIG_KEY = "jpy.config";
+    public static final String JPY_CONFIG_RESOURCE = "jpyconfig.properties";
 
     public enum OS {
         WINDOWS,
         UNIX,
         MAC_OS,
         SUNOS,
-
     }
 
     private static final Properties properties = new Properties();
 
+
     static {
-        File file = new File(System.getProperty(JPY_CONFIG_KEY, JPY_CONFIG_FILE.getPath()));
-        if (file.exists()) {
+        InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(JPY_CONFIG_RESOURCE);
+        if (stream != null) {
+            loadConfig(stream, JPY_CONFIG_RESOURCE);
+        }
+        String path = System.getProperty(JPY_CONFIG_KEY);
+        if (path != null) {
+            File file = new File(path);
+            if (file.isFile()) {
+                loadConfig(file);
+            }
+        }
+        File file = new File(JPY_CONFIG_RESOURCE).getAbsoluteFile();
+        if (file.isFile()) {
             loadConfig(file);
+        }
+    }
+
+    private static void loadConfig(InputStream stream, String name) {
+        try {
+            System.out.printf(String.format("%s: loading configuration resource %s\n", PyLibConfig.class.getName(), name));
+            try (Reader reader = new InputStreamReader(stream)) {
+                loadConfig(reader);
+            }
+        } catch (IOException e) {
+            System.err.printf("%s: %s: %s\n", PyLibConfig.class.getName(), name, e.getMessage());
         }
     }
 
     private static void loadConfig(File file) {
         try {
+            System.out.printf(String.format("%s: loading configuration file %s\n", PyLibConfig.class.getName(), file));
             try (Reader reader = new FileReader(file)) {
                 loadConfig(reader);
             }

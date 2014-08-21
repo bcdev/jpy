@@ -1,15 +1,13 @@
 import unittest
+
 import jpyutil
-jpyutil.preload_jvm_dll()
+
+
+jpyutil.init_jvm(jvm_maxmem='512M', jvm_classpath=['target/test-classes'])
 import jpy
 
 
-jpy.create_jvm(options=jpyutil.get_jvm_options('-Djava.class.path=target/test-classes', '-Xmx512M'))
-
-
 class TestConstructorOverloads(unittest.TestCase):
-
-
     def setUp(self):
         self.Fixture = jpy.get_type('org.jpy.fixtures.ConstructorOverloadTestFixture')
         self.assertIsNotNone(self.Fixture)
@@ -43,8 +41,6 @@ class TestConstructorOverloads(unittest.TestCase):
 
 
 class TestMethodOverloads(unittest.TestCase):
-
-
     def setUp(self):
         self.Fixture = jpy.get_type('org.jpy.fixtures.MethodOverloadTestFixture')
         self.assertIsNotNone(self.Fixture)
@@ -92,7 +88,6 @@ class TestMethodOverloads(unittest.TestCase):
         with  self.assertRaises(RuntimeError, msg='RuntimeError expected') as e:
             fixture.join('x', 'y', 'z', 'u', 'v')
         self.assertEqual(str(e.exception), 'no matching Java method overloads found')
-
 
 
 if __name__ == '__main__':

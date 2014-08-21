@@ -2,10 +2,8 @@ import unittest
 import time
 import random
 import jpyutil
-jpyutil.preload_jvm_dll()
+jpyutil.init_jvm(jvm_maxmem='512M')
 import jpy
-
-jpy.create_jvm(options=['-Xmx512M'])
 
 
 class TestPerformance(unittest.TestCase):

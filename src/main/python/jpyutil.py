@@ -4,7 +4,6 @@ import os.path
 import platform
 import ctypes
 import ctypes.util
-import datetime
 
 
 def _get_python_lib_name():
@@ -15,9 +14,9 @@ def _get_python_lib_name():
     return 'python' + sysconfig.get_config_var('VERSION') + abiflags
 
 
+PYTHON_64BIT = sys.maxsize > 2 ** 32
 PYTHON_LIB_NAME = _get_python_lib_name()
 JVM_LIB_NAME = 'jvm'
-IS64BIT = sys.maxsize > 2 ** 32
 
 
 def _get_unique_config_values(names):
@@ -29,70 +28,11 @@ def _get_unique_config_values(names):
     return values
 
 
-def preload_jvm_dll(lib_path=None, java_home_dir=None):
-    if not lib_path:
-        lib_path = find_jvm_dll_file(java_home_dir)
-
-    if not lib_path:
-        raise ValueError('JVM shared library not found')
-
-    return ctypes.CDLL(lib_path, mode=ctypes.RTLD_GLOBAL)
-
-
-def _has_jvm_option(options, prefix):
-    for option in options:
-        if option.startswith(prefix):
-            return True
-    return False
-
-
-def get_jvm_options(*options):
-    options = list(options)
-    if not _has_jvm_option(options, '-Djpy.lib='):
-        options.append('-Djpy.lib=' + _get_module_path('jpy', fail=True))
-    if not _has_jvm_option(options, '-Djdl.lib='):
-        options.append('-Djdl.lib=' + _get_module_path('jdl', fail=True))
-    if not _has_jvm_option(options, '-Dpython.lib='):
-        python_dll_file = find_python_dll_file()
-        if python_dll_file:
-            options.append('-Dpython.lib=' + python_dll_file)
-    return options
-
-
 def _add_paths_if_exists(path_list, *paths):
     for path in paths:
         if os.path.exists(path) and not path in path_list:
             path_list.append(path)
     return path_list
-
-
-def get_jpy_user_config_file():
-    user_home = os.path.expanduser('~')
-    return os.path.join(user_home, '.jpy')
-
-
-def find_jpy_config_file():
-    """
-    :return: pathname to an existing jpy config file or None
-    """
-    config_file = os.environ.get('JPY_CONFIG')
-    if config_file and os.path.isfile(config_file):
-        return config_file
-
-    config_file = os.path.join('.', 'jpy.properties')
-    if os.path.isfile(config_file):
-        return config_file
-
-    module_dir = os.path.dirname(__file__)
-    config_file = os.path.join(module_dir, 'jpy.properties')
-    if os.path.isfile(config_file):
-        return config_file
-
-    config_file = get_jpy_user_config_file()
-    if os.path.isfile(config_file):
-        return config_file
-
-    return None
 
 
 def _get_module_path(name, fail=False):
@@ -107,37 +47,23 @@ def _get_module_path(name, fail=False):
     return path
 
 
-def read_jpy_config(jpy_config_file, fail=False):
-    if not jpy_config_file:
-        jpy_config_file = find_jpy_config_file()
+def _find_file(search_dirs, *filenames):
+    for dir in search_dirs:
+        dir = os.path.normpath(dir)
+        for filename in filenames:
+            path = os.path.join(dir, filename)
+            if os.path.exists(path):
+                return path
+    return None
 
-    if not jpy_config_file:
-        if fail:
-            raise RuntimeError("can't find any jpy configuration file")
-        return None
 
+def _get_java_api_properties(fail=False):
     jpy_config = Properties()
-    jpy_config.load(jpy_config_file)
-    return jpy_config
-
-
-def write_jpy_config(jpy_config_file, java_home_dir=None):
-    if not jpy_config_file:
-        jpy_config_file = get_jpy_user_config_file()
-    jpy_config = Properties()
-    if os.path.exists(jpy_config_file):
-        jpy_config.load(jpy_config_file)
-    jpy_config.set_property('jpy.lib', _get_module_path('jpy', fail=True))
-    jpy_config.set_property('jdl.lib', _get_module_path('jdl', fail=True))
-    jpy_config.set_property('jvm.lib', find_jvm_dll_file(java_home_dir, fail=True))
-    jpy_config.set_property('python.lib', find_python_dll_file(fail=True))
-    jpy_config.set_property('python.prefix', sys.prefix)
-    jpy_config.set_property('python.executable', sys.executable)
-    if os.path.exists(jpy_config_file):
-        comment = 'Updated by jpy/setup.py on ' + str(datetime.datetime.now())
-    else:
-        comment = 'Created by jpy/setup.py on ' + str(datetime.datetime.now())
-    jpy_config.store(jpy_config_file, comments=[comment])
+    jpy_config.set_property('jpy.jpyLib', _get_module_path('jpy', fail=fail))
+    jpy_config.set_property('jpy.jdlLib', _get_module_path('jdl', fail=fail))
+    jpy_config.set_property('jpy.pythonLib', _find_python_dll_file(fail=fail))
+    jpy_config.set_property('jpy.pythonPrefix', sys.prefix)
+    jpy_config.set_property('jpy.pythonExecutable', sys.executable)
     return jpy_config
 
 
@@ -152,15 +78,14 @@ def find_jdk_home_dir():
 
 
 def find_jvm_dll_file(java_home_dir=None, fail=False):
+    """
+    Try to detect JVM DLL file.
+    :param java_home_dir:
+    :return: pathname if found, else None
+    """
     if java_home_dir:
         jvm_dll_path = _find_jvm_dll_file(java_home_dir)
         if jvm_dll_path:
-            return jvm_dll_path
-
-    jpy_config = read_jpy_config(None, fail=fail)
-    if jpy_config:
-        jvm_dll_path = jpy_config.get_property('jvm.lib')
-        if jvm_dll_path and os.path.isfile(jvm_dll_path):
             return jvm_dll_path
 
     for name in ('JPY_JAVA_HOME', 'JPY_JDK_HOME', 'JPY_JRE_HOME', 'JAVA_HOME', 'JDK_HOME', 'JRE_HOME', 'JAVA_JRE'):
@@ -178,7 +103,7 @@ def find_jvm_dll_file(java_home_dir=None, fail=False):
 
 
 def _get_jvm_lib_dirs(java_home_dir):
-    arch = 'amd64' if IS64BIT else 'i386'
+    arch = 'amd64' if PYTHON_64BIT else 'i386'
     return (os.path.join(java_home_dir, 'bin'),
             os.path.join(java_home_dir, 'bin', 'server'),
             os.path.join(java_home_dir, 'bin', 'client'),
@@ -212,17 +137,7 @@ def _find_jvm_dll_file(java_home_dir):
         return _find_file(search_dirs, 'libjvm.so')
 
 
-def _find_file(search_dirs, *filenames):
-    for dir in search_dirs:
-        dir = os.path.normpath(dir)
-        for filename in filenames:
-            path = os.path.join(dir, filename)
-            if os.path.exists(path):
-                return path
-    return None
-
-
-def find_python_dll_file(fail=False):
+def _find_python_dll_file(fail=False):
     filenames = _get_unique_config_values(('LDLIBRARY', 'INSTSONAME', 'PY3LIBRARY', 'DLLLIBRARY',))
     search_dirs = _get_unique_config_values(('LDLIBRARYDIR', 'srcdir', 'BINDIR', 'DESTLIB', 'DESTSHARED',
                                              'BINLIBDEST', 'LIBDEST', 'LIBDIR', 'MACHDESTLIB',))
@@ -258,10 +173,132 @@ def find_python_dll_file(fail=False):
     return python_dll_path
 
 
+def _read_python_api_config(py_config_file):
+    jpyconfig = Configuration()
+    jpyconfig.load(py_config_file)
+    return jpyconfig
+
+
+def _get_python_api_config(py_config_file=None):
+    if py_config_file:
+        # 1. Try argument, if any
+        return _read_python_api_config(py_config_file)
+
+    try:
+        # 2. Try Python import machinery
+        import jpyconfig
+
+        return jpyconfig
+
+    except ImportError:
+        py_config_file = os.environ.get('JPY_PY_CONFIG', None)
+        if py_config_file:
+            # 3. Try 'JPY_PY_CONFIG' environment variable, if any
+            return _read_python_api_config(py_config_file)
+
+    return None
+
+
+def preload_jvm_dll(jvm_dll_file=None, java_home_dir=None):
+    if not jvm_dll_file:
+        jvm_dll_file = find_jvm_dll_file(java_home_dir=java_home_dir, fail=True)
+    return ctypes.CDLL(jvm_dll_file, mode=ctypes.RTLD_GLOBAL)
+
+
+def init_jvm(py_config_file=None,
+             java_home=None,
+             jvm_dll=None,
+             jvm_maxmem=None,
+             jvm_classpath=None,
+             jvm_properties=None,
+             jvm_options=None):
+    python_api_config = _get_python_api_config(py_config_file=py_config_file)
+    if python_api_config:
+        if not java_home:
+            java_home = getattr(python_api_config, 'java_home', None)
+        if not jvm_dll:
+            jvm_dll = getattr(python_api_config, 'jvm_dll', None)
+        if not jvm_maxmem:
+            jvm_maxmem = getattr(python_api_config, 'jvm_maxmem', None)
+        if not jvm_classpath:
+            jvm_classpath = getattr(python_api_config, 'jvm_classpath', None)
+        if not jvm_properties:
+            jvm_properties = getattr(python_api_config, 'jvm_properties', None)
+        if not jvm_options:
+            jvm_options = getattr(python_api_config, 'jvm_options', None)
+
+    jvm_cp = None
+    if jvm_classpath:
+        for path in jvm_classpath:
+            if jvm_cp:
+                jvm_cp += os.pathsep + path
+            else:
+                jvm_cp = path
+
+    if not java_home:
+        java_home = os.environ.get('JPY_JAVA_HOME', None)
+    if not jvm_dll:
+        jvm_dll = getattr(python_api_config, 'JPY_JVM_DLL', None)
+    if not jvm_cp:
+        jvm_cp = getattr(python_api_config, 'JPY_JVM_CLASSPATH', None)
+    if not jvm_maxmem:
+        jvm_maxmem = getattr(python_api_config, 'JPY_JVM_MAXMEM', None)
+
+    java_api_properties = _get_java_api_properties().values
+
+    if jvm_properties:
+        # Overwrite jpy_config
+        jvm_properties = dict(list(java_api_properties.items()) + list(jvm_properties.items()))
+    else:
+        jvm_properties = java_api_properties
+
+    jvm_options = list(jvm_options) if jvm_options else []
+    if jvm_maxmem:
+        jvm_options.append('-Xmx' + jvm_maxmem)
+    if jvm_cp:
+        jvm_options.append('-Djava.class.path=' + jvm_cp)
+    if jvm_properties:
+        for key in jvm_properties:
+            value = jvm_properties[key]
+            jvm_options.append('-D' + key + '=' + value)
+
+    if not jvm_dll:
+        jvm_dll = find_jvm_dll_file(java_home_dir=java_home)
+
+    print('jvm_dll =', jvm_dll)
+    print('jvm_options =', jvm_options)
+
+    if jvm_dll:
+        cdll = preload_jvm_dll(jvm_dll)
+    else:
+        cdll = None
+
+    import jpy
+
+    jpy.create_jvm(options=jvm_options)
+    return (cdll, jvm_options, )
+
+
+class Configuration:
+    def load(self, path):
+        """
+        Read Python file from 'path', execute it and return object that stores all variables of the Python code as attributes.
+        :param path:
+        :return:
+        """
+        with open(path) as f:
+            code = f.read()
+            exec (code, {}, self.__dict__)
+
+
 class Properties:
-    def __init__(self):
-        self.keys = []
-        self.values = {}
+    def __init__(self, values=None):
+        if values:
+            self.keys = values.keys()
+            self.values = values.copy()
+        else:
+            self.keys = []
+            self.values = {}
 
 
     def set_property(self, key, value):
@@ -305,20 +342,44 @@ class Properties:
 
 
 if __name__ == '__main__':
+    import argparse
+    import datetime
 
-    if len(sys.argv) > 3:
-        print('Usage: ' + __file__ + ' [<jpy_config_file> [<java_home_dir>]]')
+    comment = 'Created by ' + sys.argv[0] + '  on ' + str(datetime.datetime.now())
+
+    parser = argparse.ArgumentParser(description='Generate configuration files for the jpy Python API (jpyconfig.py)\n'
+                                                 'and the jpy Java API (jpyconfig.properties).')
+    parser.add_argument("-o", "--out", action='store', default='.',
+                        help="Output directory for the configuration files.")
+    parser.add_argument("--java_home", action='store', default=None, help="Java home directory.")
+    parser.add_argument("--jvm_dll", action='store', default=None, help="Java shared library location.")
+    args = parser.parse_args()
+
+    java_api_properties_file = os.path.join(args.out, 'jpyconfig.properties')
+    java_api_properties = _get_java_api_properties(fail=True)
+
+    python_api_config_file = os.path.join(args.out, 'jpyconfig.py')
+
+    jvm_dll = args.jvm_dll
+    if not jvm_dll:
+        jvm_dll = find_jvm_dll_file(java_home_dir=args.java_home)
+    if not jvm_dll:
+        print("error: can't determine any JVM shared library")
         exit(1)
 
-    jpy_config_file = 'jpy.properties'
-    if len(sys.argv) >= 2:
-        jpy_config_file = sys.argv[1]
+    with open(python_api_config_file, 'w') as f:
+        f.write('# ' + comment + '\"\n')
+        if args.java_home:
+            f.write('java_home = \"' + args.java_home.replace('\\', '\\\\') + '\"\n')
+        f.write('jvm_dll = \"' + jvm_dll.replace('\\', '\\\\') + '\"\n')
+        f.write('jvm_maxmem = None\n')
+        f.write('jvm_classpath = []\n')
+        f.write('jvm_properties = {}\n')
+        f.write('jvm_options = []\n')
+    print('Written jpy Python configuration to %s:' % (python_api_config_file,))
+    print('  jvm_dll = %s' % (jvm_dll,))
 
-    java_home_dir = None
-    if len(sys.argv) == 3:
-        java_home_dir = sys.argv[2]
-
-    jpy_config = write_jpy_config(jpy_config_file, java_home_dir=java_home_dir)
-    print('Written jpy configuration to %s:' % (jpy_config_file,))
-    for key in jpy_config.keys:
-        print('  %s = %s' % (key, jpy_config.values[key],))
+    java_api_properties.store(java_api_properties_file, comments=[comment])
+    print('Written jpy Java configuration to %s:' % (java_api_properties_file,))
+    for key in java_api_properties.keys:
+        print('  %s = %s' % (key, java_api_properties.values[key],))

@@ -1,16 +1,17 @@
 import unittest
 import array
 import sys
+
 import jpyutil
-jpyutil.preload_jvm_dll()
+
+
+jpyutil.init_jvm(jvm_maxmem='512M', jvm_classpath=['target/test-classes'])
 import jpy
 
 try:
     import numpy as np
 except:
     np = None
-
-jpy.create_jvm(options=jpyutil.get_jvm_options('-Djava.class.path=target/test-classes', '-Xmx512M'))
 
 
 def annotate_fixture_methods(type, method):
@@ -91,7 +92,7 @@ class TestMutableAndReturnParameters(unittest.TestCase):
         fixture = self.Fixture()
 
         # See https://docs.python.org/2/c-api/buffer.html
-        #   "An array can only expose its contents via the old-style buffer interface.
+        # "An array can only expose its contents via the old-style buffer interface.
         #    This limitation does not apply to Python 3, where memoryview objects can be
         #    constructed from arrays, too."
         # >>> import array
@@ -135,7 +136,7 @@ class TestMutableAndReturnParameters(unittest.TestCase):
         fixture = self.Fixture()
 
         # See https://docs.python.org/2/c-api/buffer.html
-        #   "An array can only expose its contents via the old-style buffer interface.
+        # "An array can only expose its contents via the old-style buffer interface.
         #    This limitation does not apply to Python 3, where memoryview objects can be
         #    constructed from arrays, too."
         # >>> import array
@@ -171,7 +172,7 @@ class TestMutableAndReturnParameters(unittest.TestCase):
         fixture = self.Fixture()
 
         # See https://docs.python.org/2/c-api/buffer.html
-        #   "An array can only expose its contents via the old-style buffer interface.
+        # "An array can only expose its contents via the old-style buffer interface.
         #    This limitation does not apply to Python 3, where memoryview objects can be
         #    constructed from arrays, too."
         # >>> import array
@@ -224,7 +225,7 @@ class TestMutableAndReturnParameters(unittest.TestCase):
         fixture = self.Fixture()
 
         # See https://docs.python.org/2/c-api/buffer.html
-        #   "An array can only expose its contents via the old-style buffer interface.
+        # "An array can only expose its contents via the old-style buffer interface.
         #    This limitation does not apply to Python 3, where memoryview objects can be
         #    constructed from arrays, too."
         # >>> import array

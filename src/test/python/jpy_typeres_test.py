@@ -1,21 +1,19 @@
 import unittest
+
 import jpyutil
-jpyutil.preload_jvm_dll()
+
+
+jpyutil.init_jvm(jvm_maxmem='512M', jvm_classpath=['target/test-classes'])
 import jpy
 
 
-jpy.create_jvm(options=jpyutil.get_jvm_options('-Djava.class.path=target/test-classes', '-Xmx512M'))
-
-
 class TestTypeResolution(unittest.TestCase):
-
     def setUp(self):
         self.Fixture = jpy.get_type('org.jpy.fixtures.TypeResolutionTestFixture')
         self.assertIsNotNone(self.Fixture)
 
 
     def test_ThatTypeIsResolvedLate(self):
-
         self.assertTrue('org.jpy.fixtures.TypeResolutionTestFixture' in jpy.types)
         self.assertTrue('org.jpy.fixtures.TypeResolutionTestFixture$SuperThing' in jpy.types)
         self.assertTrue('org.jpy.fixtures.Thing' in jpy.types)
@@ -40,8 +38,6 @@ class TestTypeResolution(unittest.TestCase):
 
         value = thing.getValue()
         self.assertEqual(value, 2011)
-
-
 
 
 if __name__ == '__main__':

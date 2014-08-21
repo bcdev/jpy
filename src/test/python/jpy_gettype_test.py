@@ -1,20 +1,20 @@
 import unittest
 import sys
+
 import jpyutil
-jpyutil.preload_jvm_dll()
+
+
+jpyutil.init_jvm(jvm_maxmem='512M', jvm_classpath=['target/test-classes'])
 import jpy
 
 
-jpy.create_jvm(options=jpyutil.get_jvm_options('-Djava.class.path=target/test-classes', '-Xmx512M'))
-
-
-if sys.version_info >= (3,0,0):
+if sys.version_info >= (3, 0, 0):
     TYPE_STR_PREFIX = '<class '
 else:
     TYPE_STR_PREFIX = '<type '
 
-class TestGetClass(unittest.TestCase):
 
+class TestGetClass(unittest.TestCase):
     def test_get_class_of_primitive_array(self):
         IntArray1D = jpy.get_type('[I')
         self.assertEqual(str(IntArray1D), TYPE_STR_PREFIX + "'[I'>")
@@ -53,6 +53,7 @@ class TestGetClass(unittest.TestCase):
         with  self.assertRaises(ValueError) as e:
             IntArray = jpy.get_type('int[]')
         self.assertEqual(str(e.exception), "Java class 'int[]' not found")
+
 
 if __name__ == '__main__':
     print('\nRunning ' + __file__)

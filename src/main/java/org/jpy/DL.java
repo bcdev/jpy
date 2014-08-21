@@ -19,7 +19,7 @@ public class DL {
         try {
             System.loadLibrary("jdl");
         } catch (Throwable t) {
-            String jdlLibPath = System.getProperty("jdl.lib");
+            String jdlLibPath = System.getProperty("jpy.jdlLib");
             if (jdlLibPath != null) {
                 System.out.print("DL: load library " + jdlLibPath + "\n");
                 System.load(jdlLibPath);

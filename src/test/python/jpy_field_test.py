@@ -1,15 +1,13 @@
 import unittest
+
 import jpyutil
-jpyutil.preload_jvm_dll()
+
+
+jpyutil.init_jvm(jvm_maxmem='512M', jvm_classpath=['target/test-classes'])
 import jpy
 
 
-jpy.create_jvm(options=jpyutil.get_jvm_options('-Djava.class.path=target/test-classes', '-Xmx512M'))
-
-
 class TestFields(unittest.TestCase):
-
-
     def setUp(self):
         self.Fixture = jpy.get_type('org.jpy.fixtures.FieldTestFixture')
         self.assertIsNotNone(self.Fixture)
@@ -99,7 +97,6 @@ class TestFields(unittest.TestCase):
         self.assertAlmostEqual(fixture.dObjInstField, 0.123456789)
         self.assertEqual(fixture.SObjInstField, 'ABC')
         self.assertEqual(fixture.lObjInstField, self.Thing(123))
-
 
 
 if __name__ == '__main__':

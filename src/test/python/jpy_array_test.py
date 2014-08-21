@@ -1,10 +1,11 @@
 import unittest
 import sys
-import jpyutil
-jpyutil.preload_jvm_dll()
-import jpy
 
-jpy.create_jvm(options=jpyutil.get_jvm_options('-Djava.class.path=target/test-classes', '-Xmx512M'))
+import jpyutil
+
+
+jpyutil.init_jvm(jvm_maxmem='512M', jvm_classpath=['target/test-classes'])
+import jpy
 
 
 class TestJavaArrays(unittest.TestCase):

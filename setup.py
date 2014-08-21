@@ -23,13 +23,14 @@ src_test_py_dir = os.path.join('src', 'test', 'python')
 sys.path = [src_main_py_dir] + sys.path
 import jpyutil
 
-do_build = 'build' in sys.argv
+print('Using ' + jpyutil.__file__)
+
 do_install = 'install' in sys.argv
+do_build = 'build' in sys.argv
 do_maven = False
 if '--maven' in sys.argv:
     do_maven = True
     sys.argv.remove('--maven')
-
 
 sources = [
     os.path.join(src_main_c_dir, 'jpy_module.c'),
@@ -62,7 +63,7 @@ python_java_rt_tests = [
     os.path.join(src_test_py_dir, 'jpy_rt_test.py'),
     os.path.join(src_test_py_dir, 'jpy_mt_test.py'),
     os.path.join(src_test_py_dir, 'jpy_diag_test.py'),
-    # os.path.join(src_test_py_dir, 'jpy_perf_test.py'),
+    #os.path.join(src_test_py_dir, 'jpy_perf_test.py'),
 ]
 
 # Python unit tests that require jpy test fixture classes to be accessible
@@ -87,7 +88,7 @@ if jdk_home_dir is None:
 
 log.info(
     'Building a %s-bit library for a %s system with JDK at %s' % (
-        '64' if jpyutil.IS64BIT else '32', platform.system(), jdk_home_dir))
+        '64' if jpyutil.PYTHON_64BIT else '32', platform.system(), jdk_home_dir))
 
 jvm_dll_file = jpyutil.find_jvm_dll_file(jdk_home_dir)
 if not jvm_dll_file:
@@ -98,7 +99,7 @@ lib_dir = 'lib'
 jpy_jar_file = os.path.join(lib_dir, 'jpy.jar')
 
 
-if do_maven:
+if do_maven and do_build:
 
     ##
     ## Java packaging with Maven
@@ -208,16 +209,20 @@ if do_build or do_install:
         os.environ['PYTHONPATH'] = build_dir
         log.info('set PYTHONPATH = ' + build_dir)
 
+    # Make accessible the build jpy package
+    os.environ['PYTHONPATH'] = build_dir
+    log.info('set PYTHONPATH = ' + build_dir)
+
     ##
     ## Write jpy configuration file
     ##
 
-    if do_install:
-        jpy_config_file = jpyutil.get_jpy_user_config_file()
-    else:
-        jpy_config_file = os.path.join(build_dir, 'jpy.properties')
-    log.info('Writing jpy configuration to ' + jpy_config_file)
-    code = subprocess.call([sys.executable, os.path.join(src_main_py_dir, 'jpyutil.py'), jpy_config_file, jdk_home_dir])
+    log.info('Writing jpy configuration of current build to ' + build_dir)
+    code = subprocess.call([sys.executable,
+                            os.path.join(src_main_py_dir, 'jpyutil.py'),
+                            '--out', build_dir,
+                            '--jvm_dll', jvm_dll_file,
+                            '--java_home', jdk_home_dir])
     if code:
         exit(code)
 
@@ -253,7 +258,7 @@ if do_build or do_install:
         else:
             goal = 'test'
         log.info("Executing Maven goal '" + goal + "'")
-        arg_line = '-DargLine=-Xmx512m -Djpy.config=' + jpy_config_file + ''
+        arg_line = '-DargLine=-Xmx512m -Djpy.config=' + os.path.join(build_dir, 'jpyconfig.properties') + ''
         code = subprocess.call(['mvn', goal, arg_line], shell=platform.system() == 'Windows')
         if code:
             exit(code)

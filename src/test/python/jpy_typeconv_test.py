@@ -1,16 +1,14 @@
 import unittest
 import array
+
 import jpyutil
-jpyutil.preload_jvm_dll()
+
+
+jpyutil.init_jvm(jvm_maxmem='512M', jvm_classpath=['target/test-classes'])
 import jpy
 
 
-jpy.create_jvm(options=jpyutil.get_jvm_options('-Djava.class.path=target/test-classes', '-Xmx512M'))
-
-
 class TestTypeConversions(unittest.TestCase):
-
-
     def setUp(self):
         self.Fixture = jpy.get_type('org.jpy.fixtures.TypeConversionTestFixture')
         self.assertTrue('org.jpy.fixtures.TypeConversionTestFixture' in jpy.types)
@@ -31,7 +29,7 @@ class TestTypeConversions(unittest.TestCase):
         fixture = self.Fixture()
 
         # Python int array to Java int array
-        a = array.array('i', [1,2,3])
+        a = array.array('i', [1, 2, 3])
         self.assertEqual(fixture.stringifyIntArrayArg(a), 'int[](1,2,3)')
 
         # integer list

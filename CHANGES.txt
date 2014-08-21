@@ -15,8 +15,30 @@ Version 0.8 (SNAPSHOT)
   - removed need to add JVM path to PATH (Windows) / LD_LIBRARY_PATH (Unix) environment variable
   - removed need to compile Java module using Maven
   - removed need to specify JDK_HOME environment variable, if JAVA_HOME already points to a JDK
-* Added new method jpy.org.PyModule.importBuiltins()
-* Added new method jpy.org.PyModule.extendSysPath()
+* Java API extensions
+  - new method jpy.org.PyModule.importBuiltins()
+  - new method jpy.org.PyModule.extendSysPath()
+* Java API configuration changes:
+  - System property jpy.jpyLib:
+  - System property jpy.jdlLib:
+  - System property jpy.pythonLib:
+  - System property jpy.config:
+  - Loaded from
+    # File ./jpyconfig.properties
+    # Resource /jpyconfig.properties
+    # File ${jpy.config}
+* Python API configuration changes:
+  - Attribute java_home
+  - Attribute jvm_dll
+  - Loaded from
+    # File ./jpyconfig.py
+    # Resource ${jpy-module}/jpyconfig.py
+* Python API extensions
+  - new jpyutil module
+    # jpyutil.init_jvm(...)
+    # jpyutil.preload_jvm_lib(...)
+  - new jpyutil tool
+    # usage: jpyutil.py [-h] [--out OUT] [--java_home JAVA_HOME] [--jvm_dll JVM_DLL]
 
 
 Version 0.7.5

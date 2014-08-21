@@ -1,11 +1,11 @@
 import unittest
 import sys
+
 import jpyutil
-jpyutil.preload_jvm_dll()
+
+print('jpyutil.__file__: ' + jpyutil.__file__)
+jpyutil.init_jvm(jvm_maxmem='512M')
 import jpy
-
-
-jpy.create_jvm(options=['-Xmx512M'])
 
 
 class TestString(unittest.TestCase):
@@ -65,7 +65,7 @@ class TestString(unittest.TestCase):
         s = self.String('Bibo')
         self.assertTrue('getBytes' in self.String.__dict__)
         array = s.getBytes()
-        if sys.version_info >= (3,0,0):
+        if sys.version_info >= (3, 0, 0):
             self.assertEqual(str(type(array)), "<class '[B'>")
         else:
             self.assertEqual(str(type(array)), "<type '[B'>")
@@ -86,8 +86,6 @@ import os
 
 
 class TestFile(unittest.TestCase):
-
-
     def setUp(self):
         self.File = jpy.get_type('java.io.File')
         self.assertIsNotNone(self.File)
@@ -117,7 +115,7 @@ class TestFile(unittest.TestCase):
         f = self.File('/usr/local/bibo')
         self.assertTrue('toPath' in self.File.__dict__)
         path = f.toPath()
-        if sys.version_info >= (3,0,0):
+        if sys.version_info >= (3, 0, 0):
             self.assertEqual(str(type(path)), '<class \'java.nio.file.Path\'>')
         else:
             self.assertEqual(str(type(path)), '<type \'java.nio.file.Path\'>')
@@ -132,14 +130,12 @@ class TestFile(unittest.TestCase):
 
 
 class TestArrayList(unittest.TestCase):
-
     def setUp(self):
         self.ArrayList = jpy.get_type('java.util.ArrayList')
         self.File = jpy.get_type('java.io.File')
 
 
     def test_ArrayList(self):
-
         f = self.File('/usr/local/bibo')
 
         array_list = self.ArrayList()
@@ -173,7 +169,6 @@ class TestArrayList(unittest.TestCase):
 
 
 class TestHashMap(unittest.TestCase):
-
     def setUp(self):
         self.HashMap = jpy.get_type('java.util.HashMap')
         self.File = jpy.get_type('java.io.File')
