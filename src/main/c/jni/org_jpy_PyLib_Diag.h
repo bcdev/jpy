@@ -17,6 +17,10 @@ extern "C" {
 #define org_jpy_PyLib_Diag_F_EXEC 4L
 #undef org_jpy_PyLib_Diag_F_MEM
 #define org_jpy_PyLib_Diag_F_MEM 8L
+#undef org_jpy_PyLib_Diag_F_JVM
+#define org_jpy_PyLib_Diag_F_JVM 16L
+#undef org_jpy_PyLib_Diag_F_ERR
+#define org_jpy_PyLib_Diag_F_ERR 32L
 #undef org_jpy_PyLib_Diag_F_ALL
 #define org_jpy_PyLib_Diag_F_ALL 255L
 /*
