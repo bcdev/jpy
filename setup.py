@@ -203,13 +203,7 @@ def _execute_python_scripts(scripts):
 if do_build or do_install:
     build_dir = os.path.join('build', 'lib.' + sysconfig.get_platform() + '-' + sysconfig.get_python_version())
 
-    # If we don't install we need add current build output dir to PYTHONPATH, because we need it for testing
-    if do_build and not do_install:
-        # Make accessible the build jpy package
-        os.environ['PYTHONPATH'] = build_dir
-        log.info('set PYTHONPATH = ' + build_dir)
-
-    # Make accessible the build jpy package
+    # We add current build output dir to PYTHONPATH, so we can test with platform/Python-dependent build results.
     os.environ['PYTHONPATH'] = build_dir
     log.info('set PYTHONPATH = ' + build_dir)
 
