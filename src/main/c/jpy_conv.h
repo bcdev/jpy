@@ -62,7 +62,7 @@ extern "C" {
 
 
 /**
- * Convert Java string to Python unicode object.
+ * Convert Java string to Python string/unicode object.
  */
 PyObject* JPy_FromJString(JNIEnv* jenv, jstring stringRef);
 
