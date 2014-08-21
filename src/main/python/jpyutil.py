@@ -68,7 +68,7 @@ def _get_java_api_properties(fail=False):
 
 
 def find_jdk_home_dir():
-    for name in ('JPY_JDK_HOME', 'JDK_HOME', 'JPY_JAVA_HOME', 'JAVA_HOME', ):
+    for name in ('JPY_JAVA_HOME', 'JPY_JDK_HOME', 'JAVA_HOME', 'JDK_HOME', ):
         jdk_home_dir = os.environ.get(name, None)
         if jdk_home_dir \
                 and os.path.exists(os.path.join(jdk_home_dir, 'include')) \
@@ -173,16 +173,16 @@ def _find_python_dll_file(fail=False):
     return python_dll_path
 
 
-def _read_python_api_config(py_config_file):
-    jpyconfig = Configuration()
-    jpyconfig.load(py_config_file)
-    return jpyconfig
+def _read_config(config_file):
+    config = Config()
+    config.load(config_file)
+    return config
 
 
-def _get_python_api_config(py_config_file=None):
-    if py_config_file:
+def _get_python_api_config(config_file=None):
+    if config_file:
         # 1. Try argument, if any
-        return _read_python_api_config(py_config_file)
+        return _read_config(config_file)
 
     try:
         # 2. Try Python import machinery
@@ -191,10 +191,10 @@ def _get_python_api_config(py_config_file=None):
         return jpyconfig
 
     except ImportError:
-        py_config_file = os.environ.get('JPY_PY_CONFIG', None)
-        if py_config_file:
+        config_file = os.environ.get('JPY_PY_CONFIG', None)
+        if config_file:
             # 3. Try 'JPY_PY_CONFIG' environment variable, if any
-            return _read_python_api_config(py_config_file)
+            return _read_config(config_file)
 
     return None
 
@@ -205,64 +205,76 @@ def preload_jvm_dll(jvm_dll_file=None, java_home_dir=None):
     return ctypes.CDLL(jvm_dll_file, mode=ctypes.RTLD_GLOBAL)
 
 
-def init_jvm(py_config_file=None,
-             java_home=None,
-             jvm_dll=None,
-             jvm_maxmem=None,
-             jvm_classpath=None,
-             jvm_properties=None,
-             jvm_options=None):
-    python_api_config = _get_python_api_config(py_config_file=py_config_file)
-    if python_api_config:
-        if not java_home:
-            java_home = getattr(python_api_config, 'java_home', None)
-        if not jvm_dll:
-            jvm_dll = getattr(python_api_config, 'jvm_dll', None)
+def get_jvm_options(jvm_maxmem=None,
+                    jvm_classpath=None,
+                    jvm_properties=None,
+                    jvm_options=None,
+                    config=None):
+    if config:
         if not jvm_maxmem:
-            jvm_maxmem = getattr(python_api_config, 'jvm_maxmem', None)
+            jvm_maxmem = getattr(config, 'jvm_maxmem', None)
         if not jvm_classpath:
-            jvm_classpath = getattr(python_api_config, 'jvm_classpath', None)
+            jvm_classpath = getattr(config, 'jvm_classpath', None)
         if not jvm_properties:
-            jvm_properties = getattr(python_api_config, 'jvm_properties', None)
+            jvm_properties = getattr(config, 'jvm_properties', None)
         if not jvm_options:
-            jvm_options = getattr(python_api_config, 'jvm_options', None)
+            jvm_options = getattr(config, 'jvm_options', None)
 
     jvm_cp = None
     if jvm_classpath and len(jvm_classpath) > 0:
         jvm_cp = os.pathsep.join(jvm_classpath)
-
-    if not java_home:
-        java_home = os.environ.get('JPY_JAVA_HOME', None)
-    if not jvm_dll:
-        jvm_dll = getattr(python_api_config, 'JPY_JVM_DLL', None)
     if not jvm_cp:
-        jvm_cp = getattr(python_api_config, 'JPY_JVM_CLASSPATH', None)
+        jvm_cp = getattr(config, 'JPY_JVM_CLASSPATH', None)
+
     if not jvm_maxmem:
-        jvm_maxmem = getattr(python_api_config, 'JPY_JVM_MAXMEM', None)
+        jvm_maxmem = getattr(config, 'JPY_JVM_MAXMEM', None)
 
     java_api_properties = _get_java_api_properties().values
-
     if jvm_properties:
         # Overwrite jpy_config
         jvm_properties = dict(list(java_api_properties.items()) + list(jvm_properties.items()))
     else:
         jvm_properties = java_api_properties
 
-    jvm_options = list(jvm_options) if jvm_options else []
+    options = []
     if jvm_maxmem:
-        jvm_options.append('-Xmx' + jvm_maxmem)
+        options.append('-Xmx' + jvm_maxmem)
     if jvm_cp:
-        jvm_options.append('-Djava.class.path=' + jvm_cp)
+        options.append('-Djava.class.path=' + jvm_cp)
     if jvm_properties:
         for key in jvm_properties:
             value = jvm_properties[key]
-            jvm_options.append('-D' + key + '=' + value)
+            options.append('-D' + key + '=' + value)
+    if jvm_options:
+        options += jvm_options
+
+    return options
+
+
+def init_jvm(java_home=None,
+             jvm_dll=None,
+             jvm_maxmem=None,
+             jvm_classpath=None,
+             jvm_properties=None,
+             jvm_options=None,
+             config_file=None,
+             config=None):
+    if not config:
+        config = _get_python_api_config(config_file=config_file)
+
+    if config:
+        if not java_home:
+            java_home = getattr(config, 'java_home', None)
+        if not jvm_dll:
+            jvm_dll = getattr(config, 'jvm_dll', None)
+
+    if not java_home:
+        java_home = os.environ.get('JPY_JAVA_HOME', None)
+    if not jvm_dll:
+        jvm_dll = getattr(config, 'JPY_JVM_DLL', None)
 
     if not jvm_dll:
         jvm_dll = find_jvm_dll_file(java_home_dir=java_home)
-
-    #print('jvm_dll =', jvm_dll)
-    #print('jvm_options =', jvm_options)
 
     if jvm_dll:
         cdll = preload_jvm_dll(jvm_dll)
@@ -271,11 +283,22 @@ def init_jvm(py_config_file=None,
 
     import jpy
 
-    jpy.create_jvm(options=jvm_options)
+    if not jpy.has_jvm():
+        jvm_options = get_jvm_options(jvm_maxmem=jvm_maxmem,
+                                      jvm_classpath=jvm_classpath,
+                                      jvm_properties=jvm_properties,
+                                      jvm_options=jvm_options,
+                                      config=config)
+        jpy.create_jvm(options=jvm_options)
+    else:
+        jvm_options = None
+
+    # print('jvm_dll =', jvm_dll)
+    # print('jvm_options =', jvm_options)
     return (cdll, jvm_options, )
 
 
-class Configuration:
+class Config:
     def load(self, path):
         """
         Read Python file from 'path', execute it and return object that stores all variables of the Python code as attributes.
