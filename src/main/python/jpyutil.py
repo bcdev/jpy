@@ -228,12 +228,8 @@ def init_jvm(py_config_file=None,
             jvm_options = getattr(python_api_config, 'jvm_options', None)
 
     jvm_cp = None
-    if jvm_classpath:
-        for path in jvm_classpath:
-            if jvm_cp:
-                jvm_cp += os.pathsep + path
-            else:
-                jvm_cp = path
+    if jvm_classpath and len(jvm_classpath) > 0:
+        jvm_cp = os.pathsep.join(jvm_classpath)
 
     if not java_home:
         java_home = os.environ.get('JPY_JAVA_HOME', None)
