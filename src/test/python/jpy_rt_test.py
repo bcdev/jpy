@@ -3,7 +3,7 @@ import sys
 
 import jpyutil
 
-print('jpyutil.__file__: ' + jpyutil.__file__)
+
 jpyutil.init_jvm(jvm_maxmem='512M')
 import jpy
 

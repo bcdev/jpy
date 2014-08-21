@@ -265,8 +265,8 @@ def init_jvm(py_config_file=None,
     if not jvm_dll:
         jvm_dll = find_jvm_dll_file(java_home_dir=java_home)
 
-    print('jvm_dll =', jvm_dll)
-    print('jvm_options =', jvm_options)
+    #print('jvm_dll =', jvm_dll)
+    #print('jvm_options =', jvm_options)
 
     if jvm_dll:
         cdll = preload_jvm_dll(jvm_dll)
