@@ -294,10 +294,10 @@ void JArray_releasebufferproc_double(JPy_JArray* self, Py_buffer* view)
 #elif defined(JPY_COMPAT_27)
 
 #define JPY_PY27_OLD_BUFFER_PROCS \
-    (getreadbufferproc) NULL, \
-    (getwritebufferproc) NULL, \
+    (readbufferproc) NULL, \
+    (writebufferproc) NULL, \
     (segcountproc) NULL, \
-    (getcharbufferproc) NULL,
+    (charbufferproc) NULL,
 
 #else
 
