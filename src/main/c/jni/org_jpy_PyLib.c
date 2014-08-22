@@ -109,13 +109,12 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_isPythonRunning
     return init && JPy_Module != NULL;
 }
 
-
 /*
  * Class:     org_jpy_PyLib
- * Method:    startPython
- * Signature: ([Ljava/lang/String;)V
+ * Method:    startPython0
+ * Signature: ([Ljava/lang/String;)Z
  */
-JNIEXPORT void JNICALL Java_org_jpy_PyLib_startPython
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_startPython0
   (JNIEnv* jenv, jclass jLibClass, jobjectArray jPathArray)
 {
     int pyInit = Py_IsInitialized();
@@ -135,66 +134,83 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_startPython
         pyInit = Py_IsInitialized();
     }
 
-    // If we've got jPathArray, add all entries to Python's "sys.path"
-    //
-    if (pyInit && jPathArray != NULL) {
-        PyObject* pyPathList;
-        PyObject* pyPath;
-        jstring jPath;
-        jsize i, pathCount;
+    if (pyInit) {
 
-        pathCount = (*jenv)->GetArrayLength(jenv, jPathArray);
-        //printf(">> pathCount=%d\n", pathCount);
-        if (pathCount > 0) {
+        // If we've got jPathArray, add all entries to Python's "sys.path"
+        //
+        if (jPathArray != NULL) {
+            PyObject* pyPathList;
+            PyObject* pyPath;
+            jstring jPath;
+            jsize i, pathCount;
+
+            pathCount = (*jenv)->GetArrayLength(jenv, jPathArray);
+            printf(">> pathCount=%d\n", pathCount);
+            if (pathCount > 0) {
+
+                JPy_BEGIN_GIL_STATE
+
+                pyPathList = PySys_GetObject("path");
+                printf(">> pyPathList=%p, len=%ld\n", pyPathList, PyList_Size(pyPathList));
+                if (pyPathList != NULL) {
+                    Py_INCREF(pyPathList);
+                    for (i = pathCount - 1; i >= 0; i--) {
+                        jPath = (*jenv)->GetObjectArrayElement(jenv, jPathArray, i);
+                        //printf(">> i=%d, jPath=%p\n", i, jPath);
+                        if (jPath != NULL) {
+                            pyPath = JPy_FromJString(jenv, jPath);
+                            //printf(">> i=%d, pyPath=%p\n", i, pyPath);
+                            if (pyPath != NULL) {
+                                PyList_Insert(pyPathList, 0, pyPath);
+                            }
+                        }
+                    }
+                    Py_DECREF(pyPathList);
+                }
+                printf(">> pyPathList=%p, len=%ld\n", pyPathList, PyList_Size(pyPathList));
+                printf(">> pyPathList=%p, len=%ld (check)\n", PySys_GetObject("path"), PyList_Size(PySys_GetObject("path")));
+
+                JPy_END_GIL_STATE
+            }
+        }
+
+        // if the global JPy_Module is NULL, then the 'jpy' extension module has not been imported yet.
+        //
+        if (JPy_Module == NULL) {
+            PyObject* pyModule;
 
             JPy_BEGIN_GIL_STATE
 
-            pyPathList = PySys_GetObject("path");
-            //printf(">> pyPathList=%p, len=%d\n", pyPathList, PyList_Size(pyPathList));
-            if (pyPathList != NULL) {
-                Py_INCREF(pyPathList);
-                for (i = pathCount - 1; i >= 0; i--) {
-                    jPath = (*jenv)->GetObjectArrayElement(jenv, jPathArray, i);
-                    //printf(">> i=%d, jPath=%p\n", i, jPath);
-                    if (jPath != NULL) {
-                        pyPath = JPy_FromJString(jenv, jPath);
-                        //printf(">> i=%d, pyPath=%p\n", i, pyPath);
-                        if (pyPath != NULL) {
-                            PyList_Insert(pyPathList, 0, pyPath);
-                        }
-                    }
+            // We import 'jpy' so that Python can call our PyInit_jpy() which sets up a number of
+            // required global variables (including JPy_Module, see above).
+            //
+            pyModule = PyImport_ImportModule("jpy");
+            printf(">> pyModule=%p\n", pyModule);
+            if (pyModule == NULL) {
+                JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "PyLib_startPython: failed to import module 'jpy'\n");
+                if (JPy_DiagFlags != 0 && PyErr_Occurred()) {
+                    PyErr_Print();
                 }
-                Py_DECREF(pyPathList);
+                PyLib_HandlePythonException(jenv);
             }
-            //printf(">> pyPathList=%p, len=%d\n", pyPathList, PyList_Size(pyPathList));
-            //printf(">> pyPathList=%p, len=%d\n", PySys_GetObject("path"), PyList_Size(PySys_GetObject("path")));
 
             JPy_END_GIL_STATE
         }
     }
 
-    // if the global JPy_Module is NULL, then the 'jpy' extension module has not been imported yet.
-    //
-    if (pyInit && JPy_Module == NULL) {
-        PyObject* pyModule;
-
-        // We import 'jpy' so that Python can call our PyInit_jpy() which sets up a number of
-        // required global variables (including JPy_Module, see above).
-        //
-        pyModule = PyImport_ImportModule("jpy");
-        //printf(">> pyModule=%p\n", pyModule);
-        if (pyModule == NULL) {
-            JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "PyLib_startPython: failed to import module 'jpy'\n");
-            if (JPy_DiagFlags != 0 && PyErr_Occurred()) {
-                PyErr_Print();
-            }
-            PyLib_HandlePythonException(jenv);
-        }
-    }
-
     JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "PyLib_startPython: exiting: jenv=%p, pyInit=%d, JPy_Module=%p\n", jenv, pyInit, JPy_Module);
 
-    //printf(">> JPy_Module=%p\n", JPy_Module);
+    printf(">> JPy_Module=%p\n", JPy_Module);
+
+    if (!pyInit) {
+        (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, "Failed to initialize Python interpreter.");
+        return JNI_FALSE;
+    }
+    if (JPy_Module == NULL) {
+        (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, "Failed to initialize Python 'jpy' module.");
+        return JNI_FALSE;
+    }
+    return JNI_TRUE;
 }
   
 

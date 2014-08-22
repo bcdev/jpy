@@ -13,11 +13,10 @@
 
 package org.jpy;
 
-import static org.jpy.PyLibConfig.JPY_LIB_KEY;
-import static org.jpy.PyLibConfig.OS;
-import static org.jpy.PyLibConfig.PYTHON_LIB_KEY;
-import static org.jpy.PyLibConfig.getOS;
-import static org.jpy.PyLibConfig.getProperty;
+import java.io.File;
+import java.util.Arrays;
+
+import static org.jpy.PyLibConfig.*;
 
 /**
  * Represents the library that provides the Python interpreter (CPython).
@@ -43,6 +42,10 @@ import static org.jpy.PyLibConfig.getProperty;
  * @since 0.7
  */
 public class PyLib {
+
+    private static String dllFilePath;
+    private static Throwable dllProblem;
+    private static boolean dllLoaded;
 
     /**
      * The kind of callable Python objects.
@@ -117,8 +120,10 @@ public class PyLib {
         }
     }
 
-    private static Throwable sharedLibraryProblem;
-    private static boolean sharedLibraryLoaded;
+    public static String getDllFilePath() {
+        return dllFilePath;
+    }
+
 
     /**
      * Throws a runtime exception if Python interpreter is not running. Possible reasons for this are
@@ -130,8 +135,8 @@ public class PyLib {
      * </ul>
      */
     public static void assertPythonRuns() {
-        if (sharedLibraryProblem != null) {
-            throw new RuntimeException("PyLib not initialized", sharedLibraryProblem);
+        if (dllProblem != null) {
+            throw new RuntimeException("PyLib not initialized", dllProblem);
         }
         if (!isPythonRunning()) {
             throw new RuntimeException("PyLib not initialized");
@@ -147,14 +152,35 @@ public class PyLib {
      * Starts the Python interpreter. It does the following:
      * <ol>
      * <li>Initializes the Python interpreter, if not already running.</li>
-     * <li>Prepends any given paths to Python's 'sys.path' (e.g. so that 'jpy' can be loaded from isolated directories).</li>
+     * <li>Prepends any given extra paths to Python's 'sys.path' (e.g. so that 'jpy' can be loaded from isolated directories).</li>
      * <li>Imports the 'jpy' extension module, if not already done.</li>
      * </ol>
      *
-     * @param paths List of paths that will be prepended to Python's 'sys.path'.
+     * @param extraPaths List of paths that will be prepended to Python's 'sys.path'.
      * @throws RuntimeException if Python could not be started or if the 'jpy' extension module could not be loaded.
      */
-    public static native void startPython(String... paths);
+    public static void startPython(String... extraPaths) {
+        String moduleDirPath;
+        File moduleDir = new File(dllFilePath).getParentFile();
+        if (moduleDir != null && moduleDir.isDirectory()) {
+            moduleDirPath = moduleDir.getPath();
+            String[] pathsNew = new String[1 + extraPaths.length];
+            pathsNew[0] = moduleDirPath;
+            System.arraycopy(extraPaths, 0, pathsNew, 1, extraPaths.length);
+            extraPaths = pathsNew;
+        }
+        if (extraPaths.length > 0) {
+            System.out.println("Starting Python with " + extraPaths.length + " extra path(s):");
+            for (String path : extraPaths) {
+                System.out.println("  " + path);
+            }
+        } else {
+            System.out.println("Starting Python with 0 extra paths:");
+        }
+        startPython0(extraPaths);
+    }
+
+    static native boolean startPython0(String... paths);
 
     /**
      * @return The Python interpreter version string.
@@ -270,7 +296,7 @@ public class PyLib {
                                            Class<T> returnType);
 
     private static void loadLib() {
-        if (sharedLibraryLoaded || sharedLibraryProblem != null) {
+        if (dllLoaded || dllProblem != null) {
             return;
         }
         try {
@@ -299,18 +325,19 @@ public class PyLib {
             }
 
 
-            String jpyLibPath = getProperty(JPY_LIB_KEY, true);
-            // E.g. jpyLibPath = "/usr/local/lib/python3.3/dist-packages/jpy.cpython-33m.so";
+            // E.g. dllFilePath = "/usr/local/lib/python3.3/dist-packages/jpy.cpython-33m.so";
+            dllFilePath = getProperty(JPY_LIB_KEY, true);
+            dllFilePath = new File(dllFilePath).getAbsolutePath();
 
-            System.out.println("PyLib: loading library: " + jpyLibPath);
+            System.out.println("PyLib: loading library: " + dllFilePath);
             //System.out.println("PyLib: context class loader: " + Thread.currentThread().getContextClassLoader());
             //System.out.println("PyLib: class class loader:   " + PyLib.class.getClassLoader());
 
-            System.load(jpyLibPath);
-            sharedLibraryProblem = null;
-            sharedLibraryLoaded = true;
+            System.load(dllFilePath);
+            dllProblem = null;
+            dllLoaded = true;
         } catch (Throwable t) {
-            sharedLibraryProblem = t;
+            dllProblem = t;
             throw t;
         }
     }

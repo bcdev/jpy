@@ -25,12 +25,13 @@ import jpyutil
 
 print('Using ' + jpyutil.__file__)
 
-do_install = 'install' in sys.argv
-do_build = 'build' in sys.argv
 do_maven = False
 if '--maven' in sys.argv:
     do_maven = True
     sys.argv.remove('--maven')
+else:
+    print(
+    'Note that you can use non-standard global option <--maven> to force a Java Maven build incl. jpy Java API testing')
 
 sources = [
     os.path.join(src_main_c_dir, 'jpy_module.c'),
@@ -63,7 +64,7 @@ python_java_rt_tests = [
     os.path.join(src_test_py_dir, 'jpy_rt_test.py'),
     os.path.join(src_test_py_dir, 'jpy_mt_test.py'),
     os.path.join(src_test_py_dir, 'jpy_diag_test.py'),
-    #os.path.join(src_test_py_dir, 'jpy_perf_test.py'),
+    # os.path.join(src_test_py_dir, 'jpy_perf_test.py'),
 ]
 
 # Python unit tests that require jpy test fixture classes to be accessible
@@ -86,9 +87,8 @@ if jdk_home_dir is None:
     log.error('Error: environment variable "JAVA_HOME" must be set to a JDK (>= v1.6) installation directory')
     exit(1)
 
-log.info(
-    'Building a %s-bit library for a %s system with JDK at %s' % (
-        '64' if jpyutil.PYTHON_64BIT else '32', platform.system(), jdk_home_dir))
+log.info('Building a %s-bit library for a %s system with JDK at %s' % (
+    '64' if jpyutil.PYTHON_64BIT else '32', platform.system(), jdk_home_dir))
 
 jvm_dll_file = jpyutil.find_jvm_dll_file(jdk_home_dir)
 if not jvm_dll_file:
@@ -98,8 +98,7 @@ if not jvm_dll_file:
 lib_dir = 'lib'
 jpy_jar_file = os.path.join(lib_dir, 'jpy.jar')
 
-
-if do_maven and do_build:
+if do_maven:
 
     ##
     ## Java packaging with Maven
@@ -124,7 +123,6 @@ if do_maven and do_build:
     built_jpy_jar_file = os.path.join('target', 'jpy-' + __version__ + '.jar')
     log.info("Copying " + built_jpy_jar_file + " -> " + jpy_jar_file + "")
     shutil.copy(built_jpy_jar_file, jpy_jar_file)
-
 
 jvm_dll_dir = os.path.dirname(jvm_dll_file)
 
@@ -154,69 +152,80 @@ with open('README.txt') as file:
 with open('CHANGES.txt') as file:
     changelog = file.read()
 
-setup(name='jpy',
-      description='Bi-directional Python-Java bridge',
-      long_description=long_description + '\n\n' + changelog,
-      version=__version__,
-      platforms='Windows, Linux, Darwin',
-      author=__author__,
-      author_email='norman.fomferra@brockmann-consult.de',
-      maintainer='Brockmann Consult GmbH',
-      maintainer_email='norman.fomferra@brockmann-consult.de',
-      license='GPL 3',
-      url='https://github.com/bcdev/jpy',
-      download_url='https://pypi.python.org/pypi/jpy/' + __version__,
-      package_dir={'': src_main_py_dir},
-      py_modules=['jpyutil'],
-      package_data=[('', [jpy_jar_file])],
-      ext_modules=[Extension('jpy',
-                             sources=sources,
-                             depends=headers,
-                             include_dirs=include_dirs,
-                             library_dirs=library_dirs,
-                             libraries=libraries,
-                             extra_link_args=extra_link_args,
-                             extra_compile_args=extra_compile_args,
-                             define_macros=define_macros),
-                   Extension('jdl',
-                             sources=[os.path.join(src_main_c_dir, 'jni/org_jpy_DL.c')],
-                             depends=[os.path.join(src_main_c_dir, 'jni/org_jpy_DL.h')],
-                             include_dirs=include_dirs,
-                             library_dirs=library_dirs,
-                             libraries=libraries,
-                             extra_link_args=extra_link_args,
-                             extra_compile_args=extra_compile_args,
-                             define_macros=define_macros),
-      ]
+dist = setup(name='jpy',
+             description='Bi-directional Python-Java bridge',
+             long_description=long_description + '\n\n' + changelog,
+             version=__version__,
+             platforms='Windows, Linux, Darwin',
+             author=__author__,
+             author_email='norman.fomferra@brockmann-consult.de',
+             maintainer='Brockmann Consult GmbH',
+             maintainer_email='norman.fomferra@brockmann-consult.de',
+             license='GPL 3',
+             url='https://github.com/bcdev/jpy',
+             download_url='https://pypi.python.org/pypi/jpy/' + __version__,
+             package_dir={'': src_main_py_dir},
+             py_modules=['jpyutil'],
+             package_data=[('', [jpy_jar_file])],
+             ext_modules=[Extension('jpy',
+                                    sources=sources,
+                                    depends=headers,
+                                    include_dirs=include_dirs,
+                                    library_dirs=library_dirs,
+                                    libraries=libraries,
+                                    extra_link_args=extra_link_args,
+                                    extra_compile_args=extra_compile_args,
+                                    define_macros=define_macros),
+                          Extension('jdl',
+                                    sources=[os.path.join(src_main_c_dir, 'jni/org_jpy_DL.c')],
+                                    depends=[os.path.join(src_main_c_dir, 'jni/org_jpy_DL.h')],
+                                    include_dirs=include_dirs,
+                                    library_dirs=library_dirs,
+                                    libraries=libraries,
+                                    extra_link_args=extra_link_args,
+                                    extra_compile_args=extra_compile_args,
+                                    define_macros=define_macros),
+             ]
 )
 
+if dist.commands and len(dist.commands) > 0:
 
-def _execute_python_scripts(scripts):
-    failures = 0
-    for script in scripts:
-        exit_code = subprocess.call([sys.executable, script])
-        if exit_code:
-            failures += 1
-    return failures
+    #import pprint
+    #pprint.pprint(dist.command_obj)
+
+    def _execute_python_scripts(scripts):
+        failures = 0
+        for script in scripts:
+            exit_code = subprocess.call([sys.executable, script])
+            if exit_code:
+                failures += 1
+        return failures
 
 
-if do_build or do_install:
-    build_dir = os.path.join('build', 'lib.' + sysconfig.get_platform() + '-' + sysconfig.get_python_version())
+    target_dir = None
+    if 'install' in dist.command_obj:
+        target_dir = dist.command_obj['install'].install_lib
+    elif 'build' in dist.command_obj:
+        target_dir = dist.command_obj['build'].build_lib
+    else:
+        target_dir = os.path.join('build', 'lib.' + sysconfig.get_platform() + '-' + sysconfig.get_python_version())
 
-    # We add current build output dir to PYTHONPATH, so we can test with platform/Python-dependent build results.
-    os.environ['PYTHONPATH'] = build_dir
-    log.info('set PYTHONPATH = ' + build_dir)
+    if not 'install' in dist.commands:
+        # We add current build output dir to PYTHONPATH, so we can test with platform/Python-dependent build results.
+        #os.environ['PYTHONPATH'] = target_dir
+        #log.info('set PYTHONPATH = ' + target_dir)
+        pass
 
     ##
-    ## Write jpy configuration file
+    ## Write jpy configuration files
     ##
 
-    log.info('Writing jpy configuration of current build to ' + build_dir)
+    log.info('Writing jpy configuration to ' + target_dir)
     code = subprocess.call([sys.executable,
-                            os.path.join(src_main_py_dir, 'jpyutil.py'),
-                            '--out', build_dir,
+                            os.path.join(target_dir, 'jpyutil.py'),
+                            '--out', target_dir,
                             '--jvm_dll', jvm_dll_file,
-                            '--java_home', jdk_home_dir])
+                            '--java_home', jdk_home_dir, '-f'])
     if code:
         exit(code)
 
@@ -229,7 +238,6 @@ if do_build or do_install:
     if fails > 0:
         log.error(str(fails) + ' Python unit test(s) failed. Installation is likely broken.')
         exit(1)
-
 
     if do_maven:
 
@@ -244,15 +252,15 @@ if do_build or do_install:
             exit(1)
 
         ##
-        ## Java package or install with Maven
+        ## Java install or test with Maven. Goal package has already been done..
         ##
 
-        if do_install:
+        if 'install' in dist.commands:
             goal = 'install'
         else:
             goal = 'test'
         log.info("Executing Maven goal '" + goal + "'")
-        arg_line = '-DargLine=-Xmx512m -Djpy.config=' + os.path.join(build_dir, 'jpyconfig.properties') + ''
+        arg_line = '-DargLine=-Xmx512m -Djpy.config=' + os.path.join(target_dir, 'jpyconfig.properties') + ''
         code = subprocess.call(['mvn', goal, arg_line], shell=platform.system() == 'Windows')
         if code:
             exit(code)

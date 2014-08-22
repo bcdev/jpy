@@ -17,10 +17,10 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_isPythonRunning
 
 /*
  * Class:     org_jpy_PyLib
- * Method:    startPython
- * Signature: ([Ljava/lang/String;)V
+ * Method:    startPython0
+ * Signature: ([Ljava/lang/String;)Z
  */
-JNIEXPORT void JNICALL Java_org_jpy_PyLib_startPython
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_startPython0
   (JNIEnv *, jclass, jobjectArray);
 
 /*

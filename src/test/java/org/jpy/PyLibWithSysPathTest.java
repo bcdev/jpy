@@ -40,8 +40,8 @@ public class PyLibWithSysPathTest {
             System.out.println(PyLibWithSysPathTest.class + " not run: code source is not a directory: " + codeSourceLocation);
             return;
         }
-        File pymodulesDir = new File(codeSourceDir, "pymodules");
 
+        File pymodulesDir = new File(codeSourceDir, "pymodules");
         //assertFalse(PyLib.isPythonRunning());
         System.out.println("PyLibWithSysPathTest: starting Python with 'sys.path' extension: " + pymodulesDir);
         PyLib.startPython(pymodulesDir.getPath());
