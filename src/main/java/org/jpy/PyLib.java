@@ -144,9 +144,14 @@ public class PyLib {
     public static native boolean isPythonRunning();
 
     /**
-     * Starts the Python interpreter and imports the 'jpy' extension module.
+     * Starts the Python interpreter. It does the following:
+     * <ol>
+     * <li>Initializes the Python interpreter, if not already running.</li>
+     * <li>Prepends any given paths to Python's 'sys.path' (e.g. so that 'jpy' can be loaded from isolated directories).</li>
+     * <li>Imports the 'jpy' extension module, if not already done.</li>
+     * </ol>
      *
-     * @param paths List of paths that well be prepended to Python's 'sys.path'.
+     * @param paths List of paths that will be prepended to Python's 'sys.path'.
      * @throws RuntimeException if Python could not be started or if the 'jpy' extension module could not be loaded.
      */
     public static native void startPython(String... paths);

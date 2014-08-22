@@ -146,6 +146,9 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_startPython
         pathCount = (*jenv)->GetArrayLength(jenv, jPathArray);
         //printf(">> pathCount=%d\n", pathCount);
         if (pathCount > 0) {
+
+            JPy_BEGIN_GIL_STATE
+
             pyPathList = PySys_GetObject("path");
             //printf(">> pyPathList=%p, len=%d\n", pyPathList, PyList_Size(pyPathList));
             if (pyPathList != NULL) {
@@ -165,6 +168,8 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_startPython
             }
             //printf(">> pyPathList=%p, len=%d\n", pyPathList, PyList_Size(pyPathList));
             //printf(">> pyPathList=%p, len=%d\n", PySys_GetObject("path"), PyList_Size(PySys_GetObject("path")));
+
+            JPy_END_GIL_STATE
         }
     }
 

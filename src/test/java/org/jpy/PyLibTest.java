@@ -23,7 +23,7 @@ public class PyLibTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        PyLib.startPython("x");
+        PyLib.startPython();
         assertEquals(true, PyLib.isPythonRunning());
     }
 
