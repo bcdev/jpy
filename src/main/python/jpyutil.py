@@ -372,12 +372,20 @@ if __name__ == '__main__':
                         help="Output directory for the configuration files.")
     parser.add_argument("--java_home", action='store', default=None, help="Java home directory.")
     parser.add_argument("--jvm_dll", action='store', default=None, help="Java shared library location.")
+    parser.add_argument("-f", "--force", action='store_true', default=False, help="Force output files to be overwritten.")
     args = parser.parse_args()
 
     java_api_properties_file = os.path.join(args.out, 'jpyconfig.properties')
-    java_api_properties = _get_java_api_properties(fail=True)
+    if not args.force and os.path.exists(java_api_properties_file):
+        print("error: file exists: " + java_api_properties_file + " (use -f to force overwrite)")
+        exit(1)
 
     python_api_config_file = os.path.join(args.out, 'jpyconfig.py')
+    if not args.force and os.path.exists(python_api_config_file):
+        print("error: file exists: " + python_api_config_file + " (use -f to force overwrite)")
+        exit(1)
+
+    java_api_properties = _get_java_api_properties(fail=True)
 
     jvm_dll = args.jvm_dll
     if not jvm_dll:
