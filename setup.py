@@ -31,7 +31,7 @@ if '--maven' in sys.argv:
     sys.argv.remove('--maven')
 else:
     print(
-    'Note that you can use non-standard global option <--maven> to force a Java Maven build incl. jpy Java API testing')
+    'Note that you can use non-standard global option [--maven] to force a Java Maven build incl. jpy Java API testing')
 
 sources = [
     os.path.join(src_main_c_dir, 'jpy_module.c'),
@@ -188,10 +188,13 @@ dist = setup(name='jpy',
              ]
 )
 
-if dist.commands and len(dist.commands) > 0:
+if dist.commands and len(dist.commands) > 0 and dist.command_obj and len(dist.command_obj) > 0:
 
     #import pprint
+    #pprint.pprint(dist.commands)
     #pprint.pprint(dist.command_obj)
+    #pprint.pprint(dist.command_obj['build'].__dict__)
+    #pprint.pprint(dist.command_obj['install'].__dict__)
 
     def _execute_python_scripts(scripts):
         failures = 0
@@ -202,19 +205,16 @@ if dist.commands and len(dist.commands) > 0:
         return failures
 
 
-    target_dir = None
-    if 'install' in dist.command_obj:
+    # User provided 'install (--> dist.commands)
+    if 'install' in dist.commands and 'install' in dist.command_obj:
         target_dir = dist.command_obj['install'].install_lib
+    # 'build' is part of the setup (--> dist.command_obj)
     elif 'build' in dist.command_obj:
         target_dir = dist.command_obj['build'].build_lib
     else:
-        target_dir = os.path.join('build', 'lib.' + sysconfig.get_platform() + '-' + sysconfig.get_python_version())
-
-    if not 'install' in dist.commands:
-        # We add current build output dir to PYTHONPATH, so we can test with platform/Python-dependent build results.
-        #os.environ['PYTHONPATH'] = target_dir
-        #log.info('set PYTHONPATH = ' + target_dir)
-        pass
+        target_dir = None
+        # Nothing to do
+        exit(0)
 
     ##
     ## Write jpy configuration files
@@ -265,4 +265,4 @@ if dist.commands and len(dist.commands) > 0:
         if code:
             exit(code)
 
-
+    log.info("Successful build is in " + target_dir )
