@@ -360,11 +360,53 @@ class Properties:
                         raise ValueError('illegal Java properties format ' + line)
 
 
-if __name__ == '__main__':
+def _execute_python_scripts(scripts):
+    import subprocess
+    failures = 0
+    for script in scripts:
+        exit_code = subprocess.call([sys.executable, script])
+        if exit_code:
+            failures += 1
+    return failures
+
+
+def __contains(list, entry):
+    for item in list:
+        if item == entry or (item.endswith('/') and entry.startswith(item)):
+            return True
+    return False
+
+
+def _list_dir_entries(rootdir, includes=None, excludes=None):
+    rootdir = os.path.normpath(rootdir)
+    rootoffs = len(rootdir) + 1
+    entries = []
+    for (dirpath, dirnames, filenames) in os.walk(rootdir):
+        for filename in filenames:
+            path = os.path.join(dirpath, filename)
+            entry = path[rootoffs:].replace(os.sep, '/')
+            included = not includes or __contains(includes, entry)
+            excluded = not excludes or __contains(excludes, entry)
+            if included and not excluded:
+                entries.append(entry)
+    return (rootdir, entries)
+
+
+def _zip_entries(archive_path, dir, dir_entries, verbose=False):
+    import zipfile
+    if verbose: print("creating '"+archive_path+"' and adding '" + dir + "' to it")
+    with zipfile.ZipFile(archive_path, 'w') as archive:
+        for entry in dir_entries:
+            path = os.path.join(dir, entry.replace('/', os.sep))
+            archive.write(path, arcname=entry)
+            if verbose: print("adding '" + entry + "'")
+
+
+def _main():
     import argparse
     import datetime
 
-    comment = 'Created by ' + sys.argv[0] + '  on ' + str(datetime.datetime.now())
+    comment = 'Created by ' + sys.argv[0] + ' on ' + str(datetime.datetime.now())
 
     parser = argparse.ArgumentParser(description='Generate configuration files for the jpy Python API (jpyconfig.py)\n'
                                                  'and the jpy Java API (jpyconfig.properties).')
@@ -372,7 +414,8 @@ if __name__ == '__main__':
                         help="Output directory for the configuration files.")
     parser.add_argument("--java_home", action='store', default=None, help="Java home directory.")
     parser.add_argument("--jvm_dll", action='store', default=None, help="Java shared library location.")
-    parser.add_argument("-f", "--force", action='store_true', default=False, help="Force output files to be overwritten.")
+    parser.add_argument("-f", "--force", action='store_true', default=False,
+                        help="Force output files to be overwritten.")
     args = parser.parse_args()
 
     java_api_properties_file = os.path.join(args.out, 'jpyconfig.properties')
@@ -410,3 +453,8 @@ if __name__ == '__main__':
     print('Written jpy Java configuration to %s:' % (java_api_properties_file,))
     for key in java_api_properties.keys:
         print('  %s = %s' % (key, java_api_properties.values[key],))
+
+
+if __name__ == '__main__':
+    _main()
+    
