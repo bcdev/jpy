@@ -223,15 +223,13 @@ if dist.commands and len(dist.commands) > 0 \
         exit(0)
 
     dist_name = 'jpy.' + sysconfig.get_platform() + '-' + sysconfig.get_python_version()
+
     target_dir, dist_files = jpyutil._list_dir_entries(target_dir,
                                                        excludes=['__pycache__/',
                                                                  'jpyconfig.properties',
                                                                  'jpyconfig.py'])
 
-    ##
     ## Ensure that the new 'jpy' from target directory is found first
-    ##
-
     pp = os.environ.get('PYTHONPATH')
     os.environ['PYTHONPATH'] = os.pathsep.join([target_dir, pp]) if pp else target_dir
 
@@ -239,17 +237,23 @@ if dist.commands and len(dist.commands) > 0 \
     ## Write jpy version info to target directory
     ##
 
-    jpy_version_file = os.path.join(target_dir, dist_name + ".info")
-    log.info('Writing jpy version info to ' + jpy_version_file)
-    import glob
-
-    jpy_files = glob.glob(os.path.join(target_dir, '*'))
+    version_filename = dist_name + ".info"
+    version_file = os.path.join(target_dir, version_filename)
+    log.info('Writing jpy version info to ' + version_file)
     jpy_info = {'jpy_version': __version__,
-                'jpy_files': dist_files}
+                'jpy_files': dist_files + [version_filename]}
     import pprint
-
-    with open(jpy_version_file, 'w') as f:
+    with open(version_file, 'w') as f:
         f.write(pprint.pformat(jpy_info))
+
+
+    ##
+    ## Zip the plain target directory contents (similar to 'bdist' but without install path info)
+    ##
+
+    dist_filename = dist_name + '.zip'
+    archive_file = os.path.join('build', dist_filename)
+    jpyutil._zip_entries(archive_file, target_dir, dist_files, verbose=True)
 
     ##
     ## Write jpy configuration files to target directory
@@ -263,13 +267,6 @@ if dist.commands and len(dist.commands) > 0 \
                             '--java_home', jdk_home_dir, '-f'])
     if code:
         exit(code)
-
-    ##
-    ## Zip the plain target directory contents (similar to 'bdist' but without install path info)
-    ##
-
-    archive_file = os.path.join('build', dist_name + '.zip')
-    jpyutil._zip_entries(archive_file, target_dir, dist_files, verbose=True)
 
     ##
     ## Python unit tests with Java runtime classes
