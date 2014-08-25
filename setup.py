@@ -18,9 +18,10 @@ from distutils import log
 from distutils.core import setup
 from distutils.extension import Extension
 
-src_main_c_dir = os.path.join('src', 'main', 'c')
-src_main_py_dir = os.path.join('src', 'main', 'python')
-src_test_py_dir = os.path.join('src', 'test', 'python')
+base_dir = os.path.dirname(os.path.abspath(__file__))
+src_main_c_dir = os.path.join(base_dir, 'src', 'main', 'c')
+src_main_py_dir = os.path.join(base_dir, 'src', 'main', 'python')
+src_test_py_dir = os.path.join(base_dir, 'src', 'test', 'python')
 
 sys.path = [src_main_py_dir] + sys.path
 import jpyutil
@@ -97,12 +98,12 @@ if not jvm_dll_file:
     log.error('Error: Cannot find any JVM shared library')
     exit(1)
 
-lib_dir = 'lib'
+lib_dir = os.path.join(base_dir, 'lib')
 jpy_jar_file = os.path.join(lib_dir, 'jpy.jar')
 
 if do_maven:
 
-    # #
+    ##
     ## Java packaging with Maven
     ##
 
@@ -127,7 +128,7 @@ if do_maven:
     shutil.copy(built_jpy_jar_file, jpy_jar_file)
 
 
-# #
+##
 ## Prepare setup arguments and call setup
 ##
 
@@ -266,14 +267,6 @@ if dist.commands and len(dist.commands) > 0 \
     jpyutil._zip_entries(archive_file, build_dir, dist_files, verbose=True)
 
     ##
-    ## Ensure that the build directory is on Python's 'sys.path' when invoking
-    ## Python via subprocess.call([sys.executable, ...]) from this script.
-    ##
-
-    pp = os.environ.get('PYTHONPATH')
-    os.environ['PYTHONPATH'] = os.pathsep.join([build_dir, pp]) if pp else build_dir
-
-    ##
     ## Write jpy configuration files to target directories
     ##
 
@@ -294,14 +287,58 @@ if dist.commands and len(dist.commands) > 0 \
             exit(code)
 
     ##
+    ## Ensure that the build directory is on Python's 'sys.path' when invoking
+    ## Python via subprocess.call([sys.executable, ...]) from this script.
+    ##
+
+    class EnvVar:
+        def __init__(self, name):
+            self.name = name
+            self.changed = False
+            self.saved_value = self.get_value()
+
+        def __del__(self):
+            self.restore()
+
+        def get_value(self):
+            return os.environ.get(self.name)
+
+        def set_value(self, value):
+            self._set_value(value)
+            self.changed = True
+
+        def _set_value(self, value):
+            log.info("setting environment variable '" + self.name + "' to " + repr(value))
+            if value:
+                os.environ[self.name] = value
+            else:
+                os.environ.pop(self.name)
+
+        def prepend_path(self, path):
+            old_value = self.get_value()
+            new_value = os.pathsep.join([path, old_value]) if old_value else path
+            self.set_value(new_value)
+
+        def restore(self):
+            if self.changed:
+                self._set_value(self.saved_value)
+                self.changed = False
+
+
+    pp = EnvVar('PYTHONPATH')
+
+    ##
     ## Python unit tests with Java runtime classes
     ##
 
     log.info('Executing Python unit tests (against Java runtime classes)...')
+    pp.prepend_path(build_dir)
     fails = jpyutil._execute_python_scripts(python_java_rt_tests)
+    pp.restore()
     if fails > 0:
         log.error(str(fails) + ' Python unit test(s) failed. Installation is likely broken.')
         exit(1)
+
 
     if do_maven:
 
@@ -310,21 +347,23 @@ if dist.commands and len(dist.commands) > 0 \
         ##
 
         log.info('Executing Python unit tests (against jpy test classes)...')
+        pp.prepend_path(build_dir)
         fails = jpyutil._execute_python_scripts(python_java_jpy_tests)
+        pp.restore()
         if fails > 0:
             log.error(str(fails) + ' Python unit test(s) failed. Installation is likely broken.')
             exit(1)
 
         ##
-        ## Java install or test with Maven. Goal package has already been done..
+        ## Java install or test with Maven. Goal 'package' has already been achieved.
         ##
 
         if 'install' in dist.commands:
             goal = 'install'
         else:
             goal = 'test'
-        log.info("Executing Maven goal '" + goal + "'")
         arg_line = '-DargLine=-Xmx512m -Djpy.config=' + os.path.join(build_dir, 'jpyconfig.properties') + ''
+        log.info("Executing Maven goal " + repr(goal) + " with arg line " + repr(arg_line))
         code = subprocess.call(['mvn', goal, arg_line], shell=platform.system() == 'Windows')
         if code:
             exit(code)
