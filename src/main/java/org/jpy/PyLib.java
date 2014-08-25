@@ -14,9 +14,13 @@
 package org.jpy;
 
 import java.io.File;
-import java.util.Arrays;
+import java.util.ArrayList;
 
-import static org.jpy.PyLibConfig.*;
+import static org.jpy.PyLibConfig.JPY_LIB_KEY;
+import static org.jpy.PyLibConfig.OS;
+import static org.jpy.PyLibConfig.PYTHON_LIB_KEY;
+import static org.jpy.PyLibConfig.getOS;
+import static org.jpy.PyLibConfig.getProperty;
 
 /**
  * Represents the library that provides the Python interpreter (CPython).
@@ -160,22 +164,29 @@ public class PyLib {
      * @throws RuntimeException if Python could not be started or if the 'jpy' extension module could not be loaded.
      */
     public static void startPython(String... extraPaths) {
-        String moduleDirPath;
+
+        ArrayList<File> dirList = new ArrayList<>(1 + extraPaths.length);
+
         File moduleDir = new File(dllFilePath).getParentFile();
-        if (moduleDir != null && moduleDir.isDirectory()) {
-            moduleDirPath = moduleDir.getPath();
-            String[] pathsNew = new String[1 + extraPaths.length];
-            pathsNew[0] = moduleDirPath;
-            System.arraycopy(extraPaths, 0, pathsNew, 1, extraPaths.length);
-            extraPaths = pathsNew;
+        if (moduleDir != null) {
+            dirList.add(moduleDir.getAbsoluteFile());
         }
-        if (extraPaths.length > 0) {
-            System.out.println("Starting Python with " + extraPaths.length + " extra path(s):");
-            for (String path : extraPaths) {
-                System.out.println("  " + path);
+
+        for (String extraPath : extraPaths) {
+            File extraDir = new File(extraPath).getAbsoluteFile();
+            if (!dirList.contains(extraDir)) {
+                dirList.add(extraDir);
             }
-        } else {
-            System.out.println("Starting Python with 0 extra paths:");
+        }
+
+        extraPaths = new String[dirList.size()];
+        for (int i = 0; i < dirList.size(); i++) {
+            extraPaths[i] = dirList.get(i).getPath();
+        }
+
+        System.out.println("Starting Python with " + extraPaths.length + " extra module path(s):");
+        for (String path : extraPaths) {
+            System.out.println("  " + path);
         }
         startPython0(extraPaths);
     }
