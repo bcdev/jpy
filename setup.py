@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# !/usr/bin/env python3
 
 __author__ = "Norman Fomferra, Brockmann Consult GmbH"
 __copyright__ = "Copyright (C) 2014 Brockmann Consult GmbH"
@@ -12,6 +12,8 @@ import platform
 import subprocess
 import shutil
 import sysconfig
+import pprint
+
 from distutils import log
 from distutils.core import setup
 from distutils.extension import Extension
@@ -100,7 +102,7 @@ jpy_jar_file = os.path.join(lib_dir, 'jpy.jar')
 
 if do_maven:
 
-    ##
+    # #
     ## Java packaging with Maven
     ##
 
@@ -125,7 +127,7 @@ if do_maven:
     shutil.copy(built_jpy_jar_file, jpy_jar_file)
 
 
-##
+# #
 ## Prepare setup arguments and call setup
 ##
 
@@ -193,6 +195,11 @@ dist = setup(name='jpy',
              ]
 )
 
+# pprint.pprint(dist.commands)
+# pprint.pprint(dist.command_obj)
+# pprint.pprint(dist.command_obj['build'].__dict__)
+# pprint.pprint(dist.command_obj['install'].__dict__)
+
 ##
 ## Continue with custom setup if any commands including a build have been provided
 ##
@@ -202,49 +209,52 @@ if dist.commands and len(dist.commands) > 0 \
         and not 'clean' in dist.command_obj \
         and 'build' in dist.command_obj:
 
-    # import pprint
-    # pprint.pprint(dist.commands)
-    # pprint.pprint(dist.command_obj)
-    # pprint.pprint(dist.command_obj['build'].__dict__)
-    # pprint.pprint(dist.command_obj['install'].__dict__)
-
     ##
-    ## Get target directory (whose content we'll zip in which we test)
+    ## Get build directory (whose content we'll zip and in which we test)
     ##
 
-    # Explicit 'install' command
-    if 'install' in dist.commands and 'install' in dist.command_obj:
-        target_dir = dist.command_obj['install'].install_lib
-    # Explicit or implicit 'build' command
-    elif 'build' in dist.command_obj:
-        target_dir = dist.command_obj['build'].build_lib
-    else:
-        # Nothing to do
-        exit(0)
+    build_dir = dist.command_obj['build'].build_lib
+    if not os.path.exists(build_dir):
+        log.error("Missing build directory '" + build_dir + "'")
+        exit(1)
+
+    ##
+    ## Get install directory
+    ##
+
+    install_dir = None
+    if 'install' in dist.command_obj:
+        install_dir = dist.command_obj['install'].install_lib
+        if not os.path.exists(install_dir):
+            log.warn("Missing install directory '" + install_dir + "'")
+            install_dir = None
+
+    ##
+    ## Get distribution file list from build directory.
+    ##
 
     dist_name = 'jpy.' + sysconfig.get_platform() + '-' + sysconfig.get_python_version()
-
-    target_dir, dist_files = jpyutil._list_dir_entries(target_dir,
-                                                       excludes=['__pycache__/',
-                                                                 'jpyconfig.properties',
-                                                                 'jpyconfig.py'])
-
-    ## Ensure that the new 'jpy' from target directory is found first
-    pp = os.environ.get('PYTHONPATH')
-    os.environ['PYTHONPATH'] = os.pathsep.join([target_dir, pp]) if pp else target_dir
+    dist_files = jpyutil._list_dir_entries(build_dir,
+                                           excludes=['__pycache__/',
+                                                     'jpyconfig.properties',
+                                                     'jpyconfig.py'])
 
     ##
-    ## Write jpy version info to target directory
+    ## Write jpy version info (jpy.<platform>-<python-version>.info) to target directories
     ##
+
+    def _write_version_info(version_file, jpy_info):
+        log.info('Writing jpy version info to ' + version_file)
+        with open(version_file, 'w') as f:
+            f.write(pprint.pformat(jpy_info))
 
     version_filename = dist_name + ".info"
-    version_file = os.path.join(target_dir, version_filename)
-    log.info('Writing jpy version info to ' + version_file)
     jpy_info = {'jpy_version': __version__,
                 'jpy_files': dist_files + [version_filename]}
-    import pprint
-    with open(version_file, 'w') as f:
-        f.write(pprint.pformat(jpy_info))
+
+    _write_version_info(os.path.join(build_dir, version_filename), jpy_info)
+    if install_dir and install_dir != build_dir:
+        _write_version_info(os.path.join(install_dir, version_filename), jpy_info)
 
 
     ##
@@ -253,20 +263,35 @@ if dist.commands and len(dist.commands) > 0 \
 
     dist_filename = dist_name + '.zip'
     archive_file = os.path.join('build', dist_filename)
-    jpyutil._zip_entries(archive_file, target_dir, dist_files, verbose=True)
+    jpyutil._zip_entries(archive_file, build_dir, dist_files, verbose=True)
 
     ##
-    ## Write jpy configuration files to target directory
+    ## Ensure that the build directory is on Python's 'sys.path' when invoking
+    ## Python via subprocess.call([sys.executable, ...]) from this script.
     ##
 
-    log.info('Writing jpy configuration to ' + target_dir)
-    code = subprocess.call([sys.executable,
-                            os.path.join(target_dir, 'jpyutil.py'),
-                            '--out', target_dir,
-                            '--jvm_dll', jvm_dll_file,
-                            '--java_home', jdk_home_dir, '-f'])
-    if code:
+    pp = os.environ.get('PYTHONPATH')
+    os.environ['PYTHONPATH'] = os.pathsep.join([build_dir, pp]) if pp else build_dir
+
+    ##
+    ## Write jpy configuration files to target directories
+    ##
+
+    def _write_jpy_config(target_dir, jvm_dll_file, jdk_home_dir):
+        log.info('Writing jpy configuration to ' + target_dir)
+        return subprocess.call([sys.executable,
+                                os.path.join(target_dir, 'jpyutil.py'),
+                                '--out', target_dir,
+                                '--jvm_dll', jvm_dll_file,
+                                '--java_home', jdk_home_dir, '-f'])
+
+    code = _write_jpy_config(build_dir, jvm_dll_file, jdk_home_dir)
+    if code != 0:
         exit(code)
+    if install_dir and install_dir != build_dir:
+        code = _write_jpy_config(install_dir, jvm_dll_file, jdk_home_dir)
+        if code != 0:
+            exit(code)
 
     ##
     ## Python unit tests with Java runtime classes
@@ -299,9 +324,12 @@ if dist.commands and len(dist.commands) > 0 \
         else:
             goal = 'test'
         log.info("Executing Maven goal '" + goal + "'")
-        arg_line = '-DargLine=-Xmx512m -Djpy.config=' + os.path.join(target_dir, 'jpyconfig.properties') + ''
+        arg_line = '-DargLine=-Xmx512m -Djpy.config=' + os.path.join(build_dir, 'jpyconfig.properties') + ''
         code = subprocess.call(['mvn', goal, arg_line], shell=platform.system() == 'Windows')
         if code:
             exit(code)
 
-    log.info("Successful build is in " + target_dir)
+    log.info("jpy binary build is '" + archive_file + "'")
+    if install_dir:
+        log.info("jpy installed into '" + install_dir + "'")
+

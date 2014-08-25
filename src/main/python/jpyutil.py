@@ -378,7 +378,6 @@ def __contains(list, entry):
 
 
 def _list_dir_entries(rootdir, includes=None, excludes=None):
-    rootdir = os.path.normpath(rootdir)
     rootoffs = len(rootdir) + 1
     entries = []
     for (dirpath, dirnames, filenames) in os.walk(rootdir):
@@ -389,7 +388,7 @@ def _list_dir_entries(rootdir, includes=None, excludes=None):
             excluded = not excludes or __contains(excludes, entry)
             if included and not excluded:
                 entries.append(entry)
-    return (rootdir, entries)
+    return entries
 
 
 def _zip_entries(archive_path, dir, dir_entries, verbose=False):
