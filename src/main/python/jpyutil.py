@@ -362,6 +362,7 @@ class Properties:
 
 def _execute_python_scripts(scripts):
     import subprocess
+
     failures = 0
     for script in scripts:
         exit_code = subprocess.call([sys.executable, script])
@@ -393,7 +394,8 @@ def _list_dir_entries(rootdir, includes=None, excludes=None):
 
 def _zip_entries(archive_path, dir, dir_entries, verbose=False):
     import zipfile
-    if verbose: print("creating '"+archive_path+"' and adding '" + dir + "' to it")
+
+    if verbose: print("creating '" + archive_path + "' and adding '" + dir + "' to it")
     with zipfile.ZipFile(archive_path, 'w') as archive:
         for entry in dir_entries:
             path = os.path.join(dir, entry.replace('/', os.sep))
@@ -401,57 +403,64 @@ def _zip_entries(archive_path, dir, dir_entries, verbose=False):
             if verbose: print("adding '" + entry + "'")
 
 
-def _main():
-    import argparse
+def write_config_files(out_dir='.', java_home_dir=None, jvm_dll_file=None, force=False):
     import datetime
 
-    comment = 'Created by ' + sys.argv[0] + ' on ' + str(datetime.datetime.now())
+    errors = []
+    warnings = []
+    comment = 'Created by ' + __file__ + ' on ' + str(datetime.datetime.now())
+
+    python_api_config_file = os.path.join(out_dir, 'jpyconfig.py')
+    if force or not os.path.exists(python_api_config_file):
+        if not jvm_dll_file:
+            jvm_dll_file = find_jvm_dll_file(java_home_dir=java_home_dir)
+        if not jvm_dll_file:
+            errors.append("can't determine any JVM shared library")
+        else:
+            with open(python_api_config_file, 'w') as f:
+                f.write('# ' + comment + '\"\n')
+                if java_home_dir:
+                    f.write('java_home = ' + repr(java_home_dir) + '\n')
+                f.write('jvm_dll = ' + repr(jvm_dll_file) + '\n')
+                f.write('jvm_maxmem = None\n')
+                f.write('jvm_classpath = []\n')
+                f.write('jvm_properties = {}\n')
+                f.write('jvm_options = []\n')
+            print('Written jpy Python configuration to %s:' % (python_api_config_file,))
+
+    java_api_properties_file = os.path.join(out_dir, 'jpyconfig.properties')
+    if force or not os.path.exists(java_api_properties_file):
+        java_api_properties = _get_java_api_properties(fail=True)
+        java_api_properties.store(java_api_properties_file, comments=[comment])
+        print('Written jpy Java configuration to %s:' % (java_api_properties_file,))
+
+    return errors, warnings
+
+def _main():
+    import argparse
+
 
     parser = argparse.ArgumentParser(description='Generate configuration files for the jpy Python API (jpyconfig.py)\n'
                                                  'and the jpy Java API (jpyconfig.properties).')
     parser.add_argument("-o", "--out", action='store', default='.',
-                        help="Output directory for the configuration files.")
-    parser.add_argument("--java_home", action='store', default=None, help="Java home directory.")
-    parser.add_argument("--jvm_dll", action='store', default=None, help="Java shared library location.")
+                        help="output directory for the configuration files")
+    parser.add_argument("--java_home", action='store', default=None, help="Java home directory")
+    parser.add_argument("--jvm_dll", action='store', default=None, help="Java shared library location")
     parser.add_argument("-f", "--force", action='store_true', default=False,
-                        help="Force output files to be overwritten.")
+                        help="force output files to be overwritten")
     args = parser.parse_args()
 
-    java_api_properties_file = os.path.join(args.out, 'jpyconfig.properties')
-    if not args.force and os.path.exists(java_api_properties_file):
-        print("error: file exists: " + java_api_properties_file + " (use -f to force overwrite)")
-        exit(1)
-
-    python_api_config_file = os.path.join(args.out, 'jpyconfig.py')
-    if not args.force and os.path.exists(python_api_config_file):
-        print("error: file exists: " + python_api_config_file + " (use -f to force overwrite)")
-        exit(1)
-
-    java_api_properties = _get_java_api_properties(fail=True)
-
+    out_dir = args.out
+    force = args.force
     jvm_dll = args.jvm_dll
-    if not jvm_dll:
-        jvm_dll = find_jvm_dll_file(java_home_dir=args.java_home)
-    if not jvm_dll:
-        print("error: can't determine any JVM shared library")
-        exit(1)
+    java_home = args.java_home
 
-    with open(python_api_config_file, 'w') as f:
-        f.write('# ' + comment + '\"\n')
-        if args.java_home:
-            f.write('java_home = \"' + args.java_home.replace('\\', '\\\\') + '\"\n')
-        f.write('jvm_dll = \"' + jvm_dll.replace('\\', '\\\\') + '\"\n')
-        f.write('jvm_maxmem = None\n')
-        f.write('jvm_classpath = []\n')
-        f.write('jvm_properties = {}\n')
-        f.write('jvm_options = []\n')
-    print('Written jpy Python configuration to %s:' % (python_api_config_file,))
-    print('  jvm_dll = %s' % (jvm_dll,))
+    errors, warnings = write_config_files(out_dir=out_dir,
+                                          java_home_dir=java_home,
+                                          jvm_dll_file=jvm_dll,
+                                          force=force)
 
-    java_api_properties.store(java_api_properties_file, comments=[comment])
-    print('Written jpy Java configuration to %s:' % (java_api_properties_file,))
-    for key in java_api_properties.keys:
-        print('  %s = %s' % (key, java_api_properties.values[key],))
+    exit(0 if len(errors) == 0 else 1)
 
 
 if __name__ == '__main__':
