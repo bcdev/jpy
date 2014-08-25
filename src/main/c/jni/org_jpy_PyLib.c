@@ -122,37 +122,35 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_startPython0
     JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "PyLib_startPython: entered: jenv=%p, pyInit=%d, JPy_Module=%p\n", jenv, pyInit, JPy_Module);
 
     if (!pyInit) {
-
         Py_Initialize();
+        PyLib_RedirectStdOut();
+        pyInit = Py_IsInitialized();
+    }
+
+    if (pyInit) {
 
         if (JPy_DiagFlags != 0) {
-            printf("PyLib_startPython: after Py_Initialize():\n");
-#if defined(JPY_COMPAT_33P)
+            printf("PyLib_startPython: global Python interpreter information:\n");
+            #if defined(JPY_COMPAT_33P)
             printf("  Py_GetProgramName()     = \"%ls\"\n", Py_GetProgramName());
             printf("  Py_GetPrefix()          = \"%ls\"\n", Py_GetPrefix());
             printf("  Py_GetExecPrefix()      = \"%ls\"\n", Py_GetExecPrefix());
             printf("  Py_GetProgramFullPath() = \"%ls\"\n", Py_GetProgramFullPath());
             printf("  Py_GetPath()            = \"%ls\"\n", Py_GetPath());
             printf("  Py_GetPythonHome()      = \"%ls\"\n", Py_GetPythonHome());
-#elif defined(JPY_COMPAT_27)
+            #elif defined(JPY_COMPAT_27)
             printf("  Py_GetProgramName()     = \"%s\"\n", Py_GetProgramName());
             printf("  Py_GetPrefix()          = \"%s\"\n", Py_GetPrefix());
             printf("  Py_GetExecPrefix()      = \"%s\"\n", Py_GetExecPrefix());
             printf("  Py_GetProgramFullPath() = \"%s\"\n", Py_GetProgramFullPath());
             printf("  Py_GetPath()            = \"%s\"\n", Py_GetPath());
             printf("  Py_GetPythonHome()      = \"%s\"\n", Py_GetPythonHome());
-#endif
+            #endif
             printf("  Py_GetVersion()         = \"%s\"\n", Py_GetVersion());
             printf("  Py_GetPlatform()        = \"%s\"\n", Py_GetPlatform());
             printf("  Py_GetCompiler()        = \"%s\"\n", Py_GetCompiler());
             printf("  Py_GetBuildInfo()       = \"%s\"\n", Py_GetBuildInfo());
         }
-
-        PyLib_RedirectStdOut();
-        pyInit = Py_IsInitialized();
-    }
-
-    if (pyInit) {
 
         // If we've got jPathArray, add all entries to Python's "sys.path"
         //

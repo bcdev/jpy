@@ -23,6 +23,7 @@ public class PyLibTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
+        //PyLib.Diag.setFlags(PyLib.Diag.F_ERR);
         PyLib.startPython();
         assertEquals(true, PyLib.isPythonRunning());
     }
