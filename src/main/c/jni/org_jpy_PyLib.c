@@ -122,14 +122,23 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_startPython0
     JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "PyLib_startPython: entered: jenv=%p, pyInit=%d, JPy_Module=%p\n", jenv, pyInit, JPy_Module);
 
     if (!pyInit) {
-#if defined(JPY_COMPAT_33P)
-        Py_SetProgramName(L"java");
-#elif defined(JPY_COMPAT_27)
-        Py_SetProgramName("java");
-#else
-        #error JPY_VERSION_ERROR
-#endif
+
         Py_Initialize();
+
+        if (JPy_DiagFlags != 0) {
+            printf("PyLib_startPython: after Py_Initialize():\n");
+            printf("  Py_GetProgramName()     = \"%s\"\n", Py_GetProgramName());
+            printf("  Py_GetPrefix()          = \"%s\"\n", Py_GetPrefix());
+            printf("  Py_GetExecPrefix()      = \"%s\"\n", Py_GetExecPrefix());
+            printf("  Py_GetProgramFullPath() = \"%s\"\n", Py_GetProgramFullPath());
+            printf("  Py_GetPythonHome()      = \"%s\"\n", Py_GetPythonHome());
+            printf("  Py_GetPath()            = \"%s\"\n", Py_GetPath());
+            printf("  Py_GetVersion()         = \"%s\"\n", Py_GetVersion());
+            printf("  Py_GetPlatform()        = \"%s\"\n", Py_GetPlatform());
+            printf("  Py_GetCompiler()        = \"%s\"\n", Py_GetCompiler());
+            printf("  Py_GetBuildInfo()       = \"%s\"\n", Py_GetBuildInfo());
+        }
+
         PyLib_RedirectStdOut();
         pyInit = Py_IsInitialized();
     }
@@ -145,13 +154,13 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_startPython0
             jsize i, pathCount;
 
             pathCount = (*jenv)->GetArrayLength(jenv, jPathArray);
-            printf(">> pathCount=%d\n", pathCount);
+            //printf(">> pathCount=%d\n", pathCount);
             if (pathCount > 0) {
 
                 JPy_BEGIN_GIL_STATE
 
                 pyPathList = PySys_GetObject("path");
-                printf(">> pyPathList=%p, len=%ld\n", pyPathList, PyList_Size(pyPathList));
+                //printf(">> pyPathList=%p, len=%ld\n", pyPathList, PyList_Size(pyPathList));
                 if (pyPathList != NULL) {
                     Py_INCREF(pyPathList);
                     for (i = pathCount - 1; i >= 0; i--) {
@@ -167,8 +176,8 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_startPython0
                     }
                     Py_DECREF(pyPathList);
                 }
-                printf(">> pyPathList=%p, len=%ld\n", pyPathList, PyList_Size(pyPathList));
-                printf(">> pyPathList=%p, len=%ld (check)\n", PySys_GetObject("path"), PyList_Size(PySys_GetObject("path")));
+                //printf(">> pyPathList=%p, len=%ld\n", pyPathList, PyList_Size(pyPathList));
+                //printf(">> pyPathList=%p, len=%ld (check)\n", PySys_GetObject("path"), PyList_Size(PySys_GetObject("path")));
 
                 JPy_END_GIL_STATE
             }
@@ -185,7 +194,7 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_startPython0
             // required global variables (including JPy_Module, see above).
             //
             pyModule = PyImport_ImportModule("jpy");
-            printf(">> pyModule=%p\n", pyModule);
+            //printf(">> pyModule=%p\n", pyModule);
             if (pyModule == NULL) {
                 JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "PyLib_startPython: failed to import module 'jpy'\n");
                 if (JPy_DiagFlags != 0 && PyErr_Occurred()) {
@@ -200,7 +209,7 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_startPython0
 
     JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "PyLib_startPython: exiting: jenv=%p, pyInit=%d, JPy_Module=%p\n", jenv, pyInit, JPy_Module);
 
-    printf(">> JPy_Module=%p\n", JPy_Module);
+    //printf(">> JPy_Module=%p\n", JPy_Module);
 
     if (!pyInit) {
         (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, "Failed to initialize Python interpreter.");
