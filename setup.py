@@ -363,7 +363,7 @@ if dist.commands and len(dist.commands) > 0 \
             goal = 'install'
         else:
             goal = 'test'
-        arg_line = '-DargLine=-Xmx512m -Djpy.config=' + os.path.join(build_dir, 'jpyconfig.properties') + ''
+        arg_line = '-DargLine=-Xmx512m -Djpy.config=' + os.path.join(build_dir, 'jpyconfig.properties') + ' -Djpy.debug=true'
         log.info("Executing Maven goal " + repr(goal) + " with arg line " + repr(arg_line))
         code = subprocess.call(['mvn', goal, arg_line], shell=platform.system() == 'Windows')
         if code:
