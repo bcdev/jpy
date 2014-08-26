@@ -139,9 +139,9 @@ def _find_jvm_dll_file(java_home_dir):
 
     search_dirs = _add_paths_if_exists([], *search_dirs)
 
-    if platform.system() is 'Windows':
+    if platform.system() == 'Windows':
         return _find_file(search_dirs, 'jvm.dll')
-    elif platform.system() is 'Darwin':
+    elif platform.system() == 'Darwin':
         return _find_file(search_dirs, 'libjvm.dylib')
 
     return _find_file(search_dirs, 'libjvm.so')
@@ -154,7 +154,7 @@ def _find_python_dll_file(fail=False):
 
     search_dirs.append(sys.prefix)
 
-    if platform.system() is 'Windows':
+    if platform.system() == 'Windows':
         filenames += ['python' + str(sys.version_info.major) + str(sys.version_info.minor) + '.dll',
                       'python' + str(sys.version_info.major) + '.dll',
                       'python.dll']
