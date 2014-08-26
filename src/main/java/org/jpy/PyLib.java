@@ -125,6 +125,7 @@ public class PyLib {
         }
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     public static String getDllFilePath() {
         return dllFilePath;
     }
@@ -327,9 +328,7 @@ public class PyLib {
                 // If the Python shared lib is not found, we get error messages similar to the following:
                 // java.lang.UnsatisfiedLinkError: /usr/local/lib/python3.3/dist-packages/jpy.cpython-33m.so:
                 //      /usr/local/lib/python3.3/dist-packages/jpy.cpython-33m.so: undefined symbol: PyFloat_Type
-                if (DEBUG) {
-                    System.out.println("org.jpy.PyLib: DL.dlopen(\"" + pythonLibPath + "\", DL.RTLD_GLOBAL + DL.RTLD_LAZY");
-                }
+                if (DEBUG) System.out.println("org.jpy.PyLib: DL.dlopen(\"" + pythonLibPath + "\", DL.RTLD_GLOBAL + DL.RTLD_LAZY");
 
                 long handle = DL.dlopen(pythonLibPath, DL.RTLD_GLOBAL + DL.RTLD_LAZY);
                 if (handle == 0) {
@@ -347,11 +346,9 @@ public class PyLib {
             dllFilePath = getProperty(JPY_LIB_KEY, true);
             dllFilePath = new File(dllFilePath).getAbsolutePath();
 
-            if (DEBUG) {
-                System.out.println("org.jpy.PyLib: System.load(\"" + dllFilePath + "\"");
-                //System.out.println("PyLib: context class loader: " + Thread.currentThread().getContextClassLoader());
-                //System.out.println("PyLib: class class loader:   " + PyLib.class.getClassLoader());
-            }
+            if (DEBUG) System.out.println("org.jpy.PyLib: System.load(\"" + dllFilePath + "\"");
+            //if (DEBUG) System.out.println("org.jpy.PyLib: context class loader: " + Thread.currentThread().getContextClassLoader());
+            //if (DEBUG) System.out.println("org.jpy.PyLib: class class loader:   " + PyLib.class.getClassLoader());
 
             System.load(dllFilePath);
             dllProblem = null;
@@ -366,7 +363,9 @@ public class PyLib {
     }
 
     static {
+        if (DEBUG) System.out.println("org.jpy.PyLib: entered static initializer");
         loadLib();
+        if (DEBUG) System.out.println("org.jpy.PyLib: exited static initializer");
     }
 }
 
