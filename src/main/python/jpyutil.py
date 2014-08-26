@@ -4,6 +4,7 @@ import os.path
 import platform
 import ctypes
 import ctypes.util
+import logging
 
 
 def _get_python_lib_name():
@@ -11,7 +12,10 @@ def _get_python_lib_name():
         abiflags = sys.abiflags
     except AttributeError:
         abiflags = ''
-    return 'python' + sysconfig.get_config_var('VERSION') + abiflags
+    version = sysconfig.get_config_var('VERSION')
+    if not version:
+        version = ''
+    return 'python' + version + abiflags
 
 
 PYTHON_64BIT = sys.maxsize > 2 ** 32
@@ -88,6 +92,10 @@ def find_jvm_dll_file(java_home_dir=None, fail=False):
         if jvm_dll_path:
             return jvm_dll_path
 
+    jvm_dll_path = os.environ.get('JPY_JVM_DLL', None)
+    if jvm_dll_path:
+        return jvm_dll_path
+
     for name in ('JPY_JAVA_HOME', 'JPY_JDK_HOME', 'JPY_JRE_HOME', 'JAVA_HOME', 'JDK_HOME', 'JRE_HOME', 'JAVA_JRE'):
         java_home_dir = os.environ.get(name, None)
         if java_home_dir:
@@ -133,8 +141,10 @@ def _find_jvm_dll_file(java_home_dir):
 
     if platform.system() is 'Windows':
         return _find_file(search_dirs, 'jvm.dll')
-    else:
-        return _find_file(search_dirs, 'libjvm.so')
+    elif platform.system() is 'Darwin':
+        return _find_file(search_dirs, 'libjvm.dylib')
+
+    return _find_file(search_dirs, 'libjvm.so')
 
 
 def _find_python_dll_file(fail=False):
@@ -155,8 +165,8 @@ def _find_python_dll_file(fail=False):
         if multiarchsubdir:
             while multiarchsubdir.startswith('/'):
                 multiarchsubdir = multiarchsubdir[1:]
-        lib_dirs_extra = [os.path.join(lib, multiarchsubdir) for lib in search_dirs]
-        search_dirs = lib_dirs_extra + search_dirs
+            lib_dirs_extra = [os.path.join(lib, multiarchsubdir) for lib in search_dirs]
+            search_dirs = lib_dirs_extra + search_dirs
 
     search_dirs = _add_paths_if_exists([], *search_dirs)
 
@@ -191,9 +201,9 @@ def _get_python_api_config(config_file=None):
         return jpyconfig
 
     except ImportError:
+        # 3. Try 'JPY_PY_CONFIG' environment variable, if any
         config_file = os.environ.get('JPY_PY_CONFIG', None)
         if config_file:
-            # 3. Try 'JPY_PY_CONFIG' environment variable, if any
             return _read_config(config_file)
 
     return None
@@ -224,10 +234,10 @@ def get_jvm_options(jvm_maxmem=None,
     if jvm_classpath and len(jvm_classpath) > 0:
         jvm_cp = os.pathsep.join(jvm_classpath)
     if not jvm_cp:
-        jvm_cp = getattr(config, 'JPY_JVM_CLASSPATH', None)
+        jvm_cp = os.environ.get('JPY_JVM_CLASSPATH', None)
 
     if not jvm_maxmem:
-        jvm_maxmem = getattr(config, 'JPY_JVM_MAXMEM', None)
+        jvm_maxmem = os.environ.get('JPY_JVM_MAXMEM', None)
 
     java_api_properties = _get_java_api_properties().values
     if jvm_properties:
@@ -267,11 +277,6 @@ def init_jvm(java_home=None,
             java_home = getattr(config, 'java_home', None)
         if not jvm_dll:
             jvm_dll = getattr(config, 'jvm_dll', None)
-
-    if not java_home:
-        java_home = os.environ.get('JPY_JAVA_HOME', None)
-    if not jvm_dll:
-        jvm_dll = getattr(config, 'JPY_JVM_DLL', None)
 
     if not jvm_dll:
         jvm_dll = find_jvm_dll_file(java_home_dir=java_home)
@@ -403,38 +408,59 @@ def _zip_entries(archive_path, dir, dir_entries, verbose=False):
             if verbose: print("adding '" + entry + "'")
 
 
-def write_config_files(out_dir='.', java_home_dir=None, jvm_dll_file=None, force=False):
+def write_config_files(out_dir='.',
+                       java_home_dir=None,
+                       jvm_dll_file=None,
+                       req_java_api_conf=True,
+                       req_py_api_conf=True):
     import datetime
 
-    errors = []
-    warnings = []
-    comment = 'Created by ' + __file__ + ' on ' + str(datetime.datetime.now())
+    retcode = 0
 
-    python_api_config_file = os.path.join(out_dir, 'jpyconfig.py')
-    if force or not os.path.exists(python_api_config_file):
-        if not jvm_dll_file:
-            jvm_dll_file = find_jvm_dll_file(java_home_dir=java_home_dir)
-        if not jvm_dll_file:
-            errors.append("can't determine any JVM shared library")
-        else:
-            with open(python_api_config_file, 'w') as f:
-                f.write('# ' + comment + '\"\n')
+    tool_name = os.path.basename(__file__)
+
+    py_api_config_basename = 'jpyconfig.py'
+    java_api_config_basename = 'jpyconfig.properties'
+
+    if not jvm_dll_file:
+        jvm_dll_file = find_jvm_dll_file(java_home_dir=java_home_dir)
+    if jvm_dll_file:
+        py_api_config_file = os.path.join(out_dir, py_api_config_basename)
+        try:
+            with open(py_api_config_file, 'w') as f:
+                f.write("# Created by '%s' tool on %s\n" % (tool_name, str(datetime.datetime.now())))
+                f.write("# This file is read by the 'jpyutil' module in order load and configure the JVM from Python\n")
                 if java_home_dir:
-                    f.write('java_home = ' + repr(java_home_dir) + '\n')
-                f.write('jvm_dll = ' + repr(jvm_dll_file) + '\n')
+                    f.write('java_home = %s\n' % repr(java_home_dir))
+                f.write('jvm_dll = %s\n' % repr(jvm_dll_file))
                 f.write('jvm_maxmem = None\n')
                 f.write('jvm_classpath = []\n')
                 f.write('jvm_properties = {}\n')
                 f.write('jvm_options = []\n')
-            print('Written jpy Python configuration to %s:' % (python_api_config_file,))
+            logging.info("jpy Python API configuration written to '%s'" % py_api_config_file)
+        except Exception:
+            logging.exception("Error while writing Python API configuration")
+            if req_py_api_conf:
+                retcode = 1
+    else:
+        logging.error("Can't determine any JVM shared library")
+        if req_py_api_conf:
+            retcode = 2
 
-    java_api_properties_file = os.path.join(out_dir, 'jpyconfig.properties')
-    if force or not os.path.exists(java_api_properties_file):
-        java_api_properties = _get_java_api_properties(fail=True)
-        java_api_properties.store(java_api_properties_file, comments=[comment])
-        print('Written jpy Java configuration to %s:' % (java_api_properties_file,))
+    try:
+        java_api_config_file = os.path.join(out_dir, java_api_config_basename)
+        java_api_properties = _get_java_api_properties(fail=req_java_api_conf)
+        java_api_properties.store(java_api_config_file, comments=[
+            "Created by '%s' tool on %s" % (tool_name, str(datetime.datetime.now())),
+            "This file is read by the jpy Java API (org.jpy.PyLib class) in order to find shared libraries"])
+        logging.info("jpy Java API configuration written to '%s'" % java_api_config_file)
+    except Exception:
+        logging.exception("Error while writing Java API configuration")
+        if req_java_api_conf:
+            retcode = 3
 
-    return errors, warnings
+    return retcode
+
 
 def _main():
     import argparse
@@ -446,23 +472,37 @@ def _main():
                         help="output directory for the configuration files")
     parser.add_argument("--java_home", action='store', default=None, help="Java home directory")
     parser.add_argument("--jvm_dll", action='store', default=None, help="Java shared library location")
-    parser.add_argument("-f", "--force", action='store_true', default=False,
-                        help="force output files to be overwritten")
+    parser.add_argument("--log_file", action='store', default=None, help="Log file")
+    parser.add_argument("--log_level", action='store', default='INFO',
+                        help="Possible values: DEBUG, INFO, WARNING, ERROR")
+    parser.add_argument("-j", "--req_java", action='store_true', default=False,
+                        help="require that Java API configuration succeeds")
+    parser.add_argument("-p", "--req_py", action='store_true', default=False,
+                        help="require that Python API configuration succeeds")
     args = parser.parse_args()
 
-    out_dir = args.out
-    force = args.force
-    jvm_dll = args.jvm_dll
-    java_home = args.java_home
+    log_level = getattr(logging, args.log_level.upper(), None)
+    if not isinstance(log_level, int):
+        raise ValueError('Invalid log level: %s' % log_level)
 
-    errors, warnings = write_config_files(out_dir=out_dir,
-                                          java_home_dir=java_home,
-                                          jvm_dll_file=jvm_dll,
-                                          force=force)
+    log_format='%(levelname)s: %(message)s'
+    log_file = args.log_file
+    if log_file:
+        logging.basicConfig(format=log_format, level=log_level, filename=log_file, filemode='w')
+    else:
+        logging.basicConfig(format=log_format, level=log_level)
 
-    exit(0 if len(errors) == 0 else 1)
+    try:
+        return write_config_files(out_dir=args.out,
+                                  java_home_dir=args.java_home,
+                                  jvm_dll_file=args.jvm_dll,
+                                  req_java_api_conf=args.req_java,
+                                  req_py_api_conf=args.req_py)
+    except Exception:
+        logging.exception("Configuration failed")
+        return 10
 
 
 if __name__ == '__main__':
     _main()
-    
+
