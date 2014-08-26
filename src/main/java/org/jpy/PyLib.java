@@ -47,6 +47,7 @@ import static org.jpy.PyLibConfig.getProperty;
  */
 public class PyLib {
 
+    private static final boolean DEBUG = Boolean.getBoolean("jpy.debug");
     private static String dllFilePath;
     private static Throwable dllProblem;
     private static boolean dllLoaded;
@@ -184,10 +185,14 @@ public class PyLib {
             extraPaths[i] = dirList.get(i).getPath();
         }
 
-        System.out.println("Starting Python with " + extraPaths.length + " extra module path(s):");
-        for (String path : extraPaths) {
-            System.out.println("  " + path);
+        if (DEBUG) {
+            System.out.println("org.jpy.PyLib: Starting Python with " + extraPaths.length + " extra module path(s):");
+            for (String path : extraPaths) {
+                System.out.println("org.jpy.PyLib:  " + path);
+            }
+            Diag.setFlags(Diag.F_EXEC);
         }
+
         startPython0(extraPaths);
     }
 
@@ -322,7 +327,9 @@ public class PyLib {
                 // If the Python shared lib is not found, we get error messages similar to the following:
                 // java.lang.UnsatisfiedLinkError: /usr/local/lib/python3.3/dist-packages/jpy.cpython-33m.so:
                 //      /usr/local/lib/python3.3/dist-packages/jpy.cpython-33m.so: undefined symbol: PyFloat_Type
-                System.out.println("PyLib: loading library: " + pythonLibPath);
+                if (DEBUG) {
+                    System.out.println("org.jpy.PyLib: DL.dlopen(\"" + pythonLibPath + "\", DL.RTLD_GLOBAL + DL.RTLD_LAZY");
+                }
 
                 long handle = DL.dlopen(pythonLibPath, DL.RTLD_GLOBAL + DL.RTLD_LAZY);
                 if (handle == 0) {
@@ -340,9 +347,11 @@ public class PyLib {
             dllFilePath = getProperty(JPY_LIB_KEY, true);
             dllFilePath = new File(dllFilePath).getAbsolutePath();
 
-            System.out.println("PyLib: loading library: " + dllFilePath);
-            //System.out.println("PyLib: context class loader: " + Thread.currentThread().getContextClassLoader());
-            //System.out.println("PyLib: class class loader:   " + PyLib.class.getClassLoader());
+            if (DEBUG) {
+                System.out.println("org.jpy.PyLib: System.load(\"" + dllFilePath + "\"");
+                //System.out.println("PyLib: context class loader: " + Thread.currentThread().getContextClassLoader());
+                //System.out.println("PyLib: class class loader:   " + PyLib.class.getClassLoader());
+            }
 
             System.load(dllFilePath);
             dllProblem = null;
