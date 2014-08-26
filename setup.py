@@ -33,8 +33,8 @@ if '--maven' in sys.argv:
     do_maven = True
     sys.argv.remove('--maven')
 else:
-    print(
-        'Note that you can use non-standard global option [--maven] to force a Java Maven build incl. jpy Java API testing')
+    print('Note that you can use non-standard global option [--maven] '
+          'to force a Java Maven build for jpy Java API')
 
 sources = [
     os.path.join(src_main_c_dir, 'jpy_module.c'),
@@ -276,7 +276,9 @@ if dist.commands and len(dist.commands) > 0 \
                                 os.path.join(target_dir, 'jpyutil.py'),
                                 '--out', target_dir,
                                 '--jvm_dll', jvm_dll_file,
-                                '--java_home', jdk_home_dir, '-f'])
+                                '--java_home', jdk_home_dir,
+                                '--req_java',
+                                '--req_py'])
 
     code = _write_jpy_config(build_dir, jvm_dll_file, jdk_home_dir)
     if code != 0:
@@ -338,7 +340,6 @@ if dist.commands and len(dist.commands) > 0 \
     if fails > 0:
         log.error(str(fails) + ' Python unit test(s) failed. Installation is likely broken.')
         exit(1)
-
 
     if do_maven:
 
