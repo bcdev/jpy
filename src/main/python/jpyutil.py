@@ -199,22 +199,24 @@ def _find_python_dll_file(fail=False):
         extra_search_dirs = _get_existing_subdirs(search_dirs, multi_arch_sub_dir)
         search_dirs = extra_search_dirs + search_dirs
 
+    logging.debug("Potential Python shared library search dirs: %s" % repr(search_dirs))
+
     #
     # Prepare list of possible library file names
     #
 
-    vXY = str(sys.version_info.major) + str(sys.version_info.minor)
-    vX = str(sys.version_info.major)
-    v0 = ""
-    versions = (vXY, vX, v0)
+    vmaj = str(sys.version_info.major)
+    vmin = str(sys.version_info.minor)
 
-    file_names = []
     if platform.system() == 'Windows':
+        versions = (vmaj + vmin, vmaj, '')
         file_names = ['python' + v + '.dll' for v in versions]
     elif platform.system() == 'Darwin':
+        versions = (vmaj + "." + vmin, vmaj, '')
         file_names = ['libpython' + v + '.dylib' for v in versions] + \
                      ['libpython' + v + '.so' for v in versions]
     else:
+        versions = (vmaj + "." + vmin, vmaj, '')
         file_names = ['libpython' + v + '.so' for v in versions]
 
     extra_file_names = [sysconfig.get_config_var(name) for name in PYTHON_LIB_NAME_CONFIG_VAR_NAMES]
@@ -222,8 +224,7 @@ def _find_python_dll_file(fail=False):
         if extra_file_name and not extra_file_name in file_names:
             file_names.append(extra_file_name)
 
-    # pprint.pprint(search_dirs)
-    # pprint.pprint(filenames)
+    logging.debug("Potential Python shared library file names: %s" % repr(file_names))
 
     python_dll_path = _find_file(search_dirs, *file_names)
     if python_dll_path:
