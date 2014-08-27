@@ -220,7 +220,7 @@ def _find_python_dll_file(fail=False):
     extra_file_names = [sysconfig.get_config_var(name) for name in PYTHON_LIB_NAME_CONFIG_VAR_NAMES]
     for extra_file_name in extra_file_names:
         if extra_file_name and not extra_file_name in file_names:
-            extra_file_names.append(extra_file_name)
+            file_names.append(extra_file_name)
 
     # pprint.pprint(search_dirs)
     # pprint.pprint(filenames)
