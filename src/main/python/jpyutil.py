@@ -144,7 +144,7 @@ def _get_existing_subdirs(dirs, subdirname):
     new_dirs = []
     for dir in dirs:
         new_dir = os.path.join(dir, subdirname)
-        if not new_dir in dirs and os.path.isdir(new_dir):
+        if os.path.isdir(new_dir):
             new_dirs.append(new_dir)
     return new_dirs
 
