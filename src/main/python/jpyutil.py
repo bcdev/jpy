@@ -23,11 +23,11 @@ PYTHON_LIB_NAME = _get_python_lib_name()
 JVM_LIB_NAME = 'jvm'
 
 PYTHON_LIB_DIR_CONFIG_VAR_NAMES = ('LDLIBRARYDIR', 'srcdir',
-                           'BINDIR', 'DESTLIB', 'DESTSHARED',
-                           'BINLIBDEST', 'LIBDEST', 'LIBDIR', 'MACHDESTLIB',)
-
+                                   'BINDIR', 'DESTLIB', 'DESTSHARED',
+                                   'BINLIBDEST', 'LIBDEST', 'LIBDIR', 'MACHDESTLIB',)
 
 PYTHON_LIB_NAME_CONFIG_VAR_NAMES = ('LDLIBRARY', 'INSTSONAME', 'PY3LIBRARY', 'DLLLIBRARY',)
+
 
 def _get_unique_config_values(names):
     values = []
@@ -149,7 +149,6 @@ def _get_existing_subdirs(dirs, subdirname):
     return new_dirs
 
 
-
 def _find_jvm_dll_file(java_home_dir):
     logging.debug("Searching for JVM shared library file in %s" % repr(java_home_dir))
 
@@ -171,7 +170,6 @@ def _find_jvm_dll_file(java_home_dir):
 
     # 'Window' and 'Darwin' did not succeed, try 'libjvm.so' on remaining platforms
     return _find_file(search_dirs, 'libjvm.so')
-
 
 
 def _find_python_dll_file(fail=False):
@@ -552,14 +550,19 @@ def _main():
         logging.basicConfig(format=log_format, level=log_level)
 
     try:
-        return write_config_files(out_dir=args.out,
-                                  java_home_dir=args.java_home,
-                                  jvm_dll_file=args.jvm_dll,
-                                  req_java_api_conf=args.req_java,
-                                  req_py_api_conf=args.req_py)
-    except Exception:
+        retcode = write_config_files(out_dir=args.out,
+                                     java_home_dir=args.java_home,
+                                     jvm_dll_file=args.jvm_dll,
+                                     req_java_api_conf=args.req_java,
+                                     req_py_api_conf=args.req_py)
+    except:
         logging.exception("Configuration failed")
-        return 10
+        retcode = 100
+
+    if retcode == 0:
+        logging.info("Configuration completed successfully")
+
+    exit(retcode)
 
 
 if __name__ == '__main__':
