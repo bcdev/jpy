@@ -191,7 +191,7 @@ def _find_python_dll_file(fail=False):
         python_dll_path = ctypes.util.find_library(PYTHON_LIB_NAME)
 
     if python_dll_path:
-        logging.warning("No Python shared library file found in all search paths. Using fallback %s" % repr(jvm_dll_path))
+        logging.warning("No Python shared library file found in all search paths. Using fallback %s" % repr(python_dll_path))
     elif fail:
         raise RuntimeError("can't find any Python shared library")
 
