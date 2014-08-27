@@ -277,6 +277,7 @@ if dist.commands and len(dist.commands) > 0 \
                                 '--out', target_dir,
                                 '--jvm_dll', jvm_dll_file,
                                 '--java_home', jdk_home_dir,
+                                '--log_level', 'DEBUG',
                                 '--req_java',
                                 '--req_py'])
 
