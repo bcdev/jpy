@@ -109,7 +109,9 @@ def find_jvm_dll_file(java_home_dir=None, fail=False):
                 return jvm_dll_path
 
     jvm_dll_path = ctypes.util.find_library(JVM_LIB_NAME)
-    if not jvm_dll_path and fail:
+    if jvm_dll_path:
+        logging.warning("No JVM shared library file found in all search paths. Using fallback %s" % repr(jvm_dll_path))
+    elif fail:
         raise RuntimeError("can't find any JVM shared library")
 
     return jvm_dll_path
@@ -188,7 +190,9 @@ def _find_python_dll_file(fail=False):
     if not python_dll_path:
         python_dll_path = ctypes.util.find_library(PYTHON_LIB_NAME)
 
-    if not python_dll_path and fail:
+    if python_dll_path:
+        logging.warning("No Python shared library file found in all search paths. Using fallback %s" % repr(jvm_dll_path))
+    elif fail:
         raise RuntimeError("can't find any Python shared library")
 
     return python_dll_path
