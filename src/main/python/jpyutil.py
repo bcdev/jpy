@@ -56,7 +56,9 @@ def _find_file(search_dirs, *filenames):
         dir = os.path.normpath(dir)
         for filename in filenames:
             path = os.path.join(dir, filename)
-            if os.path.exists(path):
+            path_exists = os.path.exists(path)
+            logging.debug("Exists '%s'? %s" % (path, "yes" if path_exists else "no"))
+            if path_exists:
                 return path
     return None
 
@@ -87,6 +89,9 @@ def find_jvm_dll_file(java_home_dir=None, fail=False):
     :param java_home_dir:
     :return: pathname if found, else None
     """
+
+    logging.debug("Searching for JVM shared library file")
+
     if java_home_dir:
         jvm_dll_path = _find_jvm_dll_file(java_home_dir)
         if jvm_dll_path:
@@ -128,6 +133,8 @@ def _get_jvm_lib_dirs(java_home_dir):
 
 
 def _find_jvm_dll_file(java_home_dir):
+    logging.debug("Searching for JVM shared library file in %s" % repr(java_home_dir))
+
     if not os.path.exists(java_home_dir):
         return None
 
@@ -144,10 +151,14 @@ def _find_jvm_dll_file(java_home_dir):
     elif platform.system() == 'Darwin':
         return _find_file(search_dirs, 'libjvm.dylib')
 
+    # 'Window' and 'Darwin' did not succeed, try 'libjvm.so' on remaining platforms
     return _find_file(search_dirs, 'libjvm.so')
 
 
 def _find_python_dll_file(fail=False):
+
+    logging.debug("Searching for Python shared library file")
+
     filenames = _get_unique_config_values(('LDLIBRARY', 'INSTSONAME', 'PY3LIBRARY', 'DLLLIBRARY',))
     search_dirs = _get_unique_config_values(('LDLIBRARYDIR', 'srcdir', 'BINDIR', 'DESTLIB', 'DESTSHARED',
                                              'BINLIBDEST', 'LIBDEST', 'LIBDIR', 'MACHDESTLIB',))
@@ -212,6 +223,7 @@ def _get_python_api_config(config_file=None):
 def preload_jvm_dll(jvm_dll_file=None, java_home_dir=None):
     if not jvm_dll_file:
         jvm_dll_file = find_jvm_dll_file(java_home_dir=java_home_dir, fail=True)
+    logging.debug('Preloading JVM shared library %s' % repr(jvm_dll_file))
     return ctypes.CDLL(jvm_dll_file, mode=ctypes.RTLD_GLOBAL)
 
 
@@ -294,13 +306,14 @@ def init_jvm(java_home=None,
                                       jvm_properties=jvm_properties,
                                       jvm_options=jvm_options,
                                       config=config)
+        logging.debug('Creating JVM with options %s' % repr(jvm_options))
         jpy.create_jvm(options=jvm_options)
     else:
         jvm_options = None
 
     # print('jvm_dll =', jvm_dll)
     # print('jvm_options =', jvm_options)
-    return (cdll, jvm_options, )
+    return cdll, jvm_options
 
 
 class Config:
