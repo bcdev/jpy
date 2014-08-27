@@ -238,7 +238,8 @@ if dist.commands and len(dist.commands) > 0 \
     dist_files = jpyutil._list_dir_entries(build_dir,
                                            excludes=['__pycache__/',
                                                      'jpyconfig.properties',
-                                                     'jpyconfig.py'])
+                                                     'jpyconfig.py',
+                                                     'jpyconfig.pyc'])
 
     ##
     ## Write jpy version info (jpy.<platform>-<python-version>.info) to target directories
