@@ -264,11 +264,33 @@ def _get_python_api_config(config_file=None):
     return None
 
 
-def preload_jvm_dll(jvm_dll_file=None, java_home_dir=None):
+def preload_jvm_dll(jvm_dll_file=None,
+                    java_home_dir=None,
+                    config_file=None,
+                    config=None,
+                    fail=True):
+
+    # if jvm_dll_file is unknown, try getting it from config
     if not jvm_dll_file:
-        jvm_dll_file = find_jvm_dll_file(java_home_dir=java_home_dir, fail=True)
-    logging.debug('Preloading JVM shared library %s' % repr(jvm_dll_file))
-    return ctypes.CDLL(jvm_dll_file, mode=ctypes.RTLD_GLOBAL)
+        if not config:
+            config = _get_python_api_config(config_file=config_file)
+
+        if config:
+            jvm_dll_file = getattr(config, 'jvm_dll', None)
+            if not java_home_dir:
+                java_home_dir = getattr(config, 'java_home', None)
+
+    # if jvm_dll_file is still unknown, try searching it using java_home_dir
+    if not jvm_dll_file:
+        jvm_dll_file = find_jvm_dll_file(java_home_dir=java_home_dir, fail=fail)
+
+    if jvm_dll_file:
+        logging.debug('Preloading JVM shared library %s' % repr(jvm_dll_file))
+        return ctypes.CDLL(jvm_dll_file, mode=ctypes.RTLD_GLOBAL)
+    else:
+        logging.warning('Failed to preload JVM shared library. No shared library found.')
+        return None
+
 
 
 def get_jvm_options(jvm_maxmem=None,
@@ -325,22 +347,15 @@ def init_jvm(java_home=None,
              jvm_options=None,
              config_file=None,
              config=None):
+
     if not config:
         config = _get_python_api_config(config_file=config_file)
 
-    if config:
-        if not java_home:
-            java_home = getattr(config, 'java_home', None)
-        if not jvm_dll:
-            jvm_dll = getattr(config, 'jvm_dll', None)
-
-    if not jvm_dll:
-        jvm_dll = find_jvm_dll_file(java_home_dir=java_home)
-
-    if jvm_dll:
-        cdll = preload_jvm_dll(jvm_dll)
-    else:
-        cdll = None
+    cdll = preload_jvm_dll(jvm_dll_file=jvm_dll,
+                           java_home_dir=java_home,
+                           config_file=config_file,
+                           config=config,
+                           fail=False)
 
     import jpy
 
