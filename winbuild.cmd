@@ -11,7 +11,7 @@ SET PY33_64=C:\Python33-amd64
 SET PY34_64=C:\Python34-amd64
 SET PY27_32=C:\Python27
 SET PY33_32=C:\Python33
-SET PY34_32=
+SET PY34_32=C:\Python34
 
 
 
