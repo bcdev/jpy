@@ -332,15 +332,14 @@ public class PyLib {
 
                 long handle = DL.dlopen(pythonLibPath, DL.RTLD_GLOBAL + DL.RTLD_LAZY);
                 if (handle == 0) {
-                    String dlerror = DL.dlerror();
-                    String message = "Failed to load Python shared library. Use system property 'python.lib' to specify it.";
-                    if (dlerror != null) {
-                        message += " Error: " + dlerror;
+                    String message = "Failed to load Python shared library '" + pythonLibPath + "'";
+                    String dlError = DL.dlerror();
+                    if (dlError != null) {
+                        message += ": " + dlError;
                     }
                     throw new RuntimeException(message);
                 }
             }
-
 
             // E.g. dllFilePath = "/usr/local/lib/python3.3/dist-packages/jpy.cpython-33m.so";
             dllFilePath = getProperty(JPY_LIB_KEY, true);
