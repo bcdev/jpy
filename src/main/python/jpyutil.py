@@ -24,10 +24,7 @@ JVM_LIB_NAME = 'jvm'
 
 PYTHON_LIB_DIR_CONFIG_VAR_NAMES = ('LDLIBRARYDIR', 'srcdir',
                                    'BINDIR', 'DESTLIB', 'DESTSHARED',
-                                   'BINLIBDEST', 'LIBDEST', 'LIBDIR', 'MACHDESTLIB',)
-
-PYTHON_LIB_NAME_CONFIG_VAR_NAMES = ('INSTSONAME', 'DLLLIBRARY',)
-
+                                   'BINLIBDEST', 'LIBDEST', 'LIBDIR',)
 
 def _get_unique_config_values(names):
     values = []
@@ -216,11 +213,6 @@ def _find_python_dll_file(fail=False):
     else:
         versions = (vmaj + "." + vmin, vmaj, '')
         file_names = ['libpython' + v + '.so' for v in versions]
-
-    extra_file_names = [sysconfig.get_config_var(name) for name in PYTHON_LIB_NAME_CONFIG_VAR_NAMES]
-    for extra_file_name in extra_file_names:
-        if extra_file_name and not extra_file_name in file_names:
-            file_names.append(extra_file_name)
 
     logging.debug("Potential Python shared library file names: %s" % repr(file_names))
 
