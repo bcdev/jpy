@@ -26,7 +26,7 @@ PYTHON_LIB_DIR_CONFIG_VAR_NAMES = ('LDLIBRARYDIR', 'srcdir',
                                    'BINDIR', 'DESTLIB', 'DESTSHARED',
                                    'BINLIBDEST', 'LIBDEST', 'LIBDIR', 'MACHDESTLIB',)
 
-PYTHON_LIB_NAME_CONFIG_VAR_NAMES = ('LDLIBRARY', 'INSTSONAME', 'PY3LIBRARY', 'DLLLIBRARY',)
+PYTHON_LIB_NAME_CONFIG_VAR_NAMES = ('INSTSONAME', 'DLLLIBRARY',)
 
 
 def _get_unique_config_values(names):
