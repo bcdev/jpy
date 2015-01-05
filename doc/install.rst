@@ -67,7 +67,6 @@ If you encounter linkage errors during setup saying that something like a ``libj
 Build for Microsoft Windows
 ===========================
 
-
 Python 2.7
 ----------
 
@@ -138,6 +137,15 @@ Then, to actually build and test the jpy Python module use the following command
 ****************
 Typical Problems
 ****************
+
+=====================
+Environment variables
+=====================
+
+Make sure that ``JAVA_HOME`` and ``JDK_HOME`` are always set, not only when installing, but also when using jpy. Additionally make sure that your ``PATH`` environment variable contains the ``JAVA_HOME``.
+
+Set environment variables on Windows <http://www.computerhope.com/issues/ch000549.htm>
+Set environment variables on Linux <http://unix.stackexchange.com/questions/117467/how-to-permanently-set-environmental-variables>
 
 ==============================================
 Binary incompatibility between Python and Java
