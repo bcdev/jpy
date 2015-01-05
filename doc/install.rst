@@ -144,8 +144,9 @@ Environment variables
 
 Make sure that ``JAVA_HOME`` and ``JDK_HOME`` are always set, not only when installing, but also when using jpy. Additionally make sure that your ``PATH`` environment variable contains the ``JAVA_HOME``.
 
-Set environment variables on Windows <http://www.computerhope.com/issues/ch000549.htm>
-Set environment variables on Linux <http://unix.stackexchange.com/questions/117467/how-to-permanently-set-environmental-variables>
+Set environment variables on `Windows <http://www.computerhope.com/issues/ch000549.htm>`_
+
+Set environment variables on `Linux <http://unix.stackexchange.com/questions/117467/how-to-permanently-set-environmental-variables>`_
 
 ==============================================
 Binary incompatibility between Python and Java
