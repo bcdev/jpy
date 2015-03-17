@@ -109,7 +109,7 @@ public class PyObject {
      *
      * @return This Python object as a Java {@code Object[]} value.
      */
-    public <T> T[] getObjectArrayValue(Class<T> itemType) {
+    public <T> T[] getObjectArrayValue(Class<? extends T> itemType) {
         assertPythonRuns();
         return PyLib.getObjectArrayValue(getPointer(), itemType);
     }
@@ -137,7 +137,7 @@ public class PyObject {
      * @param valueType The type of the value or {@code null}, if unknown
      * @return The Python attribute value as Java object.
      */
-    public <T> T getAttribute(String name, Class<T> valueType) {
+    public <T> T getAttribute(String name, Class<? extends T> valueType) {
         assertPythonRuns();
         return PyLib.getAttributeValue(getPointer(), name, valueType);
     }
@@ -152,9 +152,9 @@ public class PyObject {
      * @param name  A name of the Python attribute.
      * @param value The new attribute value as Java object.
      */
-    public void setAttribute(String name, Object value) {
+    public <T> void setAttribute(String name, T value) {
         assertPythonRuns();
-        PyLib.setAttributeValue(getPointer(), name, value, value != null ? value.getClass() : (Class) null);
+        PyLib.setAttributeValue(getPointer(), name, value, value != null ? value.getClass() : null);
     }
 
     /**
@@ -168,7 +168,7 @@ public class PyObject {
      * @param value     The new attribute value as Java object.
      * @param valueType The value type used for the conversion. May be {@code null}.
      */
-    public <T> void setAttribute(String name, T value, Class<T> valueType) {
+    public <T> void setAttribute(String name, T value, Class<? extends T> valueType) {
         assertPythonRuns();
         PyLib.setAttributeValue(getPointer(), name, value, valueType);
     }
@@ -209,6 +209,7 @@ public class PyObject {
      */
     public <T> T createProxy(Class<T> type) {
         assertPythonRuns();
+        //noinspection unchecked
         return (T) createProxy(PyLib.CallableKind.METHOD, type);
     }
 

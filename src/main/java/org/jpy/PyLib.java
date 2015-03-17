@@ -223,7 +223,7 @@ public class PyLib {
 
     static native Object getObjectValue(long pointer);
 
-    static native <T> T[] getObjectArrayValue(long pointer, Class<T> itemType);
+    static native <T> T[] getObjectArrayValue(long pointer, Class<? extends T> itemType);
 
     static native long importModule(String name);
 
@@ -244,7 +244,7 @@ public class PyLib {
      * @param valueType The expected return type.
      * @return A value that represents the converted Python attribute value.
      */
-    static native <T> T getAttributeValue(long pointer, String name, Class<T> valueType);
+    static native <T> T getAttributeValue(long pointer, String name, Class<? extends T> valueType);
 
     /**
      * Sets the Python attribute given by {@code name} of the Python object pointed to by {@code pointer}.
@@ -259,7 +259,7 @@ public class PyLib {
      * @param value     The new attribute value.
      * @param valueType Optional type for converting the value to a Python object.
      */
-    static native <T> void setAttributeValue(long pointer, String name, T value, Class<T> valueType);
+    static native <T> void setAttributeValue(long pointer, String name, T value, Class<? extends T> valueType);
 
     /**
      * Calls a Python callable and returns the resulting Python object.
