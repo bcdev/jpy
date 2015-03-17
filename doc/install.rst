@@ -125,7 +125,7 @@ to prepare a build of the 64-bit version of jpy. Use::
 to prepare a build of the 32-bit version of jpy. Now set other environment variables::
 
     SET DISTUTILS_USE_SDK=1
-    <path to the JDK installation directory>
+    SET JDK_HOME=<path to the JDK installation directory>
     SET JAVA_HOME=%JDK_HOME%
     SET PATH=%JDK_HOME%\jre\bin\server;%PATH%
 
