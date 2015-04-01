@@ -124,7 +124,7 @@ int JMethod_MatchPyArgs(JNIEnv* jenv, JPy_JMethod* method, int argCount, PyObjec
         pyArg = PyTuple_GetItem(pyArgs, i);
         matchValue = paramDescriptor->MatchPyArg(jenv, paramDescriptor, pyArg);
 
-        JPy_DIAG_PRINT(JPy_DIAG_F_METH, "JMethod_MatchPyArgs: pyArgs[%d]: matchValue=%d\n", i, matchValue);
+        JPy_DIAG_PRINT(JPy_DIAG_F_METH, "JMethod_MatchPyArgs: pyArgs[%d]: paramDescriptor->type->javaName='%s', matchValue=%d\n", i, paramDescriptor->type->javaName, matchValue);
 
         if (matchValue == 0) {
             //printf("JMethod_MatchPyArgs 6\n");
