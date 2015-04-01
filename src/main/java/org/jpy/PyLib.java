@@ -187,9 +187,9 @@ public class PyLib {
         }
 
         if (DEBUG) {
-            System.out.println("org.jpy.PyLib: Starting Python with " + extraPaths.length + " extra module path(s):");
+            System.out.printf("org.jpy.PyLib: Starting Python with %d extra module path(s):%n", extraPaths.length);
             for (String path : extraPaths) {
-                System.out.println("org.jpy.PyLib:  " + path);
+                System.out.printf("org.jpy.PyLib:   %s%n", path);
             }
             Diag.setFlags(Diag.F_EXEC);
         }
@@ -345,7 +345,7 @@ public class PyLib {
             dllFilePath = getProperty(JPY_LIB_KEY, true);
             dllFilePath = new File(dllFilePath).getAbsolutePath();
 
-            if (DEBUG) System.out.println("org.jpy.PyLib: System.load(\"" + dllFilePath + "\"");
+            if (DEBUG) System.out.printf("org.jpy.PyLib: System.load(\"%s\")%n", dllFilePath);
             //if (DEBUG) System.out.println("org.jpy.PyLib: context class loader: " + Thread.currentThread().getContextClassLoader());
             //if (DEBUG) System.out.println("org.jpy.PyLib: class class loader:   " + PyLib.class.getClassLoader());
 
