@@ -8,6 +8,7 @@ import jpy
 
 
 class TestConstructorOverloads(unittest.TestCase):
+
     def setUp(self):
         self.Fixture = jpy.get_type('org.jpy.fixtures.ConstructorOverloadTestFixture')
         self.assertIsNotNone(self.Fixture)
@@ -41,6 +42,7 @@ class TestConstructorOverloads(unittest.TestCase):
 
 
 class TestMethodOverloads(unittest.TestCase):
+
     def setUp(self):
         self.Fixture = jpy.get_type('org.jpy.fixtures.MethodOverloadTestFixture')
         self.assertIsNotNone(self.Fixture)
@@ -88,6 +90,19 @@ class TestMethodOverloads(unittest.TestCase):
         with  self.assertRaises(RuntimeError, msg='RuntimeError expected') as e:
             fixture.join('x', 'y', 'z', 'u', 'v')
         self.assertEqual(str(e.exception), 'no matching Java method overloads found')
+
+
+class TestStaticMethodOverloads(unittest.TestCase):
+
+    # see https://github.com/bcdev/jpy/issues/54
+    def test_staticMethodIsFoundOverNonStatic(self):
+        String = jpy.get_type('java.lang.String')
+        Arrays = jpy.get_type('java.util.Arrays')
+        a = jpy.array(String, ['A', 'B', 'C'])
+        s = Arrays.toString(a)
+        print("Arrays.toString: " + str(type(Arrays.toString)))
+        self.assertEqual(str(s), '[A,B,C]')
+
 
 
 if __name__ == '__main__':
