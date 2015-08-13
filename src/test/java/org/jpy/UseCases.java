@@ -27,7 +27,7 @@ public class UseCases {
     public void modifyPythonSysPath() {
 
         PyLib.startPython();
-        PyModule builtinsMod = PyModule.importBuiltins();
+        PyModule builtinsMod = PyModule.getBuiltins();
 
         PyModule sysMod = PyModule.importModule("sys");
         PyObject pathObj = sysMod.getAttribute("path");
@@ -59,7 +59,7 @@ public class UseCases {
         PyLib.startPython();
         PyLib.execScript("paramInt = 123");
         PyLib.execScript("paramStr = 'abc'");
-        PyModule mainModule = PyModule.importModule("__main__");
+        PyModule mainModule = PyModule.getMain();
         PyObject paramIntObj = mainModule.getAttribute("paramInt");
         PyObject paramStrObj = mainModule.getAttribute("paramStr");
         int paramIntValue = paramIntObj.getIntValue();
@@ -69,6 +69,23 @@ public class UseCases {
 
         Assert.assertEquals(123, paramIntValue);
         Assert.assertEquals("abc", paramStrValue);
+
+        /////////////////////////////////////////////////
+
+        //PyLib.stopPython();
+    }
+
+    @Test
+    public void defAndUseGlobalPythonFunction() throws Exception {
+
+        PyLib.startPython();
+        PyLib.execScript("def incByOne(x): return x + 1");
+        PyModule mainModule = PyModule.getMain();
+        PyObject eleven = mainModule.call("incByOne", 10);
+
+        /////////////////////////////////////////////////
+
+        Assert.assertEquals(11, eleven.getIntValue());
 
         /////////////////////////////////////////////////
 

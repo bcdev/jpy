@@ -40,6 +40,43 @@ public class PyModule extends PyObject {
         return name;
     }
 
+    /**
+     * Get the Python interpreter's main module and return its Java representation.
+     * It can be used to access global scope variables and functions. For example:
+     * <pre>
+     *      PyLib.execScript("def incByOne(x): return x + 1");
+     *      PyModule mainModule = PyModule.getMain();
+     *      PyObject eleven = mainModule.call("incByOne", 10);
+     * </pre>
+     *
+     * @return The Python main module's Java representation.
+     * @since 0.8
+     */
+    public static PyModule getMain() {
+        return importModule("__main__");
+    }
+
+    /**
+     * Get the Python interpreter's buildins module and returns its Java representation.
+     * It can be used to call functions such as {@code len()}, {@code type()}, {@code list()}, etc. For example:
+     * <pre>
+     *      builtins = PyModule.getBuiltins();
+     *      PyObject size = builtins.call("len", pyList);
+     * </pre>
+     *
+     * @return Java representation of Python's builtin module.
+     * @see org.jpy.PyObject#call(String, Object...)
+     * @since 0.8
+     */
+    public static PyModule getBuiltins() {
+        try {
+            //Python 3.3+
+            return importModule("builtins");
+        } catch (Exception e) {
+            //Python 2.7
+            return importModule("__builtin__");
+        }
+    }
 
     /**
      * Import a Python module into the Python interpreter and return its Java representation.
@@ -54,34 +91,11 @@ public class PyModule extends PyObject {
     }
 
     /**
-     * Imports the Python buildins module and returns its Java representation.
-     * It can be used to call functions such as {@code len()}, {@code type()}, {@code list()}, etc. For example:
-     * <pre>
-     *      builtins = PyModule.importBuiltins();
-     *      int size = builtins.call("len", pyList);
-     * </pre>
-     *
-     * @return Java representation of Python's builtin module.
-     * @see org.jpy.PyObject#call(String, Object...)
-     * @since 0.8
-     */
-    public static PyModule importBuiltins() {
-        try {
-            //Python 3.3+
-            return PyModule.importModule("builtins");
-        } catch (Exception e) {
-            //Python 2.7
-            return PyModule.importModule("__builtin__");
-        }
-    }
-
-
-    /**
      * Extends Python's 'sys.path' variable by the given module path.
      *
      * @param modulePath The new module path. Should be an absolute pathname.
      * @param prepend    If true, the new path will be the new first element of 'sys.path', otherwise it will be the last.
-     * @return The altered 'sys.path' object.
+     * @return The altered 'sys.path' list.
      * @since 0.8
      */
     public static PyObject extendSysPath(String modulePath, boolean prepend) {
