@@ -783,18 +783,21 @@ PyObject* JOverloadedMethod_call(JPy_JOverloadedMethod* self, PyObject *args, Py
  */
 PyObject* JOverloadedMethod_repr(JPy_JOverloadedMethod* self)
 {
+    const char* className = self->declaringClass->javaName;
     const char* name = JPy_AS_UTF8(self->name);
     int methodCount = PyList_Size(self->methodList);
-    return JPy_FROM_FORMAT("%s(name='%s', methodCount=%d)",
+    return JPy_FROM_FORMAT("%s(class='%s', name='%s', methodCount=%d)",
                            ((PyObject*)self)->ob_type->tp_name,
+                           className,
                            name,
                            methodCount);
 }
 
 static PyMemberDef JOverloadedMethod_members[] =
 {
-    {"name",    T_OBJECT_EX, offsetof(JPy_JOverloadedMethod, name),       READONLY, "Overloaded method name"},
-    {"methods", T_OBJECT_EX, offsetof(JPy_JOverloadedMethod, methodList), READONLY, "List of methods"},
+    {"decl_class",   T_OBJECT_EX, offsetof(JPy_JOverloadedMethod, declaringClass), READONLY, "Declaring Java class"},
+    {"name",         T_OBJECT_EX, offsetof(JPy_JOverloadedMethod, name),           READONLY, "Overloaded method name"},
+    {"methods",      T_OBJECT_EX, offsetof(JPy_JOverloadedMethod, methodList),     READONLY, "List of methods"},
     {NULL}  /* Sentinel */
 };
 
