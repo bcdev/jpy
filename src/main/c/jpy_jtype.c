@@ -1511,15 +1511,18 @@ int JType_MatchPyArgAsJObjectParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
                     char format = *view.format;
                     if (type == JPy_JBoolean) {
                         matchValue = format == 'b' || format == 'B' ? 100
-                                   : view.itemsize == 1 ? 10 : 0;
+                                   : view.itemsize == 1 ? 10
+                                   : 0;
                     } else if (type == JPy_JByte) {
                         matchValue = format == 'b' ? 100
                                    : format == 'B' ? 90
-                                   : view.itemsize == 1 ? 10 : 0;
+                                   : view.itemsize == 1 ? 10
+                                   : 0;
                     } else if (type == JPy_JChar) {
                         matchValue = format == 'u' ? 100
                                    : format == 'H' ? 90
-                                   : format == 'h' ? 80 : view.itemsize == 2 ? 10
+                                   : format == 'h' ? 80
+                                   : view.itemsize == 2 ? 10
                                    : 0;
                     } else if (type == JPy_JShort) {
                         matchValue = format == 'h' ? 100
@@ -1538,7 +1541,8 @@ int JType_MatchPyArgAsJObjectParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
                                    : 0;
                     } else if (type == JPy_JFloat) {
                         matchValue = format == 'f' ? 100
-                                   : view.itemsize == 4 ? 10 : 0;
+                                   : view.itemsize == 4 ? 10
+                                   : 0;
                     } else if (type == JPy_JDouble) {
                         matchValue = format == 'd' ? 100
                                    : view.itemsize == 8 ? 10

@@ -27,13 +27,13 @@ typedef struct JPy_JType
 {
     // Since this is a type object, inherit everything from from PyTypeObject.
     // It is absolutely essential that this is the first struct member!
-    // typeObj.tp_name is this type's fully qualified Java name (same as 'javaName field').
+    // typeObj.tp_name is this type's fully qualified Java name (same as 'javaName' field).
     PyTypeObject typeObj;
     // The Java type name.
     char* javaName;
     // The JNI class reference (global reference).
     jclass classRef;
-    // The super type of this type. This will be NULL for primitive types, 'void' and 'java.lang.Object'.
+    // The super type of this type. This will be NULL for primitive types, 'void', and 'java.lang.Object'.
     struct JPy_JType* superType;
     // If component type of this type if this type is an array, NULL otherwise.
     struct JPy_JType* componentType;
