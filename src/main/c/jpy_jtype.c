@@ -1444,7 +1444,11 @@ int JType_ConvertPyArgToJStringArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
 
 int JType_MatchPyArgAsJObjectParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg)
 {
-    JPy_JType* paramType;
+    return JType_MatchPyArgAsJObject(jenv, paramDescriptor->type, pyArg);
+}
+
+int JType_MatchPyArgAsJObject(JNIEnv* jenv, JPy_JType* paramType, PyObject* pyArg)
+{
     JPy_JType* argType;
     JPy_JType* paramComponentType;
     JPy_JType* argComponentType;
@@ -1455,7 +1459,6 @@ int JType_MatchPyArgAsJObjectParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
         return 1;
     }
 
-    paramType = paramDescriptor->type;
     paramComponentType = paramType->componentType;
 
     if (JObj_Check(pyArg)) {
@@ -1606,7 +1609,6 @@ int JType_MatchPyArgAsJObjectParam(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
 
     return 0;
 }
-
 
 int JType_ConvertPyArgToJObjectArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescriptor, PyObject* pyArg, jvalue* value, JPy_ArgDisposer* disposer)
 {

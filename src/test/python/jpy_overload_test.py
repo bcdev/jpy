@@ -99,9 +99,10 @@ class TestStaticMethodOverloads(unittest.TestCase):
         String = jpy.get_type('java.lang.String')
         Arrays = jpy.get_type('java.util.Arrays')
         a = jpy.array(String, ['A', 'B', 'C'])
+        #jpy.diag.flags = jpy.diag.F_METH
         s = Arrays.toString(a)
-        print("Arrays.toString: " + str(type(Arrays.toString)))
-        self.assertEqual(str(s), '[A,B,C]')
+        #jpy.diag.flags = 0
+        self.assertEqual(str(s), '[A, B, C]')
 
 
 

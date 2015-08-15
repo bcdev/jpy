@@ -6,7 +6,8 @@ jpy Changelog
 Version 0.8 (SNAPSHOT)
 ======================
 
-* Fixed a problem where Python extensions loaded from Java couldn't see Python symbols (Linux) (issue #38)
+* Fixed problem where a Java 1-arg static method was confused with a zero-arg non-static method (issue #54)
+* Fixed problem where Python extensions loaded from Java couldn't see Python symbols (Linux) (issue #38)
 * It is now possible to use jpy Java API to work with multiple Python installations (issue #35).
   A tool called 'jpyutil.py' can be used to write configuration files that determine the required shared libraries
   for a given Python versions.

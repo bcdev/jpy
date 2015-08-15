@@ -114,6 +114,8 @@ int       JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObjec
 
 PyObject* JType_GetOverloadedMethod(JNIEnv* jenv, JPy_JType* type, PyObject* methodName, jboolean useSuperClass);
 
+int JType_MatchPyArgAsJObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg);
+
 int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* componentType, PyObject* pyArg, jobject* objectRef);
 
 // Non-API. Defined in jpy_jobj.c
