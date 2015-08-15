@@ -1,7 +1,7 @@
 # !/usr/bin/env python3
 
 __author__ = "Norman Fomferra, Brockmann Consult GmbH"
-__copyright__ = "Copyright (C) 2014 Brockmann Consult GmbH"
+__copyright__ = "Copyright (C) 2015 Brockmann Consult GmbH"
 __license__ = "GPL v3"
 __version__ = "0.8-SNAPSHOT"
 
@@ -154,7 +154,7 @@ elif platform.system() == 'Darwin':
     library_dirs += [os.path.join(sys.exec_prefix, 'lib')]
     extra_link_args += ['-Xlinker', '-rpath', jvm_dll_dir]
 
-with open('README.txt') as file:
+with open('README.md') as file:
     long_description = file.read()
 
 with open('CHANGES.txt') as file:
