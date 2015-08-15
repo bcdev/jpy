@@ -16,7 +16,8 @@ Version 0.8 (SNAPSHOT)
   - removed need to compile Java module using Maven
   - removed need to specify JDK_HOME environment variable, if JAVA_HOME already points to a JDK
 * Java API extensions
-  - new method jpy.org.PyModule.importBuiltins()
+  - new method jpy.org.PyModule.getBuiltins()
+  - new method jpy.org.PyModule.getMain()
   - new method jpy.org.PyModule.extendSysPath()
 * Java API configuration changes:
   - System property jpy.jpyLib:
