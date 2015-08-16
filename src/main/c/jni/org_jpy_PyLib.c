@@ -300,19 +300,18 @@ JNIEXPORT jint JNICALL Java_org_jpy_PyLib_execScript
 }
 
 
-PyObject* PyLib_ConvertJavaMapToPythonDict(jobject jMap)
+PyObject* PyLib_ConvertJavaToPythonObject(JNIEnv* jenv, jobject jObject)
 {
-    if (jMap == NULL) {
-        //return NULL;
-    }
-
-    return PyDict_New();
+    JPy_JType* type;
+    type = JType_GetTypeForObject(jenv, jObject);
+    return JType_ConvertJavaToPythonObject(jenv, type, jObject);
 }
 
-void PyLib_ReleasePythonDict(PyObject* pyDict, jobject jMap)
+int PyLib_ConvertPythonToJavaObject(JNIEnv* jenv, PyObject* pyObject, jobject* jObject)
 {
-
+    return JType_ConvertPythonToJavaObject(jenv, JPy_JPyObject, pyObject, jObject);
 }
+
 
 JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeCode
   (JNIEnv* jenv, jclass jLibClass, jstring jCode, jint jStart, jobject jGlobals, jobject jLocals)
@@ -324,33 +323,60 @@ JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeCode
     PyObject* pyMainModule;
     int start;
 
+    pyGlobals = NULL;
+    pyLocals = NULL;
+    pyReturnValue = NULL;
+    pyMainModule = NULL;
+    codeChars = NULL;
+
     JPy_BEGIN_GIL_STATE
 
     pyMainModule = PyImport_AddModule("__main__");
     if (pyMainModule == NULL) {
-        return 0L;
+        goto error;
     }
+    Py_INCREF(pyMainModule);
 
     codeChars = (*jenv)->GetStringUTFChars(jenv, jCode, NULL);
+    if (codeChars == NULL) {
+        goto error;
+    }
 
     pyGlobals = PyModule_GetDict(pyMainModule);
+    if (pyGlobals == NULL) {
+        goto error;
+    }
+    Py_INCREF(pyGlobals);
 
-    //pyGlobals = PyLib_ConvertJavaMapToPythonDict(jGlobals);
-    pyLocals = PyLib_ConvertJavaMapToPythonDict(jLocals);
+    pyLocals = PyDict_New();
+    if (pyLocals == NULL) {
+        goto error;
+    }
+
+    // todo: copy jGlobals into pyGlobals (convert Java --> Python values)
+    // todo: copy jLocals into pyLocals (convert Java --> Python values)
 
     start = jStart == JPy_IM_STATEMENT ? Py_single_input :
             jStart == JPy_IM_SCRIPT ? Py_file_input :
             Py_eval_input;
 
-    pyReturnValue = PyRun_String(codeChars, jStart, pyGlobals, pyLocals);
+    pyReturnValue = PyRun_String(codeChars, start, pyGlobals, pyLocals);
     if (pyReturnValue == NULL) {
         PyLib_HandlePythonException(jenv);
+        goto error;
     }
 
-    (*jenv)->ReleaseStringUTFChars(jenv, jCode, codeChars);
+    // todo: copy pyGlobals into jGlobals (convert Python --> Java values)
+    // todo: copy pyLocals into jLocals (convert Python --> Java values)
 
-    PyLib_ReleasePythonDict(pyGlobals, jGlobals);
-    PyLib_ReleasePythonDict(pyLocals, jLocals);
+error:
+    if (codeChars != NULL) {
+        (*jenv)->ReleaseStringUTFChars(jenv, jCode, codeChars);
+    }
+
+    Py_XDECREF(pyLocals);
+    Py_XDECREF(pyGlobals);
+    Py_XDECREF(pyMainModule);
 
     JPy_END_GIL_STATE
 
