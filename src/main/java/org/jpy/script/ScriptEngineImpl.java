@@ -3,6 +3,7 @@ package org.jpy.script;
 import org.jpy.PyLib;
 import org.jpy.PyModule;
 import org.jpy.PyObject;
+import org.jpy.PyInputMode;
 
 import javax.script.AbstractScriptEngine;
 import javax.script.Bindings;
@@ -90,14 +91,10 @@ class ScriptEngineImpl extends AbstractScriptEngine implements Invocable {
      */
     @Override
     public Object eval(String script, ScriptContext context) throws ScriptException {
-        // todo: implement a PyLib.execString(script) method which makes use of
-        // PyObject* PyRun_String(const char *str, int start, PyObject *globals, PyObject *locals)
-        // and used the 'context' arg to fill either 'globals' and/or 'locals'.
-        int exitCode = PyLib.execScript(script);
-        if (exitCode != 0) {
-            throw new ScriptException("exit code: " + exitCode);
-        }
-        return null;
+        return PyObject.executeCode(script,
+                                    PyInputMode.SCRIPT,
+                                    context.getBindings(ScriptContext.GLOBAL_SCOPE),
+                                    context.getBindings(ScriptContext.ENGINE_SCOPE));
     }
 
     /**

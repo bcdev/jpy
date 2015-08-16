@@ -22,6 +22,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -82,6 +83,74 @@ public class PyObjectTest {
         assertEquals(pyObject1.hashCode(), pyObject1.hashCode());
         assertEquals(pyObject1.hashCode(), new PyObject(pointer1).hashCode());
         assertTrue(pyObject1.hashCode() != pyObject2.hashCode());
+    }
+
+    @Test
+    public void testExecuteScript_Void() throws Exception {
+        String code = String.format("print('%s says: \"Hello Python!\"')", PyObjectTest.class.getName());
+        PyObject pyObject = PyObject.executeCode(code, PyInputMode.EXPRESSION);
+        assertNotNull(pyObject);
+        assertNull(pyObject.getObjectValue());
+    }
+
+    @Test
+    public void testExecuteScript_Int() throws Exception {
+        PyObject pyObject = PyObject.executeCode("7465", PyInputMode.EXPRESSION);
+        assertNotNull(pyObject);
+        assertEquals(7465, pyObject.getIntValue());
+    }
+
+    @Test
+    public void testExecuteScript_Double() throws Exception {
+        PyObject pyObject = PyObject.executeCode("3.14", PyInputMode.EXPRESSION);
+        assertNotNull(pyObject);
+        assertEquals(3.14, pyObject.getDoubleValue(), 1e-10);
+    }
+
+    @Test
+    public void testExecuteScript_String() throws Exception {
+        PyObject pyObject = PyObject.executeCode("'Hello from Python'", PyInputMode.EXPRESSION);
+        assertNotNull(pyObject);
+        assertEquals("Hello from Python", pyObject.getStringValue());
+    }
+
+    @Test
+    public void testExecuteScript_jpy() throws Exception {
+        HashMap<String, Object> localMap = new HashMap<>();
+        PyObject pyVoid = PyObject.executeCode("" +
+                                                       "import jpy\n" +
+                                                       "File = jpy.get_type('java.io.File')\n" +
+                                                       "f = File('test.txt')",
+                                               PyInputMode.SCRIPT,
+                                               null,
+                                               localMap);
+        assertNotNull(pyVoid);
+        assertEquals(null, pyVoid.getObjectValue());
+
+/*
+        assertNotNull(localMap.get("jpy"));
+        assertNotNull(localMap.get("File"));
+        assertNotNull(localMap.get("f"));
+        assertEquals(PyObject.class, localMap.get("jpy").getClass());
+        assertEquals(Class.class, localMap.get("File").getClass());
+        assertEquals(File.class, localMap.get("f").getClass());
+
+        assertEquals(new File("test.txt"), localMap.get("f"));
+*/
+    }
+
+    @Test
+    public void testExecuteScript_Error() throws Exception {
+        try {
+            PyObject.executeCode("[1, 2, 3", PyInputMode.EXPRESSION);
+        } catch (RuntimeException e) {
+            assertEquals("Error in Python interpreter:\n" +
+                                 "Type: <class 'SyntaxError'>\n" +
+                                 "Value: unexpected EOF while parsing (<string>, line 1)\n" +
+                                 "Line: <not available>\n" +
+                                 "Namespace: <not available>\n" +
+                                 "File: <not available>", e.getMessage());
+        }
     }
 
     @Test

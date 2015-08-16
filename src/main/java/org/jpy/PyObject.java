@@ -15,6 +15,7 @@ package org.jpy;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
+import java.util.Map;
 
 import static org.jpy.PyLib.assertPythonRuns;
 
@@ -37,6 +38,39 @@ public class PyObject {
         }
         PyLib.incRef(pointer);
         this.pointer = pointer;
+    }
+
+    /**
+     * Executes Python source code.
+     *
+     * @param code The Python source code.
+     * @param mode The execution mode.
+     * @return The result of executing the code as a Python object.
+     */
+    public static PyObject executeCode(String code, PyInputMode mode) {
+        return executeCode(code, mode, null, null);
+    }
+
+    /**
+     * Executes Python source code in the context specified by the {@code globals} and {@code locals} maps.
+     * <p/>
+     * If a Java value in the {@code globals} and {@code locals} maps cannot be directly converted into a Python object, a Java wrapper will be created instead.
+     * If a Java value is a wrapped Python object of type {@link PyObject}, it will be unwrapped.
+     *
+     * @param code The Python source code.
+     * @param mode The execution mode.
+     * @param globals The global variables to be set.
+     * @param locals The locals variables to be set.
+     * @return The result of executing the code as a Python object.
+     */
+    public static PyObject executeCode(String code, PyInputMode mode, Map<String, Object> globals, Map<String, Object> locals) {
+        if (code == null) {
+            throw new NullPointerException("code must not be null");
+        }
+        if (mode == null) {
+            throw new NullPointerException("mode must not be null");
+        }
+        return new PyObject(PyLib.executeCode(code, mode.value(), globals, locals));
     }
 
     /**
@@ -88,7 +122,6 @@ public class PyObject {
     /**
      * Gets this Python object as Java {@code Object} value.
      * <p/>
-     * Appropriate type conversions from Python to Java will be performed as needed.
      * If this Python object cannot be converted into a Java object, a Java wrapper of type {@link PyObject} will be returned.
      * If this Python object is a wrapped Java object, it will be unwrapped.
      *
@@ -101,8 +134,8 @@ public class PyObject {
 
     /**
      * Gets this Python object as Java {@code Object[]} value of the given item type.
-     * <p/>
      * Appropriate type conversions from Python to Java will be performed as needed.
+     * <p/>
      * If a Python item value cannot be converted into a Java item object, a Java wrapper of type {@link PyObject} will be returned.
      * If a Python item value is a wrapped Java object, it will be unwrapped.
      * If this Python object value is a wrapped Java array object of given type, it will be unwrapped.
@@ -116,6 +149,9 @@ public class PyObject {
 
     /**
      * Gets the Python value of a Python attribute.
+     * <p/>
+     * If the Python value cannot be converted into a Java object, a Java wrapper of type {@link PyObject} will be returned.
+     * If the Python value is a wrapped Java object, it will be unwrapped.
      *
      * @param name A name of the Python attribute.
      * @return A wrapper for the returned Python attribute value.
@@ -128,8 +164,8 @@ public class PyObject {
 
     /**
      * Gets the value of a Python attribute as Java object of a given type.
+     * Appropriate type conversions from Python to Java will be performed using the given value type.
      * <p/>
-     * Appropriate type conversions from Python to Java will be performed as needed.
      * If the Python value cannot be converted into a Java object, a Java wrapper of type {@link PyObject} will be returned.
      * If the Python value is a wrapped Java object, it will be unwrapped.
      *
@@ -145,9 +181,8 @@ public class PyObject {
     /**
      * Sets the value of a Python attribute from the given Java object.
      * <p/>
-     * Appropriate type conversions from Java to Python will be performed as needed.
-     * If the Java value cannot be converted into a Python object, a Java wrapper will be created instead.
-     * If the Java value is a wrapped Python object of type {@link PyObject}, it will be unwrapped.
+     * If the Java {@code value} cannot be directly converted into a Python object, a Java wrapper will be created instead.
+     * If the Java {@code value} is a wrapped Python object of type {@link PyObject}, it will be unwrapped.
      *
      * @param name  A name of the Python attribute.
      * @param value The new attribute value as Java object.
@@ -159,10 +194,10 @@ public class PyObject {
 
     /**
      * Sets the value of a Python attribute from the given Java object and Java type (if given).
+     * Appropriate type conversions from Java to Python will be performed using the given value type.
      * <p/>
-     * Appropriate type conversions from Java to Python will be performed as needed using the given value type.
-     * If the Java value cannot be converted into a Python object, a Java wrapper will be created instead.
-     * If the Java value is a wrapped Python object of type {@link PyObject}, it will be unwrapped.
+     * If the Java {@code value} cannot be directly converted into a Python object, a Java wrapper will be created instead.
+     * If the Java {@code value} is a wrapped Python object of type {@link PyObject}, it will be unwrapped.
      *
      * @param name      A name of the Python attribute.
      * @param value     The new attribute value as Java object.
@@ -175,6 +210,9 @@ public class PyObject {
 
     /**
      * Call the callable Python method with the given name and arguments.
+     * <p/>
+     * If a Java value in {@code args} cannot be directly converted into a Python object, a Java wrapper will be created instead.
+     * If the Java value in {@code args} is a wrapped Python object of type {@link PyObject}, it will be unwrapped.
      *
      * @param name A name of a Python attribute that evaluates to a callable object.
      * @param args The arguments for the method call.
@@ -188,6 +226,9 @@ public class PyObject {
 
     /**
      * Call the callable Python object with the given name and arguments.
+     * <p/>
+     * If a Java value in {@code args} cannot be directly converted into a Python object, a Java wrapper will be created instead.
+     * If the Java value in {@code args} is a wrapped Python object of type {@link PyObject}, it will be unwrapped.
      *
      * @param name A name of a Python attribute that evaluates to a callable object,
      * @param args The arguments for the call.

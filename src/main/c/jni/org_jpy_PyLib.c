@@ -36,6 +36,11 @@ static int JPy_InitThreads = 0;
 //#define JPy_JNI_DEBUG 1
 #define JPy_JNI_DEBUG 0
 
+// Make sure the following contants are same as in enum org.jpy.PyInputMode
+#define JPy_IM_STATEMENT  256
+#define JPy_IM_SCRIPT     257
+#define JPy_IM_EXPRESSION 258
+
 #define JPy_GIL_AWARE
 
 #ifdef JPy_GIL_AWARE
@@ -294,6 +299,63 @@ JNIEXPORT jint JNICALL Java_org_jpy_PyLib_execScript
     return retCode;
 }
 
+
+PyObject* PyLib_ConvertJavaMapToPythonDict(jobject jMap)
+{
+    if (jMap == NULL) {
+        //return NULL;
+    }
+
+    return PyDict_New();
+}
+
+void PyLib_ReleasePythonDict(PyObject* pyDict, jobject jMap)
+{
+
+}
+
+JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeCode
+  (JNIEnv* jenv, jclass jLibClass, jstring jCode, jint jStart, jobject jGlobals, jobject jLocals)
+{
+    const char* codeChars;
+    PyObject* pyReturnValue;
+    PyObject* pyGlobals;
+    PyObject* pyLocals;
+    PyObject* pyMainModule;
+    int start;
+
+    JPy_BEGIN_GIL_STATE
+
+    pyMainModule = PyImport_AddModule("__main__");
+    if (pyMainModule == NULL) {
+        return 0L;
+    }
+
+    codeChars = (*jenv)->GetStringUTFChars(jenv, jCode, NULL);
+
+    pyGlobals = PyModule_GetDict(pyMainModule);
+
+    //pyGlobals = PyLib_ConvertJavaMapToPythonDict(jGlobals);
+    pyLocals = PyLib_ConvertJavaMapToPythonDict(jLocals);
+
+    start = jStart == JPy_IM_STATEMENT ? Py_single_input :
+            jStart == JPy_IM_SCRIPT ? Py_file_input :
+            Py_eval_input;
+
+    pyReturnValue = PyRun_String(codeChars, jStart, pyGlobals, pyLocals);
+    if (pyReturnValue == NULL) {
+        PyLib_HandlePythonException(jenv);
+    }
+
+    (*jenv)->ReleaseStringUTFChars(jenv, jCode, codeChars);
+
+    PyLib_ReleasePythonDict(pyGlobals, jGlobals);
+    PyLib_ReleasePythonDict(pyLocals, jLocals);
+
+    JPy_END_GIL_STATE
+
+    return (jlong) pyReturnValue;
+}
 
 /*
  * Class:     org_jpy_python_PyLib

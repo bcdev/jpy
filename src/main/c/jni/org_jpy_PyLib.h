@@ -49,6 +49,14 @@ JNIEXPORT jint JNICALL Java_org_jpy_PyLib_execScript
 
 /*
  * Class:     org_jpy_PyLib
+ * Method:    execute
+ * Signature: (Ljava/lang/String;ILjava/util/Map;Ljava/util/Map;)J
+ */
+JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeCode
+  (JNIEnv *, jclass, jstring, jint, jobject, jobject);
+
+/*
+ * Class:     org_jpy_PyLib
  * Method:    incRef
  * Signature: (J)V
  */

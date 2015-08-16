@@ -15,6 +15,7 @@ package org.jpy;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Map;
 
 import static org.jpy.PyLibConfig.JPY_LIB_KEY;
 import static org.jpy.PyLibConfig.OS;
@@ -209,7 +210,10 @@ public class PyLib {
      */
     public static native void stopPython();
 
+    @Deprecated
     public static native int execScript(String script);
+
+    static native long executeCode(String code, int start, Map<String, Object> globals, Map<String, Object> locals);
 
     static native void incRef(long pointer);
 
