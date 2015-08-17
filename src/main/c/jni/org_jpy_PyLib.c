@@ -312,6 +312,23 @@ int PyLib_ConvertPythonToJavaObject(JNIEnv* jenv, PyObject* pyObject, jobject* j
     return JType_ConvertPythonToJavaObject(jenv, JPy_JPyObject, pyObject, jObject);
 }
 
+void dumpDict(const char* dictName, PyObject* dict)
+{
+    Py_ssize_t size;
+    PyObject *key = NULL, *value = NULL;
+    Py_ssize_t pos = 0;
+    int i = 0;
+
+    size = PyDict_Size(dict);
+    printf(">>>>>>>> %s.size = %d\n", dictName, size);
+    while (PyDict_Next(dict, &pos, &key, &value)) {
+        char* name;
+        name = JPy_AS_UTF8(key);
+        printf(">>>>>>>> %s[%d].name = '%s'\n", dictName, i, name);
+        i++;
+    }
+}
+
 
 JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeCode
   (JNIEnv* jenv, jclass jLibClass, jstring jCode, jint jStart, jobject jGlobals, jobject jLocals)
@@ -323,33 +340,35 @@ JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeCode
     PyObject* pyMainModule;
     int start;
 
+    JPy_BEGIN_GIL_STATE
+
     pyGlobals = NULL;
     pyLocals = NULL;
     pyReturnValue = NULL;
     pyMainModule = NULL;
     codeChars = NULL;
 
-    JPy_BEGIN_GIL_STATE
-
-    pyMainModule = PyImport_AddModule("__main__");
+    pyMainModule = PyImport_AddModule("__main__"); // borrowed ref
     if (pyMainModule == NULL) {
+        PyLib_HandlePythonException(jenv);
         goto error;
     }
-    Py_INCREF(pyMainModule);
 
     codeChars = (*jenv)->GetStringUTFChars(jenv, jCode, NULL);
     if (codeChars == NULL) {
+        // todo: Throw out-of-memory error
         goto error;
     }
 
-    pyGlobals = PyModule_GetDict(pyMainModule);
+    pyGlobals = PyModule_GetDict(pyMainModule); // borrowed ref
     if (pyGlobals == NULL) {
+        PyLib_HandlePythonException(jenv);
         goto error;
     }
-    Py_INCREF(pyGlobals);
 
-    pyLocals = PyDict_New();
+    pyLocals = PyDict_New(); // new ref
     if (pyLocals == NULL) {
+        PyLib_HandlePythonException(jenv);
         goto error;
     }
 
@@ -368,6 +387,8 @@ JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeCode
 
     // todo: copy pyGlobals into jGlobals (convert Python --> Java values)
     // todo: copy pyLocals into jLocals (convert Python --> Java values)
+    dumpDict("pyGlobals", pyGlobals);
+    dumpDict("pyLocals", pyLocals);
 
 error:
     if (codeChars != NULL) {
@@ -375,8 +396,6 @@ error:
     }
 
     Py_XDECREF(pyLocals);
-    Py_XDECREF(pyGlobals);
-    Py_XDECREF(pyMainModule);
 
     JPy_END_GIL_STATE
 
