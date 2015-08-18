@@ -2,17 +2,14 @@ import unittest
 
 import jpyutil
 
-
 jpyutil.init_jvm(jvm_maxmem='512M', jvm_classpath=['target/test-classes'])
 import jpy
 
 
 class TestConstructorOverloads(unittest.TestCase):
-
     def setUp(self):
         self.Fixture = jpy.get_type('org.jpy.fixtures.ConstructorOverloadTestFixture')
         self.assertIsNotNone(self.Fixture)
-
 
     def test_FloatConstructors(self):
         fixture = self.Fixture()
@@ -42,11 +39,9 @@ class TestConstructorOverloads(unittest.TestCase):
 
 
 class TestMethodOverloads(unittest.TestCase):
-
     def setUp(self):
         self.Fixture = jpy.get_type('org.jpy.fixtures.MethodOverloadTestFixture')
         self.assertIsNotNone(self.Fixture)
-
 
     def test_2ArgOverloadsWithVaryingTypes(self):
         fixture = self.Fixture()
@@ -65,7 +60,6 @@ class TestMethodOverloads(unittest.TestCase):
             fixture.join(object(), 32)
         self.assertEqual(str(e.exception), 'no matching Java method overloads found')
 
-
     def test_nArgOverloads(self):
         fixture = self.Fixture()
 
@@ -76,7 +70,6 @@ class TestMethodOverloads(unittest.TestCase):
         with  self.assertRaises(RuntimeError, msg='RuntimeError expected') as e:
             fixture.join('x', 'y', 'z', 'u')
         self.assertEqual(str(e.exception), 'no matching Java method overloads found')
-
 
     def test_nArgOverloadsAreFoundInBaseClass(self):
         Fixture = jpy.get_type('org.jpy.fixtures.MethodOverloadTestFixture$MethodOverloadTestFixture2')
@@ -92,18 +85,28 @@ class TestMethodOverloads(unittest.TestCase):
         self.assertEqual(str(e.exception), 'no matching Java method overloads found')
 
 
-class TestStaticMethodOverloads(unittest.TestCase):
+class TestOtherMethodOverloads(unittest.TestCase):
+    # see https://github.com/bcdev/jpy/issues/55
+    def test_objMethodIsFoundOverIfc(self):
+        ObjWithObjOverrides = jpy.get_type('org.jpy.fixtures.ObjWithObjOverrides')
+        o = ObjWithObjOverrides()
+        s = o.toString()
+        self.assertEqual(s, 'Hi!')
+
+        IfcWithObjOverrides = jpy.get_type('org.jpy.fixtures.IfcWithObjOverrides')
+        o = jpy.cast(o, IfcWithObjOverrides)
+        s = o.toString()
+        self.assertEqual(s, 'Hi!')
 
     # see https://github.com/bcdev/jpy/issues/54
     def test_staticMethodIsFoundOverNonStatic(self):
         String = jpy.get_type('java.lang.String')
         Arrays = jpy.get_type('java.util.Arrays')
         a = jpy.array(String, ['A', 'B', 'C'])
-        #jpy.diag.flags = jpy.diag.F_METH
+        # jpy.diag.flags = jpy.diag.F_METH
         s = Arrays.toString(a)
-        #jpy.diag.flags = 0
+        # jpy.diag.flags = 0
         self.assertEqual(str(s), '[A, B, C]')
-
 
 
 if __name__ == '__main__':
