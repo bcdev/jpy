@@ -7,6 +7,10 @@ import ctypes.util
 import logging
 
 
+# Uncomment for debugging
+#logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
+
+
 def _get_python_lib_name():
     try:
         abiflags = sys.abiflags
@@ -25,6 +29,7 @@ JVM_LIB_NAME = 'jvm'
 PYTHON_LIB_DIR_CONFIG_VAR_NAMES = ('LDLIBRARYDIR', 'srcdir',
                                    'BINDIR', 'DESTLIB', 'DESTSHARED',
                                    'BINLIBDEST', 'LIBDEST', 'LIBDIR',)
+
 
 def _get_unique_config_values(names):
     values = []
@@ -77,7 +82,7 @@ def _get_java_api_properties(fail=False):
 
 
 def find_jdk_home_dir():
-    for name in ('JPY_JAVA_HOME', 'JPY_JDK_HOME', 'JAVA_HOME', 'JDK_HOME', ):
+    for name in ('JPY_JAVA_HOME', 'JPY_JDK_HOME', 'JAVA_HOME', 'JDK_HOME',):
         jdk_home_dir = os.environ.get(name, None)
         if jdk_home_dir \
                 and os.path.exists(os.path.join(jdk_home_dir, 'include')) \
@@ -134,7 +139,7 @@ def _get_jvm_lib_dirs(java_home_dir):
             os.path.join(java_home_dir, 'lib', arch),
             os.path.join(java_home_dir, 'lib', arch, 'server'),
             os.path.join(java_home_dir, 'lib', arch, 'client'),
-    )
+            )
 
 
 def _get_existing_subdirs(dirs, subdirname):
@@ -261,7 +266,6 @@ def preload_jvm_dll(jvm_dll_file=None,
                     config_file=None,
                     config=None,
                     fail=True):
-
     # if jvm_dll_file is unknown, try getting it from config
     if not jvm_dll_file:
         if not config:
@@ -282,7 +286,6 @@ def preload_jvm_dll(jvm_dll_file=None,
     else:
         logging.warning('Failed to preload JVM shared library. No shared library found.')
         return None
-
 
 
 def get_jvm_options(jvm_maxmem=None,
@@ -339,7 +342,6 @@ def init_jvm(java_home=None,
              jvm_options=None,
              config_file=None,
              config=None):
-
     if not config:
         config = _get_python_api_config(config_file=config_file)
 
@@ -388,7 +390,6 @@ class Properties:
             self.keys = []
             self.values = {}
 
-
     def set_property(self, key, value):
         if value:
             if not key in self.keys:
@@ -399,10 +400,8 @@ class Properties:
                 self.keys.remove(key)
                 self.values.pop(key)
 
-
     def get_property(self, key, default_value=None):
         return self.values[key] if key in self.values else default_value
-
 
     def store(self, path, comments=()):
         with open(path, 'w') as f:
@@ -414,7 +413,6 @@ class Properties:
                     f.write(str(key) + ' = ' + str(value).replace('\\', '\\\\') + '\n')
                 else:
                     f.write(str(key) + ' =\n')
-
 
     def load(self, path):
         self.__init__()
@@ -529,7 +527,6 @@ def write_config_files(out_dir='.',
 def _main():
     import argparse
 
-
     parser = argparse.ArgumentParser(description='Generate configuration files for the jpy Python API (jpyconfig.py)\n'
                                                  'and the jpy Java API (jpyconfig.properties).')
     parser.add_argument("-o", "--out", action='store', default='.',
@@ -574,4 +571,3 @@ def _main():
 
 if __name__ == '__main__':
     _main()
-
