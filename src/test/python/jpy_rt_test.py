@@ -129,6 +129,13 @@ class TestFile(unittest.TestCase):
         self.assertEqual(str(n3), 'bibo')
 
 
+    def test_toString(self):
+        f = self.File('bibo')
+        self.assertTrue('toString' in self.File.__dict__)
+        s = f.toString()
+        self.assertEqual(s, 'bibo')
+
+
 class TestArrayList(unittest.TestCase):
     def setUp(self):
         self.ArrayList = jpy.get_type('java.util.ArrayList')
@@ -203,6 +210,29 @@ class TestHashMap(unittest.TestCase):
         self.assertEqual(hash_map.get(3), f)
         self.assertEqual(type(hash_map.get(3)), type(f))
         self.assertEqual(hash_map.get(4), fa)
+
+
+class TestDiverseStuff(unittest.TestCase):
+
+    def test_BugThatCausesPythonToCrash(self):
+        # todo (doing) here: https://github.com/bcdev/jpy/issues/56
+
+        Paths = jpy.get_type('java.nio.file.Paths')
+        #Path = jpy.get_type('java.nio.file.Path')
+
+        p = Paths.get('bibo', [])
+
+        s = str(p)
+        self.assertEqual(s, 'bibo')
+
+        print(">> Before crash")
+        jpy.diag.flags = jpy.diag.F_METH + jpy.diag.F_EXEC
+        # todo: p.toString() will cause Python 3.4 64-bit WIN32 to crash
+        s = p.toString()
+        jpy.diag.flags = 0
+        print(">> After crash")
+
+        self.assertEqual(s, 'bibo')
 
 
 if __name__ == '__main__':
