@@ -136,6 +136,7 @@ jmethodID JPy_Class_GetDeclaredFields_MID = NULL;
 jmethodID JPy_Class_GetDeclaredMethods_MID = NULL;
 jmethodID JPy_Class_GetComponentType_MID = NULL;
 jmethodID JPy_Class_IsPrimitive_MID = NULL;
+jmethodID JPy_Class_IsInterface_MID = NULL;
 
 // java.lang.reflect.Constructor
 jclass JPy_Constructor_JClass = NULL;
@@ -727,6 +728,7 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     DEFINE_METHOD(JPy_Class_GetDeclaredFields_MID, JPy_Class_JClass, "getDeclaredFields", "()[Ljava/lang/reflect/Field;");
     DEFINE_METHOD(JPy_Class_GetComponentType_MID, JPy_Class_JClass, "getComponentType", "()Ljava/lang/Class;");
     DEFINE_METHOD(JPy_Class_IsPrimitive_MID, JPy_Class_JClass, "isPrimitive", "()Z");
+    DEFINE_METHOD(JPy_Class_IsInterface_MID, JPy_Class_JClass, "isInterface", "()Z");
 
     DEFINE_CLASS(JPy_Constructor_JClass, "java/lang/reflect/Constructor");
     DEFINE_METHOD(JPy_Constructor_GetModifiers_MID, JPy_Constructor_JClass, "getModifiers", "()I");
@@ -790,7 +792,7 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     DEFINE_NON_OBJECT_TYPE(JPy_JFloat, JPy_Float_JClass);
     DEFINE_NON_OBJECT_TYPE(JPy_JDouble, JPy_Double_JClass);
     DEFINE_NON_OBJECT_TYPE(JPy_JVoid, JPy_Void_JClass);
-    // The Java root object.
+    // The Java root object. Make sure, JPy_JObject is the first object type to be initialized.
     DEFINE_OBJECT_TYPE(JPy_JObject, JPy_Object_JClass);
     // Primitive-Wrapper Objects.
     DEFINE_OBJECT_TYPE(JPy_JBooleanObj, JPy_Boolean_JClass);
@@ -862,6 +864,7 @@ void JPy_ClearGlobalVars(JNIEnv* jenv)
     JPy_Class_GetDeclaredMethods_MID = NULL;
     JPy_Class_GetComponentType_MID = NULL;
     JPy_Class_IsPrimitive_MID = NULL;
+    JPy_Class_IsInterface_MID = NULL;
     JPy_Constructor_GetModifiers_MID = NULL;
     JPy_Constructor_GetParameterTypes_MID = NULL;
     JPy_Method_GetName_MID = NULL;

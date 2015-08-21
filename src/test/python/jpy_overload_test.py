@@ -11,6 +11,7 @@ class TestConstructorOverloads(unittest.TestCase):
         self.Fixture = jpy.get_type('org.jpy.fixtures.ConstructorOverloadTestFixture')
         self.assertIsNotNone(self.Fixture)
 
+
     def test_FloatConstructors(self):
         fixture = self.Fixture()
         self.assertEqual(fixture.getState(), '')
@@ -85,6 +86,7 @@ class TestMethodOverloads(unittest.TestCase):
         self.assertEqual(str(e.exception), 'no matching Java method overloads found')
 
 
+class TestOtherMethodResolutionCases(unittest.TestCase):
 class TestOtherMethodOverloads(unittest.TestCase):
     # see https://github.com/bcdev/jpy/issues/55
     def test_objMethodIsFoundOverIfc(self):
@@ -93,20 +95,30 @@ class TestOtherMethodOverloads(unittest.TestCase):
         s = o.toString()
         self.assertEqual(s, 'Hi!')
 
-        IfcWithObjOverrides = jpy.get_type('org.jpy.fixtures.IfcWithObjOverrides')
-        o = jpy.cast(o, IfcWithObjOverrides)
-        s = o.toString()
-        self.assertEqual(s, 'Hi!')
+    # see https://github.com/bcdev/jpy/issues/57
+    def test_toReproduceAndFixIssue57(self):
+        HashMap = jpy.get_type('java.util.HashMap')
+        Map = jpy.get_type('java.util.Map')
+        m = HashMap()
+        c = m.getClass()
+        self.assertEqual(c.getName(), 'java.util.HashMap')
+        m = jpy.cast(m, Map)
+        # without the fix, we get "AttributeError: 'java.util.Map' object has no attribute 'getClass'"
+        c = m.getClass()
+        self.assertEqual(c.getName(), 'java.util.HashMap')
+
 
     # see https://github.com/bcdev/jpy/issues/54
-    def test_staticMethodIsFoundOverNonStatic(self):
+    def test_toReproduceAndFixIssue54(self):
         String = jpy.get_type('java.lang.String')
         Arrays = jpy.get_type('java.util.Arrays')
         a = jpy.array(String, ['A', 'B', 'C'])
-        # jpy.diag.flags = jpy.diag.F_METH
+        #jpy.diag.flags = jpy.diag.F_METH
         s = Arrays.toString(a)
-        # jpy.diag.flags = 0
+        #jpy.diag.flags = 0
+        # without the fix, we get str(s) = "java.lang.String@xxxxxx"
         self.assertEqual(str(s), '[A, B, C]')
+
 
 
 if __name__ == '__main__':
