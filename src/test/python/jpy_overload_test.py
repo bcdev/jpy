@@ -11,7 +11,6 @@ class TestConstructorOverloads(unittest.TestCase):
         self.Fixture = jpy.get_type('org.jpy.fixtures.ConstructorOverloadTestFixture')
         self.assertIsNotNone(self.Fixture)
 
-
     def test_FloatConstructors(self):
         fixture = self.Fixture()
         self.assertEqual(fixture.getState(), '')
@@ -87,11 +86,15 @@ class TestMethodOverloads(unittest.TestCase):
 
 
 class TestOtherMethodResolutionCases(unittest.TestCase):
-class TestOtherMethodOverloads(unittest.TestCase):
-    # see https://github.com/bcdev/jpy/issues/55
-    def test_objMethodIsFoundOverIfc(self):
+    # see https://github.com/bcdev/jpy/issues/56
+    def test_toReproduceAndFixIssue56(self):
         ObjWithObjOverrides = jpy.get_type('org.jpy.fixtures.ObjWithObjOverrides')
         o = ObjWithObjOverrides()
+        s = o.toString()
+        self.assertEqual(s, 'Hi!')
+
+        IfcWithObjOverrides = jpy.get_type('org.jpy.fixtures.IfcWithObjOverrides')
+        o = jpy.cast(o, IfcWithObjOverrides)
         s = o.toString()
         self.assertEqual(s, 'Hi!')
 
@@ -107,18 +110,16 @@ class TestOtherMethodOverloads(unittest.TestCase):
         c = m.getClass()
         self.assertEqual(c.getName(), 'java.util.HashMap')
 
-
     # see https://github.com/bcdev/jpy/issues/54
     def test_toReproduceAndFixIssue54(self):
         String = jpy.get_type('java.lang.String')
         Arrays = jpy.get_type('java.util.Arrays')
         a = jpy.array(String, ['A', 'B', 'C'])
-        #jpy.diag.flags = jpy.diag.F_METH
+        # jpy.diag.flags = jpy.diag.F_METH
         s = Arrays.toString(a)
-        #jpy.diag.flags = 0
+        # jpy.diag.flags = 0
         # without the fix, we get str(s) = "java.lang.String@xxxxxx"
         self.assertEqual(str(s), '[A, B, C]')
-
 
 
 if __name__ == '__main__':
