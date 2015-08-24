@@ -1,4 +1,4 @@
-package org.jpy.script;
+package org.jpy.jsr223;
 
 import org.jpy.PyLib;
 import org.jpy.PyModule;
