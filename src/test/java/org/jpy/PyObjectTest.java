@@ -86,36 +86,35 @@ public class PyObjectTest {
     }
 
     @Test
-    public void testExecuteScript_Void() throws Exception {
-        String code = String.format("print('%s says: \"Hello Python!\"')", PyObjectTest.class.getName());
-        PyObject pyObject = PyObject.executeCode(code, PyInputMode.EXPRESSION);
+    public void testExecuteCode_Stmt() throws Exception {
+        PyObject pyObject = PyObject.executeCode("pass", PyInputMode.STATEMENT);
         assertNotNull(pyObject);
         assertNull(pyObject.getObjectValue());
     }
 
     @Test
-    public void testExecuteScript_Int() throws Exception {
+    public void testExecuteCode_IntExpr() throws Exception {
         PyObject pyObject = PyObject.executeCode("7465", PyInputMode.EXPRESSION);
         assertNotNull(pyObject);
         assertEquals(7465, pyObject.getIntValue());
     }
 
     @Test
-    public void testExecuteScript_Double() throws Exception {
+    public void testExecuteCode_DoubleExpr() throws Exception {
         PyObject pyObject = PyObject.executeCode("3.14", PyInputMode.EXPRESSION);
         assertNotNull(pyObject);
         assertEquals(3.14, pyObject.getDoubleValue(), 1e-10);
     }
 
     @Test
-    public void testExecuteScript_String() throws Exception {
+    public void testExecuteCode_StringExpr() throws Exception {
         PyObject pyObject = PyObject.executeCode("'Hello from Python'", PyInputMode.EXPRESSION);
         assertNotNull(pyObject);
         assertEquals("Hello from Python", pyObject.getStringValue());
     }
 
     @Test
-    public void testExecuteScript_jpy() throws Exception {
+    public void testExecuteCode_Script() throws Exception {
         HashMap<String, Object> localMap = new HashMap<>();
         PyObject pyVoid = PyObject.executeCode("" +
                                                        "import jpy\n" +
@@ -140,16 +139,12 @@ public class PyObjectTest {
     }
 
     @Test
-    public void testExecuteScript_Error() throws Exception {
+    public void testExecuteScript_ErrorExpr() throws Exception {
         try {
             PyObject.executeCode("[1, 2, 3", PyInputMode.EXPRESSION);
         } catch (RuntimeException e) {
-            assertEquals("Error in Python interpreter:\n" +
-                                 "Type: <class 'SyntaxError'>\n" +
-                                 "Value: unexpected EOF while parsing (<string>, line 1)\n" +
-                                 "Line: <not available>\n" +
-                                 "Namespace: <not available>\n" +
-                                 "File: <not available>", e.getMessage());
+            assertNotNull(e.getMessage());
+            assertTrue(e.getMessage().contains("SyntaxError"));
         }
     }
 

@@ -37,8 +37,10 @@ typedef struct JPy_JType
     struct JPy_JType* superType;
     // If component type of this type if this type is an array, NULL otherwise.
     struct JPy_JType* componentType;
-    // If TRUE, 'classRef' refers to a primitive type (or 'void').
+    // If TRUE, 'classRef' refers to a Java primitive type or 'void'.
     char isPrimitive;
+    // If TRUE, 'classRef' refers to a Java interface type.
+    char isInterface;
     // If TRUE, the type is currently being resolved.
     char isResolving;
     // If TRUE, all the class constructors and methods have already been resolved.
