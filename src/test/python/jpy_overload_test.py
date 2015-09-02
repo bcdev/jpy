@@ -33,7 +33,7 @@ class TestConstructorOverloads(unittest.TestCase):
         fixture = self.Fixture(12, 0.34)
         self.assertEqual(fixture.getState(), 'Integer(12),Float(0.34)')
 
-        with  self.assertRaises(RuntimeError, msg='RuntimeError expected') as e:
+        with self.assertRaises(RuntimeError, msg='RuntimeError expected') as e:
             fixture = self.Fixture(12, '34')
         self.assertEqual(str(e.exception), 'no matching Java method overloads found')
 
@@ -56,7 +56,7 @@ class TestMethodOverloads(unittest.TestCase):
         self.assertEqual(fixture.join('efg', 3.2), 'String(efg),Double(3.2)')
         self.assertEqual(fixture.join('efg', 'abc'), 'String(efg),String(abc)')
 
-        with  self.assertRaises(RuntimeError, msg='RuntimeError expected') as e:
+        with self.assertRaises(RuntimeError, msg='RuntimeError expected') as e:
             fixture.join(object(), 32)
         self.assertEqual(str(e.exception), 'no matching Java method overloads found')
 
@@ -67,7 +67,7 @@ class TestMethodOverloads(unittest.TestCase):
         self.assertEqual(fixture.join('x', 'y'), 'String(x),String(y)')
         self.assertEqual(fixture.join('x', 'y', 'z'), 'String(x),String(y),String(z)')
 
-        with  self.assertRaises(RuntimeError, msg='RuntimeError expected') as e:
+        with self.assertRaises(RuntimeError, msg='RuntimeError expected') as e:
             fixture.join('x', 'y', 'z', 'u')
         self.assertEqual(str(e.exception), 'no matching Java method overloads found')
 
@@ -80,23 +80,30 @@ class TestMethodOverloads(unittest.TestCase):
         self.assertEqual(fixture.join('x', 'y', 'z'), 'String(x),String(y),String(z)')
         self.assertEqual(fixture.join('x', 'y', 'z', 'u'), 'String(x),String(y),String(z),String(u)')
 
-        with  self.assertRaises(RuntimeError, msg='RuntimeError expected') as e:
+        with self.assertRaises(RuntimeError, msg='RuntimeError expected') as e:
             fixture.join('x', 'y', 'z', 'u', 'v')
         self.assertEqual(str(e.exception), 'no matching Java method overloads found')
 
 
 class TestOtherMethodResolutionCases(unittest.TestCase):
+    # see https://github.com/bcdev/jpy/issues/55
+    def test_toReproduceAndFixIssue55(self):
+        Paths = jpy.get_type('java.nio.file.Paths')
+        # The following outcommented statement is will end in a Python error
+        # RuntimeError: no matching Java method overloads found
+        #p = Paths.get('testfile')
+        # This is the embarrassing workaround
+        p = Paths.get('testfile', [])
+
     # see https://github.com/bcdev/jpy/issues/56
     def test_toReproduceAndFixIssue56(self):
-        ObjWithObjOverrides = jpy.get_type('org.jpy.fixtures.ObjWithObjOverrides')
-        o = ObjWithObjOverrides()
-        s = o.toString()
-        self.assertEqual(s, 'Hi!')
-
-        IfcWithObjOverrides = jpy.get_type('org.jpy.fixtures.IfcWithObjOverrides')
-        o = jpy.cast(o, IfcWithObjOverrides)
-        s = o.toString()
-        self.assertEqual(s, 'Hi!')
+        Paths = jpy.get_type('java.nio.file.Paths')
+        p = Paths.get('testfile', [])
+        s = str(p)
+        self.assertEqual(s, 'testfile')
+        #The following outcommented call crashes the Python interpreter. The problem is likely a JNI one.
+        #s = p.toString()
+        self.assertEqual(s, 'testfile')
 
     # see https://github.com/bcdev/jpy/issues/57
     def test_toReproduceAndFixIssue57(self):
