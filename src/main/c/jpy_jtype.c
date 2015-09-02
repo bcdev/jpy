@@ -889,7 +889,7 @@ int JType_ProcessMethod(JNIEnv* jenv, JPy_JType* type, PyObject* methodKey, cons
         returnDescriptor = NULL;
     }
 
-    method = JMethod_New(methodKey, paramCount, paramDescriptors, returnDescriptor, isStatic, mid);
+    method = JMethod_New(type, methodKey, paramCount, paramDescriptors, returnDescriptor, isStatic, mid);
     if (method == NULL) {
         PyMem_Del(paramDescriptors);
         PyMem_Del(returnDescriptor);
@@ -1051,7 +1051,8 @@ int JType_ProcessClassMethods(JNIEnv* jenv, JPy_JType* type)
     jint i;
     jboolean isStatic;
     jboolean isPublic;
-    const char * methodName;
+    jboolean isAbstract;
+    const char* methodName;
     jmethodID mid;
     PyObject* methodKey;
 
@@ -1066,8 +1067,11 @@ int JType_ProcessClassMethods(JNIEnv* jenv, JPy_JType* type)
         method = (*jenv)->GetObjectArrayElement(jenv, methods, i);
         modifiers = (*jenv)->CallIntMethod(jenv, method, JPy_Method_GetModifiers_MID);
         // see http://docs.oracle.com/javase/6/docs/api/constant-values.html#java.lang.reflect.Modifier.PUBLIC
-        isPublic = (modifiers & 0x0001) != 0;
-        isStatic = (modifiers & 0x0008) != 0;
+        isPublic   = (modifiers & 0x0001) != 0;
+        isStatic   = (modifiers & 0x0008) != 0;
+        isAbstract = (modifiers & 0x0400) != 0;
+        // todo: if isAbstract, try to find method in java.lang.Object (JPy_JObject). If found, use it instead.
+        // this will likely fix https://github.com/bcdev/jpy/issues/56
         if (isPublic) {
             methodNameStr = (*jenv)->CallObjectMethod(jenv, method, JPy_Method_GetName_MID);
             returnType = (*jenv)->CallObjectMethod(jenv, method, JPy_Method_GetReturnType_MID);
@@ -1243,8 +1247,18 @@ PyObject* JType_GetOverloadedMethod(JNIEnv* jenv, JPy_JType* type, PyObject* met
 
     methodValue = PyDict_GetItem(typeDict, methodName);
     if (methodValue == NULL) {
-        if (useSuperClass && type->superType != NULL) {
-            return JType_GetOverloadedMethod(jenv, type->superType, methodName, JNI_TRUE);
+        if (useSuperClass) {
+            // type->superType == NULL means that type->superType is either an interface or a java.lang.Object
+            // If it is an interface (and not type java.lang.Object) also look for java.lang.Object methods
+            // See https://github.com/bcdev/jpy/issues/57.
+            if (type->superType != NULL) {
+                return JType_GetOverloadedMethod(jenv, type->superType, methodName, JNI_TRUE);
+            } else if (type != JPy_JObject && JPy_JObject != NULL) {
+                printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><ppppppppp\n");
+                return JType_GetOverloadedMethod(jenv, JPy_JObject, methodName, JNI_FALSE);
+            } else {
+                return Py_None;
+            }
         } else {
             return Py_None;
         }

@@ -27,6 +27,8 @@ typedef struct
 {
     PyObject_HEAD
 
+    // The declaring class.
+    JPy_JType* declaringClass;
     // Method name.
     PyObject* name;
     // Method parameter count.
@@ -37,7 +39,7 @@ typedef struct
     JPy_ParamDescriptor* paramDescriptors;
     // Method return type. Will be NULL for constructors.
     JPy_ReturnDescriptor* returnDescriptor;
-    // Method ID retrieved from JNI.
+    // The JNI method ID obtained from the declaring class.
     jmethodID mid;
 }
 JPy_JMethod;
@@ -73,7 +75,8 @@ JPy_JMethod*           JOverloadedMethod_FindStaticMethod(JPy_JOverloadedMethod*
 JPy_JOverloadedMethod* JOverloadedMethod_New(JPy_JType* declaringClass, PyObject* name, JPy_JMethod* method);
 int                    JOverloadedMethod_AddMethod(JPy_JOverloadedMethod* overloadedMethod, JPy_JMethod* method);
 
-JPy_JMethod* JMethod_New(PyObject* name,
+JPy_JMethod* JMethod_New(JPy_JType* declaringClass,
+                         PyObject* name,
                          int paramCount,
                          JPy_ParamDescriptor* paramDescriptors,
                          JPy_ReturnDescriptor* returnDescriptor,

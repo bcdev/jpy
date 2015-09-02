@@ -20,7 +20,8 @@
 #include "jpy_compat.h"
 
 
-JPy_JMethod* JMethod_New(PyObject* name,
+JPy_JMethod* JMethod_New(JPy_JType* declaringClass,
+                         PyObject* name,
                          int paramCount,
                          JPy_ParamDescriptor* paramDescriptors,
                          JPy_ReturnDescriptor* returnDescriptor,
@@ -31,6 +32,7 @@ JPy_JMethod* JMethod_New(PyObject* name,
     JPy_JMethod* method;
 
     method = (JPy_JMethod*) type->tp_alloc(type, 0);
+    method->declaringClass = declaringClass;
     method->name = name;
     method->paramCount = paramCount;
     method->paramDescriptors = paramDescriptors;
@@ -38,6 +40,7 @@ JPy_JMethod* JMethod_New(PyObject* name,
     method->isStatic = isStatic;
     method->mid = mid;
 
+    Py_INCREF(declaringClass);
     Py_INCREF(method->name);
 
     return method;
@@ -51,6 +54,7 @@ void JMethod_dealloc(JPy_JMethod* self)
 {
     JNIEnv* jenv;
 
+    Py_DECREF(self->declaringClass);
     Py_DECREF(self->name);
 
     jenv = JPy_GetJNIEnv();
@@ -178,12 +182,14 @@ PyObject* JMethod_FromJObject(JNIEnv* jenv, JPy_JMethod* method, PyObject* pyArg
 /**
  * Invoke a method. We have already ensured that the Python arguments and expected Java parameters match.
  */
-PyObject* JMethod_InvokeMethod(JNIEnv* jenv, JPy_JMethod* method, JPy_JType* type, PyObject* pyArgs)
+PyObject* JMethod_InvokeMethod(JNIEnv* jenv, JPy_JMethod* method, PyObject* pyArgs)
 {
     jvalue* jArgs;
     JPy_ArgDisposer* argDisposers;
     PyObject* returnValue;
+    JPy_JType* declaringClass;
     JPy_JType* returnType;
+    jclass classRef;
 
     //printf("JMethod_InvokeMethod 1: typeCode=%c\n", typeCode);
     if (JMethod_CreateJArgs(jenv, method, pyArgs, &jArgs, &argDisposers) < 0) {
@@ -194,11 +200,12 @@ PyObject* JMethod_InvokeMethod(JNIEnv* jenv, JPy_JMethod* method, JPy_JType* typ
 
     returnType = method->returnDescriptor->type;
     returnValue = NULL;
+    declaringClass = method->declaringClass;
+    classRef = declaringClass->classRef;
 
     if (method->isStatic) {
-        jclass classRef = type->classRef;
 
-        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "JMethod_InvokeMethod: calling static Java method %s#%s\n", type->javaName, JPy_AS_UTF8(method->name));
+        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "JMethod_InvokeMethod: calling static Java method %s#%s\n", declaringClass->javaName, JPy_AS_UTF8(method->name));
 
         if (returnType == JPy_JVoid) {
             (*jenv)->CallStaticVoidMethodA(jenv, classRef, method->mid, jArgs);
@@ -252,7 +259,7 @@ PyObject* JMethod_InvokeMethod(JNIEnv* jenv, JPy_JMethod* method, JPy_JType* typ
         jobject objectRef;
         PyObject* self;
 
-        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "JMethod_InvokeMethod: calling Java method %s#%s\n", type->javaName, JPy_AS_UTF8(method->name));
+        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "JMethod_InvokeMethod: calling Java method %s#%s\n", declaringClass->javaName, JPy_AS_UTF8(method->name));
 
         self = PyTuple_GetItem(pyArgs, 0);
         // Note it is already ensured that self is a JPy_JObj*
@@ -297,9 +304,9 @@ PyObject* JMethod_InvokeMethod(JNIEnv* jenv, JPy_JMethod* method, JPy_JType* typ
         } else if (returnType == JPy_JString) {
             // todo (doing) here: https://github.com/bcdev/jpy/issues/56
             jstring v;
-            printf("JMethod_InvokeMethod objectRef=%p, method->mid=%p, jArgs=%p\n", objectRef, method->mid, jArgs);
+            printf("Debugging issue 56: --> CallObjectMethodA(objectRef=%p, method->mid=%p, jArgs=%p)\n", objectRef, method->mid, jArgs);
             v = (*jenv)->CallObjectMethodA(jenv, objectRef, method->mid, jArgs);
-            printf("JMethod_InvokeMethod\n");
+            printf("Debugging issue 56: <-- CallObjectMethodA(...)=%p\n", v);
             JPy_ON_JAVA_EXCEPTION_GOTO(error);
             returnValue = JPy_FromJString(jenv, v);
             (*jenv)->DeleteLocalRef(jenv, v);
@@ -797,7 +804,7 @@ PyObject* JOverloadedMethod_call(JPy_JOverloadedMethod* self, PyObject *args, Py
         return NULL;
     }
 
-    return JMethod_InvokeMethod(jenv, method, self->declaringClass, args);
+    return JMethod_InvokeMethod(jenv, method, args);
 }
 
 /**

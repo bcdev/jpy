@@ -226,7 +226,7 @@ class TestDiverseStuff(unittest.TestCase):
         self.assertEqual(s, 'bibo')
 
         print(">> Before crash")
-        jpy.diag.flags = jpy.diag.F_METH + jpy.diag.F_EXEC
+        jpy.diag.flags = jpy.diag.F_METH + jpy.diag.F_EXEC + jpy.diag.F_TYPE
         # todo: p.toString() will cause Python 3.4 64-bit WIN32 to crash
         s = p.toString()
         jpy.diag.flags = 0

@@ -11,4 +11,9 @@ public class ObjWithObjOverrides implements IfcWithObjOverrides {
     public String toString() {
         return "Hi!";
     }
+
+    @Override
+    public String getName() {
+        return "Bibo";
+    }
 }
