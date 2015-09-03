@@ -24,7 +24,6 @@ import java.lang.annotation.Target;
  * <i>Note: this class is not used yet.</i>
  *
  * @author Norman Fomferra
- * @since 0.7 (not used)
  */
 @Target(value = ElementType.PARAMETER)
 @Retention(value = RetentionPolicy.RUNTIME)
