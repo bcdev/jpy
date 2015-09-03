@@ -86,6 +86,7 @@ class TestMethodOverloads(unittest.TestCase):
 
 
 class TestOtherMethodResolutionCases(unittest.TestCase):
+
     # see https://github.com/bcdev/jpy/issues/55
     def test_toReproduceAndFixIssue55(self):
         Paths = jpy.get_type('java.nio.file.Paths')
@@ -102,7 +103,7 @@ class TestOtherMethodResolutionCases(unittest.TestCase):
         s = str(p)
         self.assertEqual(s, 'testfile')
         #The following outcommented call crashes the Python interpreter. The problem is likely a JNI one.
-        #s = p.toString()
+        s = p.toString()
         self.assertEqual(s, 'testfile')
 
     # see https://github.com/bcdev/jpy/issues/57
