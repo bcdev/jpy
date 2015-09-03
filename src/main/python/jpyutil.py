@@ -1,3 +1,24 @@
+"""
+The main usage of this module is to configure jpy with respect to a given Java version and Python version.
+The module can also be used as tool. For usage, type:
+
+    python jpyutil.py --help
+
+The function being invoked here is `write_config_files()` which may also be directly used from your Python code.
+It will create a file 'jpyconfig.py' and/or a 'jpyconfig.properties' in the given output directory which is usually
+the one in which the jpy module is installed.
+
+To programmatically configure the Java Virtual machine, without any configuration files,
+the `init_jvm()` function can be used:
+
+    import jpyutil
+    jpyutil.init_jvm(jvm_maxmem='512M', jvm_classpath=['target/test-classes'])
+    # Without the former call, the following jpy import would create a JVM with default settings
+    import jpy
+
+"""
+
+
 import sys
 import sysconfig
 import os.path
@@ -93,8 +114,8 @@ def find_jdk_home_dir():
 
 def find_jvm_dll_file(java_home_dir=None, fail=False):
     """
-    Try to detect JVM DLL file.
-    :param java_home_dir:
+    Try to detect the JVM's shared library file.
+    :param java_home_dir: The Java JRE or JDK installation directory to be used for searching.
     :return: pathname if found, else None
     """
 
@@ -342,6 +363,20 @@ def init_jvm(java_home=None,
              jvm_options=None,
              config_file=None,
              config=None):
+    """
+    Creates a configured Java virtual machine which will be used by jpy.
+
+    :param java_home: The Java JRE or JDK home directory used to search JVM shared library, if 'jvm_dll' is omitted.
+    :param jvm_dll: The JVM shared library file. My be inferred from 'java_home'.
+    :param jvm_maxmem: The JVM maximum heap space, e.g. '400M', '8G'. Refer to the java executable '-Xmx' option.
+    :param jvm_classpath: The JVM search paths for Java class files. Separated by colons (Unix) or semicolons (Windows). Refer to the java executable '-cp' option.
+    :param jvm_properties: A dictionary of key -> value pairs passed to the JVM as Java system properties. Refer to the java executable '-D' option.
+    :param jvm_options: A list of extra options for the JVM. Refer to the java executable options.
+    :param config_file: Extra configuration file (e.g. 'jpyconfig.py') to be loaded if 'config' parameter is omitted.
+    :param config: An optional default configuration object providing default attributes
+                   for the 'jvm_maxmem', 'jvm_classpath', 'jvm_properties', 'jvm_options' parameters.
+    :return: a tuple (cdll, actual_jvm_options) on success, None otherwise.
+    """
     if not config:
         config = _get_python_api_config(config_file=config_file)
 
@@ -475,6 +510,16 @@ def write_config_files(out_dir='.',
                        jvm_dll_file=None,
                        req_java_api_conf=True,
                        req_py_api_conf=True):
+    """
+    Writes the jpy configuration files for Java and/or Python.
+
+    :param out_dir: output directory, must exist
+    :param java_home_dir: optional home directory of the Java JRE or JDK installation
+    :param jvm_dll_file: optional file to JVM shared library file
+    :param req_java_api_conf: whether to write the jpy configuration file 'jpyconfig.properties' for Java
+    :param req_py_api_conf: whether to write the jpy configuration file 'jpyconfig.py' for Python
+    :return: zero on success, otherwise an error code
+    """
     import datetime
 
     retcode = 0
@@ -491,7 +536,7 @@ def write_config_files(out_dir='.',
         try:
             with open(py_api_config_file, 'w') as f:
                 f.write("# Created by '%s' tool on %s\n" % (tool_name, str(datetime.datetime.now())))
-                f.write("# This file is read by the 'jpyutil' module in order load and configure the JVM from Python\n")
+                f.write("# This file is read by the 'jpyutil' module in order to load and configure the JVM from Python\n")
                 if java_home_dir:
                     f.write('java_home = %s\n' % repr(java_home_dir))
                 f.write('jvm_dll = %s\n' % repr(jvm_dll_file))
