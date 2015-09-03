@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * jpy's ScriptEngineFactory implementation.
+ * jpy's ScriptEngineFactory implementation of JSR 223: <i>Scripting for the Java Platform</i>.
  *
  * @author Norman Fomferra
  * @since 0.8
@@ -217,11 +217,13 @@ public class ScriptEngineFactoryImpl implements ScriptEngineFactory {
      */
     @Override
     public ScriptEngine getScriptEngine() {
-        synchronized (this) {
-            if (scriptEngine == null) {
-                scriptEngine = new ScriptEngineImpl(this);
+        if (scriptEngine == null) {
+            synchronized (this) {
+                if (scriptEngine == null) {
+                    scriptEngine = new ScriptEngineImpl(this);
+                }
             }
-            return scriptEngine;
         }
+        return scriptEngine;
     }
 }

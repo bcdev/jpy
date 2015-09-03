@@ -18,7 +18,7 @@ import java.io.Reader;
 import java.util.stream.Collectors;
 
 /**
- * jpy's ScriptEngine implementation.
+ * jpy's ScriptEngine implementation of JSR 223: <i>Scripting for the Java Platform</i>.
  *
  * @author Norman Fomferra
  * @since 0.8
