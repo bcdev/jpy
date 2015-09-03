@@ -248,6 +248,7 @@ JPy_JType* JType_New(JNIEnv* jenv, jclass classRef, jboolean resolve)
     }
 
     type->isPrimitive = (*jenv)->CallBooleanMethod(jenv, type->classRef, JPy_Class_IsPrimitive_MID);
+    type->isInterface = (*jenv)->CallBooleanMethod(jenv, type->classRef, JPy_Class_IsInterface_MID);
 
     JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_New: javaName=\"%s\", resolve=%d, type=%p\n", type->javaName, resolve, type);
 
@@ -936,6 +937,10 @@ int JType_InitSuperType(JNIEnv* jenv, JPy_JType* type, jboolean resolve)
         }
         Py_INCREF(type->superType);
         (*jenv)->DeleteLocalRef(jenv, superClassRef);
+    } else if (type->isInterface && JPy_JObject != NULL) {
+        // This solves the problems that java.lang.Object methods can not be called on interfaces (https://github.com/bcdev/jpy/issues/57)
+        type->superType = JPy_JObject;
+        Py_INCREF(type->superType);
     } else {
         type->superType = NULL;
     }

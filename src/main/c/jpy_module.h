@@ -126,6 +126,7 @@ extern jmethodID JPy_Class_GetDeclaredFields_MID;
 extern jmethodID JPy_Class_GetDeclaredMethods_MID;
 extern jmethodID JPy_Class_GetComponentType_MID;
 extern jmethodID JPy_Class_IsPrimitive_MID;
+extern jmethodID JPy_Class_IsInterface_MID;
 // java.lang.reflect.Constructor
 extern jclass JPy_Constructor_JClass;
 extern jmethodID JPy_Constructor_GetModifiers_MID;
