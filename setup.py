@@ -84,10 +84,10 @@ python_java_jpy_tests = [
     os.path.join(src_test_py_dir, 'jpy_gettype_test.py'),
 ]
 
-# e.g. java_home_dir = '/home/marta/jdk1.7.0_15'
+# e.g. jdk_home_dir = '/home/marta/jdk1.7.0_15'
 jdk_home_dir = jpyutil.find_jdk_home_dir()
 if jdk_home_dir is None:
-    log.error('Error: environment variable "JAVA_HOME" must be set to a JDK (>= v1.6) installation directory')
+    log.error('Error: environment variable "JAVA_HOME" must be set to a JDK (>= v1.7) installation directory')
     exit(1)
 
 log.info('Building a %s-bit library for a %s system with JDK at %s' % (
