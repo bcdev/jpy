@@ -372,8 +372,9 @@ JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeCode
         goto error;
     }
 
-    // todo: copy jGlobals into pyGlobals (convert Java --> Python values)
-    // todo: copy jLocals into pyLocals (convert Java --> Python values)
+    // todo for https://github.com/bcdev/jpy/issues/53
+    // - copy jGlobals into pyGlobals (convert Java --> Python values)
+    // - copy jLocals into pyLocals (convert Java --> Python values)
 
     start = jStart == JPy_IM_STATEMENT ? Py_single_input :
             jStart == JPy_IM_SCRIPT ? Py_file_input :
@@ -385,10 +386,11 @@ JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeCode
         goto error;
     }
 
-    // todo: copy pyGlobals into jGlobals (convert Python --> Java values)
-    // todo: copy pyLocals into jLocals (convert Python --> Java values)
-    dumpDict("pyGlobals", pyGlobals);
-    dumpDict("pyLocals", pyLocals);
+    // todo for https://github.com/bcdev/jpy/issues/53
+    // - copy pyGlobals into jGlobals (convert Python --> Java values)
+    // - copy pyLocals into jLocals (convert Python --> Java values)
+    //dumpDict("pyGlobals", pyGlobals);
+    //dumpDict("pyLocals", pyLocals);
 
 error:
     if (codeChars != NULL) {

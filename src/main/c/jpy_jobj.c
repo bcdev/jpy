@@ -594,7 +594,13 @@ int JObj_sq_ass_item(JPy_JObj* self, Py_ssize_t index, PyObject* pyItem)
     type = (JPy_JType*) Py_TYPE(self);
     componentType = type->componentType;
     if (type->componentType == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "internal error: object is not an array");
+        PyErr_SetString(PyExc_RuntimeError, "object is not a Java array");
+        return -1;
+    }
+
+    // fixes https://github.com/bcdev/jpy/issues/52
+    if (pyItem == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "cannot delete items of Java arrays");
         return -1;
     }
 
