@@ -322,27 +322,8 @@ public class PyLib {
         }
         try {
             String pythonLibPath = getProperty(PYTHON_LIB_KEY, false);
-
-            if (pythonLibPath != null && getOS() != OS.WINDOWS) {
-                // For PyLib, we load the shared library that was generated for the Python extension module 'jpy'.
-                // However, to use 'jpy' from Java we also need the Python shared library to be loaded as well.
-                // On Windows, this is done auto-magically, on Linux and Darwin we have to either change 'setup.py'
-                // to also include a dependency to the Python shared lib or, as done here, explicitly load it.
-                //
-                // If the Python shared lib is not found, we get error messages similar to the following:
-                // java.lang.UnsatisfiedLinkError: /usr/local/lib/python3.3/dist-packages/jpy.cpython-33m.so:
-                //      /usr/local/lib/python3.3/dist-packages/jpy.cpython-33m.so: undefined symbol: PyFloat_Type
-                if (DEBUG) System.out.println("org.jpy.PyLib: DL.dlopen(\"" + pythonLibPath + "\", DL.RTLD_GLOBAL + DL.RTLD_LAZY");
-
-                long handle = DL.dlopen(pythonLibPath, DL.RTLD_GLOBAL + DL.RTLD_LAZY);
-                if (handle == 0) {
-                    String message = "Failed to load Python shared library '" + pythonLibPath + "'";
-                    String dlError = DL.dlerror();
-                    if (dlError != null) {
-                        message += ": " + dlError;
-                    }
-                    throw new RuntimeException(message);
-                }
+            if (pythonLibPath != null && new File(pythonLibPath).isFile()) {
+                preloadPythonLib(pythonLibPath);
             }
 
             // E.g. dllFilePath = "/usr/local/lib/python3.3/dist-packages/jpy.cpython-33m.so";
@@ -359,6 +340,41 @@ public class PyLib {
         } catch (Throwable t) {
             dllProblem = t;
             throw t;
+        }
+    }
+
+    private static void preloadPythonLib(String pythonLibPath) {
+        if (getOS() != OS.WINDOWS) {
+            // For PyLib, we load the shared library that was generated for the Python extension module 'jpy'.
+            // However, to use 'jpy' from Java we also need the Python shared library to be loaded as well.
+            // On Windows, this is done auto-magically, on Linux and Darwin we have to either change 'setup.py'
+            // to also include a dependency to the Python shared lib or, as done here, explicitly load it.
+            //
+            // If the Python shared lib is not found, we get error messages similar to the following:
+            // java.lang.UnsatisfiedLinkError: /usr/local/lib/python3.3/dist-packages/jpy.cpython-33m.so:
+            //      /usr/local/lib/python3.3/dist-packages/jpy.cpython-33m.so: undefined symbol: PyFloat_Type
+            if (DEBUG)
+                System.out.printf("org.jpy.PyLib: DL.dlopen(\"%s\", DL.RTLD_GLOBAL + DL.RTLD_LAZY%n", pythonLibPath);
+
+            long handle = DL.dlopen(pythonLibPath, DL.RTLD_GLOBAL + DL.RTLD_LAZY);
+            if (handle == 0) {
+                String message = "Failed to load Python shared library '" + pythonLibPath + "'";
+                String dlError = DL.dlerror();
+                if (dlError != null) {
+                    message += ": " + dlError;
+                }
+                throw new RuntimeException(message);
+            }
+        } else {
+            // Fixes https://github.com/bcdev/jpy/issues/58
+            // Loading of jpy DLL fails for user-specific Python installations on Windows
+            if (DEBUG) System.out.printf("org.jpy.PyLib: System.load(\"%s\")%n", pythonLibPath);
+            try {
+                System.load(pythonLibPath);
+            } catch (Exception e) {
+                String message = "Failed to load Python shared library '" + pythonLibPath + "': " + e.getMessage();
+                System.err.println(message);
+            }
         }
     }
 

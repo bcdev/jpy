@@ -81,10 +81,9 @@ def _get_module_path(name, fail=False):
 
 
 def _find_file(search_dirs, *filenames):
-    for dir in search_dirs:
-        dir = os.path.normpath(dir)
-        for filename in filenames:
-            path = os.path.join(dir, filename)
+    for filename in filenames:
+        for dir in search_dirs:
+            path = os.path.normpath(os.path.join(dir, filename))
             path_exists = os.path.exists(path)
             logging.debug("Exists '%s'? %s" % (path, "yes" if path_exists else "no"))
             if path_exists:

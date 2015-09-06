@@ -6,6 +6,7 @@ jpy Changelog
 Version 0.8 (SNAPSHOT)
 ======================
 
+* Fixed problem where loading of jpy DLL fails for user-specific Python installations on Windows (issue #58)
 * Fixed problem where Java interface types didn't expose java.lang.Object methods (issue #57)
 * Fixed problem where a Java 1-arg static method was confused with a zero-arg non-static method (issue #54)
 * Added basic support for Java Scripting Engine API (issue #53)
