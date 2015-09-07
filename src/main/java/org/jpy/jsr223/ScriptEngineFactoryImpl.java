@@ -47,7 +47,7 @@ public class ScriptEngineFactoryImpl implements ScriptEngineFactory {
      */
     @Override
     public String getEngineVersion() {
-        return "0.8-SNAPSHOT";
+        return "0.1-alpha";
     }
 
     /**
@@ -108,7 +108,9 @@ public class ScriptEngineFactoryImpl implements ScriptEngineFactory {
      */
     @Override
     public String getLanguageVersion() {
-        return "3.4";
+        // todo - return true Python version --> e.g. call python -V
+        // using PyLibConfig.getProperties().getProperty("jpy.pythonExecutable")
+        return "3.x";
     }
 
     /**
