@@ -302,11 +302,7 @@ PyObject* JMethod_InvokeMethod(JNIEnv* jenv, JPy_JMethod* method, PyObject* pyAr
             JPy_ON_JAVA_EXCEPTION_GOTO(error);
             returnValue = JPy_FROM_JDOUBLE(v);
         } else if (returnType == JPy_JString) {
-            // todo (doing) here: https://github.com/bcdev/jpy/issues/56
-            jstring v;
-            printf("Debugging issue 56: --> CallObjectMethodA(objectRef=%p, method->mid=%p, jArgs=%p)\n", objectRef, method->mid, jArgs);
-            v = (*jenv)->CallObjectMethodA(jenv, objectRef, method->mid, jArgs);
-            printf("Debugging issue 56: <-- CallObjectMethodA(...)=%p\n", v);
+            jstring v = (*jenv)->CallObjectMethodA(jenv, objectRef, method->mid, jArgs);
             JPy_ON_JAVA_EXCEPTION_GOTO(error);
             returnValue = JPy_FromJString(jenv, v);
             (*jenv)->DeleteLocalRef(jenv, v);

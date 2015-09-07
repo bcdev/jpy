@@ -123,7 +123,7 @@ public class ScriptEngineFactoryImpl implements ScriptEngineFactory {
      * <li>ScriptEngine.LANGUAGE</li>
      * <li>ScriptEngine.LANGUAGE_VERSION</li>
      * </ul>
-     * <p/>
+     * <p>
      * The values for these keys are the Strings returned by <code>getEngineName</code>,
      * <code>getEngineVersion</code>, <code>getName</code>, <code>getLanguageName</code> and
      * <code>getLanguageVersion</code> respectively.<br><br>

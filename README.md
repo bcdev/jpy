@@ -62,3 +62,16 @@ With Visual Studio 14 and higher it is much easier:
     > python setup.py --maven build
 
 On success, the output is found in the `build` directory.
+
+
+Releasing a jpy version
+-----------------------
+
+The target reader of this section is a jpy developer wishing to release a new jpy version.
+
+Make sure all Java *and* Python units tests run green
+Remove the `-SNAPSHOT` qualifier from versions names in both the Maven `pom.xml` and `setup.py` files.
+Generate Java API doc by running `mvn javadoc:javadoc` which will output to `doc/_static`
+
+
+

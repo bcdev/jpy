@@ -25,21 +25,21 @@ import static org.jpy.PyLibConfig.getProperty;
 
 /**
  * Represents the library that provides the Python interpreter (CPython).
- * <p/>
+ * <p>
  * When the {@code PyLib} class is loaded, it reads its configuration from a Java properties file called {@code .jpy}
  * which must exist in the current user's home directory. The configuration file has been written to this location
  * by installing the Python jpy module using {@code python3 setup.py install --user} on Unix
  * and {@code python setup.py install}) on Windows.
- * <p/>
+ * <p>
  * Currently, the following properties are recognised in the {@code .jpy} file:
  * <ul>
  * <li>{@code python.lib} - the Python shared library (usually required on Unix only)</li>
  * <li>{@code jpy.lib} - the jpy shared library path for Python (Unix: {@code jpy*.so}, Windows: {@code jpy*.pyd})</li>
  * </ul>
- * <p/>
+ * <p>
  * jpy API clients should first call {@link #isPythonRunning()} in order to check if a Python interpreter is already available.
  * If not, {@link #startPython(String...)} must be called before any other jpy API is used.
- * <p/>
+ * <p>
  * <i>Important note for developers: If you change the signature of any of the native {@code PyLib} methods,
  * you must first run {@code javah} on the compiled class, and then adapt {@code src/main/c/jni/org_jpy_PyLib.c}.</i>
  *
@@ -252,7 +252,7 @@ public class PyLib {
 
     /**
      * Sets the Python attribute given by {@code name} of the Python object pointed to by {@code pointer}.
-     * <p/>
+     * <p>
      * Before the Python attribute is set, the Java {@code value} is converted into a corresponding
      * Python object using the optional {@code valueType}.
      * The {@code value} may also be of type {@code PyObject}.
@@ -267,7 +267,7 @@ public class PyLib {
 
     /**
      * Calls a Python callable and returns the resulting Python object.
-     * <p/>
+     * <p>
      * Before the Python callable is called, the {@code args} array of Java objects is converted into corresponding
      * Python objects.
      * The {@code args} array may also contain objects of type {@code PyObject}.
@@ -291,7 +291,7 @@ public class PyLib {
 
     /**
      * Calls a Python callable and returns the a Java Object.
-     * <p/>
+     * <p>
      * Before the Python callable is called, the {@code args} array of Java objects is converted into corresponding
      * Python objects. The return value of the Python call is converted to a Java object according the the given
      * return type.

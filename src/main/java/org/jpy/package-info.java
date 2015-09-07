@@ -20,18 +20,13 @@
  *
  * jpy API clients should first call {@link org.jpy.PyLib#isPythonRunning()} in order to check if a Python interpreter is already available.
  * If not, {@link org.jpy.PyLib#startPython(String...)} must be called before any other jpy API is used.
- * <p/>
- *
  * <p>
  * Once the Python interpreter in running clients can either execute Python code directly using the {@link org.jpy.PyLib#execScript(String)} method or
  * load a Python module using {@link org.jpy.PyModule#importModule(String)}. The returned {@link org.jpy.PyModule} object
  * then is the entry point to access Python variables and invoke functions.
- * <p/>
- *
  * <p>
  * Some {@link org.jpy.PyModule} methods return {@link org.jpy.PyObject} instances. These can be used to
  * create instances of Python classes, and to access Python class members, attributes and to invoke Python object methods..
- * <p/>
  *
  * @since 0.7
  */

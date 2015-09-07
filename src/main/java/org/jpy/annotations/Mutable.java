@@ -20,7 +20,7 @@ import java.lang.annotation.Target;
 
 /**
  * Used to mark method parameters as mutable, that is, an argument's state is expected to be modified by the method.
- * <p/>
+ * <p>
  * <i>Note: this class is not used yet.</i>
  *
  * @author Norman Fomferra

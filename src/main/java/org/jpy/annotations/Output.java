@@ -20,7 +20,7 @@ import java.lang.annotation.Target;
 
 /**
  * Used to mark method parameters as mere output, that is, an argument is expected to be written to by the method but not read from.
- * <p/>
+ * <p>
  * <i>Note: this class is not used yet.</i>
  *
  * @author Norman Fomferra

@@ -20,7 +20,7 @@ import java.lang.annotation.Target;
 
 /**
  * Used to mark method parameters as return values, that is, an argument may be returned as-is by the method.
- * <p/>
+ * <p>
  * <i>Note: this class is not used yet.</i>
  *
  * @author Norman Fomferra
