@@ -68,10 +68,14 @@ Releasing a jpy version
 -----------------------
 
 The target reader of this section is a jpy developer wishing to release a new jpy version.
+Note: You need to have Sphinx installed to update the documentation.
 
-Make sure all Java *and* Python units tests run green
-Remove the `-SNAPSHOT` qualifier from versions names in both the Maven `pom.xml` and `setup.py` files.
-Generate Java API doc by running `mvn javadoc:javadoc` which will output to `doc/_static`
+
+1. Make sure all Java *and* Python units tests run green
+2. Remove the `-SNAPSHOT` qualifier from versions names in both the Maven `pom.xml` and `setup.py` files.
+3. Generate Java API doc by running `mvn javadoc:javadoc` which will update directory `doc/_static`
+4. Update documentation, `cd doc` and run `make html` 
+5. http://peterdowns.com/posts/first-time-with-pypi.html
 
 
 

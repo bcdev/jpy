@@ -11,9 +11,6 @@ After successful installation you will be able
 * to use Java from Python by importing the jpy module ``import jpy`` and
 * to use Python from Java by importing the jpy Java API classes ``import org.jpy.*;`` from ``jpy.jar`` on your Java classpath.
 
-You will also find a file called ``.jpy`` in your home folder. This is used by jpy's Java API ``jpy.jar`` in order to
-locate the Python interpreter as well as the shared library representing the jpy Python module.
-
 *******************
 Getting the Sources
 *******************
@@ -34,7 +31,60 @@ In the following it is assumed that the jpy sources are either checked out or un
 Build from Sources
 ******************
 
-Now change into the checkout directory (``cd jpy``) and follow the build steps below.
+Change into the checkout directory (``cd jpy``) and follow the build steps below. After successful build, the
+``build`` directory will contain the platform-dependent jpy versions:
+
+    build/
+        lib-*os-platform*-*python-version*/
+            jpy.so (Unixes only)
+            jdl.so (Unixes only)
+            jpy.pyd (Windows only)
+            jdl.pyd (Windows only)
+            jpyutil.py
+            jpyconfig.py
+            jpyconfig.properties
+
+
+************************
+Running Java from Python
+************************
+
+In order to use jpy from Python you will have to add the respective directory ``lib-``*os-platform*``-``*python-version*
+for your platform and Python version to your Python path. This can be done either programmatically in Python, e.g.
+
+    import sys
+    sys.path.append('build/lib-*os-platform*-*python-version*')
+
+You could also alter the ``PYTHONPATH`` environment variable,
+
+    export PYTHONPATH=$PYTHONPATH:build/lib-*os-platform*-*python-version*
+
+Finally you could copy the contained files into your Python
+installation's ``site-packages`` directory to make jpy permanently available.
+
+************************
+Running Python from Java
+************************
+
+To use the jpy Java API, put ``lib/jpy.jar`` on your classpath. Or if you use Maven add the following dependency to your
+project:
+
+    <dependency>
+        <groupId>org.jpy</groupId>
+        <artifactId>jpy</artifactId>
+        <version>0.8</version>
+    </dependency>
+
+The jpy Java API requires a maximum of two configuration parameters:
+
+* ``jpy.jpyLib`` - path to the 'jpy' Python module, namely the ``jpy.so`` (Unix) or ``jpy.pyd`` (Windows) file
+* ``jpy.jdlLib`` - path to the 'jdl' Python module, namely the ``jpy.so`` (Unix) file. Not used on Windows.
+
+They can be passed directly to the JVM either as Java system properties or by using the single system property
+
+* ``jpy.config`` - which is a path to a Java properties files containing the definitions of the two parameters named
+above. Such property file is also written for each build and is found in ``build/lib-<os-platform>-<python-version>/jpyconfig.properties``.
+
 
 ========================
 Build for Linux / Darwin
@@ -42,8 +92,8 @@ Build for Linux / Darwin
 
 You will need
 
-* `Python 2.7 or 3.3 <http://www.python.org/>`_ or higher (2.6 and 3.2 may work as well but are not tested)
-* `Oracle JDK 7 <http://www.oracle.com/technetwork/java/javase/downloads/>`_ or higher (JDK 6 may work as well)
+* `Python 2.7 or 3.3 <http://www.python.org/>`_ or higher
+* `Oracle JDK 7 <http://www.oracle.com/technetwork/java/javase/downloads/>`_ or higher
 * `Maven 3 <http://maven.apache.org/>`_ or higher
 * For Linux: ``gcc``
 * For Darwin: `Xcode <https://itunes.apple.com/de/app/xcode/id497799835?mt=12>`_
@@ -52,13 +102,16 @@ To build and test the jpy Python module use the following commands::
 
     export JDK_HOME=<path to the JDK installation directory>
     export JAVA_HOME=$JDK_HOME
-    python setup.py install --user
+    python setup.py --maven build
 
+where ``JAVA_HOME`` is used by Maven and ``JDK_HOME`` by ``setup.py``.
 On Darwin, you may find the current JDK/Java home using the following expression::
 
     export JDK_HOME=$(/usr/libexec/java_home)
 
-If you encounter linkage errors during setup saying that something like a ``libjvm.so`` (Linux) or ``libjvm.dylib`` (Darwin) cannot be found, then you can try adding its containing directory to the ``LD_LIBRARY_PATH`` environment variable, e.g.::
+If you encounter linkage errors during setup saying that something like a ``libjvm.so`` (Linux) or ``libjvm.dylib``
+(Darwin) cannot be found, then you can try adding its containing directory to the ``LD_LIBRARY_PATH`` environment
+variable, e.g.::
 
     export LD_LIBRARY_PATH=$JDK_HOME/jre/lib/server:$LD_LIBRARY_PATH
 
@@ -90,7 +143,7 @@ Open the command-line and execute::
 
 Then, to actually build and test the jpy Python module use the following command::
 
-    python setup.py install
+    python setup.py --maven build
 
 
 Python 3.3 and higher
@@ -131,12 +184,14 @@ to prepare a build of the 32-bit version of jpy. Now set other environment varia
 
 Then, to actually build and test the jpy Python module use the following command::
 
-    python setup.py install
+    python setup.py --maven build
 
 
-****************
-Typical Problems
-****************
+
+
+**********************
+Typical Build Problems
+**********************
 
 =====================
 Environment variables
