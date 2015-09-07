@@ -3,7 +3,7 @@
 __author__ = "Norman Fomferra, Brockmann Consult GmbH"
 __copyright__ = "Copyright (C) 2015 Brockmann Consult GmbH"
 __license__ = "GPL v3"
-__version__ = "0.8-SNAPSHOT"
+__version__ = "0.8"
 
 import sys
 import os

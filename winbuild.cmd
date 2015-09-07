@@ -1,22 +1,22 @@
 :: Windows SDK 7.1 settings
-#SET SDK_SETENV=C:\Program Files\Microsoft SDKs\Windows\v7.1\bin\setenv
-#SET VS90COMNTOOLS=%VS100COMNTOOLS%
-#SET DISTUTILS_USE_SDK=1
+SET SDK_SETENV=C:\Program Files\Microsoft SDKs\Windows\v7.1\bin\setenv
+SET VS90COMNTOOLS=%VS100COMNTOOLS%
+SET DISTUTILS_USE_SDK=1
 
-# VS 14 settings (with Windows 10)
-SET SDK_SETENV=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC
-SET VS100COMNTOOLS=C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\
+:: VS 14 settings (with Windows 10)
+::SET SDK_SETENV=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC
+::SET VS100COMNTOOLS=C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\
 
 
-SET JDK32_HOME=C:\Program Files (x86)\Java\jdk1.7.0_45
-SET JDK64_HOME=C:\Program Files\Java\jdk1.8.0_45
+SET JDK32_HOME=C:\Program Files (x86)\Java\jdk1.8.0_60
+SET JDK64_HOME=C:\Program Files\Java\jdk1.8.0_60
 
-SET PY27_64=C:\Python27
-SET PY33_64=C:\Python33
-SET PY34_64=C:\Python34
-SET PY27_32=C:\Python27-x86
-SET PY33_32=C:\Python33-x86
-SET PY34_32=C:\Python34-x86
+SET PY27_64=C:\Python27-amd64
+SET PY33_64=C:\Python33-amd64
+SET PY34_64=C:\Python34-amd64
+SET PY27_32=C:\Python27
+SET PY33_32=C:\Python33
+SET PY34_32=C:\Python34
 
 
 
