@@ -6,6 +6,7 @@ jpy Changelog
 Version 0.8
 ===========
 
+*
 * Fixed problem where a Python interpreter crash occurred when executing del statement on Java arrays (issue #52)
 * Fixed problem where loading of jpy DLL fails for user-specific Python installations on Windows (issue #58)
 * Fixed problem where Java interface types didn't expose java.lang.Object methods (issue #57)

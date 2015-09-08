@@ -27,19 +27,19 @@ CALL "%SDK_SETENV%" /x64 /release
 SET PYTHONHOME=%PY27_64%
 IF NOT EXIST "%PYTHONHOME%" GOTO Build_PY33_64
 ECHO Starting build using "%PYTHONHOME%" and "%JAVA_HOME%"
-"%PYTHONHOME%\python.exe" setup.py --maven build
+"%PYTHONHOME%\python.exe" setup.py --maven bdist_wheel
 
 :Build_PY33_64
 SET PYTHONHOME=%PY33_64%
 IF NOT EXIST "%PYTHONHOME%" GOTO Build_PY34_64
 ECHO Starting build using "%PYTHONHOME%" and "%JAVA_HOME%"
-"%PYTHONHOME%\python.exe" setup.py --maven build
+"%PYTHONHOME%\python.exe" setup.py --maven bdist_wheel
 
 :Build_PY34_64
 SET PYTHONHOME=%PY34_64%
 IF NOT EXIST "%PYTHONHOME%" GOTO Build_32
 ECHO Starting build using "%PYTHONHOME%" and "%JAVA_HOME%"
-"%PYTHONHOME%\python.exe" setup.py --maven build
+"%PYTHONHOME%\python.exe" setup.py --maven bdist_wheel
 
 
 :Build_32
@@ -51,19 +51,19 @@ CALL "%SDK_SETENV%" /x86 /release
 SET PYTHONHOME=%PY27_32%
 IF NOT EXIST "%PYTHONHOME%" GOTO Build_PY33_32
 ECHO Starting build using "%PYTHONHOME%" and "%JAVA_HOME%"
-"%PYTHONHOME%\python.exe" setup.py --maven build
+"%PYTHONHOME%\python.exe" setup.py --maven bdist_wheel
 
 :Build_PY33_32
 SET PYTHONHOME=%PY33_32%
 IF NOT EXIST "%PYTHONHOME%" GOTO Build_PY34_32
 ECHO Starting build using "%PYTHONHOME%" and "%JAVA_HOME%"
-"%PYTHONHOME%\python.exe" setup.py --maven build
+"%PYTHONHOME%\python.exe" setup.py --maven bdist_wheel
 
 :Build_PY34_32
 SET PYTHONHOME=%PY34_32%
 IF NOT EXIST "%PYTHONHOME%" GOTO Build_End
 ECHO Starting build using "%PYTHONHOME%" and "%JAVA_HOME%"
-"%PYTHONHOME%\python.exe" setup.py --maven build
+"%PYTHONHOME%\python.exe" setup.py --maven bdist_wheel
 
 
 :Build_End

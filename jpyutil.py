@@ -8,16 +8,19 @@ The function being invoked here is `write_config_files()` which may also be dire
 It will create a file 'jpyconfig.py' and/or a 'jpyconfig.properties' in the given output directory which is usually
 the one in which the jpy module is installed.
 
-To programmatically configure the Java Virtual machine, without any configuration files,
-the `init_jvm()` function can be used:
+To programmatically configure the Java Virtual machine, the `init_jvm()` function can be used:
 
     import jpyutil
     jpyutil.init_jvm(jvm_maxmem='512M', jvm_classpath=['target/test-classes'])
     # Without the former call, the following jpy import would create a JVM with default settings
     import jpy
 
-"""
+The `init_jvm()` can also be called with 'config_file' or 'config' arguments instead. If they are omitted,
+default configuration values will inferred by first trying to import the module 'jpyconfig.py' (which must
+therefore be detectable by the Python sys.path). Secondly, the environment variable 'JPY_PY_CONFIG' may point to
+such a Python configuration file.
 
+"""
 
 import sys
 import sysconfig
@@ -29,7 +32,11 @@ import logging
 
 
 # Uncomment for debugging
-#logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
+# logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
+
+JDK_HOME_VARS = ('JPY_JAVA_HOME', 'JPY_JDK_HOME', 'JAVA_HOME', 'JDK_HOME',)
+JRE_HOME_VARS = ('JPY_JAVA_HOME', 'JPY_JDK_HOME', 'JPY_JRE_HOME', 'JAVA_HOME', 'JDK_HOME', 'JRE_HOME', 'JAVA_JRE')
+JVM_LIB_NAME = 'jvm'
 
 
 def _get_python_lib_name():
@@ -45,7 +52,6 @@ def _get_python_lib_name():
 
 PYTHON_64BIT = sys.maxsize > 2 ** 32
 PYTHON_LIB_NAME = _get_python_lib_name()
-JVM_LIB_NAME = 'jvm'
 
 PYTHON_LIB_DIR_CONFIG_VAR_NAMES = ('LDLIBRARYDIR', 'srcdir',
                                    'BINDIR', 'DESTLIB', 'DESTSHARED',
@@ -102,7 +108,11 @@ def _get_java_api_properties(fail=False):
 
 
 def find_jdk_home_dir():
-    for name in ('JPY_JAVA_HOME', 'JPY_JDK_HOME', 'JAVA_HOME', 'JDK_HOME',):
+    """
+    Try to detect the JDK home directory from dedicated environment variables.
+    :return: pathname if found, else None
+    """
+    for name in JDK_HOME_VARS:
         jdk_home_dir = os.environ.get(name, None)
         if jdk_home_dir \
                 and os.path.exists(os.path.join(jdk_home_dir, 'include')) \
@@ -129,7 +139,7 @@ def find_jvm_dll_file(java_home_dir=None, fail=False):
     if jvm_dll_path:
         return jvm_dll_path
 
-    for name in ('JPY_JAVA_HOME', 'JPY_JDK_HOME', 'JPY_JRE_HOME', 'JAVA_HOME', 'JDK_HOME', 'JRE_HOME', 'JAVA_JRE'):
+    for name in JRE_HOME_VARS:
         java_home_dir = os.environ.get(name, None)
         if java_home_dir:
             jvm_dll_path = _find_jvm_dll_file(java_home_dir)
@@ -138,7 +148,7 @@ def find_jvm_dll_file(java_home_dir=None, fail=False):
 
     jvm_dll_path = ctypes.util.find_library(JVM_LIB_NAME)
     if jvm_dll_path:
-        logging.warning("No JVM shared library file found in all search paths. Using fallback %s" % repr(jvm_dll_path))
+        logging.debug("No JVM shared library file found in all search paths. Using fallback %s" % repr(jvm_dll_path))
     elif fail:
         raise RuntimeError("can't find any JVM shared library")
 
@@ -368,8 +378,10 @@ def init_jvm(java_home=None,
     :param java_home: The Java JRE or JDK home directory used to search JVM shared library, if 'jvm_dll' is omitted.
     :param jvm_dll: The JVM shared library file. My be inferred from 'java_home'.
     :param jvm_maxmem: The JVM maximum heap space, e.g. '400M', '8G'. Refer to the java executable '-Xmx' option.
-    :param jvm_classpath: The JVM search paths for Java class files. Separated by colons (Unix) or semicolons (Windows). Refer to the java executable '-cp' option.
-    :param jvm_properties: A dictionary of key -> value pairs passed to the JVM as Java system properties. Refer to the java executable '-D' option.
+    :param jvm_classpath: The JVM search paths for Java class files. Separated by colons (Unix) or semicolons
+                          (Windows). Refer to the java executable '-cp' option.
+    :param jvm_properties: A dictionary of key -> value pairs passed to the JVM as Java system properties.
+                        Refer to the java executable '-D' option.
     :param jvm_options: A list of extra options for the JVM. Refer to the java executable options.
     :param config_file: Extra configuration file (e.g. 'jpyconfig.py') to be loaded if 'config' parameter is omitted.
     :param config: An optional default configuration object providing default attributes
@@ -406,13 +418,14 @@ def init_jvm(java_home=None,
 class Config:
     def load(self, path):
         """
-        Read Python file from 'path', execute it and return object that stores all variables of the Python code as attributes.
+        Read Python file from 'path', execute it and return object that stores all variables of the
+        Python code as attributes.
         :param path:
         :return:
         """
         with open(path) as f:
             code = f.read()
-            exec (code, {}, self.__dict__)
+            exec(code, {}, self.__dict__)
 
 
 class Properties:
@@ -472,38 +485,6 @@ def _execute_python_scripts(scripts):
     return failures
 
 
-def __contains(list, entry):
-    for item in list:
-        if item == entry or (item.endswith('/') and entry.startswith(item)):
-            return True
-    return False
-
-
-def _list_dir_entries(rootdir, includes=None, excludes=None):
-    rootoffs = len(rootdir) + 1
-    entries = []
-    for (dirpath, dirnames, filenames) in os.walk(rootdir):
-        for filename in filenames:
-            path = os.path.join(dirpath, filename)
-            entry = path[rootoffs:].replace(os.sep, '/')
-            included = not includes or __contains(includes, entry)
-            excluded = not excludes or __contains(excludes, entry)
-            if included and not excluded:
-                entries.append(entry)
-    return entries
-
-
-def _zip_entries(archive_path, dir, dir_entries, verbose=False):
-    import zipfile
-
-    if verbose: print("creating '" + archive_path + "' and adding '" + dir + "' to it")
-    with zipfile.ZipFile(archive_path, 'w') as archive:
-        for entry in dir_entries:
-            path = os.path.join(dir, entry.replace('/', os.sep))
-            archive.write(path, arcname=entry)
-            if verbose: print("adding '" + entry + "'")
-
-
 def write_config_files(out_dir='.',
                        java_home_dir=None,
                        jvm_dll_file=None,
@@ -535,7 +516,8 @@ def write_config_files(out_dir='.',
         try:
             with open(py_api_config_file, 'w') as f:
                 f.write("# Created by '%s' tool on %s\n" % (tool_name, str(datetime.datetime.now())))
-                f.write("# This file is read by the 'jpyutil' module in order to load and configure the JVM from Python\n")
+                f.write(
+                    "# This file is read by the 'jpyutil' module in order to load and configure the JVM from Python\n")
                 if java_home_dir:
                     f.write('java_home = %s\n' % repr(java_home_dir))
                 f.write('jvm_dll = %s\n' % repr(jvm_dll_file))
@@ -571,19 +553,25 @@ def write_config_files(out_dir='.',
 def _main():
     import argparse
 
+    out_default = os.path.dirname(os.path.abspath(__file__))
+
     parser = argparse.ArgumentParser(description='Generate configuration files for the jpy Python API (jpyconfig.py)\n'
                                                  'and the jpy Java API (jpyconfig.properties).')
-    parser.add_argument("-o", "--out", action='store', default='.',
-                        help="output directory for the configuration files")
-    parser.add_argument("--java_home", action='store', default=None, help="Java home directory")
-    parser.add_argument("--jvm_dll", action='store', default=None, help="Java shared library location")
-    parser.add_argument("--log_file", action='store', default=None, help="Log file")
+    parser.add_argument("-o", "--out", action='store', default=out_default,
+                        help="Output directory for the generated configuration files. Defaults to " + out_default)
+    parser.add_argument("--java_home", action='store', default=None, help="Java JDK or JRE home directory. Can also be "
+                                                                          "set using one of the environment variables "
+                                                                          + " | ".join(JRE_HOME_VARS) + ".")
+    parser.add_argument("--jvm_dll", action='store', default=None, help="Java JVM shared library file. Usually inferred"
+                                                                        " from java_home option. Can also be set "
+                                                                        "using environment variable JPY_JVM_DLL.")
+    parser.add_argument("--log_file", action='store', default=None, help="Optional log file.")
     parser.add_argument("--log_level", action='store', default='INFO',
-                        help="Possible values: DEBUG, INFO, WARNING, ERROR")
+                        help="Possible values: DEBUG, INFO, WARNING, ERROR. Default is INFO.")
     parser.add_argument("-j", "--req_java", action='store_true', default=False,
-                        help="require that Java API configuration succeeds")
+                        help="Require that Java API configuration succeeds.")
     parser.add_argument("-p", "--req_py", action='store_true', default=False,
-                        help="require that Python API configuration succeeds")
+                        help="Require that Python API configuration succeeds.")
     args = parser.parse_args()
 
     log_level = getattr(logging, args.log_level.upper(), None)

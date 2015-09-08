@@ -23,7 +23,7 @@
 
     <groupId>org.jpy</groupId>
     <artifactId>jpy</artifactId>
-    <version>0.8</version>
+    <version>0.8.0</version>
 
     <description>
         jpy is a bi-directional Java-Python bridge which you can use to embed Java code in Python programs or the other
@@ -76,6 +76,13 @@
                 </configuration>
             </plugin>
             <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.6</version>
+                <configuration>
+                    <finalName>${project.artifactId}</finalName>
+                </configuration>
+            </plugin>
+            <plugin>
                 <artifactId>maven-source-plugin</artifactId>
                 <version>2.2.1</version>
                 <executions>
@@ -92,7 +99,6 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>2.9.1</version>
                 <configuration>
