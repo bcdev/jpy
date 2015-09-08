@@ -212,29 +212,6 @@ class TestHashMap(unittest.TestCase):
         self.assertEqual(hash_map.get(4), fa)
 
 
-class TestDiverseStuff(unittest.TestCase):
-
-    def test_BugThatCausesPythonToCrash(self):
-        # todo (doing) here: https://github.com/bcdev/jpy/issues/56
-
-        Paths = jpy.get_type('java.nio.file.Paths')
-        #Path = jpy.get_type('java.nio.file.Path')
-
-        p = Paths.get('bibo', [])
-
-        s = str(p)
-        self.assertEqual(s, 'bibo')
-
-        print(">> Before crash")
-        jpy.diag.flags = jpy.diag.F_METH + jpy.diag.F_EXEC + jpy.diag.F_TYPE
-        # todo: p.toString() will cause Python 3.4 64-bit WIN32 to crash
-        s = p.toString()
-        jpy.diag.flags = 0
-        print(">> After crash")
-
-        self.assertEqual(s, 'bibo')
-
-
 if __name__ == '__main__':
     print('\nRunning ' + __file__)
     unittest.main()

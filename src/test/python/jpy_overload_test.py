@@ -102,7 +102,7 @@ class TestOtherMethodResolutionCases(unittest.TestCase):
         p = Paths.get('testfile', [])
         s = str(p)
         self.assertEqual(s, 'testfile')
-        #The following outcommented call crashes the Python interpreter. The problem is likely a JNI one.
+        # The following call crashed the Python interpreter with JDK/JRE 1.8.0 < update 60.
         s = p.toString()
         self.assertEqual(s, 'testfile')
 
