@@ -80,10 +80,15 @@ The jpy Java API requires a maximum of two configuration parameters:
 * ``jpy.jpyLib`` - path to the 'jpy' Python module, namely the ``jpy.so`` (Unix) or ``jpy.pyd`` (Windows) file
 * ``jpy.jdlLib`` - path to the 'jdl' Python module, namely the ``jpy.so`` (Unix) file. Not used on Windows.
 
-They can be passed directly to the JVM either as Java system properties or by using the single system property
+Another optional parameter
 
-* ``jpy.config`` - which is a path to a Java properties files containing the definitions of the two parameters named
-above. Such property file is also written for each build and is found in ``build/lib-<os-platform>-<python-version>/jpyconfig.properties``.
+* ``jpy.debug`` - which is either ``true`` or ``false`` can be used to output extra debugging information.
+
+All the parameters can be passed directly to the JVM either as Java system properties or by using the single system property
+
+* ``jpy.config`` - which is a path to a Java properties files containing the definitions of the two parameters named above.
+
+Such property file is also written for each build and is found in ``build/lib-<os-platform>-<python-version>/jpyconfig.properties``.
 
 
 ========================
