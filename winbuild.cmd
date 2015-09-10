@@ -18,7 +18,8 @@ SET PY27_32=C:\Python27
 SET PY33_32=C:\Python33
 SET PY34_32=C:\Python34
 
-
+SET OLD_PYTHONHOME=%PYTHONHOME%
+SET PYTHONHOME=
 
 IF NOT EXIST "%JDK64_HOME%" GOTO Build_32
 SET JAVA_HOME=%JDK64_HOME%
@@ -28,6 +29,7 @@ SET PYTHONHOME=%PY27_64%
 IF NOT EXIST "%PYTHONHOME%" GOTO Build_PY33_64
 ECHO Starting build using "%PYTHONHOME%" and "%JAVA_HOME%"
 "%PYTHONHOME%\python.exe" setup.py --maven bdist_wheel
+
 
 :Build_PY33_64
 SET PYTHONHOME=%PY33_64%
@@ -67,3 +69,5 @@ ECHO Starting build using "%PYTHONHOME%" and "%JAVA_HOME%"
 
 
 :Build_End
+IF EXIST "%PYTHONHOME%" "%PYTHONHOME%\python.exe" setup.py sdist
+SET PYTHONHOME=%OLD_PYTHONHOME%
