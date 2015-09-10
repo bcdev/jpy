@@ -25,6 +25,7 @@ import os.path
 import platform
 import subprocess
 import shutil
+import glob
 
 import ez_setup
 ez_setup.use_setuptools()
@@ -131,15 +132,20 @@ if do_maven:
         exit(code)
 
     #
-    # Copy result to lib/jpy.jar
+    # Copy JAR results to lib/*.jar
     #
 
     if not os.path.exists(lib_dir):
         os.mkdir(lib_dir)
-    built_jpy_jar_file = os.path.join('target', 'jpy.jar')
-    log.info("Copying " + built_jpy_jar_file + " -> " + jpy_jar_file + "")
-    shutil.copy(built_jpy_jar_file, jpy_jar_file)
-
+    target_dir = os.path.join(base_dir, 'target')
+    jar_files = glob.glob(os.path.join(target_dir, '*.jar'))
+    jar_files = [f for f in jar_files if not (f.endswith('-sources.jar') or f.endswith('-javadoc.jar'))]
+    if not jar_files:
+        log.error('Maven did not generate any JAR artifacts')
+        exit(1)
+    for jar_file in jar_files:
+        log.info("Copying " + jar_file + " -> " + lib_dir + "")
+        shutil.copy(jar_file, lib_dir)
 
 #
 # Prepare setup arguments and call setup
