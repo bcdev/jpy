@@ -17,15 +17,45 @@
 package org.jpy;
 
 /**
- * Replaces System.load().
+ * A replacement for {@link System#load(String)} with support for POSIX {@code dlopen} flags.
+ * <p>
+ * <i>Important note: This class is useful on POSIX (Unix/Linux) systems only. On Windows OSes, all methods
+ * are no-ops.</i>
+ *
+ * @author Norman Fomferra
+ * @see <a href="http://man7.org/linux/man-pages/man3/dlopen.3.html">dlopen(3) - Linux manual page</a>
+ * @since 0.7
  */
 public class DL {
+    /**
+     * Resolve undefined symbols as code from the dynamic library is executed.
+     */
     public static final int RTLD_LAZY = 0x0001;
+    /**
+     * Resolve all undefined symbols before {@link #dlopen} returns and fail if this cannot be done.
+     */
     public static final int RTLD_NOW = 0x0002;
+    /**
+     * This is the converse of RTLD_GLOBAL, and the default if neither flag is specified.
+     */
     public static final int RTLD_LOCAL = 0x0004;
+    /**
+     * External symbols defined in the library will be made available to subsequently loaded libraries.
+     */
     public static final int RTLD_GLOBAL = 0x0008;
 
-    public static native long dlopen(String path, int mode);
+    /**
+     * loads the dynamic library file named by the null-terminated string filename and returns
+     * an opaque "handle" for the dynamic library. If filename is {@code null}, then the returned handle
+     * is for the main program. If filename contains a slash ("/"), then it is interpreted as a
+     * (relative or absolute) pathname.
+     *
+     * @param filename dynamic library filename or {@code null}
+     * @param flag     combination of {@link #RTLD_GLOBAL} or {@link #RTLD_LOCAL} with {@link #RTLD_LAZY},
+     *                 {@link #RTLD_NOW}.
+     * @return opaque "handle" for the dynamic library.
+     */
+    public static native long dlopen(String filename, int flag);
 
     public static native int dlclose(long handle);
 
