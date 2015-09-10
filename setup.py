@@ -11,10 +11,13 @@ import os.path
 import platform
 import subprocess
 import shutil
-import pprint
-from distutils import log
+
+import ez_setup
+ez_setup.use_setuptools()
+
 from setuptools import setup
 from setuptools.extension import Extension
+from distutils import log
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 src_main_c_dir = os.path.join(base_dir, 'src', 'main', 'c')
@@ -212,6 +215,7 @@ dist = setup(name='jpy',
              ]
              )
 
+#import pprint
 #pprint.pprint(dist)
 #pprint.pprint(dist.__dict__)
 #pprint.pprint(dist.commands)
