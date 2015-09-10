@@ -16,7 +16,7 @@
 
 package org.jpy;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.jpy.fixtures.Processor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

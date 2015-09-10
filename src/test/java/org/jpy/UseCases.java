@@ -16,8 +16,9 @@
 
 package org.jpy;
 
-import junit.framework.Assert;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Some (more complex) tests that represent possible API use cases.
@@ -45,8 +46,8 @@ public class UseCases {
 
         /////////////////////////////////////////////////
 
-        Assert.assertEquals(lenVal1 + 1, lenVal2);
-        Assert.assertEquals(pathEntries.length, lenVal2);
+        assertEquals(lenVal1 + 1, lenVal2);
+        assertEquals(pathEntries.length, lenVal2);
         //for (int i = 0; i < pathEntries.length; i++) {
         //    System.out.printf("pathEntries[%d] = %s%n", i, pathEntries[i]);
         //}
@@ -70,8 +71,8 @@ public class UseCases {
 
         /////////////////////////////////////////////////
 
-        Assert.assertEquals(123, paramIntValue);
-        Assert.assertEquals("abc", paramStrValue);
+        assertEquals(123, paramIntValue);
+        assertEquals("abc", paramStrValue);
 
         /////////////////////////////////////////////////
 
@@ -88,7 +89,7 @@ public class UseCases {
 
         /////////////////////////////////////////////////
 
-        Assert.assertEquals(11, eleven.getIntValue());
+        assertEquals(11, eleven.getIntValue());
 
         /////////////////////////////////////////////////
 
