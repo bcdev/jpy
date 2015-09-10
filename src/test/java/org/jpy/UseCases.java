@@ -16,9 +16,13 @@
 
 package org.jpy;
 
+import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Locale;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Some (more complex) tests that represent possible API use cases.
@@ -92,7 +96,31 @@ public class UseCases {
         assertEquals(11, eleven.getIntValue());
 
         /////////////////////////////////////////////////
+        // Performance test for TheMegaTB:
+
+        long t0 = System.nanoTime();
+        long numCalls = 100000;
+        PyObject num = eleven;
+        for (long i = 0; i < numCalls; i++) {
+            num = mainModule.call("incByOne", num);
+        }
+        long t1 = System.nanoTime();
+
+        assertEquals(11 + numCalls, num.getIntValue());
+
+        double millis = (t1 - t0) / 1000. / 1000.;
+        double callsPerMilli = numCalls / millis;
+        double millisPerCall = millis / numCalls;
+
+        System.out.printf("Performance: %10.1f Python-calls/ms, %2.10f ms/Python-call%n", callsPerMilli, millisPerCall);
+        assertTrue(callsPerMilli > 1.0);
+
+        /////////////////////////////////////////////////
 
         //PyLib.stopPython();
+    }
+
+    static {
+        Locale.setDefault(Locale.ENGLISH);
     }
 }
