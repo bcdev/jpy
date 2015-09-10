@@ -129,9 +129,7 @@
                     <quiet>false</quiet>
                     <author>false</author>
                     <version>true</version>
-                    <excludePackageNames>
-                        org.jpy.jsr223
-                    </excludePackageNames>
+                    <excludePackageNames>org.jpy.jsr223:org.jpy.annotations</excludePackageNames>
                     <links>
                         <link>http://java.sun.com/javase/7/docs/api/</link>
                     </links>
