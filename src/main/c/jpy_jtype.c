@@ -1054,7 +1054,6 @@ int JType_ProcessClassMethods(JNIEnv* jenv, JPy_JType* type)
     jint i;
     jboolean isStatic;
     jboolean isPublic;
-    jboolean isAbstract;
     const char* methodName;
     jmethodID mid;
     PyObject* methodKey;
@@ -1072,9 +1071,6 @@ int JType_ProcessClassMethods(JNIEnv* jenv, JPy_JType* type)
         // see http://docs.oracle.com/javase/6/docs/api/constant-values.html#java.lang.reflect.Modifier.PUBLIC
         isPublic   = (modifiers & 0x0001) != 0;
         isStatic   = (modifiers & 0x0008) != 0;
-        isAbstract = (modifiers & 0x0400) != 0;
-        // todo: if isAbstract, try to find method in java.lang.Object (JPy_JObject). If found, use it instead.
-        // this will likely fix https://github.com/bcdev/jpy/issues/56
         if (isPublic) {
             methodNameStr = (*jenv)->CallObjectMethod(jenv, method, JPy_Method_GetName_MID);
             returnType = (*jenv)->CallObjectMethod(jenv, method, JPy_Method_GetReturnType_MID);
