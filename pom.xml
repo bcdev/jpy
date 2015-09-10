@@ -27,7 +27,9 @@
     <groupId>org.jpy</groupId>
     <artifactId>jpy</artifactId>
     <version>0.8-SNAPSHOT</version>
+    <packaging>jar</packaging>
 
+    <name>Java-Python Bridge</name>
     <description>
         jpy is a bi-directional Java-Python bridge which you can use to embed Java code in Python programs or the other
         way round.
@@ -40,25 +42,39 @@
         </license>
     </licenses>
 
-    <packaging>jar</packaging>
+    <url>https://github.com/bcdev/jpy</url>
+    <inceptionYear>2014</inceptionYear>
 
     <organization>
         <name>Brockmann Consult GmbH</name>
         <url>http://www.brockmann-consult.de</url>
     </organization>
 
-    <inceptionYear>2014</inceptionYear>
+    <developers>
+        <developer>
+            <name>Norman Fomferra</name>
+            <email>norman.fomferra@brockmann-consult.de</email>
+            <organization>Brockmann Consult GmbH</organization>
+            <organizationUrl>http://www.brockmann-consult.de</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git@github.com:bcdev/jpy.git</connection>
+        <developerConnection>scm:git:git@github.com:bcdev/jpy.git</developerConnection>
+        <url>git@github.com:bcdev/jpy.git</url>
+    </scm>
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/bcdev/jpy/issues?state=open</url>
+        <url>https://github.com/bcdev/jpy/issues</url>
     </issueManagement>
 
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.8.2</version>
+            <version>4.12</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
