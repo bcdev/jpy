@@ -26,9 +26,10 @@ import java.util.Map;
 
 /**
  * jpy's ScriptEngineFactory implementation of JSR 223: <i>Scripting for the Java Platform</i>.
+ * <p>
+ * Note, jpy's JSR 223 support is not yet functional. This class is only used by unit-tests so far.
  *
  * @author Norman Fomferra
- * @since 0.8
  */
 public class ScriptEngineFactoryImpl implements ScriptEngineFactory {
 
