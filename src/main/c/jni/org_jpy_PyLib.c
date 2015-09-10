@@ -320,14 +320,14 @@ void dumpDict(const char* dictName, PyObject* dict)
     Py_ssize_t size;
     PyObject *key = NULL, *value = NULL;
     Py_ssize_t pos = 0;
-    int i = 0;
+    Py_ssize_t i = 0;
 
     size = PyDict_Size(dict);
-    printf(">> dumpDict: %s.size = %d\n", dictName, size);
+    printf(">> dumpDict: %s.size = %ld\n", dictName, size);
     while (PyDict_Next(dict, &pos, &key, &value)) {
-        char* name;
+        const char* name;
         name = JPy_AS_UTF8(key);
-        printf(">> dumpDict: %s[%d].name = '%s'\n", dictName, i, name);
+        printf(">> dumpDict: %s[%ld].name = '%s'\n", dictName, i, name);
         i++;
     }
 }
