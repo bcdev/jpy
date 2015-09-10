@@ -1,8 +1,22 @@
 # !/usr/bin/env python3
 
+# Copyright 2015 Brockmann Consult GmbH
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 __author__ = "Norman Fomferra, Brockmann Consult GmbH"
-__copyright__ = "Copyright (C) 2015 Brockmann Consult GmbH"
-__license__ = "GPL v3"
+__copyright__ = "Copyright 2015 Brockmann Consult GmbH"
+__license__ = "Apache 2.0"
 __version__ = "0.8.0"
 
 import sys
@@ -168,7 +182,7 @@ dist = setup(name='jpy',
              author_email='norman.fomferra@brockmann-consult.de',
              maintainer='Brockmann Consult GmbH',
              maintainer_email='norman.fomferra@brockmann-consult.de',
-             license='GPL 3',
+             license=__license__,
              url='https://github.com/bcdev/jpy',
              download_url='https://pypi.python.org/pypi/jpy/' + __version__,
              py_modules=['jpyutil'],
@@ -203,7 +217,7 @@ dist = setup(name='jpy',
                  'Intended Audience :: Developers',
 
                  # Pick your license as you wish (should match "license" above)
-                 'License :: OSI Approved :: GPL 3 License',
+                 'License :: OSI Approved :: Apache 2 License',
 
                  # Specify the Python versions you support here. In particular, ensure
                  # that you indicate whether you support Python 2, Python 3 or both.
