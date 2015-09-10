@@ -95,16 +95,16 @@
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>2.6</version>
-                <configuration>
-                    <finalName>${project.artifactId}</finalName>
-                </configuration>
+                <!--<configuration>-->
+                    <!--<finalName>${project.artifactId}</finalName>-->
+                <!--</configuration>-->
             </plugin>
             <plugin>
                 <artifactId>maven-source-plugin</artifactId>
                 <version>2.2.1</version>
                 <executions>
                     <execution>
-                        <phase>verify</phase>
+                        <id>attach-sources</id>
                         <goals>
                             <goal>jar</goal>
                         </goals>
@@ -119,8 +119,8 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>2.9.1</version>
                 <configuration>
-                    <reportOutputDirectory>${project.basedir}/doc/_static</reportOutputDirectory>
-                    <destDir>java-apidocs</destDir>
+                    <!--<reportOutputDirectory>${project.basedir}/doc/_static</reportOutputDirectory>-->
+                    <destDir>${project.basedir}/doc/_static/java-apidocs</destDir>
                     <doctitle>${project.name} ${project.version} Java API</doctitle>
                     <windowtitle>${project.name} ${project.version} Java API</windowtitle>
                     <excludePackageNames>org.jpy.annotations</excludePackageNames>
@@ -129,10 +129,21 @@
                     <quiet>false</quiet>
                     <author>false</author>
                     <version>true</version>
+                    <excludePackageNames>
+                        org.jpy.jsr223
+                    </excludePackageNames>
                     <links>
                         <link>http://java.sun.com/javase/7/docs/api/</link>
                     </links>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
 
