@@ -115,6 +115,7 @@ JPy_JType* JPy_JLongObj = NULL;
 JPy_JType* JPy_JFloatObj = NULL;
 JPy_JType* JPy_JDoubleObj = NULL;
 JPy_JType* JPy_JObject = NULL;
+JPy_JType* JPy_JClass = NULL;
 JPy_JType* JPy_JString = NULL;
 JPy_JType* JPy_JPyObject = NULL;
 JPy_JType* JPy_JPyModule = NULL;
@@ -800,6 +801,8 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     DEFINE_NON_OBJECT_TYPE(JPy_JVoid, JPy_Void_JClass);
     // The Java root object. Make sure, JPy_JObject is the first object type to be initialized.
     DEFINE_OBJECT_TYPE(JPy_JObject, JPy_Object_JClass);
+    // Immediately after JPy_JObject, we define JPy_JClass. From now on JType_AddClassAttribute() works.
+    DEFINE_OBJECT_TYPE(JPy_JClass, JPy_Class_JClass);
     // Primitive-Wrapper Objects.
     DEFINE_OBJECT_TYPE(JPy_JBooleanObj, JPy_Boolean_JClass);
     DEFINE_OBJECT_TYPE(JPy_JCharacterObj, JPy_Character_JClass);
@@ -811,6 +814,11 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     DEFINE_OBJECT_TYPE(JPy_JDoubleObj, JPy_Double_JClass);
     // Other objects.
     DEFINE_OBJECT_TYPE(JPy_JString, JPy_String_JClass);
+
+    // JType_AddClassAttribute is actually called from within JType_GetType(), but not for
+    // JPy_JObject and JPy_JClass for an obvious reason. So we do it now:
+    JType_AddClassAttribute(jenv, JPy_JObject);
+    JType_AddClassAttribute(jenv, JPy_JClass);
 
     if (initGlobalPyObjectVars(jenv) < 0) {
         JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "JPy_InitGlobalVars: JPy_JPyObject=%p, JPy_JPyModule=%p\n", JPy_JPyObject, JPy_JPyModule);

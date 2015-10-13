@@ -50,7 +50,7 @@ jpy Functions
     been destroyed. No return value.
 
 
-.. py:function:: get_type(name)
+.. py:function:: get_type(name, resolve=False)
     :module: jpy
 
     Return a type object for the given, fully qualified Java type *name* which is the name of a Java primitive type,
@@ -85,6 +85,9 @@ jpy Functions
         Runtime = jpy.get_type('java.lang.Runtime')
         rt = Runtime.getRuntime()
         tm = rt.totalMemory()
+
+    The returned Java types have a `jclass` attribute which returns the actual Java object. This allows for using
+    the Java types where a Java method would expect a parameter of type `java.lang.Class`.
 
     To instantiate Java array objects, the :py:func:`jpy.array()` function is used.
 

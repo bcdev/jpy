@@ -109,6 +109,7 @@ extern struct JPy_JType* JPy_JLongObj;
 extern struct JPy_JType* JPy_JFloatObj;
 extern struct JPy_JType* JPy_JDoubleObj;
 extern struct JPy_JType* JPy_JObject;
+extern struct JPy_JType* JPy_JClass;
 extern struct JPy_JType* JPy_JString;
 extern struct JPy_JType* JPy_JPyObject;
 extern struct JPy_JType* JPy_JPyModule;

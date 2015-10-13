@@ -39,6 +39,15 @@ class TestTypeResolution(unittest.TestCase):
         value = thing.getValue()
         self.assertEqual(value, 2011)
 
+    # see https://github.com/bcdev/jpy/issues/63
+    def test_ThatJavaTypesHaveAValidClassAttribute(self):
+        Long = jpy.get_type('java.lang.Long')
+        self.assertIsNotNone(Long.jclass)
+        Class = jpy.get_type('java.lang.Class')
+        self.assertIsNotNone(Class.jclass)
+        Object = jpy.get_type('java.lang.Object')
+        self.assertIsNotNone(Object.jclass)
+
     # see https://github.com/bcdev/jpy/issues/64
     def test_ThatInterfaceTypesIncludeMethodsOfExtendedTypes(self):
         ObjectInput = jpy.get_type('java.io.ObjectInput', resolve=True)
@@ -46,6 +55,7 @@ class TestTypeResolution(unittest.TestCase):
         self.assertTrue('readObject' in ObjectInput.__dict__)
         # assert that a method declared of java.io.DataInput is in __dict__
         self.assertTrue('readLine' in ObjectInput.__dict__)
+
 
 
 if __name__ == '__main__':

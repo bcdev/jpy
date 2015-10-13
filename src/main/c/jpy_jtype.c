@@ -174,6 +174,8 @@ JPy_JType* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve)
             return NULL;
         }
 
+        JType_AddClassAttribute(jenv, type);
+
         //printf("T5: type->tp_init=%p\n", ((PyTypeObject*)type)->tp_init);
 
     } else {
@@ -1115,6 +1117,20 @@ int JType_AddField(JPy_JType* declaringClass, JPy_JField* field)
     }
 
     PyDict_SetItem(typeDict, field->name, (PyObject*) field);
+    return 0;
+}
+
+int JType_AddClassAttribute(JNIEnv* jenv, JPy_JType* declaringClass)
+{
+    PyObject* typeDict;
+    if (JPy_JClass != NULL) {
+        typeDict = declaringClass->typeObj.tp_dict;
+        if (typeDict == NULL) {
+            PyErr_SetString(PyExc_RuntimeError, "jpy internal error: missing attribute '__dict__' in JType");
+            return -1;
+        }
+        PyDict_SetItem(typeDict, Py_BuildValue("s", "jclass"), JObj_FromType(jenv, JPy_JClass, declaringClass->classRef));
+    }
     return 0;
 }
 

@@ -128,6 +128,8 @@ int JType_InitSlots(JPy_JType* type);
 // Non-API. Defined in jpy_jtype.c
 int JType_ResolveType(JNIEnv* jenv, JPy_JType* type);
 
+int JType_AddClassAttribute(JNIEnv* jenv, JPy_JType* type);
+
 #ifdef __cplusplus
 }  /* extern "C" */
 #endif
