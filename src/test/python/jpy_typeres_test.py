@@ -39,6 +39,14 @@ class TestTypeResolution(unittest.TestCase):
         value = thing.getValue()
         self.assertEqual(value, 2011)
 
+    # see https://github.com/bcdev/jpy/issues/64
+    def test_ThatInterfaceTypesIncludeMethodsOfExtendedTypes(self):
+        ObjectInput = jpy.get_type('java.io.ObjectInput', resolve=True)
+        # assert that a method declared of java.io.ObjectInput is in __dict__
+        self.assertTrue('readObject' in ObjectInput.__dict__)
+        # assert that a method declared of java.io.DataInput is in __dict__
+        self.assertTrue('readLine' in ObjectInput.__dict__)
+
 
 if __name__ == '__main__':
     print('\nRunning ' + __file__)

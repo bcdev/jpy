@@ -1009,8 +1009,11 @@ int JType_ProcessClassFields(JNIEnv* jenv, JPy_JType* type)
     PyObject* fieldKey;
 
     classRef = type->classRef;
-
-    fields = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetDeclaredFields_MID);
+    if (type->isInterface) {
+        fields = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetFields_MID);
+    } else {
+        fields = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetDeclaredFields_MID);
+    }
     fieldCount = (*jenv)->GetArrayLength(jenv, fields);
 
     JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_ProcessClassFields: fieldCount=%d\n", fieldCount);
@@ -1060,7 +1063,11 @@ int JType_ProcessClassMethods(JNIEnv* jenv, JPy_JType* type)
 
     classRef = type->classRef;
 
-    methods = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetDeclaredMethods_MID);
+    if (type->isInterface) {
+        methods = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetMethods_MID);
+    } else {
+        methods = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetDeclaredMethods_MID);
+    }
     methodCount = (*jenv)->GetArrayLength(jenv, methods);
 
     JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_ProcessClassMethods: methodCount=%d\n", methodCount);
@@ -1861,7 +1868,7 @@ void JType_InitParamDescriptorFunctions(JPy_ParamDescriptor* paramDescriptor)
  */
 PyObject* JType_repr(JPy_JType* self)
 {
-    printf("JType_repr: self=%p\n", self);
+    //printf("JType_repr: self=%p\n", self);
     return JPy_FROM_FORMAT("%s(%p)",
                            self->javaName,
                            self->classRef);
@@ -1880,7 +1887,7 @@ PyObject* JType_str(JPy_JType* self)
 
     JPy_GET_JNI_ENV_OR_RETURN(jenv, NULL)
 
-    printf("JType_str: self=%p\n", self);
+    //printf("JType_str: self=%p\n", self);
 
     strJObj = (*jenv)->CallObjectMethod(jenv, self->classRef, JPy_Object_ToString_MID);
     utfChars = (*jenv)->GetStringUTFChars(jenv, strJObj, &isCopy);
@@ -1898,7 +1905,7 @@ void JType_dealloc(JPy_JType* self)
 {
     JNIEnv* jenv = JPy_GetJNIEnv();
 
-    printf("JType_dealloc: self->javaName='%s', self->classRef=%p\n", self->javaName, self->classRef);
+    //printf("JType_dealloc: self->javaName='%s', self->classRef=%p\n", self->javaName, self->classRef);
 
     PyMem_Del(self->javaName);
     self->javaName = NULL;
@@ -1922,7 +1929,7 @@ void JType_dealloc(JPy_JType* self)
  */
 PyObject* JType_getattro(JPy_JType* self, PyObject* name)
 {
-    printf("JType_getattro: %s.%s\n", Py_TYPE(self)->tp_name, JPy_AS_UTF8(name));
+    //printf("JType_getattro: %s.%s\n", Py_TYPE(self)->tp_name, JPy_AS_UTF8(name));
 
     if (!self->isResolved && !self->isResolving) {
         JNIEnv* jenv;

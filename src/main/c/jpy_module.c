@@ -136,6 +136,8 @@ jmethodID JPy_Class_GetName_MID = NULL;
 jmethodID JPy_Class_GetDeclaredConstructors_MID = NULL;
 jmethodID JPy_Class_GetDeclaredFields_MID = NULL;
 jmethodID JPy_Class_GetDeclaredMethods_MID = NULL;
+jmethodID JPy_Class_GetFields_MID = NULL;
+jmethodID JPy_Class_GetMethods_MID = NULL;
 jmethodID JPy_Class_GetComponentType_MID = NULL;
 jmethodID JPy_Class_IsPrimitive_MID = NULL;
 jmethodID JPy_Class_IsInterface_MID = NULL;
@@ -728,6 +730,8 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     DEFINE_METHOD(JPy_Class_GetDeclaredConstructors_MID, JPy_Class_JClass, "getDeclaredConstructors", "()[Ljava/lang/reflect/Constructor;");
     DEFINE_METHOD(JPy_Class_GetDeclaredMethods_MID, JPy_Class_JClass, "getDeclaredMethods", "()[Ljava/lang/reflect/Method;");
     DEFINE_METHOD(JPy_Class_GetDeclaredFields_MID, JPy_Class_JClass, "getDeclaredFields", "()[Ljava/lang/reflect/Field;");
+    DEFINE_METHOD(JPy_Class_GetMethods_MID, JPy_Class_JClass, "getMethods", "()[Ljava/lang/reflect/Method;");
+    DEFINE_METHOD(JPy_Class_GetFields_MID, JPy_Class_JClass, "getFields", "()[Ljava/lang/reflect/Field;");
     DEFINE_METHOD(JPy_Class_GetComponentType_MID, JPy_Class_JClass, "getComponentType", "()Ljava/lang/Class;");
     DEFINE_METHOD(JPy_Class_IsPrimitive_MID, JPy_Class_JClass, "isPrimitive", "()Z");
     DEFINE_METHOD(JPy_Class_IsInterface_MID, JPy_Class_JClass, "isInterface", "()Z");
@@ -864,6 +868,8 @@ void JPy_ClearGlobalVars(JNIEnv* jenv)
     JPy_Class_GetDeclaredConstructors_MID = NULL;
     JPy_Class_GetDeclaredFields_MID = NULL;
     JPy_Class_GetDeclaredMethods_MID = NULL;
+    JPy_Class_GetFields_MID = NULL;
+    JPy_Class_GetMethods_MID = NULL;
     JPy_Class_GetComponentType_MID = NULL;
     JPy_Class_IsPrimitive_MID = NULL;
     JPy_Class_IsInterface_MID = NULL;

@@ -127,6 +127,8 @@ extern jmethodID JPy_Class_GetName_MID;
 extern jmethodID JPy_Class_GetDeclaredConstructors_MID;
 extern jmethodID JPy_Class_GetDeclaredFields_MID;
 extern jmethodID JPy_Class_GetDeclaredMethods_MID;
+extern jmethodID JPy_Class_GetFields_MID;
+extern jmethodID JPy_Class_GetMethods_MID;
 extern jmethodID JPy_Class_GetComponentType_MID;
 extern jmethodID JPy_Class_IsPrimitive_MID;
 extern jmethodID JPy_Class_IsInterface_MID;
