@@ -39,10 +39,15 @@ How to build on Linux and Mac
 Install a JDK 8, preferrably the Oracle distribution. Set JDK_HOME or JPY_JDK_HOME to point to your JDK installation 
 and run the build script: 
 
-    > export JDK_HOME=<your-jdk-dir>
-    > python setup.py --maven build
+    > export JAVA_HOME=<your-jdk-dir>
+    > python get-pip.py
+    > python setup.py --maven bdist_wheel
 
-On success, the output is found in the ``build`` directory.
+On success, the wheel is found in the ``dist`` directory.
+
+To deploy the ``jpy.jar``:
+
+    > mvn clean deploy -DskipTests=true
 
 ***********************
 How to build on Windows
@@ -56,15 +61,15 @@ build the sources. With Windows SDK 7.1
     > SET DISTUTILS_USE_SDK=1
     > C:\Program Files\Microsoft SDKs\Windows\v7.1\bin\setenv /x64 /release
     > SET JDK_HOME=<your-jdk-dir>
-    > python setup.py --maven build
+    > python setup.py --maven bdist_wheel
     
 With Visual Studio 14 and higher it is much easier:
 
     > SET VS100COMNTOOLS=C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\
     > SET JDK_HOME=<your-jdk-dir>
-    > python setup.py --maven build
+    > python setup.py --maven bdist_wheel
 
-On success, the output is found in the ``build`` directory.
+On success, the wheel is found in the ``dist`` directory.
 
 ***********************
 Releasing a jpy version
