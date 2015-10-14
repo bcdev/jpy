@@ -1129,7 +1129,7 @@ int JType_AddClassAttribute(JNIEnv* jenv, JPy_JType* declaringClass)
             PyErr_SetString(PyExc_RuntimeError, "jpy internal error: missing attribute '__dict__' in JType");
             return -1;
         }
-        PyDict_SetItem(typeDict, Py_BuildValue("s", "jclass"), JObj_FromType(jenv, JPy_JClass, declaringClass->classRef));
+        PyDict_SetItem(typeDict, Py_BuildValue("s", "jclass"), (PyObject*) JObj_FromType(jenv, JPy_JClass, declaringClass->classRef));
     }
     return 0;
 }
