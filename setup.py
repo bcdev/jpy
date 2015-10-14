@@ -173,7 +173,7 @@ elif platform.system() == 'Darwin':
     library_dirs += [os.path.join(sys.exec_prefix, 'lib')]
     extra_link_args += ['-Xlinker', '-rpath', jvm_dll_dir]
 
-with open('README.md') as file:
+with open('README.rst') as file:
     long_description = file.read()
 
 with open('CHANGES.txt') as file:
