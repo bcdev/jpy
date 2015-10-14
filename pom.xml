@@ -160,19 +160,51 @@
         </profile>
     </profiles>
 
+    <repositories>
+        <repository>
+            <id>snap-repo-public</id>
+            <name>Public Maven Repository for ESA SNAP Modules</name>
+            <url>http://nexus.senbox.net/nexus/content/repositories/public/</url>
+            <releases>
+                <enabled>true</enabled>
+                <checksumPolicy>warn</checksumPolicy>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+                <checksumPolicy>warn</checksumPolicy>
+            </snapshots>
+        </repository>
+    </repositories>
+
     <distributionManagement>
         <repository>
-            <id>bc-mvn-repo-public</id>
-            <name>Public Maven Repository at Brockmann Consult</name>
-            <url>scp://www.brockmann-consult.de/var/www/www.brockmann-consult.de/mvn/os</url>
+            <id>snap-repo-public</id>
+            <name>Public Maven Repository for SNAP</name>
+            <url>http://nexus.senbox.net/nexus/content/repositories/releases/</url>
             <uniqueVersion>false</uniqueVersion>
         </repository>
         <snapshotRepository>
-            <id>bc-mvn-repo-public</id>
-            <name>Public Maven Snapshot Repository at Brockmann Consult</name>
-            <url>scp://www.brockmann-consult.de/var/www/www.brockmann-consult.de/mvn/os</url>
+            <id>snap-repo-public</id>
+            <name>Public Maven Snapshot Repository for SNAP</name>
+            <url>http://nexus.senbox.net/nexus/content/repositories/snapshots/</url>
             <uniqueVersion>false</uniqueVersion>
         </snapshotRepository>
     </distributionManagement>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>snap-repo-public</id>
+            <name>Public Maven Repository for SNAP</name>
+            <url>http://nexus.senbox.net/nexus/content/repositories/public/</url>
+            <releases>
+                <enabled>true</enabled>
+                <checksumPolicy>warn</checksumPolicy>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+                <checksumPolicy>warn</checksumPolicy>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
 
 </project>
