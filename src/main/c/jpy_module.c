@@ -469,12 +469,12 @@ PyObject* JPy_get_type(PyObject* self, PyObject* args, PyObject* kwds)
 
     JPy_GET_JNI_ENV_OR_RETURN(jenv, NULL)
 
-    resolve = JNI_TRUE;
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|p:get_type", keywords, &className, &resolve)) {
+    resolve = 1; // True
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|i:get_type", keywords, &className, &resolve)) {
         return NULL;
     }
 
-    return (PyObject*) JType_GetTypeForName(jenv, className, (jboolean) resolve);
+    return (PyObject*) JType_GetTypeForName(jenv, className, (jboolean) (resolve != 0 ? JNI_TRUE : JNI_FALSE));
 }
 
 PyObject* JPy_cast(PyObject* self, PyObject* args)
