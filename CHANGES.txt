@@ -6,13 +6,19 @@ jpy Changelog
 Version 0.8
 ===========
 
-* Switched to Apache 2.0 license from version 0.8 and later (issue #60)
-* Fixed problem where a Python interpreter crash occurred when executing del statement on Java arrays (issue #52)
-* Fixed problem where loading of jpy DLL fails for user-specific Python installations on Windows (issue #58)
-* Fixed problem where Java interface types didn't expose java.lang.Object methods (issue #57)
-* Fixed problem where a Java 1-arg static method was confused with a zero-arg non-static method (issue #54)
-* Added basic support for Java Scripting Engine API (issue #53)
-* Fixed problem where Python extensions loaded from Java couldn't see Python symbols (Linux) (issue #38)
+Fixes
+-----
+
+* Java interface types don't include methods of extended interfaces (issue #64)
+* Loading of jpy DLL fails for user-specific Python installations on Windows (issue #58)
+* Java interface types didn't expose java.lang.Object methods (issue #57)
+* Java 1-arg static method was confused with a zero-arg non-static method (issue #54)
+* Python interpreter crash occurred when executing del statement on Java arrays (issue #52)
+* Python extensions loaded from Java couldn't see Python symbols (Linux) (issue #38)
+
+Improvements
+------------
+
 * It is now possible to use jpy Java API to work with multiple Python installations (issue #35).
   A tool called 'jpyutil.py' can be used to write configuration files that determine the required shared libraries
   for a given Python versions.
@@ -21,7 +27,8 @@ Version 0.8
   - removed need to add JVM path to PATH (Windows) / LD_LIBRARY_PATH (Unix) environment variable
   - removed need to compile Java module using Maven
   - removed need to specify JDK_HOME environment variable, if JAVA_HOME already points to a JDK
-* Java API extensions
+ * Added 'jclass' attribute to Python type that wraps a Java class (issue #63) .
+ * Java API extensions
   - new jpy.org.PyObject.executeCode() methods
   - new jpy.org.PyModule.getBuiltins() method
   - new jpy.org.PyModule.getMain() method
@@ -36,17 +43,22 @@ Version 0.8
     # Resource /jpyconfig.properties
     # File ${jpy.config}
 * Python API configuration changes:
-  - Attribute java_home
-  - Attribute jvm_dll
   - Loaded from
     # File ./jpyconfig.py
     # Resource ${jpy-module}/jpyconfig.py
+  - Attribute java_home
+  - Attribute jvm_dll
 * Python API extensions
   - new jpyutil module
     # jpyutil.init_jvm(...)
     # jpyutil.preload_jvm_lib(...)
   - new jpyutil tool
     # usage: jpyutil.py [-h] [--out OUT] [--java_home JAVA_HOME] [--jvm_dll JVM_DLL]
+* Added basic support for Java Scripting Engine API (issue #53)
+
+Other changes
+-------------
+* Switched to Apache 2.0 license from version 0.8 and later (issue #60)
 
 
 Version 0.7.5
