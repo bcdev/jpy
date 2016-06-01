@@ -17,7 +17,7 @@
 __author__ = "Norman Fomferra, Brockmann Consult GmbH"
 __copyright__ = "Copyright 2015 Brockmann Consult GmbH"
 __license__ = "Apache 2.0"
-__version__ = "0.8.0"
+__version__ = "0.9-SNAPSHOT"
 
 import sys
 import os

@@ -26,7 +26,7 @@
 
     <groupId>org.jpy</groupId>
     <artifactId>jpy</artifactId>
-    <version>0.8</version>
+    <version>0.9-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Java-Python Bridge</name>
