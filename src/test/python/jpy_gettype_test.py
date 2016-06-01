@@ -44,6 +44,12 @@ class TestGetClass(unittest.TestCase):
             StringArray1D()
         self.assertEqual(str(e.exception), "no constructor found (missing JType attribute '__jinit__')")
 
+    def test_get_class_fromm_inner_class(self):
+        Point2D = jpy.get_type('java.awt.geom.Point2D')
+        self.assertEqual(str(Point2D), TYPE_STR_PREFIX + "'java.awt.geom.Point2D'>")
+        DoublePoint = jpy.get_type('java.awt.geom.Point2D$Double')
+        self.assertEqual(str(DoublePoint), TYPE_STR_PREFIX + "'java.awt.geom.Point2D$Double'>")
+
 
     def test_get_class_of_unknown_type(self):
         with  self.assertRaises(ValueError) as e:
