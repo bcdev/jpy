@@ -249,6 +249,7 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_stopPython
     JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_stopPython: entered: JPy_Module=%p\n", JPy_Module);
 
     if (Py_IsInitialized()) {
+        PyGILState_Ensure();
         Py_Finalize();
     }
 

@@ -54,7 +54,7 @@ public class PyLibWithSysPathTest {
 
     @AfterClass
     public static void tearDownClass() throws Exception {
-        //PyLib.stopPython();
+        PyLib.stopPython();
     }
 
     @Test

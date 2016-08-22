@@ -48,7 +48,7 @@ public class PyObjectTest {
     @AfterClass
     public static void tearDown() throws Exception {
         PyLib.Diag.setFlags(PyLib.Diag.F_OFF);
-        //PyLib.stopPython();
+        PyLib.stopPython();
     }
 
     @Test(expected = IllegalArgumentException.class)

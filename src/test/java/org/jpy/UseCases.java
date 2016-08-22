@@ -80,7 +80,7 @@ public class UseCases {
 
         /////////////////////////////////////////////////
 
-        //PyLib.stopPython();
+        PyLib.stopPython();
     }
 
     @Test
@@ -117,7 +117,7 @@ public class UseCases {
 
         /////////////////////////////////////////////////
 
-        //PyLib.stopPython();
+        PyLib.stopPython();
     }
 
     static {
