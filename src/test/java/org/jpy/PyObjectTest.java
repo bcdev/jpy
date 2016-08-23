@@ -42,7 +42,7 @@ public class PyObjectTest {
         PyLib.startPython();
         assertEquals(true, PyLib.isPythonRunning());
 
-        //PyLib.Diag.setFlags(PyLib.Diag.F_METH);
+        PyLib.Diag.setFlags(PyLib.Diag.F_ALL);
     }
 
     @AfterClass
@@ -205,7 +205,7 @@ public class PyObjectTest {
         //PyLib.Diag.setFlags(PyLib.Diag.F_ALL);
         PyModule procModule = PyModule.importModule("proc_class");
         PyObject procObj = procModule.call("Processor");
-        //PyLib.Diag.setFlags(PyLib.Diag.F_ALL);
+        PyLib.Diag.setFlags(PyLib.Diag.F_ALL);
         testCallProxyMultiThreaded(procObj);
         //PyLib.Diag.setFlags(PyLib.Diag.F_OFF);
     }

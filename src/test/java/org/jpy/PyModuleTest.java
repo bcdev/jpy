@@ -54,12 +54,12 @@ public class PyModuleTest {
     }
 
     // see https://github.com/bcdev/jpy/issues/26
-    //@Test
-    //public void testCreateAndCallProxyMultiThreaded() throws Exception {
-    //    PyObjectTest.addTestDirToPythonSysPath();
-    //    PyModule procModule = PyModule.importModule("proc_module");
-    //    PyObjectTest.testCallProxyMultiThreaded(procModule);
-    //}
+    @Test
+    public void testCreateAndCallProxyMultiThreaded() throws Exception {
+        PyObjectTest.addTestDirToPythonSysPath();
+        PyModule procModule = PyModule.importModule("proc_module");
+        PyObjectTest.testCallProxyMultiThreaded(procModule);
+    }
 
     // see: https://github.com/bcdev/jpy/issues/39: Improve Java exception messages on Python errors #39
     @Test

@@ -16,6 +16,8 @@
 
 package org.jpy;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -31,10 +33,19 @@ import static org.junit.Assert.assertTrue;
  */
 public class UseCases {
 
+    @Before
+    public void setUp() {
+      PyLib.startPython();
+    }
+
+    @After
+    public void tearDown() {
+      PyLib.stopPython();
+    }
+
     @Test
     public void modifyPythonSysPath() {
 
-        PyLib.startPython();
         PyModule builtinsMod = PyModule.getBuiltins();
 
         PyModule sysMod = PyModule.importModule("sys");
@@ -57,8 +68,6 @@ public class UseCases {
         //}
 
         /////////////////////////////////////////////////
-
-        //PyLib.stopPython();
     }
 
     @Test
@@ -79,8 +88,6 @@ public class UseCases {
         assertEquals("abc", paramStrValue);
 
         /////////////////////////////////////////////////
-
-        PyLib.stopPython();
     }
 
     @Test
@@ -116,8 +123,6 @@ public class UseCases {
         assertTrue(callsPerMilli > 1.0);
 
         /////////////////////////////////////////////////
-
-        PyLib.stopPython();
     }
 
     static {

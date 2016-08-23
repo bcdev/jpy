@@ -236,7 +236,6 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_startPython0
     }
     return JNI_TRUE;
 }
-  
 
 /*
  * Class:     org_jpy_PyLib
@@ -1174,6 +1173,3 @@ void PyLib_RedirectStdOut(void)
     PySys_SetObject("stdout", module);
     PySys_SetObject("stderr", module);
 }
-
-
-
