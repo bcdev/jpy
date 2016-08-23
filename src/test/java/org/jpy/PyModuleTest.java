@@ -16,10 +16,9 @@
 
 package org.jpy;
 
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
+
+import java.io.File;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -30,25 +29,26 @@ import static org.junit.Assert.assertTrue;
  */
 public class PyModuleTest {
 
-    @BeforeClass
-    public static void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         //System.out.println("PyModuleTest: Current thread: " + Thread.currentThread());
 
-        PyLib.startPython();
+        String importPath = new File("src/test/python/fixtures").getCanonicalPath();
+        PyLib.startPython(importPath);
         assertEquals(true, PyLib.isPythonRunning());
 
         //PyLib.Diag.setFlags(PyLib.Diag.F_METH);
     }
 
-    @AfterClass
-    public static void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         PyLib.Diag.setFlags(PyLib.Diag.F_OFF);
         PyLib.stopPython();
     }
 
     @Test
     public void testCreateAndCallProxySingleThreaded() throws Exception {
-        PyObjectTest.addTestDirToPythonSysPath();
+        //PyObjectTest.addTestDirToPythonSysPath();
         PyModule procModule = PyModule.importModule("proc_module");
         PyObjectTest.testCallProxySingleThreaded(procModule);
     }
@@ -56,7 +56,7 @@ public class PyModuleTest {
     // see https://github.com/bcdev/jpy/issues/26
     @Test
     public void testCreateAndCallProxyMultiThreaded() throws Exception {
-        PyObjectTest.addTestDirToPythonSysPath();
+        //PyObjectTest.addTestDirToPythonSysPath();
         PyModule procModule = PyModule.importModule("proc_module");
         PyObjectTest.testCallProxyMultiThreaded(procModule);
     }
@@ -64,7 +64,7 @@ public class PyModuleTest {
     // see: https://github.com/bcdev/jpy/issues/39: Improve Java exception messages on Python errors #39
     @Test
     public void testPythonErrorMessages() throws Exception {
-        PyObjectTest.addTestDirToPythonSysPath();
+        //PyObjectTest.addTestDirToPythonSysPath();
         PyModule raiserModule = PyModule.importModule("raise_errors");
         for (int i=0;i < 10;i++) {
             try {

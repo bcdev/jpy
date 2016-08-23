@@ -16,11 +16,8 @@
 
 package org.jpy;
 
-import org.junit.Assert;
+import org.junit.*;
 import org.jpy.fixtures.Processor;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,18 +32,20 @@ import static org.junit.Assert.*;
  * @author Norman Fomferra
  */
 public class PyObjectTest {
-    @BeforeClass
-    public static void setUp() throws Exception {
-        //System.out.println("PyModuleTest: Current thread: " + Thread.currentThread());
 
-        PyLib.startPython();
+    @Before
+    public void setUp() throws Exception {
+        //System.out.println("PyModuleTest: Current thread: " + Thread.currentThread());
+        String importPath = new File("src/test/python/fixtures").getCanonicalPath();
+
+        PyLib.startPython(importPath);
         assertEquals(true, PyLib.isPythonRunning());
 
         PyLib.Diag.setFlags(PyLib.Diag.F_ALL);
     }
 
-    @AfterClass
-    public static void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         PyLib.Diag.setFlags(PyLib.Diag.F_OFF);
         PyLib.stopPython();
     }
@@ -192,7 +191,7 @@ public class PyObjectTest {
 
     @Test
     public void testCreateProxyAndCallSingleThreaded() throws Exception {
-        addTestDirToPythonSysPath();
+        //addTestDirToPythonSysPath();
         PyModule procModule = PyModule.importModule("proc_class");
         PyObject procObj = procModule.call("Processor");
         testCallProxySingleThreaded(procObj);
@@ -201,7 +200,7 @@ public class PyObjectTest {
     // see https://github.com/bcdev/jpy/issues/26
     @Test
     public void testCreateProxyAndCallMultiThreaded() throws Exception {
-        addTestDirToPythonSysPath();
+        //addTestDirToPythonSysPath();
         //PyLib.Diag.setFlags(PyLib.Diag.F_ALL);
         PyModule procModule = PyModule.importModule("proc_class");
         PyObject procObj = procModule.call("Processor");
