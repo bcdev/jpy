@@ -210,6 +210,13 @@ public class PyLib {
 
     /**
      * Stops the Python interpreter.
+     * 
+     * <strong>Important note:</strong> Stopping the Python interpreter again after it has been restarted using 
+     * {@link #startPython} currently causes a fatal error in the the Java Runtime Environment originating from
+     * the Python interpreter (function {@code Py_Finalize} in standard CPython implementation).
+     * There is currently no workaround for that problem other than not restarting the Python interpreter from 
+     * your code.
+     * For more information refer to https://github.com/bcdev/jpy/issues/70
      */
     public static native void stopPython();
 
