@@ -245,12 +245,11 @@ public class PyObjectTest {
 
         List<Future<String>> futures;
         try {
-
             futures = executorService.invokeAll(Arrays.asList(new ProcessorTask(processor, 100, 100),
                     new ProcessorTask(processor, 200, 100),
                     new ProcessorTask(processor, 100, 200),
                     new ProcessorTask(processor, 200, 200)), 10, TimeUnit.SECONDS);
-
+=
             result = processor.dispose();
             assertEquals("dispose", result);
 
@@ -298,10 +297,7 @@ public class PyObjectTest {
 
         @Override
         public String call() throws Exception {
-            System.out.println(String.format("...call() started for task %s", Thread.currentThread()));
-            String result =  processor.computeTile(x, y, new float[100 * 100]);
-            System.out.println(String.format("....call() complete for task %s", Thread.currentThread()));
-            return result;
+            return processor.computeTile(x, y, new float[100 * 100]);
         }
     }
 }

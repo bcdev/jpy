@@ -43,19 +43,15 @@ class PyProxyHandler implements InvocationHandler {
 
     @Override
     public Object invoke(Object proxyObject, Method method, Object[] args) throws Throwable {
-        if(method.getName().equalsIgnoreCase("toString")) {
-            return String.valueOf(this.pyObject.toString());
-        }
-
         assertPythonRuns();
 
-        //if ((PyLib.Diag.getFlags() & PyLib.Diag.F_METH) != 0) {
+        if ((PyLib.Diag.getFlags() & PyLib.Diag.F_METH) != 0) {
             System.out.printf("org.jpy.PyProxyHandler: invoke: %s(%s) on pyObject=%s in thread %s\n",
                               method.getName(),
                               Arrays.toString(args),
                               Long.toHexString(this.pyObject.getPointer()),
                               Thread.currentThread());
-        //}
+        }
 
         return PyLib.callAndReturnValue(this.pyObject.getPointer(),
                                         callableKind == PyLib.CallableKind.METHOD,
