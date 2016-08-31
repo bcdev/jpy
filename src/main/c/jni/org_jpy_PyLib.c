@@ -250,16 +250,10 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_stopPython
     if (Py_IsInitialized()) {
         // Make sure we can get the GIL if needed before cleaning up.
         PyGILState_STATE state = PyGILState_Ensure();
+        // Cleanup the JPY stateful structures and shut the interpreter down.
         JPy_free();
-        //JPy_ClearGlobalVars(jenv);
         Py_Finalize();
-
-        // Clear out stateful pointers to JPY stuff and reset threads flag
-
-        //JPy_Module = NULL;
-        //JPy_Types = NULL;
-        //JPy_Type_Callbacks = NULL;
-        //JException_Type = NULL;
+        // Make sure we reset our global flag
         JPy_InitThreads = 0;
     }
 
