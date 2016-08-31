@@ -248,8 +248,19 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_stopPython
     JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_stopPython: entered: JPy_Module=%p\n", JPy_Module);
 
     if (Py_IsInitialized()) {
-        PyGILState_Ensure();
+        // Make sure we can get the GIL if needed before cleaning up.
+        PyGILState_STATE state = PyGILState_Ensure();
+        JPy_free();
+        //JPy_ClearGlobalVars(jenv);
         Py_Finalize();
+
+        // Clear out stateful pointers to JPY stuff and reset threads flag
+
+        //JPy_Module = NULL;
+        //JPy_Types = NULL;
+        //JPy_Type_Callbacks = NULL;
+        //JException_Type = NULL;
+        JPy_InitThreads = 0;
     }
 
     JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_stopPython: exiting: JPy_Module=%p\n", JPy_Module);

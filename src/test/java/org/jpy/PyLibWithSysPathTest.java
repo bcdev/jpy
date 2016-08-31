@@ -16,9 +16,7 @@
 
 package org.jpy;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.File;
 import java.net.URI;
@@ -28,8 +26,8 @@ import static org.junit.Assert.*;
 
 public class PyLibWithSysPathTest {
 
-    @BeforeClass
-    public static void setUpClass() throws Exception {
+    @Before
+    public void setUp() throws Exception {
 
         CodeSource codeSource = PyLibWithSysPathTest.class.getProtectionDomain().getCodeSource();
         if (codeSource == null) {
@@ -52,8 +50,8 @@ public class PyLibWithSysPathTest {
         assertTrue(PyLib.isPythonRunning());
     }
 
-    @AfterClass
-    public static void tearDownClass() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         PyLib.stopPython();
     }
 

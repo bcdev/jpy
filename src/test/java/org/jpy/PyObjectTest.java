@@ -245,14 +245,11 @@ public class PyObjectTest {
 
         List<Future<String>> futures;
         try {
-            futures = executorService.invokeAll(Arrays.asList(new ProcessorTask(processor, 100, 100)), 10, TimeUnit.SECONDS);
-            /*
+
             futures = executorService.invokeAll(Arrays.asList(new ProcessorTask(processor, 100, 100),
                     new ProcessorTask(processor, 200, 100),
                     new ProcessorTask(processor, 100, 200),
-                    new ProcessorTask(processor, 200, 200)));
-            */
-            //executorService.awaitTermination(1, TimeUnit.MINUTES);
+                    new ProcessorTask(processor, 200, 200)), 10, TimeUnit.SECONDS);
 
             result = processor.dispose();
             assertEquals("dispose", result);
