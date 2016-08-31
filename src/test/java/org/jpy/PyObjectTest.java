@@ -249,7 +249,7 @@ public class PyObjectTest {
                     new ProcessorTask(processor, 200, 100),
                     new ProcessorTask(processor, 100, 200),
                     new ProcessorTask(processor, 200, 200)), 10, TimeUnit.SECONDS);
-=
+
             result = processor.dispose();
             assertEquals("dispose", result);
 
