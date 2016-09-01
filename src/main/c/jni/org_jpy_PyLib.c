@@ -236,7 +236,6 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_startPython0
     }
     return JNI_TRUE;
 }
-  
 
 /*
  * Class:     org_jpy_PyLib
@@ -249,7 +248,13 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_stopPython
     JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_stopPython: entered: JPy_Module=%p\n", JPy_Module);
 
     if (Py_IsInitialized()) {
+        // Make sure we can get the GIL if needed before cleaning up.
+        PyGILState_STATE state = PyGILState_Ensure();
+        // Cleanup the JPY stateful structures and shut the interpreter down.
+        JPy_free();
         Py_Finalize();
+        // Make sure we reset our global flag
+        JPy_InitThreads = 0;
     }
 
     JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_stopPython: exiting: JPy_Module=%p\n", JPy_Module);
@@ -1173,6 +1178,3 @@ void PyLib_RedirectStdOut(void)
     PySys_SetObject("stdout", module);
     PySys_SetObject("stderr", module);
 }
-
-
-

@@ -16,24 +16,22 @@
 
 package org.jpy;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import static org.junit.Assert.*;
 
 public class PyLibTest {
 
-    @BeforeClass
-    public static void setUpClass() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         //PyLib.Diag.setFlags(PyLib.Diag.F_ERR);
         PyLib.startPython();
         assertEquals(true, PyLib.isPythonRunning());
     }
 
-    @AfterClass
-    public static void tearDownClass() throws Exception {
-        //PyLib.stopPython();
+    @After
+    public void tearDown() throws Exception {
+        PyLib.stopPython();
     }
 
     @Test
