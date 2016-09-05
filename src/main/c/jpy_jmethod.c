@@ -235,7 +235,7 @@ PyObject* JMethod_InvokeMethod(JNIEnv* jenv, JPy_JMethod* method, PyObject* pyAr
             JPy_ON_JAVA_EXCEPTION_GOTO(error);
             returnValue = JPy_FROM_JINT(v);
         } else if (returnType == JPy_JLong) {
-            jlong v = (*jenv)->CallStaticIntMethodA(jenv, classRef, method->mid, jArgs);
+            jlong v = (*jenv)->CallStaticLongMethodA(jenv, classRef, method->mid, jArgs);
             JPy_ON_JAVA_EXCEPTION_GOTO(error);
             returnValue = JPy_FROM_JLONG(v);
         } else if (returnType == JPy_JFloat) {
@@ -293,7 +293,7 @@ PyObject* JMethod_InvokeMethod(JNIEnv* jenv, JPy_JMethod* method, PyObject* pyAr
             JPy_ON_JAVA_EXCEPTION_GOTO(error);
             returnValue = JPy_FROM_JINT(v);
         } else if (returnType == JPy_JLong) {
-            jlong v = (*jenv)->CallIntMethodA(jenv, objectRef, method->mid, jArgs);
+            jlong v = (*jenv)->CallLongMethodA(jenv, objectRef, method->mid, jArgs);
             JPy_ON_JAVA_EXCEPTION_GOTO(error);
             returnValue = JPy_FROM_JLONG(v);
         } else if (returnType == JPy_JFloat) {
