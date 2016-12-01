@@ -37,7 +37,7 @@ How to build on Linux and Mac
 *****************************
 
 Install a JDK 8, preferrably the Oracle distribution. Set JDK_HOME or JPY_JDK_HOME to point to your JDK installation 
-and run the build script::: 
+and run the build script: :: 
 
     $ export JAVA_HOME=<your-jdk-dir>
     $ python get-pip.py
@@ -45,7 +45,7 @@ and run the build script:::
 
 On success, the wheel is found in the ``dist`` directory.
 
-To deploy the ``jpy.jar`` (if you don't know why you need this step, this is not for you):::
+To deploy the ``jpy.jar`` (if you don't know why you need this step, this is not for you): ::
 
     $ mvn clean deploy -DskipTests=true
 
@@ -63,7 +63,7 @@ build the sources. With Windows SDK 7.1::
     > SET JDK_HOME=<your-jdk-dir>
     > python setup.py --maven bdist_wheel
     
-With Visual Studio 14 and higher it is much easier:::
+With Visual Studio 14 and higher it is much easier: ::
 
     > SET VS100COMNTOOLS=C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\
     > SET JDK_HOME=<your-jdk-dir>
