@@ -19,9 +19,9 @@ It comes with a number of outstanding features:
 jpy has been tested with Python 2.7, 3.3, 3.4 and Oracle Java 7 and 8 JDKs. 
 
 The initial development of jpy has been driven by the need to write Python extensions to an established scientific
-imaging application programmed in Java, namely the `BEAM <http://www.brockmann-consult.de/beam/) toolbox
-funded by the European Space Agency (ESA) and is now continued through
-`SNAP <http://step.esa.int/main/toolboxes/snap/>`_, SeNtinel Application Platform project.
+imaging application programmed in Java, namely the `BEAM <http://www.brockmann-consult.de/beam/>`_ toolbox
+funded by the European Space Agency (ESA) which is now continued through
+`SNAP <http://step.esa.int/main/toolboxes/snap/>`_, the SeNtinel Application Platform project, also funded by ESA.
 Writing such Python plug-ins for a Java application usually requires a bi-directional communication between Python and
 Java since the Python extension code must be able to call back into the Java APIs.
 
