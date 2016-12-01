@@ -45,7 +45,7 @@ and run the build script:
 
 On success, the wheel is found in the ``dist`` directory.
 
-To deploy the ``jpy.jar``:
+To deploy the ``jpy.jar`` (if you don't know why you need this step, this is not for you):
 
     > mvn clean deploy -DskipTests=true
 
