@@ -14,3 +14,6 @@ local.dat
 setup.out
 *.pyc
 jpy.egg-info
+lib/
+.vagrant
+Vagrantfile
