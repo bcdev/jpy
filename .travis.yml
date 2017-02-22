@@ -11,6 +11,9 @@ cache:
 addons:
   apt:
     packages:
+      # update java8 to latest version
+      - oracle-java8-installer
+      # install python dev stuff and add virtualenv support
       - python-dev
       - python-virtualenv
 
