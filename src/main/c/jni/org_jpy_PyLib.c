@@ -131,6 +131,7 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_startPython0
 
     if (!pyInit) {
         Py_Initialize();
+        PySys_SetArgvEx(0, NULL, 0);
         PyLib_RedirectStdOut();
         pyInit = Py_IsInitialized();
     }

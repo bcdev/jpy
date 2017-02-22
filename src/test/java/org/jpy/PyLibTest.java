@@ -35,6 +35,17 @@ public class PyLibTest {
     }
 
     @Test
+    public void testGettingSysArgv() throws Exception {
+        // Since sys.argv is really part of the C-based sys module, there
+        // are special hooks embedded python systems need to call to set it up.
+        PyModule sys = PyModule.importModule("sys");
+        String[] argv = sys.getAttribute("argv", String[].class);
+        assertNotNull(argv);
+        assertEquals(1, argv.length);
+        assertTrue(argv[0].isEmpty());
+    }
+
+    @Test
     public void testGetPythonVersion() throws Exception {
         String pythonVersion = PyLib.getPythonVersion();
         System.out.println("pythonVersion = " + pythonVersion);
