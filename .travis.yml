@@ -15,6 +15,6 @@ addons:
 
 before_script:
   - travis_wait 20 mvn dependency:resolve
-  - pip install wheel
+  - pip --user install wheel
 
 script: python setup.py --maven bdist_wheel
