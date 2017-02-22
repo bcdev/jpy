@@ -3,7 +3,6 @@ sudo: false
 
 jdk:
   - "oraclejdk8"
-  - "openjdk8"
 
 cache:
  directories:
@@ -12,7 +11,6 @@ cache:
 addons:
   apt:
     packages:
-      - oracle-java8-installer
       - python-dev
 
 before_script:
@@ -20,6 +18,3 @@ before_script:
   - pip install wheel
 
 script: python setup.py --maven bdist_wheel
-install:
-  - python setup.py install
-  - mvn install
