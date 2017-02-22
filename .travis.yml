@@ -8,7 +8,7 @@ jdk:
 cache:
  directories:
    - $HOME/.m2
-  
+
 addons:
   apt:
     packages:
@@ -16,6 +16,10 @@ addons:
       - python-dev
 
 before_script:
+  - travis_wait 20 mvn dependency:resolve
   - pip install wheel
 
 script: python setup.py --maven bdist_wheel
+install:
+  - python setup.py install
+  - mvn install
