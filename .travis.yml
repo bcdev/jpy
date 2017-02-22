@@ -12,9 +12,12 @@ addons:
   apt:
     packages:
       - python-dev
+      - python-virtualenv
 
 before_script:
   - travis_wait 20 mvn dependency:resolve
-  - pip --user install wheel
+  - virtualenv $HOME/venv
+  - source $HOME/venv/bin/activate
+  - pip install wheel
 
 script: python setup.py --maven bdist_wheel
