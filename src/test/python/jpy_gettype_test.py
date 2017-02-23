@@ -52,13 +52,25 @@ class TestGetClass(unittest.TestCase):
 
 
     def test_get_class_of_unknown_type(self):
-        with  self.assertRaises(ValueError) as e:
+        with self.assertRaises(ValueError) as e:
             String = jpy.get_type('java.lang.Spring')
         self.assertEqual(str(e.exception), "Java class 'java.lang.Spring' not found")
 
         with  self.assertRaises(ValueError) as e:
             IntArray = jpy.get_type('int[]')
         self.assertEqual(str(e.exception), "Java class 'int[]' not found")
+
+    def test_issue_74(self):
+        """
+        Try to create enough references to trigger collection by Python.
+        """
+        java_types = ['boolean', 'char', 'byte', 'short', 'int', 'long',
+            'float', 'double', 'void', 'java.lang.String']
+
+        for java_type in java_types:
+            for i in range(200):
+                jpy.get_type(java_type)
+
 
 
 if __name__ == '__main__':
