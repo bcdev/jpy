@@ -28,7 +28,7 @@ import static org.jpy.PyLib.assertPythonRuns;
  * @author Norman Fomferra
  * @since 0.7
  */
-public class PyObject {
+public class PyObject implements java.io.Serializable {
 
     /**
      * The value of the Python/C API {@code PyObject*} which this class represents.
