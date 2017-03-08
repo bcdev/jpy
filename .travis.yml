@@ -1,0 +1,26 @@
+language: java
+sudo: false
+
+jdk:
+  - "oraclejdk8"
+
+cache:
+ directories:
+   - $HOME/.m2
+
+addons:
+  apt:
+    packages:
+      # update java8 to latest version
+      - oracle-java8-installer
+      # install python dev stuff and add virtualenv support
+      - python-dev
+      - python-virtualenv
+
+before_script:
+  - travis_wait 20 mvn dependency:resolve
+  - virtualenv $HOME/venv
+  - source $HOME/venv/bin/activate
+  - pip install wheel
+
+script: python setup.py --maven bdist_wheel
