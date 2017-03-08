@@ -58,24 +58,30 @@ JPy_JType* JType_GetTypeForName(JNIEnv* jenv, const char* typeName, jboolean res
     const char* resourceName;
     jclass classRef;
 
+    JPy_JType* javaType = NULL;
     if (strcmp(typeName, "boolean") == 0) {
-        return JPy_JBoolean;
+        javaType = JPy_JBoolean;
     } else if (strcmp(typeName, "char") == 0) {
-        return JPy_JChar;
+        javaType = JPy_JChar;
     } else if (strcmp(typeName, "byte") == 0) {
-        return JPy_JByte;
+        javaType = JPy_JByte;
     } else if (strcmp(typeName, "short") == 0) {
-        return JPy_JShort;
+        javaType = JPy_JShort;
     } else if (strcmp(typeName, "int") == 0) {
-        return JPy_JInt;
+        javaType = JPy_JInt;
     } else if (strcmp(typeName, "long") == 0) {
-        return JPy_JLong;
+        javaType = JPy_JLong;
     } else if (strcmp(typeName, "float") == 0) {
-        return JPy_JFloat;
+        javaType =  JPy_JFloat;
     } else if (strcmp(typeName, "double") == 0) {
-        return JPy_JDouble;
+        javaType =  JPy_JDouble;
     } else if (strcmp(typeName, "void") == 0) {
-        return JPy_JVoid;
+        javaType =  JPy_JVoid;
+    }
+
+    if(javaType != NULL) {
+      Py_INCREF(javaType);
+      return javaType;
     }
 
     if (strchr(typeName, '.') != NULL) {
@@ -207,7 +213,8 @@ JPy_JType* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve)
             return NULL;
         }
     }
-
+    
+    Py_INCREF(type);
     return type;
 }
 
@@ -2000,5 +2007,3 @@ PyTypeObject JType_Type = {
     NULL,                         /* tp_alloc */
     (newfunc) NULL,               /* tp_new=NULL --> JType instances cannot be created from Python. */
 };
-
-
