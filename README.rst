@@ -39,10 +39,10 @@ How to build on Linux and Mac
 Install a JDK 8, preferrably the Oracle distribution. Set JDK_HOME or JPY_JDK_HOME to point to your JDK installation 
 and run the build script::
 
-    > export JDK_HOME=<your-jdk-dir>
-    > export JAVA_HOME=$JDK_HOME
-    > python get-pip.py
-    > python setup.py --maven bdist_wheel
+    $ export JDK_HOME=<your-jdk-dir>
+    $ export JAVA_HOME=$JDK_HOME
+    $ python get-pip.py
+    $ python setup.py --maven bdist_wheel
 
 On success, the wheel is found in the ``dist`` directory.
 
