@@ -17,14 +17,18 @@
 package org.jpy;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Properties;
 
-import static org.jpy.PyLibConfig.JPY_LIB_KEY;
-import static org.jpy.PyLibConfig.OS;
-import static org.jpy.PyLibConfig.PYTHON_LIB_KEY;
-import static org.jpy.PyLibConfig.getOS;
-import static org.jpy.PyLibConfig.getProperty;
+import static org.jpy.PyLibConfig.*;
 
 /**
  * Represents the library that provides the Python interpreter (CPython).
@@ -55,6 +59,10 @@ public class PyLib {
     private static String dllFilePath;
     private static Throwable dllProblem;
     private static boolean dllLoaded;
+    private static final String JPY_SO_FILE = "jpy.so";
+    private static final String JDL_SO_FILE = "jdl.so";
+    private static final String JPY_CONFIG_TEMPLATE = "jpyconfig.properties.template";
+    private static final String JPY_CONFIG_KEY = "jpy.config";
 
     /**
      * The kind of callable Python objects.
@@ -378,7 +386,8 @@ public class PyLib {
         } else {
             // Fixes https://github.com/bcdev/jpy/issues/58
             // Loading of jpy DLL fails for user-specific Python installations on Windows
-            if (DEBUG) System.out.printf("org.jpy.PyLib: System.load(\"%s\")%n", pythonLibPath);
+            if (DEBUG)
+                System.out.printf("org.jpy.PyLib: System.load(\"%s\")%n", pythonLibPath);
             try {
                 System.load(pythonLibPath);
             } catch (Exception e) {
@@ -391,11 +400,119 @@ public class PyLib {
     private PyLib() {
     }
 
+    private static int randomInt = (int) (Math.random() * 1000000);
+
     static {
         if (DEBUG) System.out.println("org.jpy.PyLib: entered static initializer");
+        tryAutoConfiguration();
         loadLib();
         if (DEBUG) System.out.println("org.jpy.PyLib: exited static initializer");
     }
+
+    private static void tryAutoConfiguration()     {
+        if (DEBUG) System.out.println("org.jpy.PyLibConfig: trying to use C libraries from jar file.");
+
+        File jpySoFile = extractToTempFile(JPY_SO_FILE);
+        if (DEBUG) System.out.println("org.jpy.PyLibConfig: jpy.so file: " + jpySoFile.getAbsolutePath());
+        File jdlSoFile = extractToTempFile(JDL_SO_FILE);
+        if (DEBUG) System.out.println("org.jpy.PyLibConfig: jdl.so file: " + jdlSoFile.getAbsolutePath());
+        if(jpySoFile != null && jdlSoFile != null) {
+            File jpyConfigFile = createTempConfigFile(jpySoFile, jdlSoFile);
+            if (DEBUG) System.out.println("org.jpy.PyLibConfig: Setting property "
+                    + JPY_CONFIG_KEY + " to " + jpyConfigFile.getAbsolutePath() + ".");
+            System.setProperty(JPY_CONFIG_KEY, jpyConfigFile.getAbsolutePath());
+        }
+
+
+        if (DEBUG) System.out.println("org.jpy.PyLibConfig: End auto configuration.");
+
+    }
+
+    private static File extractToTempFile(String internalFilename) {
+        File filename = null;
+        InputStream fileStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(internalFilename);
+        if (fileStream != null) {
+            OutputStream output = null;
+            byte[] buffer = new byte[8 * 1024];
+            try {
+                filename = new File(System.getProperty("java.io.tmpdir"), "jpy-" + randomInt);
+                filename.mkdirs();
+                filename = new File(filename, internalFilename);
+                filename.createNewFile();
+                Files.setAttribute(filename.toPath(), "posix:permissions", PosixFilePermissions.fromString("rwxrwxrwx"));
+                filename.deleteOnExit();
+                output = new FileOutputStream(filename);
+                int bytesRead;
+                while ((bytesRead = fileStream.read(buffer)) != -1) {
+                    output.write(buffer, 0, bytesRead);
+                }
+            } catch (FileNotFoundException e) {
+                System.out.println("org.jpy.PyLibConfig: Error extracting file "
+                        + internalFilename + " from jpy.jar file.");
+                e.printStackTrace();
+            } catch (IOException e) {
+                System.out.println("org.jpy.PyLibConfig: Error extracting file "
+                        + internalFilename + " from jpy.jar file.");
+                e.printStackTrace();
+            } finally {
+                try {
+                    fileStream.close();
+                    if (output != null) {
+                        output.close();
+                    }
+                } catch (IOException e) {
+                    if (DEBUG) System.out.println("org.jpy.PyLibConfig: File " + internalFilename
+                            + " not found inside jpy.jar library. Proceeding as usual.");
+                }
+            }
+        }
+        return filename;
+    }
+
+    private static File createTempConfigFile(File jpySoFile, File jdlSoFile) {
+        File filename = null;
+        OutputStream output = null;
+        try {
+            InputStream templateStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(JPY_CONFIG_TEMPLATE);
+            if (templateStream != null) {
+                Properties p = new Properties();
+                p.load(templateStream);
+                filename = File.createTempFile("jpy-", ".jpyconfig.properties");
+                Files.setAttribute(filename.toPath(), "posix:permissions", PosixFilePermissions.fromString("rwxrwxrwx"));
+                filename.deleteOnExit();
+                output = new FileOutputStream(filename);
+                String comment = "# Created by 'PyLib' launcher on 2016-12-07 17:39:38.232756\n" +
+                        "# This file is read by the jpy Java API (org.jpy.PyLib class) in order to find shared libraries\n";
+//                        "jpy.jpyLib = " + jpySoFile.getAbsolutePath() + "\n" +
+//                        "jpy.jdlLib = " + jdlSoFile.getAbsolutePath() + "\n" +
+//                        "jpy.pythonLib = /usr/lib/x86_64-linux-gnu/libpython2.7.so\n" +
+//                        "jpy.pythonPrefix = /usr\n" +
+//                        "jpy.pythonExecutable = /usr/bin/python";
+                Properties temporalProperties = new Properties();
+                temporalProperties.setProperty("jpy.jpyLib", jpySoFile.getAbsolutePath());
+                temporalProperties.setProperty("jpy.jdlLib", jdlSoFile.getAbsolutePath());
+                temporalProperties.setProperty("jpy.pythonLib", p.getProperty("jpy.pythonLib"));
+                temporalProperties.setProperty("jpy.pythonPrefix", p.getProperty("jpy.pythonPrefix"));
+                temporalProperties.setProperty("jpy.pythonExecutable", p.getProperty("jpy.pythonExecutable"));
+                temporalProperties.store(output, comment);
+            }
+        } catch (IOException e) {
+            System.out.println("org.jpy.PyLibConfig: Error reading template file "
+                    + JPY_CONFIG_TEMPLATE + " from jpy.jar file.");
+            e.printStackTrace();
+        } finally {
+            if(output != null) {
+                try {
+                    output.close();
+                } catch (IOException e) {
+                    if (DEBUG) System.out.println("org.jpy.PyLibConfig: File " + JPY_CONFIG_TEMPLATE
+                            + " not found inside jpy.jar library. Proceeding as usual.");
+                }
+            }
+        }
+        return filename;
+    }
+
 }
 
 

@@ -16,6 +16,8 @@
 
 package org.jpy;
 
+import java.io.File;
+
 /**
  * A replacement for {@link System#load(String)} with support for POSIX {@code dlopen} flags.
  * <p>
@@ -62,13 +64,15 @@ public class DL {
     public static native String dlerror();
 
     static {
-        try {
-            System.loadLibrary("jdl");
-        } catch (Throwable t) {
-            String jdlLibPath = System.getProperty("jpy.jdlLib");
-            if (jdlLibPath != null) {
-                System.load(jdlLibPath);
-            } else {
+        String jdlLibPath = System.getProperty("jpy.jdlLib");
+        if(jdlLibPath != null && new File(jdlLibPath).exists()) {
+            // load the library from the path.
+            System.load(jdlLibPath);
+        } else {
+            // try to load it using default libs.
+            try {
+                System.loadLibrary("jdl");
+            } catch (Throwable t) {
                 throw new RuntimeException("Failed to load 'jdl' shared library. You can use system property 'jpy.jdlLib' to specify it.", t);
             }
         }

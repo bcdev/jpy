@@ -34,6 +34,7 @@ from setuptools import setup
 from setuptools.extension import Extension
 from distutils import log
 
+jpy_config = 'jpyconfig.properties'
 base_dir = os.path.dirname(os.path.abspath(__file__))
 src_main_c_dir = os.path.join(base_dir, 'src', 'main', 'c')
 src_test_py_dir = os.path.join(base_dir, 'src', 'test', 'python')
@@ -391,7 +392,7 @@ if dist.commands and len(dist.commands) > 0 \
         else:
             mvn_goal = 'test'
         mvn_args = '-DargLine=-Xmx512m -Djpy.config=' + os.path.join(build_dir,
-                                                                     'jpyconfig.properties') + ' -Djpy.debug=true'
+                                                                     jpy_config) + ' -Djpy.debug=true'
         log.info("Executing Maven goal " + repr(mvn_goal) + " with arg line " + repr(mvn_args))
         code = subprocess.call(['mvn', mvn_goal, mvn_args], shell=platform.system() == 'Windows')
         if code:

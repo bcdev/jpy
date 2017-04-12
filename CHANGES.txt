@@ -6,6 +6,10 @@ Version 0.9
 =============
 
 * Extended unit level tests
+* Maven generates an auto installable jar with C libraries embedded.
+  Only tested on Linux.
+  When jpy is invoked from the JVM, C libraries are extracted to the temporal directory and jpy library is initialized.
+  Therefore there is not need to install JPY by compiling jpy sources. It is enough to use the generated jar file.
 
 
 Version 0.8.1
