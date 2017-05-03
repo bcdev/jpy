@@ -15,9 +15,9 @@
 # limitations under the License.
 
 __author__ = "Norman Fomferra, Brockmann Consult GmbH"
-__copyright__ = "Copyright 2015 Brockmann Consult GmbH"
+__copyright__ = "Copyright 2015-2017 Brockmann Consult GmbH"
 __license__ = "Apache 2.0"
-__version__ = "0.9-SNAPSHOT"
+__version__ = "0.9.0dev"
 
 import sys
 import os
@@ -173,10 +173,10 @@ elif platform.system() == 'Darwin':
     library_dirs += [os.path.join(sys.exec_prefix, 'lib')]
     extra_link_args += ['-Xlinker', '-rpath', jvm_dll_dir]
 
-with open('README.rst') as file:
+with open('README.md') as file:
     long_description = file.read()
 
-with open('CHANGES.txt') as file:
+with open('CHANGES.md') as file:
     changelog = file.read()
 
 dist = setup(name='jpy',
@@ -232,6 +232,7 @@ dist = setup(name='jpy',
                  'Programming Language :: Python :: 3',
                  'Programming Language :: Python :: 3.3',
                  'Programming Language :: Python :: 3.4',
+                 'Programming Language :: Python :: 3.5',
              ]
              )
 
