@@ -2,19 +2,23 @@
 jpy Changelog
 *************
 
-Version 0.9
-=============
+Version 0.9 (dev)
+=================
 
-* Extended unit level tests
+This version includes a number of contributions from supportive GitHub users. Thanks to all of you! 
 
+Fixes
+-----
 
-Version 0.8.1
-=============
+* Fixed error caused by missing `sys.argv` in Python when called from Java (issue #81). Fix by Dave Voutila.
+* Fixed problem where calling jpy.get_type() too many times causes a memory access error (issue #74). Fix by Dave Voutila.
+* Fixed a corruption when retrieving long values (#72). Fix by chipkent. 
+* Fixed fatal error when stopping python session (issue #70, #77). Fix by Dave Voutila.
 
 Improvements
 ------------
 
-* Extended unit level tests
+* Java `PyObject` is now serialzable. Contribution by Mario Briggs. 
 
 
 Version 0.8
