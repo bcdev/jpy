@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright 2015 Brockmann Consult GmbH
+  ~ Copyright 2014-2017 Brockmann Consult GmbH
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -54,10 +54,26 @@
         <developer>
             <name>Norman Fomferra</name>
             <email>norman.fomferra@brockmann-consult.de</email>
+            <url>https://github.com/forman</url>
             <organization>Brockmann Consult GmbH</organization>
             <organizationUrl>http://www.brockmann-consult.de</organizationUrl>
         </developer>
     </developers>
+
+    <contributors>
+        <contributor>
+            <name>Dave Voutila</name>
+            <url>https://github.com/voutilad</url>
+        </contributor>
+        <contributor>
+            <name>Mario Briggs</name>
+            <url>https://github.com/mariobriggs</url>
+        </contributor>
+        <contributor>
+            <name>chipkent</name>
+            <url>https://github.com/chipkent</url>
+        </contributor>
+    </contributors>
 
     <scm>
         <connection>scm:git:git@github.com:bcdev/jpy.git</connection>
@@ -86,8 +102,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.1</version>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                     <debug>true</debug>
                     <fork>false</fork>
                     <encoding>UTF-8</encoding>
@@ -109,7 +125,7 @@
                     <version>true</version>
                     <excludePackageNames>org.jpy.jsr223:org.jpy.annotations</excludePackageNames>
                     <links>
-                        <link>http://java.sun.com/javase/7/docs/api/</link>
+                        <link>http://docs.oracle.com/javase/8/docs/api/</link>
                     </links>
                 </configuration>
             </plugin>
