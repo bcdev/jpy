@@ -72,16 +72,16 @@ JPy_JType* JType_GetTypeForName(JNIEnv* jenv, const char* typeName, jboolean res
     } else if (strcmp(typeName, "long") == 0) {
         javaType = JPy_JLong;
     } else if (strcmp(typeName, "float") == 0) {
-        javaType =  JPy_JFloat;
+        javaType = JPy_JFloat;
     } else if (strcmp(typeName, "double") == 0) {
-        javaType =  JPy_JDouble;
+        javaType = JPy_JDouble;
     } else if (strcmp(typeName, "void") == 0) {
-        javaType =  JPy_JVoid;
+        javaType = JPy_JVoid;
     }
 
-    if(javaType != NULL) {
-      Py_INCREF(javaType);
-      return javaType;
+    if (javaType != NULL) {
+        Py_INCREF(javaType);
+        return javaType;
     }
 
     if (strchr(typeName, '.') != NULL) {
