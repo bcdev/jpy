@@ -18,7 +18,7 @@ Fixes
 Improvements
 ------------
 
-* Java `PyObject` is now serialzable. Contribution by Mario Briggs. 
+* Java `PyObject` is now serializable. Contribution by Mario Briggs. 
 
 
 Version 0.8
