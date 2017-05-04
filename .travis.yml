@@ -20,6 +20,7 @@ addons:
     packages:
       # update java8 to latest version
       - oracle-java8-installer
+      - oracle-java8-set-default
 
 before_script:
   - travis_wait 20 mvn dependency:resolve
