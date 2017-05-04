@@ -46,6 +46,8 @@ do_maven = False
 if '--maven' in sys.argv:
     do_maven = True
     sys.argv.remove('--maven')
+elif 'install' in sys.argv:
+    do_maven = True
 else:
     print('Note that you can use non-standard global option [--maven] '
           'to force a Java Maven build for the jpy Java API')
