@@ -1,3 +1,7 @@
+[![Build Status](https://travis-ci.org/bcdev/jpy.svg?branch=master)](https://travis-ci.org/bcdev/jpy)
+[![Documentation Status](https://readthedocs.org/projects/jpy/badge/?version=latest)](http://jpy.readthedocs.org/en/latest/?badge=latest)
+
+
 jpy Python-Java Bridge
 ######################
 
