@@ -23,8 +23,8 @@ addons:
       - oracle-java8-set-default
 
 before_script:
-  - export $JDK_HOME=/usr/lib/jvm/java-8-oracle
-  - export $JAVA_HOME=$JDK_HOME
+  - export JDK_HOME=/usr/lib/jvm/java-8-oracle
+  - export JAVA_HOME=$JDK_HOME
   - travis_wait 20 mvn dependency:resolve
   - virtualenv $HOME/jpy-venv
   - source $HOME/jpy-venv/bin/activate
