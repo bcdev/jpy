@@ -474,12 +474,12 @@ class Properties:
                         raise ValueError('illegal Java properties format ' + line)
 
 
-def _execute_python_scripts(scripts):
+def _execute_python_scripts(scripts, **kwargs):
     import subprocess
 
     failures = 0
     for script in scripts:
-        exit_code = subprocess.call([sys.executable, script])
+        exit_code = subprocess.call([sys.executable, script], **kwargs)
         if exit_code:
             failures += 1
     return failures
