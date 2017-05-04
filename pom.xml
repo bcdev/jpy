@@ -113,8 +113,8 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>2.9.1</version>
                 <configuration>
-                    <!--<reportOutputDirectory>${project.basedir}/doc/_static</reportOutputDirectory>-->
-                    <destDir>${project.basedir}/doc/_static/java-apidocs</destDir>
+                    <reportOutputDirectory>${project.basedir}/doc/_static</reportOutputDirectory>
+                    <destDir>java-apidocs</destDir>
                     <doctitle>${project.name} ${project.version} Java API</doctitle>
                     <windowtitle>${project.name} ${project.version} Java API</windowtitle>
                     <excludePackageNames>org.jpy.annotations</excludePackageNames>
