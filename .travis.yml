@@ -24,6 +24,8 @@ addons:
 
 before_script:
   - java -version
+  - ls /usr/lib/jvm
+  - ls /usr/lib/jvm/java-7-oracle
   - echo $JDK_HOME
   - echo $JAVA_HOME
   - travis_wait 20 mvn dependency:resolve
