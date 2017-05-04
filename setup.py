@@ -1,6 +1,6 @@
 # !/usr/bin/env python3
 
-# Copyright 2015 Brockmann Consult GmbH
+# Copyright 2014-2017 Brockmann Consult GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__author__ = "Norman Fomferra, Brockmann Consult GmbH"
-__copyright__ = "Copyright 2015-2017 Brockmann Consult GmbH"
-__license__ = "Apache 2.0"
-__version__ = "0.9.0dev"
 
 import sys
 import os
@@ -39,6 +35,11 @@ src_main_c_dir = os.path.join(base_dir, 'src', 'main', 'c')
 src_test_py_dir = os.path.join(base_dir, 'src', 'test', 'python')
 
 import jpyutil
+
+__author__ = jpyutil.__author__
+__copyright__ = jpyutil.__copyright__
+__license__ = jpyutil.__license__
+__version__ = jpyutil.__version__
 
 print('Using ' + jpyutil.__file__)
 
