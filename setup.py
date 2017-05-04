@@ -30,7 +30,10 @@ import glob
 import unittest
 
 from setuptools import setup
+from setuptools.command.test import test
+from setuptools.command.install import install
 from setuptools.extension import Extension
+from distutils.cmd import Command
 from distutils import log
 
 import jpyutil
@@ -225,11 +228,13 @@ def _copy_jpyutil():
     log.info('Copying %s to %s' % (src, dest))
     shutil.copy(src, dest)
 
-def test_suite():
+def _build_jpy():
     package_maven()
     _copy_jpyutil()
     _write_jpy_config()
+    
 
+def test_suite():
     suite = unittest.TestSuite()
     
     def test_python_with_java_runtime(self):
@@ -246,6 +251,41 @@ def test_suite():
     suite.addTest(test_java)
 
     return suite
+
+class MavenBuildCommand(Command):
+    """ Custom JPY Maven builder command """
+    description = 'run Maven to generate JPY jar'
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        self.announce('Building JPY')
+        _build_jpy()
+        
+
+class JpyBuildBeforeTest(test):
+    """ Customization of SetupTools Install command for JPY """
+
+    def run(self):
+        self.run_command('build')
+        self.run_command('maven')
+        
+        test.run(self)
+
+
+class JpyInstall(install):
+    """ Custom install command to trigger Maven steps """
+    
+    def run(self):
+        self.run_command('build')
+        self.run_command('maven')
+        install.run(self)
+
 
 setup(name='jpy',
       description='Bi-directional Python-Java bridge',
@@ -281,6 +321,11 @@ setup(name='jpy',
                              define_macros=define_macros),
       ],
       test_suite='setup.test_suite',
+      cmdclass={
+          'maven': MavenBuildCommand,
+          'test': JpyBuildBeforeTest,
+          'install': JpyInstall
+      },
       classifiers=['Development Status :: 4 - Beta',
                    # Indicate who your project is intended for
                    'Intended Audience :: Developers',
