@@ -53,7 +53,7 @@ addons:
 
 before_script:
   - travis_wait 20 mvn dependency:resolve
-  - ./ci/travis/before_script.sh
+  - bash ./ci/travis/before_script.sh
   - pyenv activate jpy-venv
   - pip install wheel
 
