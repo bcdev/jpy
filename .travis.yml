@@ -7,7 +7,7 @@ matrix:
   allow_failures:
     - os: osx
   include:
-    # Linux
+    # Linux -----------------------
     - os: linux
       language: python
       python: 2.7
@@ -24,19 +24,19 @@ matrix:
       language: python
       python: 3.6
       env: TOXENV='3.6'
-    # OS-X
-#    - os: osx
-#      language: generic
-#      env: TOXENV='2.7'
-#    - os: osx
-#      language: generic
-#      env: TOXENV='3.4'
-#    - os: osx
-#      language: generic
-#      env: TOXENV='3.5'
-#    - os: osx
-#      language: generic
-#      env: TOXENV='3.6'
+    # OS-X ------------------------
+    - os: osx
+      language: generic
+      env: TOXENV='2.7'
+    - os: osx
+      language: generic
+      env: TOXENV='3.4'
+    - os: osx
+      language: generic
+      env: TOXENV='3.5'
+    - os: osx
+      language: generic
+      env: TOXENV='3.6'
 
 # matrix end #####################################
 
@@ -58,6 +58,7 @@ before_script:
 
 script:
   - python --version
+  # oracle-java8-set-default seems to modify PATH but not JAVA_HOME :(
   - java -version
   - export JAVA_HOME=/usr/lib/jvm/java-8-oracle
   - python setup.py --maven bdist_wheel
