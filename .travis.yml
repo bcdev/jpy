@@ -53,6 +53,8 @@ addons:
       - oracle-java8-set-default
 
 before_script:
+  - export JDK_HOME=/usr/lib/jvm/java-8-oracle
+  - export JAVA_HOME=$JDK_HOME
   - travis_wait 20 mvn dependency:resolve
   - bash ./ci/travis/before_script.sh
 
