@@ -1,7 +1,6 @@
 version: 0.9.0dev1
 
 image: Visual Studio 2015
-
 platform: x64
 configuration: Release
 
@@ -13,14 +12,13 @@ environment:
     - PYTHON_HOME: C:\Python36-x64
 
 cache:
-  - '%UserProfile%\.m2'
+  - %UserProfile%\.m2
 
 install:
   - call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64
   - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86_amd64
   - set JDK_HOME=C:\Program Files\Java\jdk1.8.0
   - set JAVA_HOME=%JDK_HOME%
-  #- set PATH=%PYTHON_HOME%\%PATH%
   - echo %PYTHON_HOME%
 
 build_script:
