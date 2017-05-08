@@ -29,6 +29,10 @@ else
     export PATH="$PYENV_ROOT/bin:$PATH"
     eval "$(pyenv init -)"
 
+    # Install pyenv virtualenv plugin
+    $ git clone https://github.com/pyenv/pyenv-virtualenv.git $(pyenv root)/plugins/pyenv-virtualenv
+    eval "$(pyenv virtualenv-init -)"
+
     # Create virtualenv from current Python
     pyenv virtualenv jpy-venv
 fi
