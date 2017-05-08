@@ -27,3 +27,4 @@ install:
 
 build_script:
   - call %PYTHON_HOME%\python.exe setup.py --maven bdist_wheel
+  - ps: Get-ChildItem -Path C:\projects\jpy\build -Filter *.pyd -Recurse
