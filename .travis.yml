@@ -3,32 +3,40 @@ sudo: false
 
 # matrix start ###################################
 
-python:
-  - "2.7"
-  - "3.4"
-  - "3.5"
-  - "3.6"
-
-os:
-  - linux
-  - osx
-
 matrix:
   allow_failures:
     - os: osx
   include:
-    - os: osx
-      language: generic
+    # Linux
+    - os: linux
+      language: python
+      python: 2.7
       env: TOXENV='2.7'
-    - os: osx
-      language: generic
+    - os: linux
+      language: python
+      python: 3.4
       env: TOXENV='3.4'
-    - os: osx
-      language: generic
+    - os: linux
+      language: python
+      python: 3.5
       env: TOXENV='3.5'
-    - os: osx
-      language: generic
+    - os: linux
+      language: python
+      python: 3.6
       env: TOXENV='3.6'
+    # OS-X
+#    - os: osx
+#      language: generic
+#      env: TOXENV='2.7'
+#    - os: osx
+#      language: generic
+#      env: TOXENV='3.4'
+#    - os: osx
+#      language: generic
+#      env: TOXENV='3.5'
+#    - os: osx
+#      language: generic
+#      env: TOXENV='3.6'
 
 # matrix end #####################################
 
@@ -45,7 +53,7 @@ addons:
 
 before_script:
   - travis_wait 20 mvn dependency:resolve
-  - bash ./ci/travis/before_script.sh
+  - ./ci/travis/before_script.sh
   - pyenv activate jpy-venv
   - pip install wheel
 

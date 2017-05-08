@@ -24,13 +24,15 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 
 else
     # Install pyenv
+    # See https://github.com/pyenv/pyenv
     git clone https://github.com/pyenv/pyenv.git $HOME/.pyenv
     export PYENV_ROOT="$HOME/.pyenv"
     export PATH="$PYENV_ROOT/bin:$PATH"
     eval "$(pyenv init -)"
 
     # Install pyenv virtualenv plugin
-    $ git clone https://github.com/pyenv/pyenv-virtualenv.git $(pyenv root)/plugins/pyenv-virtualenv
+    # See https://github.com/pyenv/pyenv-virtualenv
+    git clone https://github.com/pyenv/pyenv-virtualenv.git $(pyenv root)/plugins/pyenv-virtualenv
     eval "$(pyenv virtualenv-init -)"
 
     # Create virtualenv from current Python
