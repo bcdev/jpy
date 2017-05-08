@@ -39,4 +39,8 @@ else
     pyenv virtualenv jpy-venv
 fi
 
+pyenv activate jpy-venv
+pip install wheel
+
+
 

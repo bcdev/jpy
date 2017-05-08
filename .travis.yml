@@ -54,7 +54,5 @@ addons:
 before_script:
   - travis_wait 20 mvn dependency:resolve
   - bash ./ci/travis/before_script.sh
-  - pyenv activate jpy-venv
-  - pip install wheel
 
 script: python setup.py --maven bdist_wheel
