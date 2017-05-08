@@ -60,9 +60,7 @@ script:
   - python --version
   # oracle-java8-set-default seems to modify PATH but not JAVA_HOME :(
   - java -version
-  # - export JAVA_HOME=$(/usr/libexec/java_home -v 1.5)
-  - echo $JAVA_HOME
-  - echo $JDK_HOME
-  #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export JAVA_HOME=$(/usr/libexec/java_home -v 1.8); fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export JAVA_HOME=$(/usr/libexec/java_home -v 1.8); fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export JAVA_HOME=/usr/lib/jvm/java-8-oracle; fi
+  - echo $JAVA_HOME
   - python setup.py --maven bdist_wheel
