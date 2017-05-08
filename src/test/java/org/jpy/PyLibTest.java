@@ -20,6 +20,7 @@ import org.junit.*;
 
 import static org.junit.Assert.*;
 
+@Ignore
 public class PyLibTest {
 
     @Before
