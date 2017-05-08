@@ -20,6 +20,8 @@ install:
   - set JDK_HOME=C:\Program Files\Java\jdk1.8.0
   - set JAVA_HOME=%JDK_HOME%
   - call %PYTHON_HOME%\Scripts\pip.exe install wheel
+  - java -XshowSettings:properties -version
+  - echo %PATH%
 
 build_script:
   - call %PYTHON_HOME%\python.exe setup.py --maven bdist_wheel
