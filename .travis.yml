@@ -57,6 +57,7 @@ before_script:
   - bash ./ci/travis/before_script.sh
 
 script:
+  - python --version
   - java -version
-  - echo $JAVA_HOME
+  - export JAVA_HOME=/usr/lib/jvm/java-8-oracle
   - python setup.py --maven bdist_wheel
