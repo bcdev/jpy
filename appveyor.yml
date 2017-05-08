@@ -16,12 +16,12 @@ cache:
   - '%UserProfile%\.m2'
 
 install:
-  - cmd: call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64
-  - cmd: call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86_amd64
-  - cmd: set JDK_HOME=C:\Program Files\Java\jdk1.8.0
-  - cmd: set JAVA_HOME=%JDK_HOME%
-  #- cmd: set PATH=%PYTHON_HOME%\%PATH%
-  - cmd: echo %PYTHON_HOME%
-  - cmd: %PYTHON_HOME%\python.exe setup.py --maven bdist_wheel
+  - call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64
+  - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86_amd64
+  - set JDK_HOME=C:\Program Files\Java\jdk1.8.0
+  - set JAVA_HOME=%JDK_HOME%
+  #- set PATH=%PYTHON_HOME%\%PATH%
+  - echo %PYTHON_HOME%
 
-
+build_script:
+  - %PYTHON_HOME%\python.exe setup.py --maven bdist_wheel
