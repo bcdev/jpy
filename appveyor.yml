@@ -12,7 +12,7 @@ environment:
     - PYTHON_HOME: C:\Python36-x64
 
 cache:
-  - %UserProfile%\.m2
+  - '%UserProfile%\.m2'
 
 install:
   - call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64
@@ -22,4 +22,4 @@ install:
   - echo %PYTHON_HOME%
 
 build_script:
-  - %PYTHON_HOME%\python.exe setup.py --maven bdist_wheel
+  - call %PYTHON_HOME%\python.exe setup.py --maven bdist_wheel
