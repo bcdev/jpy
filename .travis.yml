@@ -52,6 +52,7 @@ addons:
       - oracle-java8-installer
 
 before_script:
+  - jdk_switcher use oraclejdk8
   - travis_wait 20 mvn dependency:resolve
   - bash ./ci/travis/before_script.sh
 
