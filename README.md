@@ -2,8 +2,8 @@
 [![Documentation Status](https://readthedocs.org/projects/jpy/badge/?version=latest)](http://jpy.readthedocs.org/en/latest/?badge=latest)
 
 
-jpy Python-Java Bridge
-######################
+jpy - a Python-Java Bridge
+==========================
 
 jpy is a **bi-directional** Python-Java bridge which you can use to embed Java code in Python programs or the other
 way round. It has been designed particularly with regard to maximum data transfer speed between the two languages.
@@ -36,7 +36,7 @@ For more information please have a look into jpy's
 
 
 How to build on Linux and Mac
-=============================
+-----------------------------
 
 Install a JDK 8, preferrably the Oracle distribution. Set JDK_HOME or JPY_JDK_HOME to point to your JDK installation 
 and run the build script:
@@ -53,7 +53,7 @@ To deploy the `jpy.jar` (if you don't know why you need this step, this is not f
     $ mvn clean deploy -DskipTests=true
 
 How to build on Windows
-=======================
+-----------------------
 
 If you are on Windows, please note that if you run a 32-bit Python you'll also need a 32-bit JDK.
 Set JDK_HOME or JPY_JDK_HOME to point to your JDK installation. You'll need Windows SDK 7.1 or Visual Studio C++ to 
@@ -74,8 +74,8 @@ With Visual Studio 14 and higher it is much easier::
 On success, the wheel is found in the `dist` directory.
 
 
-Releasing a jpy version
-=======================
+Releasing jpy
+-------------
 
 The target reader of this section is a jpy developer wishing to release a new jpy version.
 Note: You need to have Sphinx installed to update the documentation.
