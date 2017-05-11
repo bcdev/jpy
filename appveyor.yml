@@ -29,4 +29,5 @@ install:
   - call %JPY_PYTHON_HOME%\Scripts\pip.exe install psutil
 
 build_script:
+  - set PATH=%JPY_PYTHON_HOME%;%JPY_PYTHON_HOME%\DLLs;%PATH%
   - call %JPY_PYTHON_HOME%\python.exe setup.py --maven bdist_wheel
