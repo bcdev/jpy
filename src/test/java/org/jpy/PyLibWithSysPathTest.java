@@ -24,7 +24,7 @@ import java.security.CodeSource;
 
 import static org.junit.Assert.*;
 
-@Ignore
+
 public class PyLibWithSysPathTest {
 
     @Before
