@@ -28,8 +28,8 @@
     <artifactId>jpy</artifactId>
     <version>0.9-SNAPSHOT</version>
     <packaging>jar</packaging>
-
     <name>Java-Python Bridge</name>
+
     <description>
         jpy is a bi-directional Java-Python bridge which you can use to embed Java code in Python programs or the other
         way round.
@@ -96,7 +96,6 @@
     </dependencies>
 
     <build>
-
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -138,9 +137,7 @@
                 <version>1.0-beta-7</version>
             </extension>
         </extensions>
-
     </build>
-
 
     <profiles>
         <profile>
@@ -176,22 +173,6 @@
         </profile>
     </profiles>
 
-    <repositories>
-        <repository>
-            <id>snap-repo-public</id>
-            <name>Public Maven Repository for ESA SNAP Modules</name>
-            <url>http://nexus.senbox.net/nexus/content/repositories/public/</url>
-            <releases>
-                <enabled>true</enabled>
-                <checksumPolicy>warn</checksumPolicy>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-                <checksumPolicy>warn</checksumPolicy>
-            </snapshots>
-        </repository>
-    </repositories>
-
     <distributionManagement>
         <repository>
             <id>snap-repo-public</id>
@@ -206,21 +187,5 @@
             <uniqueVersion>false</uniqueVersion>
         </snapshotRepository>
     </distributionManagement>
-
-    <pluginRepositories>
-        <pluginRepository>
-            <id>snap-repo-public</id>
-            <name>Public Maven Repository for SNAP</name>
-            <url>http://nexus.senbox.net/nexus/content/repositories/public/</url>
-            <releases>
-                <enabled>true</enabled>
-                <checksumPolicy>warn</checksumPolicy>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-                <checksumPolicy>warn</checksumPolicy>
-            </snapshots>
-        </pluginRepository>
-    </pluginRepositories>
 
 </project>

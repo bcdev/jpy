@@ -11,8 +11,9 @@ environment:
     - PYTHON_HOME: C:\Python35-x64
     - PYTHON_HOME: C:\Python36-x64
 
+# see https://www.appveyor.com/docs/build-cache/
 cache:
-  - '%UserProfile%\.m2'
+  - '%UserProfile%\.m2 -> pom.xml'
 
 install:
   - call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64
