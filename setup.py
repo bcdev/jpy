@@ -43,6 +43,17 @@ __version__ = jpyutil.__version__
 
 print('Using ' + jpyutil.__file__)
 
+# ======================================================================
+# e.g. finding the shared libs (dll/so) our python process loaded so far ...
+
+import psutil, os
+
+p = psutil.Process(os.getpid())
+for dll in p.memory_maps():
+    print(dll.path)
+
+# ======================================================================
+
 do_maven = False
 if '--maven' in sys.argv:
     do_maven = True
