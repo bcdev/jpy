@@ -6,10 +6,10 @@ configuration: Release
 
 environment:
   matrix:
-    - PYTHON_HOME: C:\Python27-x64
-    - PYTHON_HOME: C:\Python34-x64
-    - PYTHON_HOME: C:\Python35-x64
-    - PYTHON_HOME: C:\Python36-x64
+    - JPY_PYTHON_HOME: C:\Python27-x64
+    - JPY_PYTHON_HOME: C:\Python34-x64
+    - JPY_PYTHON_HOME: C:\Python35-x64
+    - JPY_PYTHON_HOME: C:\Python36-x64
 
 # see https://www.appveyor.com/docs/build-cache/
 cache:
@@ -17,13 +17,14 @@ cache:
   - '%UserProfile%\.m2 -> pom.xml'
 
 install:
+  - ps: Get-ChildItem -Path %JPY_PYTHON_HOME% -Filter *.dll -Recurse
   - call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64
   - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86_amd64
   - set JDK_HOME=C:\Program Files\Java\jdk1.8.0
   - set JAVA_HOME=%JDK_HOME%
   - set
   - java -XshowSettings:properties -version
-  - call %PYTHON_HOME%\Scripts\pip.exe install wheel
+  - call %JPY_PYTHON_HOME%\Scripts\pip.exe install wheel
 
 build_script:
-  - call %PYTHON_HOME%\python.exe setup.py --maven bdist_wheel
+  - call %JPY_PYTHON_HOME%\python.exe setup.py --maven bdist_wheel
