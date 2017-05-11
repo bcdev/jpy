@@ -49,9 +49,12 @@ import static org.jpy.PyLibConfig.getProperty;
  * @author Norman Fomferra
  * @since 0.7
  */
+@SuppressWarnings("WeakerAccess")
 public class PyLib {
 
     private static final boolean DEBUG = Boolean.getBoolean("jpy.debug");
+    private static final boolean ON_WINDOWS = System.getProperty("os.name").toLowerCase().contains("windows");
+    private static final boolean STOP_IS_NO_OP = Boolean.getBoolean("jpy.stopIsNoOp") || ON_WINDOWS;
     private static String dllFilePath;
     private static Throwable dllProblem;
     private static boolean dllLoaded;
@@ -210,15 +213,21 @@ public class PyLib {
 
     /**
      * Stops the Python interpreter.
-     * 
-     * <strong>Important note:</strong> Stopping the Python interpreter again after it has been restarted using 
+     *
+     * <strong>Important note:</strong> Stopping the Python interpreter again after it has been restarted using
      * {@link #startPython} currently causes a fatal error in the the Java Runtime Environment originating from
      * the Python interpreter (function {@code Py_Finalize} in standard CPython implementation).
-     * There is currently no workaround for that problem other than not restarting the Python interpreter from 
+     * There is currently no workaround for that problem other than not restarting the Python interpreter from
      * your code.
      * For more information refer to https://github.com/bcdev/jpy/issues/70
      */
-    public static native void stopPython();
+    public static void stopPython() {
+        if (!STOP_IS_NO_OP) {
+            stopPython0();
+        }
+    }
+
+    static native void stopPython0();
 
     @Deprecated
     public static native int execScript(String script);

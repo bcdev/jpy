@@ -131,6 +131,7 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_startPython0
 
     if (!pyInit) {
         Py_Initialize();
+        // See https://github.com/bcdev/jpy/issues/81
         PySys_SetArgvEx(0, NULL, 0);
         PyLib_RedirectStdOut();
         pyInit = Py_IsInitialized();
@@ -240,10 +241,10 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_startPython0
 
 /*
  * Class:     org_jpy_PyLib
- * Method:    stopPython
+ * Method:    stopPython0
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_org_jpy_PyLib_stopPython
+JNIEXPORT void JNICALL Java_org_jpy_PyLib_stopPython0
   (JNIEnv* jenv, jclass jLibClass)
 {
     JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_stopPython: entered: JPy_Module=%p\n", JPy_Module);
@@ -251,7 +252,7 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_stopPython
     if (Py_IsInitialized()) {
         // Make sure we can get the GIL if needed before cleaning up.
         PyGILState_STATE state = PyGILState_Ensure();
-        // Cleanup the JPY stateful structures and shut the interpreter down.
+        // Cleanup the JPY stateful structures and shut down the interpreter.
         JPy_free();
         Py_Finalize();
         // Make sure we reset our global flag

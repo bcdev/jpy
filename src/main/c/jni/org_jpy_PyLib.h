@@ -33,10 +33,10 @@ JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_getPythonVersion
 
 /*
  * Class:     org_jpy_PyLib
- * Method:    stopPython
+ * Method:    stopPython0
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_org_jpy_PyLib_stopPython
+JNIEXPORT void JNICALL Java_org_jpy_PyLib_stopPython0
   (JNIEnv *, jclass);
 
 /*
