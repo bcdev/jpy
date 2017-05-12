@@ -44,8 +44,8 @@ cache:
 install:
   #- ps: Get-ChildItem -Path $env:JPY_PYTHON_HOME
   #- ps: Get-ChildItem -Path $env:JPY_PYTHON_HOME -Filter *.dll -Recurse
-  - copy C:\Windows\SysWOW64\python27.dll C:\Python27
-  - copy C:\Windows\System32\python27.dll C:\Python27-x64
+  #- copy C:\Windows\SysWOW64\python27.dll C:\Python27
+  #- copy C:\Windows\System32\python27.dll C:\Python27-x64
   - copy C:\Windows\WinSxS\x86_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.8387_none_5094ca96bcb6b2bb\msvcr90.dll C:\Python27
   - copy C:\Windows\WinSxS\amd64_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.8387_none_08e793bfa83a89b5\msvcr90.dll C:\Python27-x64
   - call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /%PLATFORM%
