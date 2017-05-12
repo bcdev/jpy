@@ -50,11 +50,11 @@ install:
   # JAVA_HOME is used by Maven
   - set JAVA_HOME=%JPY_JDK_HOME%
   - set
-  - call %JPY_JDK_HOME%\bin\java.exe -XshowSettings:properties -version
-  - call %JPY_PYTHON_HOME%\Scripts\pip.exe install wheel
-  - call %JPY_PYTHON_HOME%\Scripts\pip.exe install psutil
-  - call %JPY_PYTHON_HOME%\python.exe ci\appveyor\dump-dlls.py
+  - call "%JPY_JDK_HOME%\bin\java.exe" -XshowSettings:properties -version
+  - call "%JPY_PYTHON_HOME%\Scripts\pip.exe" install wheel
+  - call "%JPY_PYTHON_HOME%\Scripts\pip.exe" install psutil
+  - call "%JPY_PYTHON_HOME%\python.exe" ci\appveyor\dump-dlls.py
 
 build_script:
   - set PATH=%JPY_PYTHON_HOME%;%JPY_PYTHON_HOME%\DLLs;%JPY_JDK_HOME%;%JPY_JDK_HOME%\bin;%PATH%
-  - call %JPY_PYTHON_HOME%\python.exe setup.py --maven bdist_wheel
+  - call "%JPY_PYTHON_HOME%\python.exe" setup.py --maven bdist_wheel
