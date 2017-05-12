@@ -13,28 +13,28 @@ environment:
 
   matrix:
     - JPY_PYTHON_HOME: C:\Python27
-      JPY_JDK_HOME: %JDK8_X86%
+      JPY_JDK_HOME: '%JDK8_X86%'
     - JPY_PYTHON_HOME: C:\Python34
-      JPY_JDK_HOME: %JDK8_X86%
+      JPY_JDK_HOME: '%JDK8_X86%'
     - JPY_PYTHON_HOME: C:\Python35
-      JPY_JDK_HOME: %JDK8_X86%
+      JPY_JDK_HOME: '%JDK8_X86%'
     - JPY_PYTHON_HOME: C:\Python36
-      JPY_JDK_HOME: %JDK8_X86%
+      JPY_JDK_HOME: '%JDK8_X86%'
     - JPY_PYTHON_HOME: C:\Python27-x64
-      JPY_JDK_HOME: %JDK8_X64%
+      JPY_JDK_HOME: '%JDK8_X64%'
     - JPY_PYTHON_HOME: C:\Python34-x64
-      JPY_JDK_HOME: %JDK8_X64%
+      JPY_JDK_HOME: '%JDK8_X64%'
     - JPY_PYTHON_HOME: C:\Python35-x64
-      JPY_JDK_HOME: %JDK8_X64%
+      JPY_JDK_HOME: '%JDK8_X64%'
     - JPY_PYTHON_HOME: C:\Python36-x64
-      JPY_JDK_HOME: %JDK8_X64%
+      JPY_JDK_HOME: '%JDK8_X64%'
 
 matrix:
   exclude:
     - platform: x86
-      JPY_JDK_HOME: %JDK8_X64%
+      JPY_JDK_HOME: '%JDK8_X64%'
     - platform: x64
-      JPY_JDK_HOME: %JDK8_X86%
+      JPY_JDK_HOME: '%JDK8_X86%'
 
 # see https://www.appveyor.com/docs/build-cache/
 cache:
