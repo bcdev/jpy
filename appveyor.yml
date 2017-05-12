@@ -27,6 +27,7 @@ install:
   - java -XshowSettings:properties -version
   - call %JPY_PYTHON_HOME%\Scripts\pip.exe install wheel
   - call %JPY_PYTHON_HOME%\Scripts\pip.exe install psutil
+  - call %JPY_PYTHON_HOME%\python.exe ci\appveyor\dump-dlls.py
 
 build_script:
   - set PATH=%JPY_PYTHON_HOME%;%JPY_PYTHON_HOME%\DLLs;%PATH%
