@@ -44,6 +44,9 @@ cache:
 install:
   #- ps: Get-ChildItem -Path $env:JPY_PYTHON_HOME
   #- ps: Get-ChildItem -Path $env:JPY_PYTHON_HOME -Filter *.dll -Recurse
+  # Python 2.7 installs its main DLL into C:\Windows. Make sure it is also available in Python installation folder.
+  - cmd: copy C:\Windows\system32\python27.dll C:\Python27-x64\python27.dll
+  - cmd: copy C:\Windows\SysWOW64\python27.dll C:\Python27\python27.dll
   - call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64
   - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86_amd64
   - set JDK_HOME=%JPY_JDK_HOME%
