@@ -42,8 +42,6 @@ __version__ = jpyutil.__version__
 base_dir = os.path.dirname(os.path.relpath(__file__))
 src_main_c_dir = os.path.join(base_dir, 'src', 'main', 'c')
 src_test_py_dir = os.path.join(base_dir, 'src', 'test', 'python')
-# src_main_c_dir = 'src/main/c'
-# src_test_py_dir = 'src/test/python'
 
 do_maven = False
 if '--maven' in sys.argv:
@@ -146,9 +144,8 @@ elif platform.system() == 'Darwin':
 
 # ----------- Functions -------------
 def _build_dir():
-    #return os.path.join(base_dir, 'build/lib.macosx-10.12-x86_64-3.6')
     # this is hacky, but use distutils logic to get build dir. see: distutils.command.build
-    plat = ".%s-%d.%d" % (get_platform(), *sys.version_info[:2])
+    plat = ".%s-%d.%d" % (get_platform(), sys.version_info.major, sys.version_info.minor)
     return os.path.join('build', 'lib' + plat)
 
 def package_maven():
@@ -245,6 +242,7 @@ def _copy_jpyutil():
 def _build_jpy():
     package_maven()
     _copy_jpyutil()
+    _write_jpy_config()
     
 
 def test_suite():
