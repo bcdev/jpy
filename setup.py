@@ -221,6 +221,10 @@ dist = setup(name='jpy',
 # Continue with custom setup if 'build' step is included in commands
 #
 
+def _build_dir():
+    # TODO: figure out logic for dynamically getting this at runtime
+    return os.path.join(base_dir, 'build/lib.macosx-10.12-x86_64-3.6')
+
 if dist.commands and len(dist.commands) > 0 \
         and dist.command_obj and len(dist.command_obj) > 0 \
         and 'clean' not in dist.command_obj \
@@ -230,11 +234,12 @@ if dist.commands and len(dist.commands) > 0 \
     # Get build directory (whose content we'll zip and in which we test)
     #
 
-    build_dir = dist.command_obj['build'].build_lib
-    if not os.path.exists(build_dir):
-        log.error("Missing build directory '" + build_dir + "'")
-        exit(1)
+    # build_dir = dist.command_obj['build'].build_lib
+    # if not os.path.exists(build_dir):
+        # log.error("Missing build directory '" + build_dir + "'")
+        # exit(1)
 
+    build_dir = _build_dir()
     #
     # Get install directory
     #
@@ -291,10 +296,6 @@ def _read(filename):
     with open(filename) as file:
         return file.read()
 
-def _build_dir():
-    # TODO: figure out logic for dynamically getting this at runtime
-    return os.path.join(base_dir, 'build/lib.macosx-10.12-x86_64-3.6')
-
 def test_python_java_rt():
     """ Run Python test cases against Java runtime classes. """
     sub_env = {'PYTHONPATH': _build_dir()}
@@ -341,7 +342,7 @@ def _copy_jpyutil():
     shutil.copy(src, dest)
 
 def _build_jpy():
-    package_maven()
+    #package_maven()
     _copy_jpyutil()
     _write_jpy_config()
     
@@ -401,7 +402,7 @@ class JpyInstall(install):
 
 setup(name='jpy',
       description='Bi-directional Python-Java bridge',
-             long_description=_read('README.rst') + '\n\n' + _read('CHANGES.txt'),
+             long_description=_read('README.md') + '\n\n' + _read('CHANGES.md'),
              version=__version__,
       platforms='Windows, Linux, Darwin',
       author=__author__,
@@ -413,6 +414,8 @@ setup(name='jpy',
       download_url='https://pypi.python.org/pypi/jpy/' + __version__,
       py_modules=['jpyutil'],
       package_data={'': [jpy_jar_file]},
+      package_dir={'jpy': 'src/main/c'},
+      zip_safe=False,
       ext_modules=[Extension('jpy',
                              sources=sources,
                              depends=headers,
