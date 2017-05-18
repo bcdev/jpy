@@ -29,6 +29,7 @@ import platform
 import ctypes
 import ctypes.util
 import logging
+import subprocess
 
 
 __author__ = "Norman Fomferra, Brockmann Consult GmbH"
@@ -115,7 +116,8 @@ def _get_java_api_properties(fail=False):
 
 def find_jdk_home_dir():
     """
-    Try to detect the JDK home directory from dedicated environment variables.
+    Try to detect the JDK home directory from Maven, if available, or use
+    dedicated environment variables.
     :return: pathname if found, else None
     """
     for name in JDK_HOME_VARS:
@@ -124,6 +126,22 @@ def find_jdk_home_dir():
                 and os.path.exists(os.path.join(jdk_home_dir, 'include')) \
                 and os.path.exists(os.path.join(jdk_home_dir, 'lib')):
             return jdk_home_dir
+    logging.debug('Checking Maven for JAVA_HOME...')
+    try:
+        output = subprocess.check_output(['mvn', '-v'])
+        if isinstance(output, bytes) and not isinstance(output, str):
+            #PY3 related
+            output = output.decode('utf-8')
+        for part in output.split('\n'):
+            if part.startswith('Java home:'):
+                path = part.split(':')[1].strip()
+                if path.endswith('jre'):
+                    return path[0:-3]
+                
+    except Exception:
+        # maven probably isn't installed or not on PATH
+        logging.debug('Maven not found on PATH. No JAVA_HOME found.')
+
     return None
 
 
