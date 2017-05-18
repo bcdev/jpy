@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright 2015 Brockmann Consult GmbH
+  ~ Copyright 2014-2017 Brockmann Consult GmbH
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@
     <artifactId>jpy</artifactId>
     <version>0.9-SNAPSHOT</version>
     <packaging>jar</packaging>
-
     <name>Java-Python Bridge</name>
+
     <description>
         jpy is a bi-directional Java-Python bridge which you can use to embed Java code in Python programs or the other
         way round.
@@ -54,10 +54,26 @@
         <developer>
             <name>Norman Fomferra</name>
             <email>norman.fomferra@brockmann-consult.de</email>
+            <url>https://github.com/forman</url>
             <organization>Brockmann Consult GmbH</organization>
             <organizationUrl>http://www.brockmann-consult.de</organizationUrl>
         </developer>
     </developers>
+
+    <contributors>
+        <contributor>
+            <name>Dave Voutila</name>
+            <url>https://github.com/voutilad</url>
+        </contributor>
+        <contributor>
+            <name>Mario Briggs</name>
+            <url>https://github.com/mariobriggs</url>
+        </contributor>
+        <contributor>
+            <name>chipkent</name>
+            <url>https://github.com/chipkent</url>
+        </contributor>
+    </contributors>
 
     <scm>
         <connection>scm:git:git@github.com:bcdev/jpy.git</connection>
@@ -80,14 +96,13 @@
     </dependencies>
 
     <build>
-
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.1</version>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                     <debug>true</debug>
                     <fork>false</fork>
                     <encoding>UTF-8</encoding>
@@ -97,8 +112,8 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>2.9.1</version>
                 <configuration>
-                    <!--<reportOutputDirectory>${project.basedir}/doc/_static</reportOutputDirectory>-->
-                    <destDir>${project.basedir}/doc/_static/java-apidocs</destDir>
+                    <reportOutputDirectory>${project.basedir}/doc/_static</reportOutputDirectory>
+                    <destDir>java-apidocs</destDir>
                     <doctitle>${project.name} ${project.version} Java API</doctitle>
                     <windowtitle>${project.name} ${project.version} Java API</windowtitle>
                     <excludePackageNames>org.jpy.annotations</excludePackageNames>
@@ -109,7 +124,7 @@
                     <version>true</version>
                     <excludePackageNames>org.jpy.jsr223:org.jpy.annotations</excludePackageNames>
                     <links>
-                        <link>http://java.sun.com/javase/7/docs/api/</link>
+                        <link>http://docs.oracle.com/javase/8/docs/api/</link>
                     </links>
                 </configuration>
             </plugin>
@@ -122,9 +137,7 @@
                 <version>1.0-beta-7</version>
             </extension>
         </extensions>
-
     </build>
-
 
     <profiles>
         <profile>
@@ -160,22 +173,6 @@
         </profile>
     </profiles>
 
-    <repositories>
-        <repository>
-            <id>snap-repo-public</id>
-            <name>Public Maven Repository for ESA SNAP Modules</name>
-            <url>http://nexus.senbox.net/nexus/content/repositories/public/</url>
-            <releases>
-                <enabled>true</enabled>
-                <checksumPolicy>warn</checksumPolicy>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-                <checksumPolicy>warn</checksumPolicy>
-            </snapshots>
-        </repository>
-    </repositories>
-
     <distributionManagement>
         <repository>
             <id>snap-repo-public</id>
@@ -190,21 +187,5 @@
             <uniqueVersion>false</uniqueVersion>
         </snapshotRepository>
     </distributionManagement>
-
-    <pluginRepositories>
-        <pluginRepository>
-            <id>snap-repo-public</id>
-            <name>Public Maven Repository for SNAP</name>
-            <url>http://nexus.senbox.net/nexus/content/repositories/public/</url>
-            <releases>
-                <enabled>true</enabled>
-                <checksumPolicy>warn</checksumPolicy>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-                <checksumPolicy>warn</checksumPolicy>
-            </snapshots>
-        </pluginRepository>
-    </pluginRepositories>
 
 </project>

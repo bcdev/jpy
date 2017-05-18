@@ -8,15 +8,17 @@ SET DISTUTILS_USE_SDK=1
 ::SET VS100COMNTOOLS=C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\
 
 
-SET JDK32_HOME=C:\Program Files (x86)\Java\jdk1.8.0_60
-SET JDK64_HOME=C:\Program Files\Java\jdk1.8.0_60
+SET JDK32_HOME=C:\Program Files (x86)\Java\jdk1.8.0_112
+SET JDK64_HOME=C:\Program Files\Java\jdk1.8.0_112
 
-SET PY27_64=C:\Python27-amd64
-SET PY33_64=C:\Python33-amd64
-SET PY34_64=C:\Python34-amd64
-SET PY27_32=C:\Python27
-SET PY33_32=C:\Python33
-SET PY34_32=C:\Python34
+SET PY27_64=D:\jpy\Python27-amd64
+SET PY33_64=D:\jpy\Python33-amd64
+SET PY34_64=D:\jpy\Python34-amd64
+SET PY35_64=D:\jpy\Python35-amd64
+SET PY27_32=D:\jpy\Python27
+SET PY33_32=D:\jpy\Python33
+SET PY34_32=D:\jpy\Python34
+SET PY35_32=D:\jpy\Python35
 
 SET OLD_PYTHONHOME=%PYTHONHOME%
 SET PYTHONHOME=
@@ -43,6 +45,11 @@ IF NOT EXIST "%PYTHONHOME%" GOTO Build_32
 ECHO Starting build using "%PYTHONHOME%" and "%JAVA_HOME%"
 "%PYTHONHOME%\python.exe" setup.py --maven bdist_wheel
 
+:Build_PY35_64
+SET PYTHONHOME=%PY35_64%
+IF NOT EXIST "%PYTHONHOME%" GOTO Build_32
+ECHO Starting build using "%PYTHONHOME%" and "%JAVA_HOME%"
+"%PYTHONHOME%\python.exe" setup.py --maven bdist_wheel
 
 :Build_32
 
@@ -67,6 +74,11 @@ IF NOT EXIST "%PYTHONHOME%" GOTO Build_End
 ECHO Starting build using "%PYTHONHOME%" and "%JAVA_HOME%"
 "%PYTHONHOME%\python.exe" setup.py --maven bdist_wheel
 
+:Build_PY35_32
+SET PYTHONHOME=%PY35_32%
+IF NOT EXIST "%PYTHONHOME%" GOTO Build_End
+ECHO Starting build using "%PYTHONHOME%" and "%JAVA_HOME%"
+"%PYTHONHOME%\python.exe" setup.py --maven bdist_wheel
 
 :Build_End
 IF EXIST "%PYTHONHOME%" "%PYTHONHOME%\python.exe" setup.py sdist

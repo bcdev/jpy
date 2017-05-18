@@ -1,6 +1,6 @@
 # !/usr/bin/env python3
 
-# Copyright 2015 Brockmann Consult GmbH
+# Copyright 2014-2017 Brockmann Consult GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,11 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__author__ = "Norman Fomferra, Brockmann Consult GmbH"
-__copyright__ = "Copyright 2015 Brockmann Consult GmbH"
-__license__ = "Apache 2.0"
-__version__ = "0.9.0"
-__java_version__ = __version__ + '-SNAPSHOT'
 
 import sys
 import os
@@ -42,6 +37,14 @@ base_dir = os.path.dirname(os.path.abspath(__file__))
 src_main_c_dir = os.path.join(base_dir, 'src', 'main', 'c')
 src_test_py_dir = os.path.join(base_dir, 'src', 'test', 'python')
 
+import jpyutil
+
+__author__ = jpyutil.__author__
+__copyright__ = jpyutil.__copyright__
+__license__ = jpyutil.__license__
+__version__ = jpyutil.__version__
+
+print('Using ' + jpyutil.__file__)
 
 do_maven = False
 if '--maven' in sys.argv:
@@ -139,14 +142,123 @@ elif platform.system() == 'Darwin':
     library_dirs += [os.path.join(sys.exec_prefix, 'lib')]
     extra_link_args += ['-Xlinker', '-rpath', jvm_dll_dir]
 
-# ----------- Functions -------------
+with open('README.md') as file:
+    long_description = file.read()
 
-def package_maven():
-    """ Run maven package lifecycle """
-    if not os.getenv('JAVA_HOME'):
-        # make sure Maven uses the same JDK which we have used to compile
-        # and link the C-code
-        os.environ['JAVA_HOME'] = jdk_home_dir
+with open('CHANGES.md') as file:
+    changelog = file.read()
+
+dist = setup(name='jpy',
+             description='Bi-directional Python-Java bridge',
+             long_description=long_description + '\n\n' + changelog,
+             version=__version__,
+             platforms='Windows, Linux, Darwin',
+             author=__author__,
+             author_email='norman.fomferra@brockmann-consult.de',
+             maintainer='Brockmann Consult GmbH',
+             maintainer_email='norman.fomferra@brockmann-consult.de',
+             license=__license__,
+             url='https://github.com/bcdev/jpy',
+             download_url='https://pypi.python.org/pypi/jpy/' + __version__,
+             py_modules=['jpyutil'],
+             package_data={'': [jpy_jar_file]},
+             ext_modules=[Extension('jpy',
+                                    sources=sources,
+                                    depends=headers,
+                                    include_dirs=include_dirs,
+                                    library_dirs=library_dirs,
+                                    libraries=libraries,
+                                    extra_link_args=extra_link_args,
+                                    extra_compile_args=extra_compile_args,
+                                    define_macros=define_macros),
+                          Extension('jdl',
+                                    sources=[os.path.join(src_main_c_dir, 'jni/org_jpy_DL.c')],
+                                    depends=[os.path.join(src_main_c_dir, 'jni/org_jpy_DL.h')],
+                                    include_dirs=include_dirs,
+                                    library_dirs=library_dirs,
+                                    libraries=libraries,
+                                    extra_link_args=extra_link_args,
+                                    extra_compile_args=extra_compile_args,
+                                    define_macros=define_macros),
+                          ],
+             classifiers=[
+                 # How mature is this project? Common values are
+                 #   3 - Alpha
+                 #   4 - Beta
+                 #   5 - Production/Stable
+                 'Development Status :: 4 - Beta',
+
+                 # Indicate who your project is intended for
+                 'Intended Audience :: Developers',
+
+                 # Pick your license as you wish (should match "license" above)
+                 'License :: OSI Approved :: Apache 2 License',
+
+                 # Specify the Python versions you support here. In particular, ensure
+                 # that you indicate whether you support Python 2, Python 3 or both.
+                 'Programming Language :: Python :: 2',
+                 'Programming Language :: Python :: 2.7',
+                 'Programming Language :: Python :: 3',
+                 'Programming Language :: Python :: 3.3',
+                 'Programming Language :: Python :: 3.4',
+                 'Programming Language :: Python :: 3.5',
+             ]
+             )
+
+#import pprint
+#pprint.pprint(dist)
+#pprint.pprint(dist.__dict__)
+#pprint.pprint(dist.commands)
+#pprint.pprint(dist.command_obj)
+#pprint.pprint(dist.command_obj['build'].__dict__)
+#pprint.pprint(dist.command_obj['install'].__dict__)
+#pprint.pprint(dist.command_obj['install_lib'].__dict__)
+#pprint.pprint(dist.command_obj['bdist_egg'].__dict__)
+#pprint.pprint(dist.command_obj['egg_info'].__dict__)
+
+
+#
+# Continue with custom setup if 'build' step is included in commands
+#
+
+if dist.commands and len(dist.commands) > 0 \
+        and dist.command_obj and len(dist.command_obj) > 0 \
+        and 'clean' not in dist.command_obj \
+        and 'build' in dist.command_obj:
+
+    #
+    # Get build directory (whose content we'll zip and in which we test)
+    #
+
+    build_dir = dist.command_obj['build'].build_lib
+    if not os.path.exists(build_dir):
+        log.error("Missing build directory '" + build_dir + "'")
+        exit(1)
+
+    #
+    # Get install directory
+    #
+
+    install_dir = None
+    if 'install' in dist.command_obj:
+        install_dir = dist.command_obj['install'].install_lib
+        if not os.path.exists(install_dir):
+            log.warn("Missing install directory '" + install_dir + "'")
+            install_dir = None
+
+    #
+    # Get egg (archive/directory) name
+    #
+
+    egg_name = None
+    if 'bdist_egg' in dist.command_obj:
+        egg_output = dist.command_obj['bdist_egg'].egg_output
+        if egg_output:
+            egg_name = os.path.basename(dist.command_obj['bdist_egg'].egg_output)
+
+    #
+    # Write jpy configuration files to target directories
+    #
 
     mvn_goal = 'package'
     log.info("Executing Maven goal '" + mvn_goal + "'")

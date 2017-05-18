@@ -1,26 +1,66 @@
-language: java
+language: python
 sudo: false
 
-jdk:
-  - "oraclejdk8"
+# matrix start ###################################
+
+matrix:
+  allow_failures:
+    - os: osx
+  include:
+    # Linux -----------------------
+    - os: linux
+      language: python
+      python: 2.7
+      env: TOXENV='2.7'
+    - os: linux
+      language: python
+      python: 3.4
+      env: TOXENV='3.4'
+    - os: linux
+      language: python
+      python: 3.5
+      env: TOXENV='3.5'
+    - os: linux
+      language: python
+      python: 3.6
+      env: TOXENV='3.6'
+    # OS-X ------------------------
+    - os: osx
+      language: generic
+      env: TOXENV='2.7'
+    - os: osx
+      language: generic
+      env: TOXENV='3.4'
+    - os: osx
+      language: generic
+      env: TOXENV='3.5'
+    - os: osx
+      language: generic
+      env: TOXENV='3.6'
+
+# matrix end #####################################
 
 cache:
- directories:
-   - $HOME/.m2
+  directories:
+    - $HOME/.m2
+    - $HOME/.pyenv
 
 addons:
   apt:
     packages:
       # update java8 to latest version
       - oracle-java8-installer
-      # install python dev stuff and add virtualenv support
-      - python-dev
-      - python-virtualenv
+      - oracle-java8-set-default
 
 before_script:
   - travis_wait 20 mvn dependency:resolve
-  - virtualenv $HOME/venv
-  - source $HOME/venv/bin/activate
-  - pip install wheel
+  - bash ./ci/travis/before_script.sh
 
-script: python setup.py --maven bdist_wheel
+script:
+  - python --version
+  # oracle-java8-set-default seems to modify PATH but not JAVA_HOME :(
+  - java -version
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export JAVA_HOME=$(/usr/libexec/java_home -v 1.8); fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export JAVA_HOME=/usr/lib/jvm/java-8-oracle; fi
+  - echo $JAVA_HOME
+  - python setup.py --maven bdist_wheel
