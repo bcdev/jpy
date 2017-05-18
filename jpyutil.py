@@ -81,7 +81,8 @@ def _add_paths_if_exists(path_list, *paths):
     return path_list
 
 
-def _get_module_path(name, fail=False):
+def _get_module_path(name, fail=False, install_path=None):
+    """ Find the path to the jpy jni modules. """
     import imp
 
     module = imp.find_module(name)
@@ -90,6 +91,10 @@ def _get_module_path(name, fail=False):
     path = module[1]
     if not path and fail:
         raise RuntimeError("module '" + name + "' is missing a file path")
+    
+    if install_path:
+        return os.path.join(install_path, os.path.split(path)[1])
+
     return path
 
 
@@ -104,10 +109,10 @@ def _find_file(search_dirs, *filenames):
     return None
 
 
-def _get_java_api_properties(fail=False):
+def _get_java_api_properties(fail=False, path=None):
     jpy_config = Properties()
-    jpy_config.set_property('jpy.jpyLib', _get_module_path('jpy', fail=fail))
-    jpy_config.set_property('jpy.jdlLib', _get_module_path('jdl', fail=fail))
+    jpy_config.set_property('jpy.jpyLib', _get_module_path('jpy', fail=fail, install_path=path))
+    jpy_config.set_property('jpy.jdlLib', _get_module_path('jdl', fail=fail, install_path=path))
     jpy_config.set_property('jpy.pythonLib', _find_python_dll_file(fail=fail))
     jpy_config.set_property('jpy.pythonPrefix', sys.prefix)
     jpy_config.set_property('jpy.pythonExecutable', sys.executable)
@@ -512,6 +517,7 @@ def _execute_python_scripts(scripts, **kwargs):
 def write_config_files(out_dir='.',
                        java_home_dir=None,
                        jvm_dll_file=None,
+                       install_dir=None,
                        req_java_api_conf=True,
                        req_py_api_conf=True):
     """
@@ -520,6 +526,7 @@ def write_config_files(out_dir='.',
     :param out_dir: output directory, must exist
     :param java_home_dir: optional home directory of the Java JRE or JDK installation
     :param jvm_dll_file: optional file to JVM shared library file
+    :param install_dir: optional path to where to searfh for modules
     :param req_java_api_conf: whether to write the jpy configuration file 'jpyconfig.properties' for Java
     :param req_py_api_conf: whether to write the jpy configuration file 'jpyconfig.py' for Python
     :return: zero on success, otherwise an error code
@@ -561,7 +568,7 @@ def write_config_files(out_dir='.',
 
     try:
         java_api_config_file = os.path.join(out_dir, java_api_config_basename)
-        java_api_properties = _get_java_api_properties(fail=req_java_api_conf)
+        java_api_properties = _get_java_api_properties(fail=req_java_api_conf, path=install_dir)
         java_api_properties.store(java_api_config_file, comments=[
             "Created by '%s' tool on %s" % (tool_name, str(datetime.datetime.now())),
             "This file is read by the jpy Java API (org.jpy.PyLib class) in order to find shared libraries"])
@@ -596,6 +603,7 @@ def _main():
                         help="Require that Java API configuration succeeds.")
     parser.add_argument("-p", "--req_py", action='store_true', default=False,
                         help="Require that Python API configuration succeeds.")
+    parser.add_argument("--install_dir", action='store', default=None, help="Optional. Used during pip install of JPY")
     args = parser.parse_args()
 
     log_level = getattr(logging, args.log_level.upper(), None)
@@ -614,7 +622,8 @@ def _main():
                                      java_home_dir=args.java_home,
                                      jvm_dll_file=args.jvm_dll,
                                      req_java_api_conf=args.req_java,
-                                     req_py_api_conf=args.req_py)
+                                     req_py_api_conf=args.req_py,
+                                     install_dir=args.install_dir)
     except:
         logging.exception("Configuration failed")
         retcode = 100

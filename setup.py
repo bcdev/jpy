@@ -24,9 +24,12 @@ import unittest
 
 from setuptools import setup
 from setuptools.command.test import test
+from setuptools.command.build_ext import build_ext
 from setuptools.command.install import install
+from setuptools.command.install_lib import install_lib
 from setuptools.extension import Extension
 from distutils.cmd import Command
+from distutils.util import get_platform
 from distutils import log
 
 import jpyutil
@@ -36,10 +39,11 @@ __copyright__ = jpyutil.__copyright__
 __license__ = jpyutil.__license__
 __version__ = jpyutil.__version__
 
-base_dir = os.path.dirname(os.path.abspath(__file__))
+base_dir = os.path.dirname(os.path.relpath(__file__))
 src_main_c_dir = os.path.join(base_dir, 'src', 'main', 'c')
 src_test_py_dir = os.path.join(base_dir, 'src', 'test', 'python')
-
+# src_main_c_dir = 'src/main/c'
+# src_test_py_dir = 'src/test/python'
 
 do_maven = False
 if '--maven' in sys.argv:
@@ -120,6 +124,7 @@ jvm_dll_dir = os.path.dirname(jvm_dll_file)
 include_dirs = [src_main_c_dir, os.path.join(jdk_home_dir, 'include')]
 library_dirs = [jvm_dll_dir]
 libraries = [jpyutil.JVM_LIB_NAME]
+
 define_macros = []
 extra_link_args = []
 extra_compile_args = []
@@ -137,7 +142,14 @@ elif platform.system() == 'Darwin':
     library_dirs += [os.path.join(sys.exec_prefix, 'lib')]
     extra_link_args += ['-Xlinker', '-rpath', jvm_dll_dir]
 
+
+
 # ----------- Functions -------------
+def _build_dir():
+    #return os.path.join(base_dir, 'build/lib.macosx-10.12-x86_64-3.6')
+    # this is hacky, but use distutils logic to get build dir. see: distutils.command.build
+    plat = ".%s-%d.%d" % (get_platform(), *sys.version_info[:2])
+    return os.path.join('build', 'lib' + plat)
 
 def package_maven():
     """ Run maven package lifecycle """
@@ -168,8 +180,9 @@ def package_maven():
         log.error('Maven did not generate any JAR artifacts')
         exit(1)
     for jar_file in jar_files:
-        log.info("Copying " + jar_file + " -> " + lib_dir + "")
-        shutil.copy(jar_file, lib_dir)
+        build_dir = _build_dir()
+        log.info("Copying " + jar_file + " -> " + build_dir + "")
+        shutil.copy(jar_file, build_dir)
 
 
 def _read(filename):
@@ -177,9 +190,6 @@ def _read(filename):
     with open(filename) as file:
         return file.read()
 
-def _build_dir():
-    # TODO: figure out logic for dynamically getting this at runtime
-    return os.path.join(base_dir, 'build/lib.macosx-10.12-x86_64-3.6')
 
 def test_python_java_rt():
     """ Run Python test cases against Java runtime classes. """
@@ -204,24 +214,30 @@ def test_maven():
     code = subprocess.call(['mvn', 'test', mvn_args], shell=platform.system() == 'Windows')
     return code == 0
 
-def _write_jpy_config(target_dir=None):
+def _write_jpy_config(target_dir=None, install_dir=None):
     """
     Write out a well-formed jpyconfig.properties file for easier Java
     integration in a given location.
     """
     if not target_dir:
         target_dir = _build_dir()
-    log.info('Writing jpy configuration to ' + target_dir)
-    return subprocess.call([sys.executable,
-                            os.path.join(target_dir, 'jpyutil.py'),
-                            '--jvm_dll', jvm_dll_file,
-                            '--java_home', jdk_home_dir,
-                            '--log_level', 'DEBUG',
-                            '--req_java',
-                            '--req_py'])
+    
+    args = [sys.executable,
+            os.path.join(target_dir, 'jpyutil.py'),
+            '--jvm_dll', jvm_dll_file,
+            '--java_home', jdk_home_dir,
+            '--log_level', 'DEBUG',
+            '--req_java',
+            '--req_py']
+    if install_dir:
+        args.append('--install_dir')
+        args.append(install_dir)
+
+    log.info('Writing jpy configuration to %s using install_dir %s' % (target_dir, install_dir))
+    return subprocess.call(args)
 
 def _copy_jpyutil():
-    src = os.path.abspath(jpyutil.__file__)
+    src = os.path.relpath(jpyutil.__file__)
     dest = _build_dir()
     log.info('Copying %s to %s' % (src, dest))
     shutil.copy(src, dest)
@@ -229,7 +245,6 @@ def _copy_jpyutil():
 def _build_jpy():
     package_maven()
     _copy_jpyutil()
-    _write_jpy_config()
     
 
 def test_suite():
@@ -253,7 +268,7 @@ def test_suite():
 class MavenBuildCommand(Command):
     """ Custom JPY Maven builder command """
     description = 'run Maven to generate JPY jar'
-    user_options = []
+    user_options = [] # do not remove, needs to be stubbed out!
 
     def initialize_options(self):
         pass
@@ -264,7 +279,7 @@ class MavenBuildCommand(Command):
     def run(self):
         self.announce('Building JPY')
         _build_jpy()
-        
+
 
 class JpyBuildBeforeTest(test):
     """ Customization of SetupTools Install command for JPY """
@@ -274,6 +289,13 @@ class JpyBuildBeforeTest(test):
         self.run_command('maven')
         
         test.run(self)
+
+class JpyInstallLib(install_lib):
+    """ Custom install_lib command for getting install_dir """
+    
+    def run(self):
+        _write_jpy_config(install_dir=self.install_dir)
+        install_lib.run(self)
 
 
 class JpyInstall(install):
@@ -298,7 +320,6 @@ setup(name='jpy',
       url='https://github.com/bcdev/jpy',
       download_url='https://pypi.python.org/pypi/jpy/' + __version__,
       py_modules=['jpyutil'],
-      package_data={'': [jpy_jar_file]},
       ext_modules=[Extension('jpy',
                              sources=sources,
                              depends=headers,
@@ -322,7 +343,8 @@ setup(name='jpy',
       cmdclass={
           'maven': MavenBuildCommand,
           'test': JpyBuildBeforeTest,
-          'install': JpyInstall
+          'install': JpyInstall,
+          'install_lib': JpyInstallLib
       },
       classifiers=['Development Status :: 4 - Beta',
                    # Indicate who your project is intended for
@@ -337,4 +359,5 @@ setup(name='jpy',
                    'Programming Language :: Python :: 2.7',
                    'Programming Language :: Python :: 3',
                    'Programming Language :: Python :: 3.3',
-                   'Programming Language :: Python :: 3.4'])
+                   'Programming Language :: Python :: 3.4',
+                   'Programming Language :: Python :: 3.5'])
