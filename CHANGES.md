@@ -18,6 +18,10 @@ Fixes
 Improvements
 ------------
 
+* Can now use pip to install Python `jpy` package directly from GitHub (#83).
+  This works for Linux and OS X where C compilers are available by default 
+  and should work on Windows with Visual Studio 15 installed. 
+  Contribution by Dave Voutila. 
 * Java `PyObject` is now serializable. Contribution by Mario Briggs. 
 
 
