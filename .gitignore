@@ -18,3 +18,5 @@ lib/
 .vagrant
 Vagrantfile
 *.so
+*.dll
+
