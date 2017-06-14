@@ -74,7 +74,9 @@ JPy_ArgDisposer;
 struct JPy_ParamDescriptor;
 
 typedef int (*JPy_MatchPyArg)(JNIEnv*, struct JPy_ParamDescriptor*, PyObject*);
+typedef int (*JPy_MatchVarArgPyArg)(JNIEnv*, struct JPy_ParamDescriptor*, PyObject*, int);
 typedef int (*JPy_ConvertPyArg)(JNIEnv*, struct JPy_ParamDescriptor*, PyObject*, jvalue*, JPy_ArgDisposer*);
+typedef int (*JPy_ConvertVarArgPyArg)(JNIEnv*, struct JPy_ParamDescriptor*, PyObject*, int, jvalue*, JPy_ArgDisposer*);
 
 /**
  * Method return value descriptor.
@@ -103,7 +105,9 @@ typedef struct JPy_ParamDescriptor
     jboolean isOutput;
     jboolean isReturn;
     JPy_MatchPyArg MatchPyArg;
+    JPy_MatchVarArgPyArg MatchVarArgPyArg;
     JPy_ConvertPyArg ConvertPyArg;
+    JPy_ConvertVarArgPyArg ConvertVarArgPyArg;
 }
 JPy_ParamDescriptor;
 

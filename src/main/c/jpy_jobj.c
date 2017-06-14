@@ -23,7 +23,7 @@
 #include "jpy_jfield.h"
 #include "jpy_conv.h"
 
-JPy_JObj* JObj_New(JNIEnv* jenv, jobject objectRef)
+PyObject* JObj_New(JNIEnv* jenv, jobject objectRef)
 {
     jclass classRef;
     JPy_JType* type;
@@ -38,8 +38,11 @@ JPy_JObj* JObj_New(JNIEnv* jenv, jobject objectRef)
     return JObj_FromType(jenv, type, objectRef);
 }
 
-JPy_JObj* JObj_FromType(JNIEnv* jenv, JPy_JType* type, jobject objectRef)
+PyObject* JObj_FromType(JNIEnv* jenv, JPy_JType* type, jobject objectRef)
 {
+    PyObject* callable;
+    PyObject* callableResult;
+
     JPy_JObj* obj;
 
     obj = (JPy_JObj*) PyObject_New(JPy_JObj, (PyTypeObject*) type);
@@ -63,7 +66,19 @@ JPy_JObj* JObj_FromType(JNIEnv* jenv, JPy_JType* type, jobject objectRef)
         array->bufferExportCount = 0;
     }
 
-    return obj;
+    callable = PyDict_GetItemString(JPy_Type_Translations, type->javaName);
+    if (callable != NULL) {
+        if (PyCallable_Check(callable)) {
+            callableResult = PyObject_CallFunction(callable, "OO", type, obj);
+            if (callableResult == NULL) {
+                return Py_None;
+            } else {
+                return callableResult;
+            }
+        }
+    }
+
+    return (PyObject *)obj;
 }
 
 /**
@@ -101,12 +116,14 @@ int JObj_init(JPy_JObj* self, PyObject* args, PyObject* kwds)
         return -1;
     }
 
-    jMethod = JOverloadedMethod_FindMethod(jenv, (JPy_JOverloadedMethod*) constructor, args, JNI_FALSE);
+    int isVarArgsArray;
+
+    jMethod = JOverloadedMethod_FindMethod(jenv, (JPy_JOverloadedMethod*) constructor, args, JNI_FALSE, &isVarArgsArray);
     if (jMethod == NULL) {
         return -1;
     }
 
-    if (JMethod_CreateJArgs(jenv, jMethod, args, &jArgs, &jDisposers) < 0) {
+    if (JMethod_CreateJArgs(jenv, jMethod, args, &jArgs, &jDisposers, isVarArgsArray) < 0) {
         return -1;
     }
 
