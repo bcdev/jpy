@@ -27,29 +27,22 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Norman Fomferra
  */
-public class PyModuleTest {
+public class PyModuleTest extends PyLibTestBase {
 
-    @Before
-    public void setUp() throws Exception {
-        //System.out.println("PyModuleTest: Current thread: " + Thread.currentThread());
-
+    public void startInterpreter() throws Exception {
         String importPath = new File("src/test/python/fixtures").getCanonicalPath();
-        PyLib.startPython(importPath);
-        assertEquals(true, PyLib.isPythonRunning());
-
-        //PyLib.Diag.setFlags(PyLib.Diag.F_METH);
+        lib.startPython(importPath);
     }
 
-    @After
-    public void tearDown() throws Exception {
-        PyLib.Diag.setFlags(PyLib.Diag.F_OFF);
-        PyLib.stopPython();
+    public int getDiagFlags() {
+        //return org.jpy.lib.Diag.F_OFF;
+        return org.jpy.PyLib.Diag.F_METH;
     }
 
     @Test
     public void testCreateAndCallProxySingleThreaded() throws Exception {
         //PyObjectTest.addTestDirToPythonSysPath();
-        PyModule procModule = PyModule.importModule("proc_module");
+        PyModule procModule = lib.importModule("proc_module");
         PyObjectTest.testCallProxySingleThreaded(procModule);
     }
 
@@ -57,7 +50,7 @@ public class PyModuleTest {
     @Test
     public void testCreateAndCallProxyMultiThreaded() throws Exception {
         //PyObjectTest.addTestDirToPythonSysPath();
-        PyModule procModule = PyModule.importModule("proc_module");
+        PyModule procModule = lib.importModule("proc_module");
         PyObjectTest.testCallProxyMultiThreaded(procModule);
     }
 
@@ -65,8 +58,8 @@ public class PyModuleTest {
     @Test
     public void testPythonErrorMessages() throws Exception {
         //PyObjectTest.addTestDirToPythonSysPath();
-        PyModule raiserModule = PyModule.importModule("raise_errors");
-        for (int i=0;i < 10;i++) {
+        PyModule raiserModule = lib.importModule("raise_errors");
+        for (int i = 0; i < 10; i++) {
             try {
                 raiserModule.call("raise_if_zero", 0);
                 Assert.fail();

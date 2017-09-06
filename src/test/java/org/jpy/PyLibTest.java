@@ -20,25 +20,20 @@ import org.junit.*;
 
 import static org.junit.Assert.*;
 
-public class PyLibTest {
+public class PyLibTest extends PyLibTestBase {
 
     @Before
     public void setUp() throws Exception {
-        //PyLib.Diag.setFlags(PyLib.Diag.F_ERR);
-        PyLib.startPython();
-        assertEquals(true, PyLib.isPythonRunning());
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        PyLib.stopPython();
+        //lib.Diag.setDiagFlags(lib.Diag.F_ERR);
+        lib.startPython();
+        assertEquals(true, lib.isPythonRunning());
     }
 
     @Test
     public void testGettingSysArgv() throws Exception {
         // Since sys.argv is really part of the C-based sys module, there
         // are special hooks embedded python systems need to call to set it up.
-        PyModule sys = PyModule.importModule("sys");
+        PyModule sys = lib.importModule("sys");
         String[] argv = sys.getAttribute("argv", String[].class);
         assertNotNull(argv);
         assertEquals(1, argv.length);
@@ -47,23 +42,23 @@ public class PyLibTest {
 
     @Test
     public void testGetPythonVersion() throws Exception {
-        String pythonVersion = PyLib.getPythonVersion();
+        String pythonVersion = lib.getPythonVersion();
         System.out.println("pythonVersion = " + pythonVersion);
         assertNotNull(pythonVersion);
     }
 
     @Test
     public void testExecScript() throws Exception {
-        int exitCode = PyLib.execScript(String.format("print('%s says: \"Hello Python!\"')", PyLibTest.class.getName()));
+        int exitCode = lib.execScript(String.format("print('%s says: \"Hello Python!\"')", PyLibTest.class.getName()));
         assertEquals(0, exitCode);
     }
 
     @Test
     public void testExecScriptInError() throws Exception {
         int exitCode;
-        exitCode = PyLib.execScript("0 / 1");
+        exitCode = lib.execScript("0 / 1");
         assertEquals(0, exitCode);
-        exitCode = PyLib.execScript("1 / 0");
+        exitCode = lib.execScript("1 / 0");
         assertEquals(-1, exitCode);
     }
 
@@ -71,10 +66,10 @@ public class PyLibTest {
     public void testImportModule() throws Exception {
         long pyModule;
 
-        pyModule = PyLib.importModule("os");
+        pyModule = lib.importModule0("os");
         assertTrue(pyModule != 0);
 
-        pyModule = PyLib.importModule("sys");
+        pyModule = lib.importModule0("sys");
         assertTrue(pyModule != 0);
     }
 
@@ -83,16 +78,16 @@ public class PyLibTest {
         long pyModule;
         long pyObject;
 
-        pyModule = PyLib.importModule("jpy");
+        pyModule = lib.importModule0("jpy");
         assertTrue(pyModule != 0);
 
-        long pyObj = PyLib.getAttributeObject(pyModule, "JType");
+        long pyObj = lib.getAttributeObject(pyModule, "JType");
         assertTrue(pyObj != 0);
 
-        PyLib.setAttributeValue(pyModule, "_hello", "Hello Python!", String.class);
-        assertEquals("Hello Python!", PyLib.getAttributeValue(pyModule, "_hello", String.class));
+        lib.setAttributeValue(pyModule, "_hello", "Hello Python!", String.class);
+        assertEquals("Hello Python!", lib.getAttributeValue(pyModule, "_hello", String.class));
 
-        pyObject = PyLib.getAttributeObject(pyModule, "_hello");
+        pyObject = lib.getAttributeObject(pyModule, "_hello");
         assertTrue(pyObject != 0);
     }
 
@@ -102,18 +97,18 @@ public class PyLibTest {
 
         try {
             //Python 3.3
-            builtins = PyLib.importModule("builtins");
+            builtins = lib.importModule0("builtins");
         } catch (Exception e) {
             //Python 2.7
-            builtins = PyLib.importModule("__builtin__");
+            builtins = lib.importModule0("__builtin__");
         }
         assertTrue(builtins != 0);
 
-        long max = PyLib.getAttributeObject(builtins, "max");
+        long max = lib.getAttributeObject(builtins, "max");
         assertTrue(max != 0);
 
-        //PyLib.Diag.setFlags(PyLib.Diag.F_ALL);
-        String result = PyLib.callAndReturnValue(builtins, false, "max", 2, new Object[]{"A", "Z"}, new Class[]{String.class, String.class}, String.class);
+        //lib.Diag.setDiagFlags(lib.Diag.F_ALL);
+        String result = lib.callAndReturnValue(builtins, false, "max", 2, new Object[]{"A", "Z"}, new Class[]{String.class, String.class}, String.class);
 
         assertEquals("Z", result);
     }
@@ -125,20 +120,20 @@ public class PyLibTest {
 
         try {
             //Python 3.3
-            builtins = PyLib.importModule("builtins");
+            builtins = lib.importModule0("builtins");
         } catch (Exception e) {
             //Python 2.7
-            builtins = PyLib.importModule("__builtin__");
+            builtins = lib.importModule0("__builtin__");
         }
         assertTrue(builtins != 0);
 
-        long max = PyLib.getAttributeObject(builtins, "max");
+        long max = lib.getAttributeObject(builtins, "max");
         assertTrue(max != 0);
 
-        pointer = PyLib.callAndReturnObject(builtins, false, "max", 2, new Object[]{"A", "Z"}, null);
+        pointer = lib.callAndReturnObject(builtins, false, "max", 2, new Object[]{"A", "Z"}, null);
         assertTrue(pointer != 0);
 
-        //PyLib.Diag.setFlags(PyLib.Diag.F_ALL);
-        assertEquals("Z", new PyObject(pointer).getStringValue());
+        //lib.Diag.setDiagFlags(lib.Diag.F_ALL);
+        assertEquals("Z", new PyObject(lib, pointer).getStringValue());
     }
 }

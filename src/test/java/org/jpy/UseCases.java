@@ -16,9 +16,6 @@
 
 package org.jpy;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Locale;
@@ -31,24 +28,14 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Norman Fomferra
  */
-public class UseCases {
-
-    @Before
-    public void setUp() {
-      PyLib.startPython();
-    }
-
-    @After
-    public void tearDown() {
-      PyLib.stopPython();
-    }
+public class UseCases  extends PyLibTestBase {
 
     @Test
     public void modifyPythonSysPath() {
 
-        PyModule builtinsMod = PyModule.getBuiltins();
+        PyModule builtinsMod = lib.getBuiltins();
 
-        PyModule sysMod = PyModule.importModule("sys");
+        PyModule sysMod = lib.importModule("sys");
         PyObject pathObj = sysMod.getAttribute("path");
 
         PyObject lenObj1 = builtinsMod.call("len", pathObj);
@@ -73,10 +60,9 @@ public class UseCases {
     @Test
     public void setAndGetGlobalPythonVariables() throws Exception {
 
-        PyLib.startPython();
-        PyLib.execScript("paramInt = 123");
-        PyLib.execScript("paramStr = 'abc'");
-        PyModule mainModule = PyModule.getMain();
+        lib.execScript("paramInt = 123");
+        lib.execScript("paramStr = 'abc'");
+        PyModule mainModule = lib.getMain();
         PyObject paramIntObj = mainModule.getAttribute("paramInt");
         PyObject paramStrObj = mainModule.getAttribute("paramStr");
         int paramIntValue = paramIntObj.getIntValue();
@@ -93,9 +79,8 @@ public class UseCases {
     @Test
     public void defAndUseGlobalPythonFunction() throws Exception {
 
-        PyLib.startPython();
-        PyLib.execScript("def incByOne(x): return x + 1");
-        PyModule mainModule = PyModule.getMain();
+        lib.execScript("def incByOne(x): return x + 1");
+        PyModule mainModule = lib.getMain();
         PyObject eleven = mainModule.call("incByOne", 10);
 
         /////////////////////////////////////////////////

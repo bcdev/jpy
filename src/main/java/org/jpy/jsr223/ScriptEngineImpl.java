@@ -16,10 +16,7 @@
 
 package org.jpy.jsr223;
 
-import org.jpy.PyLib;
-import org.jpy.PyModule;
-import org.jpy.PyObject;
-import org.jpy.PyInputMode;
+import org.jpy.*;
 
 import javax.script.AbstractScriptEngine;
 import javax.script.Bindings;
@@ -44,10 +41,12 @@ class ScriptEngineImpl extends AbstractScriptEngine implements Invocable {
     public static final String EXTRA_PATHS_KEY = ScriptEngineImpl.class.getName() + ".extraPaths";
 
     private final ScriptEngineFactoryImpl factory;
+    private final PyLib lib;
 
     ScriptEngineImpl(ScriptEngineFactoryImpl factory) {
         this.factory = factory;
-        PyLib.startPython(System.getProperty(EXTRA_PATHS_KEY, "").split(File.pathSeparator));
+        lib = new PyLib(new PyLibConfig.Props(System.getProperties()));
+        lib.startPython(System.getProperty(EXTRA_PATHS_KEY, "").split(File.pathSeparator));
     }
 
     /**
@@ -107,10 +106,10 @@ class ScriptEngineImpl extends AbstractScriptEngine implements Invocable {
      */
     @Override
     public Object eval(String script, ScriptContext context) throws ScriptException {
-        return PyObject.executeCode(script,
-                                    PyInputMode.SCRIPT,
-                                    context.getBindings(ScriptContext.GLOBAL_SCOPE),
-                                    context.getBindings(ScriptContext.ENGINE_SCOPE));
+        return lib.executeCode(script,
+                               PyInputMode.SCRIPT,
+                               context.getBindings(ScriptContext.GLOBAL_SCOPE),
+                               context.getBindings(ScriptContext.ENGINE_SCOPE));
     }
 
     /**
@@ -152,7 +151,7 @@ class ScriptEngineImpl extends AbstractScriptEngine implements Invocable {
      */
     @Override
     public Object invokeFunction(String name, Object... args) throws ScriptException, NoSuchMethodException {
-        return PyModule.getMain().call(name, args);
+        return lib.getMain().call(name, args);
     }
 
     /**
@@ -172,7 +171,7 @@ class ScriptEngineImpl extends AbstractScriptEngine implements Invocable {
         if (clasz == null || !clasz.isInterface()) {
             throw new IllegalArgumentException("'clasz' must be an interface");
         }
-        return PyModule.getMain().createProxy(clasz);
+        return lib.getMain().createProxy(clasz);
     }
 
     /**

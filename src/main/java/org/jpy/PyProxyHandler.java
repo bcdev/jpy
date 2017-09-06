@@ -20,8 +20,6 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
-import static org.jpy.PyLib.assertPythonRuns;
-
 /**
  * The {@code InvocationHandler} for used by the proxy instances created by the
  * {@link PyObject#createProxy(Class)} and {@link PyModule#createProxy(Class)} methods.
@@ -43,9 +41,9 @@ class PyProxyHandler implements InvocationHandler {
 
     @Override
     public Object invoke(Object proxyObject, Method method, Object[] args) throws Throwable {
-        assertPythonRuns();
+        pyObject.lib.assertPythonRuns();
 
-        if ((PyLib.Diag.getFlags() & PyLib.Diag.F_METH) != 0) {
+        if ((pyObject.lib.getDiagFlags() & PyLib.Diag.F_METH) != 0) {
             System.out.printf("org.jpy.PyProxyHandler: invoke: %s(%s) on pyObject=%s in thread %s\n",
                               method.getName(),
                               Arrays.toString(args),
@@ -53,12 +51,12 @@ class PyProxyHandler implements InvocationHandler {
                               Thread.currentThread());
         }
 
-        return PyLib.callAndReturnValue(this.pyObject.getPointer(),
-                                        callableKind == PyLib.CallableKind.METHOD,
-                                        method.getName(),
-                                        args != null ? args.length : 0,
-                                        args,
-                                        method.getParameterTypes(),
-                                        method.getReturnType());
+        return pyObject.lib.callAndReturnValue(this.pyObject.getPointer(),
+                                               callableKind == PyLib.CallableKind.METHOD,
+                                               method.getName(),
+                                               args != null ? args.length : 0,
+                                               args,
+                                               method.getParameterTypes(),
+                                               method.getReturnType());
     }
 }

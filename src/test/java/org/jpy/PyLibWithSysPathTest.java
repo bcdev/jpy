@@ -25,40 +25,25 @@ import java.security.CodeSource;
 import static org.junit.Assert.*;
 
 
-public class PyLibWithSysPathTest {
+public class PyLibWithSysPathTest extends PyLibTestBase {
 
-    @Before
-    public void setUp() throws Exception {
-
+    public String[] getExtraPaths() throws Exception {
         CodeSource codeSource = PyLibWithSysPathTest.class.getProtectionDomain().getCodeSource();
         if (codeSource == null) {
-            System.out.println(PyLibWithSysPathTest.class + " not run: no code source found");
-            return;
+            throw new IllegalStateException("no code source found");
         }
         URI codeSourceLocation = codeSource.getLocation().toURI();
         System.out.println(PyLibWithSysPathTest.class + ": code source: " + codeSourceLocation);
         File codeSourceDir = new File(codeSourceLocation);
         if (!codeSourceDir.isDirectory()) {
-            System.out.println(PyLibWithSysPathTest.class + " not run: code source is not a directory: " + codeSourceLocation);
-            return;
+            throw new IllegalStateException("code source is not a directory: " + codeSourceLocation);
         }
-
-        File pymodulesDir = new File(codeSourceDir, "pymodules");
-        //assertFalse(PyLib.isPythonRunning());
-        System.out.println("PyLibWithSysPathTest: starting Python with 'sys.path' extension: " + pymodulesDir);
-        PyLib.startPython(pymodulesDir.getPath());
-        //PyLib.startPython("x");
-        assertTrue(PyLib.isPythonRunning());
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        PyLib.stopPython();
+        return new String[]{new File(codeSourceDir, "pymodules").getPath()};
     }
 
     @Test
     public void testLoadModule() throws Exception {
-        PyModule pyModule = PyModule.importModule("mod_1");
+        PyModule pyModule = lib.importModule("mod_1");
         assertNotNull(pyModule);
         PyObject pyAnswer = pyModule.getAttribute("answer");
         assertNotNull(pyAnswer);

@@ -20,7 +20,6 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 import java.util.Map;
 
-import static org.jpy.PyLib.assertPythonRuns;
 
 /**
  * Represents a Python object (of Python/C API type {@code PyObject*}) in the Python interpreter.
@@ -28,52 +27,29 @@ import static org.jpy.PyLib.assertPythonRuns;
  * @author Norman Fomferra
  * @since 0.7
  */
+@SuppressWarnings({"WeakerAccess", "unused"})
 public class PyObject implements java.io.Serializable {
+    final PyLib lib;
 
     /**
      * The value of the Python/C API {@code PyObject*} which this class represents.
      */
     private final long pointer;
 
-    PyObject(long pointer) {
+    PyObject(PyLib lib, long pointer) {
+        if (lib == null) {
+            throw new IllegalArgumentException("lib == null");
+        }
         if (pointer == 0) {
             throw new IllegalArgumentException("pointer == 0");
         }
-        PyLib.incRef(pointer);
+        this.lib = lib;
+        this.lib.incRef(pointer);
         this.pointer = pointer;
     }
 
-    /**
-     * Executes Python source code.
-     *
-     * @param code The Python source code.
-     * @param mode The execution mode.
-     * @return The result of executing the code as a Python object.
-     */
-    public static PyObject executeCode(String code, PyInputMode mode) {
-        return executeCode(code, mode, null, null);
-    }
-
-    /**
-     * Executes Python source code in the context specified by the {@code globals} and {@code locals} maps.
-     * <p>
-     * If a Java value in the {@code globals} and {@code locals} maps cannot be directly converted into a Python object, a Java wrapper will be created instead.
-     * If a Java value is a wrapped Python object of type {@link PyObject}, it will be unwrapped.
-     *
-     * @param code    The Python source code.
-     * @param mode    The execution mode.
-     * @param globals The global variables to be set.
-     * @param locals  The locals variables to be set.
-     * @return The result of executing the code as a Python object.
-     */
-    public static PyObject executeCode(String code, PyInputMode mode, Map<String, Object> globals, Map<String, Object> locals) {
-        if (code == null) {
-            throw new NullPointerException("code must not be null");
-        }
-        if (mode == null) {
-            throw new NullPointerException("mode must not be null");
-        }
-        return new PyObject(PyLib.executeCode(code, mode.value(), globals, locals));
+    public PyLib getLib() {
+        return lib;
     }
 
     /**
@@ -88,7 +64,7 @@ public class PyObject implements java.io.Serializable {
         if (pointer == 0) {
             throw new IllegalStateException("pointer == 0");
         }
-        PyLib.decRef(getPointer());
+        lib.decRef(getPointer());
     }
 
     /**
@@ -102,24 +78,24 @@ public class PyObject implements java.io.Serializable {
      * @return This Python object as a Java {@code int} value.
      */
     public int getIntValue() {
-        assertPythonRuns();
-        return PyLib.getIntValue(getPointer());
+        lib.assertPythonRuns();
+        return lib.getIntValue(getPointer());
     }
 
     /**
      * @return This Python object as a Java {@code double} value.
      */
     public double getDoubleValue() {
-        assertPythonRuns();
-        return PyLib.getDoubleValue(getPointer());
+        lib.assertPythonRuns();
+        return lib.getDoubleValue(getPointer());
     }
 
     /**
      * @return This Python object as a Java {@code String} value.
      */
     public String getStringValue() {
-        assertPythonRuns();
-        return PyLib.getStringValue(getPointer());
+        lib.assertPythonRuns();
+        return lib.getStringValue(getPointer());
     }
 
     /**
@@ -131,8 +107,8 @@ public class PyObject implements java.io.Serializable {
      * @return This Python object as a Java {@code Object} value.
      */
     public Object getObjectValue() {
-        assertPythonRuns();
-        return PyLib.getObjectValue(getPointer());
+        lib.assertPythonRuns();
+        return lib.getObjectValue(getPointer());
     }
 
     /**
@@ -144,12 +120,12 @@ public class PyObject implements java.io.Serializable {
      * If this Python object value is a wrapped Java array object of given type, it will be unwrapped.
      *
      * @param itemType The expected item type class.
-     * @param <T> The expected item type name.
+     * @param <T>      The expected item type name.
      * @return This Python object as a Java {@code Object[]} value.
      */
     public <T> T[] getObjectArrayValue(Class<? extends T> itemType) {
-        assertPythonRuns();
-        return PyLib.getObjectArrayValue(getPointer(), itemType);
+        lib.assertPythonRuns();
+        return lib.getObjectArrayValue(getPointer(), itemType);
     }
 
     /**
@@ -162,9 +138,9 @@ public class PyObject implements java.io.Serializable {
      * @return A wrapper for the returned Python attribute value.
      */
     public PyObject getAttribute(String name) {
-        assertPythonRuns();
-        long pointer = PyLib.getAttributeObject(getPointer(), name);
-        return pointer != 0 ? new PyObject(pointer) : null;
+        lib.assertPythonRuns();
+        long pointer = lib.getAttributeObject(getPointer(), name);
+        return pointer != 0 ? new PyObject(lib, pointer) : null;
     }
 
     /**
@@ -180,8 +156,8 @@ public class PyObject implements java.io.Serializable {
      * @return The Python attribute value as Java object.
      */
     public <T> T getAttribute(String name, Class<? extends T> valueType) {
-        assertPythonRuns();
-        return PyLib.getAttributeValue(getPointer(), name, valueType);
+        lib.assertPythonRuns();
+        return lib.getAttributeValue(getPointer(), name, valueType);
     }
 
     /**
@@ -195,8 +171,8 @@ public class PyObject implements java.io.Serializable {
      * @param <T>   The value type name.
      */
     public <T> void setAttribute(String name, T value) {
-        assertPythonRuns();
-        PyLib.setAttributeValue(getPointer(), name, value, value != null ? value.getClass() : null);
+        lib.assertPythonRuns();
+        lib.setAttributeValue(getPointer(), name, value, value != null ? value.getClass() : null);
     }
 
     /**
@@ -212,8 +188,8 @@ public class PyObject implements java.io.Serializable {
      * @param <T>       The value type name.
      */
     public <T> void setAttribute(String name, T value, Class<? extends T> valueType) {
-        assertPythonRuns();
-        PyLib.setAttributeValue(getPointer(), name, value, valueType);
+        lib.assertPythonRuns();
+        lib.setAttributeValue(getPointer(), name, value, valueType);
     }
 
     /**
@@ -227,9 +203,9 @@ public class PyObject implements java.io.Serializable {
      * @return A wrapper for the returned Python object.
      */
     public PyObject callMethod(String name, Object... args) {
-        assertPythonRuns();
-        long pointer = PyLib.callAndReturnObject(getPointer(), true, name, args.length, args, null);
-        return pointer != 0 ? new PyObject(pointer) : null;
+        lib.assertPythonRuns();
+        long pointer = lib.callAndReturnObject(getPointer(), true, name, args.length, args, null);
+        return pointer != 0 ? new PyObject(lib, pointer) : null;
     }
 
     /**
@@ -243,9 +219,9 @@ public class PyObject implements java.io.Serializable {
      * @return A wrapper for the returned Python object.
      */
     public PyObject call(String name, Object... args) {
-        assertPythonRuns();
-        long pointer = PyLib.callAndReturnObject(getPointer(), false, name, args.length, args, null);
-        return pointer != 0 ? new PyObject(pointer) : null;
+        lib.assertPythonRuns();
+        long pointer = lib.callAndReturnObject(getPointer(), false, name, args.length, args, null);
+        return pointer != 0 ? new PyObject(lib, pointer) : null;
     }
 
     /**
@@ -257,7 +233,7 @@ public class PyObject implements java.io.Serializable {
      * @return A (proxy) instance implementing the given interface.
      */
     public <T> T createProxy(Class<T> type) {
-        assertPythonRuns();
+        lib.assertPythonRuns();
         //noinspection unchecked
         return (T) createProxy(PyLib.CallableKind.METHOD, type);
     }
@@ -271,7 +247,7 @@ public class PyObject implements java.io.Serializable {
      * @return A instance implementing the all the given interfaces which serves as a proxy for the given Python object (or module).
      */
     public Object createProxy(PyLib.CallableKind callableKind, Class<?>... types) {
-        assertPythonRuns();
+        lib.assertPythonRuns();
         ClassLoader classLoader = types[0].getClassLoader();
         InvocationHandler invocationHandler = new PyProxyHandler(this, callableKind);
         return Proxy.newProxyInstance(classLoader, types, invocationHandler);

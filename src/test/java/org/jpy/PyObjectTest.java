@@ -31,86 +31,79 @@ import static org.junit.Assert.*;
 /**
  * @author Norman Fomferra
  */
-public class PyObjectTest {
+public class PyObjectTest extends PyLibTestBase {
 
-    @Before
-    public void setUp() throws Exception {
-        //System.out.println("PyModuleTest: Current thread: " + Thread.currentThread());
-        String importPath = new File("src/test/python/fixtures").getCanonicalPath();
-
-        PyLib.startPython(importPath);
-        assertEquals(true, PyLib.isPythonRunning());
-
-        PyLib.Diag.setFlags(PyLib.Diag.F_ALL);
+    @Override
+    protected String[] getExtraPaths() throws Exception {
+        return new String[]{new File("src/test/python/fixtures").getCanonicalPath()};
     }
 
-    @After
-    public void tearDown() throws Exception {
-        PyLib.Diag.setFlags(PyLib.Diag.F_OFF);
-        PyLib.stopPython();
+    @Override
+    protected int getDiagFlags() {
+        return org.jpy.PyLib.Diag.F_ALL;
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNullPointer() throws Exception {
-        new PyObject(0);
+        new PyObject(lib, 0);
     }
 
     @Test
     public void testPointer() throws Exception {
-        long pointer = PyLib.importModule("sys");
-        PyObject pyObject = new PyObject(pointer);
+        long pointer = lib.importModule0("sys");
+        PyObject pyObject = new PyObject(lib, pointer);
         assertEquals(pointer, pyObject.getPointer());
     }
 
     @Test
     public void testToString() throws Exception {
-        long pointer = PyLib.importModule("sys");
-        PyObject pyObject = new PyObject(pointer);
+        long pointer = lib.importModule0("sys");
+        PyObject pyObject = new PyObject(lib, pointer);
         assertEquals("PyObject(pointer=0x" + Long.toHexString(pointer) + ")", pyObject.toString());
     }
 
     @Test
     public void testEqualsAndHashCode() throws Exception {
-        long pointer1 = PyLib.importModule("sys");
-        long pointer2 = PyLib.importModule("os");
-        PyObject pyObject1 = new PyObject(pointer1);
-        PyObject pyObject2 = new PyObject(pointer2);
+        long pointer1 = lib.importModule0("sys");
+        long pointer2 = lib.importModule0("os");
+        PyObject pyObject1 = new PyObject(lib, pointer1);
+        PyObject pyObject2 = new PyObject(lib, pointer2);
         assertEquals(true, pyObject1.equals(pyObject1));
-        assertEquals(true, pyObject1.equals(new PyObject(pointer1)));
+        assertEquals(true, pyObject1.equals(new PyObject(lib, pointer1)));
         assertEquals(false, pyObject1.equals(pyObject2));
-        assertEquals(false, pyObject1.equals(new PyObject(pointer2)));
+        assertEquals(false, pyObject1.equals(new PyObject(lib, pointer2)));
         assertEquals(false, pyObject1.equals((Object) pointer1));
         assertTrue(0 != pyObject1.hashCode());
         assertTrue(0 != pyObject2.hashCode());
         assertEquals(pyObject1.hashCode(), pyObject1.hashCode());
-        assertEquals(pyObject1.hashCode(), new PyObject(pointer1).hashCode());
+        assertEquals(pyObject1.hashCode(), new PyObject(lib, pointer1).hashCode());
         assertTrue(pyObject1.hashCode() != pyObject2.hashCode());
     }
 
     @Test
     public void testExecuteCode_Stmt() throws Exception {
-        PyObject pyObject = PyObject.executeCode("pass", PyInputMode.STATEMENT);
+        PyObject pyObject = lib.executeCode("pass", PyInputMode.STATEMENT);
         assertNotNull(pyObject);
         assertNull(pyObject.getObjectValue());
     }
 
     @Test
     public void testExecuteCode_IntExpr() throws Exception {
-        PyObject pyObject = PyObject.executeCode("7465", PyInputMode.EXPRESSION);
+        PyObject pyObject = lib.executeCode("7465", PyInputMode.EXPRESSION);
         assertNotNull(pyObject);
         assertEquals(7465, pyObject.getIntValue());
     }
 
     @Test
     public void testExecuteCode_DoubleExpr() throws Exception {
-        PyObject pyObject = PyObject.executeCode("3.14", PyInputMode.EXPRESSION);
+        PyObject pyObject = lib.executeCode("3.14", PyInputMode.EXPRESSION);
         assertNotNull(pyObject);
         assertEquals(3.14, pyObject.getDoubleValue(), 1e-10);
     }
 
     @Test
     public void testExecuteCode_StringExpr() throws Exception {
-        PyObject pyObject = PyObject.executeCode("'Hello from Python'", PyInputMode.EXPRESSION);
+        PyObject pyObject = lib.executeCode("'Hello from Python'", PyInputMode.EXPRESSION);
         assertNotNull(pyObject);
         assertEquals("Hello from Python", pyObject.getStringValue());
     }
@@ -118,13 +111,13 @@ public class PyObjectTest {
     @Test
     public void testExecuteCode_Script() throws Exception {
         HashMap<String, Object> localMap = new HashMap<>();
-        PyObject pyVoid = PyObject.executeCode("" +
-                                                       "import jpy\n" +
-                                                       "File = jpy.get_type('java.io.File')\n" +
-                                                       "f = File('test.txt')",
-                                               PyInputMode.SCRIPT,
-                                               null,
-                                               localMap);
+        PyObject pyVoid = lib.executeCode("" +
+                                                    "import jpy\n" +
+                                                    "File = jpy.get_type('java.io.File')\n" +
+                                                    "f = File('test.txt')",
+                                          PyInputMode.SCRIPT,
+                                          null,
+                                          localMap);
         assertNotNull(pyVoid);
         assertEquals(null, pyVoid.getObjectValue());
 
@@ -143,7 +136,7 @@ public class PyObjectTest {
     @Test
     public void testExecuteScript_ErrorExpr() throws Exception {
         try {
-            PyObject.executeCode("[1, 2, 3", PyInputMode.EXPRESSION);
+            lib.executeCode("[1, 2, 3", PyInputMode.EXPRESSION);
         } catch (RuntimeException e) {
             assertNotNull(e.getMessage());
             assertTrue(e.getMessage().contains("SyntaxError"));
@@ -161,10 +154,10 @@ public class PyObjectTest {
         PyModule builtins;
         try {
             //Python 3.3
-            builtins = PyModule.importModule("builtins");
+            builtins = lib.importModule("builtins");
         } catch (Exception e) {
             //Python 2.7
-            builtins = PyModule.importModule("__builtin__");
+            builtins = lib.importModule("__builtin__");
         }
         PyObject value = builtins.call("max", "A", "Z");
         Assert.assertEquals("Z", value.getStringValue());
@@ -180,7 +173,7 @@ public class PyObjectTest {
         // >>> myobj.a
         // 'Tut tut!'
         //
-        PyModule imp = PyModule.importModule("imp");
+        PyModule imp = lib.importModule("imp");
         // Call imp.new_module('') module
         PyObject myobj = imp.call("new_module", "myobj");
         myobj.setAttribute("a", "Tut tut!");
@@ -192,7 +185,7 @@ public class PyObjectTest {
     @Test
     public void testCreateProxyAndCallSingleThreaded() throws Exception {
         //addTestDirToPythonSysPath();
-        PyModule procModule = PyModule.importModule("proc_class");
+        PyModule procModule = lib.importModule("proc_class");
         PyObject procObj = procModule.call("Processor");
         testCallProxySingleThreaded(procObj);
     }
@@ -201,12 +194,11 @@ public class PyObjectTest {
     @Test
     public void testCreateProxyAndCallMultiThreaded() throws Exception {
         //addTestDirToPythonSysPath();
-        //PyLib.Diag.setFlags(PyLib.Diag.F_ALL);
-        PyModule procModule = PyModule.importModule("proc_class");
+        //lib.Diag.setDiagFlags(lib.Diag.F_ALL);
+        PyModule procModule = lib.importModule("proc_class");
         PyObject procObj = procModule.call("Processor");
-        PyLib.Diag.setFlags(PyLib.Diag.F_ALL);
         testCallProxyMultiThreaded(procObj);
-        //PyLib.Diag.setFlags(PyLib.Diag.F_OFF);
+        //lib.Diag.setDiagFlags(lib.Diag.F_OFF);
     }
 
 
@@ -246,9 +238,9 @@ public class PyObjectTest {
         List<Future<String>> futures;
         try {
             futures = executorService.invokeAll(Arrays.asList(new ProcessorTask(processor, 100, 100),
-                    new ProcessorTask(processor, 200, 100),
-                    new ProcessorTask(processor, 100, 200),
-                    new ProcessorTask(processor, 200, 200)), 10, TimeUnit.SECONDS);
+                                                              new ProcessorTask(processor, 200, 100),
+                                                              new ProcessorTask(processor, 100, 200),
+                                                              new ProcessorTask(processor, 200, 200)), 10, TimeUnit.SECONDS);
 
             result = processor.dispose();
             assertEquals("dispose", result);
@@ -277,11 +269,11 @@ public class PyObjectTest {
         }
     }
 
-    static void addTestDirToPythonSysPath() throws IOException {
+    void addTestDirToPythonSysPath() throws IOException {
         // Add module dir to sys.path in order to import file 'proc_class.py'
         String importPath = new File("src/test/python/fixtures").getCanonicalPath();
         //System.out.println("importPath = " + importPath);
-        PyLib.execScript(String.format("import sys; sys.path.append('%s')", importPath.replace("\\", "\\\\")));
+        lib.execScript(String.format("import sys; sys.path.append('%s')", importPath.replace("\\", "\\\\")));
     }
 
     private static class ProcessorTask implements Callable<String> {

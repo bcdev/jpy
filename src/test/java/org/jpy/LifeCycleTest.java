@@ -3,26 +3,26 @@ package org.jpy;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class LifeCycleTest {
+public class LifeCycleTest extends PyLibTestBase {
     private static final boolean ON_WINDOWS = System.getProperty("os.name").toLowerCase().contains("windows");
 
     @Test
     public void testCanStartAndStopWithoutException() {
-        PyLib.startPython();
-        Assert.assertTrue(PyLib.isPythonRunning());
-        PyModule sys1 = PyModule.importModule("sys");
+        lib.startPython();
+        Assert.assertTrue(lib.isPythonRunning());
+        PyModule sys1 = lib.importModule("sys");
         Assert.assertNotNull(sys1);
         final long sys1Pointer = sys1.getPointer();
 
-        PyLib.stopPython();
+        lib.stopPython();
         if (!ON_WINDOWS) {
-            Assert.assertFalse(PyLib.isPythonRunning());
+            Assert.assertFalse(lib.isPythonRunning());
         }
 
-        PyLib.startPython();
-        Assert.assertTrue(PyLib.isPythonRunning());
+        lib.startPython();
+        Assert.assertTrue(lib.isPythonRunning());
 
-        PyModule sys2 = PyModule.importModule("sys");
+        PyModule sys2 = lib.importModule("sys");
         Assert.assertNotNull(sys2);
         final long sys2Pointer = sys2.getPointer();
 
@@ -30,9 +30,17 @@ public class LifeCycleTest {
             Assert.assertNotEquals(sys1Pointer, sys2Pointer);
         }
 
-        PyLib.stopPython();
+        lib.stopPython();
         if (!ON_WINDOWS) {
-            Assert.assertFalse(PyLib.isPythonRunning());
+            Assert.assertFalse(lib.isPythonRunning());
         }
+    }
+
+    @Override
+    protected void startInterpreter() {
+    }
+
+    @Override
+    protected void stopInterpreter() {
     }
 }

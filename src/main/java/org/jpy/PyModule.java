@@ -16,7 +16,6 @@
 
 package org.jpy;
 
-import static org.jpy.PyLib.assertPythonRuns;
 
 /**
  * Represents a Python module.
@@ -24,6 +23,7 @@ import static org.jpy.PyLib.assertPythonRuns;
  * @author Norman Fomferra
  * @since 0.7
  */
+@SuppressWarnings({"WeakerAccess", "unused"})
 public class PyModule extends PyObject {
 
     /**
@@ -31,8 +31,8 @@ public class PyModule extends PyObject {
      */
     private final String name;
 
-    PyModule(String name, long pointer) {
-        super(pointer);
+    PyModule(PyLib lib, String name, long pointer) {
+        super(lib, pointer);
         this.name = name;
     }
 
@@ -44,76 +44,6 @@ public class PyModule extends PyObject {
     }
 
     /**
-     * Get the Python interpreter's main module and return its Java representation.
-     * It can be used to access global scope variables and functions. For example:
-     * <pre>
-     *      PyLib.execScript("def incByOne(x): return x + 1");
-     *      PyModule mainModule = PyModule.getMain();
-     *      PyObject eleven = mainModule.call("incByOne", 10);
-     * </pre>
-     *
-     * @return The Python main module's Java representation.
-     * @since 0.8
-     */
-    public static PyModule getMain() {
-        return importModule("__main__");
-    }
-
-    /**
-     * Get the Python interpreter's buildins module and returns its Java representation.
-     * It can be used to call functions such as {@code len()}, {@code type()}, {@code list()}, etc. For example:
-     * <pre>
-     *      builtins = PyModule.getBuiltins();
-     *      PyObject size = builtins.call("len", pyList);
-     * </pre>
-     *
-     * @return Java representation of Python's builtin module.
-     * @see org.jpy.PyObject#call(String, Object...)
-     * @since 0.8
-     */
-    public static PyModule getBuiltins() {
-        try {
-            //Python 3.3+
-            return importModule("builtins");
-        } catch (Exception e) {
-            //Python 2.7
-            return importModule("__builtin__");
-        }
-    }
-
-    /**
-     * Import a Python module into the Python interpreter and return its Java representation.
-     *
-     * @param name The Python module's name.
-     * @return The Python module's Java representation.
-     */
-    public static PyModule importModule(String name) {
-        assertPythonRuns();
-        long pointer = PyLib.importModule(name);
-        return pointer != 0 ? new PyModule(name, pointer) : null;
-    }
-
-    /**
-     * Extends Python's 'sys.path' variable by the given module path.
-     *
-     * @param modulePath The new module path. Should be an absolute pathname.
-     * @param prepend    If true, the new path will be the new first element of 'sys.path', otherwise it will be the last.
-     * @return The altered 'sys.path' list.
-     * @since 0.8
-     */
-    public static PyObject extendSysPath(String modulePath, boolean prepend) {
-        PyModule sys = importModule("sys");
-        PyObject sysPath = sys.getAttribute("path");
-        if (prepend) {
-            sysPath.call("insert", 0, modulePath);
-        } else {
-            sysPath.call("append", modulePath);
-        }
-        return sysPath;
-    }
-
-
-    /**
      * Create a Java proxy instance of this Python module which contains compatible functions to the ones provided in the
      * interface given by the {@code type} parameter.
      *
@@ -122,7 +52,8 @@ public class PyModule extends PyObject {
      * @return A (proxy) instance implementing the given interface.
      */
     public <T> T createProxy(Class<T> type) {
-        assertPythonRuns();
+        lib.assertPythonRuns();
+        //noinspection unchecked
         return (T) createProxy(PyLib.CallableKind.FUNCTION, type);
     }
 }

@@ -16,14 +16,8 @@
 
 package org.jpy;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
 import java.util.Properties;
-import java.util.Set;
 
 /**
  * Provides configuration for {@link org.jpy.PyLib}.
@@ -31,108 +25,116 @@ import java.util.Set;
  * @author Norman Fomferra
  * @since 0.7
  */
-class PyLibConfig {
+@SuppressWarnings("WeakerAccess")
+public interface PyLibConfig {
 
-    private static final boolean DEBUG = Boolean.getBoolean("jpy.debug");
-    public static final String PYTHON_LIB_KEY = "jpy.pythonLib";
-    public static final String JPY_LIB_KEY = "jpy.jpyLib";
-    public static final String JPY_CONFIG_KEY = "jpy.config";
-    public static final String JPY_CONFIG_RESOURCE = "jpyconfig.properties";
+    boolean DEBUG = Boolean.getBoolean("jpy.debug");
 
-    public enum OS {
-        WINDOWS,
-        UNIX,
-        MAC_OS,
-        SUNOS,
+    String getJpyLibPath();
+
+    String getJdlLibPath();
+
+    String getPythonLibPath();
+
+    class Default implements PyLibConfig {
+        private final String pythonLibPath;
+        private final String jpyLibPath;
+        private final String jdlLibPath;
+
+        public Default(String pythonLibPath, String jpyLibPath, String jdlLibPath) {
+            this.pythonLibPath = pythonLibPath;
+            this.jpyLibPath = jpyLibPath;
+            this.jdlLibPath = jdlLibPath;
+        }
+
+        @Override
+        public String getPythonLibPath() {
+            return pythonLibPath;
+        }
+
+        @Override
+        public String getJpyLibPath() {
+            return jpyLibPath;
+        }
+
+        @Override
+        public String getJdlLibPath() {
+            return jdlLibPath;
+        }
     }
 
-    private static final Properties properties = new Properties();
+    class Props implements PyLibConfig {
+        public static final String PYTHON_LIB_KEY = "jpy.pythonLib";
+        public static final String JDL_LIB_KEY = "jpy.jdlLib";
+        public static final String JPY_LIB_KEY = "jpy.jpyLib";
+        public static final String JPY_CONFIG_KEY = "jpy.config";
+        public static final String JPY_CONFIG_RESOURCE = "jpyconfig.properties";
 
+        private final Properties properties;
 
-    static {
-        if (DEBUG) System.out.println("org.jpy.PyLibConfig: entered static initializer");
-        InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(JPY_CONFIG_RESOURCE);
-        if (stream != null) {
-            loadConfig(stream, JPY_CONFIG_RESOURCE);
+        public Props(Properties properties) {
+            this.properties = new Properties(System.getProperties());
+            this.properties.putAll(properties);
         }
-        String path = System.getProperty(JPY_CONFIG_KEY);
-        if (path != null) {
-            File file = new File(path);
-            if (file.isFile()) {
-                loadConfig(file);
+
+        @Override
+        public String getJpyLibPath() {
+            return properties.getProperty(JPY_LIB_KEY);
+        }
+
+        @Override
+        public String getJdlLibPath() {
+            return properties.getProperty(JDL_LIB_KEY);
+        }
+
+        @Override
+        public String getPythonLibPath() {
+            return properties.getProperty(PYTHON_LIB_KEY);
+        }
+
+        public static PyLibConfig load(String resourcePath) throws IOException {
+            if (resourcePath == null) {
+                throw new NullPointerException("resourcePath == null");
             }
-        }
-        File file = new File(JPY_CONFIG_RESOURCE).getAbsoluteFile();
-        if (file.isFile()) {
-            loadConfig(file);
-        }
-        if (DEBUG) System.out.println("org.jpy.PyLibConfig: exited static initializer");
-    }
-
-    private static void loadConfig(InputStream stream, String name) {
-        try {
             if (DEBUG)
-                System.out.printf(String.format("org.jpy.PyLibConfig: loading configuration resource %s\n", name));
-            try (Reader reader = new InputStreamReader(stream)) {
-                loadConfig(reader);
+                System.out.printf(String.format("%s: loading configuration resource %s\n", PyLibConfig.class.getName(), resourcePath));
+            InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePath);
+            if (stream == null) {
+                throw new FileNotFoundException("resource not found: " + resourcePath);
             }
-        } catch (IOException e) {
-            if (DEBUG) e.printStackTrace(System.err);
+            return load(stream);
         }
-    }
 
-    private static void loadConfig(File file) {
-        try {
+        public static PyLibConfig load(File file) throws IOException {
+            if (file == null) {
+                throw new NullPointerException("file == null");
+            }
             if (DEBUG)
                 System.out.printf(String.format("%s: loading configuration file %s\n", PyLibConfig.class.getName(), file));
             try (Reader reader = new FileReader(file)) {
-                loadConfig(reader);
-            }
-        } catch (IOException e) {
-            System.err.printf("org.jpy.PyLibConfig: %s: %s\n", file, e.getMessage());
-            if (DEBUG) e.printStackTrace(System.err);
-        }
-    }
-
-    private static void loadConfig(Reader reader) throws IOException {
-        properties.load(reader);
-        Set<String> propertyNames = properties.stringPropertyNames();
-        for (String propertyName : propertyNames) {
-            String propertyValue = properties.getProperty(propertyName);
-            if (propertyValue != null) {
-                System.setProperty(propertyName, propertyValue);
+                return load(reader);
             }
         }
-    }
 
-    public static Properties getProperties() {
-        return new Properties(properties);
-    }
+        public static PyLibConfig load(InputStream stream) throws IOException {
+            if (stream == null) {
+                throw new NullPointerException("stream == null");
+            }
+            try (Reader reader = new InputStreamReader(stream)) {
+                return load(reader);
+            }
+        }
 
-    public static String getProperty(String key, boolean mustHave) {
-        // System properties overwrite .jpy properties
-        String property = System.getProperty(key);
-        if (property != null) {
-            return property;
+        public static PyLibConfig load(Reader reader) throws IOException {
+            if (reader == null) {
+                throw new NullPointerException("reader == null");
+            }
+            Properties properties = new Properties();
+            properties.load(reader);
+            return new Props(properties);
         }
-        property = properties.getProperty(key);
-        if (property == null && mustHave) {
-            throw new RuntimeException("missing configuration property '" + key + "'");
-        }
-        return property;
-    }
-
-    public static OS getOS() {
-        String os = System.getProperty("os.name").toLowerCase();
-        if (os.contains("win")) {
-            return OS.WINDOWS;
-        } else if (os.contains("nix") || os.contains("nux") || os.contains("aix")) {
-            return OS.UNIX;
-        } else if (os.contains("mac")) {
-            return OS.MAC_OS;
-        } else if (os.contains("sunos")) {
-            return OS.SUNOS;
-        }
-        return null;
     }
 }
+
+
+

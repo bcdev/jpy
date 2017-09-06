@@ -2,8 +2,32 @@
 jpy Changelog
 *************
 
-Version 0.9 (dev)
-=================
+Version 1.0 (in dev on issue_106)
+=================================
+
+Improvements
+------------
+
+* Multiple Python interpreters can now coexists in a single JVM (#106)
+
+TODO
+----
+
+* Regenerate headers for native stubs since PyLib interface has changed entirely 
+
+Breaking Changes
+----------------
+
+* `PyLib` is no longer a singleton and most static methods have been turned into instance methods. 
+  It is instantiated by passing a `PyLibConfig` to the constructor.
+* Most `PyModule` static methods have been turned into instance methods. `PyModule` mus now be instanciated with a 
+  `PyLib` instance. 
+* `PyLib.Diag.get/setFlags` replaced by `PyLib.get/setDiagFlags`
+* `getDllFilePath` changed to `getJpyDllPath`
+
+
+Version 0.9 (in dev on master)
+==============================
 
 This version includes a number of contributions from supportive GitHub users. Thanks to all of you! 
 

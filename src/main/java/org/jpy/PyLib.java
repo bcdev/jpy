@@ -20,12 +20,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
 
-import static org.jpy.PyLibConfig.JPY_LIB_KEY;
-import static org.jpy.PyLibConfig.OS;
-import static org.jpy.PyLibConfig.PYTHON_LIB_KEY;
-import static org.jpy.PyLibConfig.getOS;
-import static org.jpy.PyLibConfig.getProperty;
-
 /**
  * Represents the library that provides the Python interpreter (CPython).
  * <p>
@@ -49,15 +43,15 @@ import static org.jpy.PyLibConfig.getProperty;
  * @author Norman Fomferra
  * @since 0.7
  */
-@SuppressWarnings("WeakerAccess")
+@SuppressWarnings({"WeakerAccess", "unused"})
 public class PyLib {
 
-    private static final boolean DEBUG = Boolean.getBoolean("jpy.debug");
-    private static final boolean ON_WINDOWS = System.getProperty("os.name").toLowerCase().contains("windows");
+    private static final boolean DEBUG = PyLibConfig.DEBUG;
+    private static final boolean ON_WINDOWS = Util.getOS() == Util.OS.WINDOWS;
     private static final boolean STOP_IS_NO_OP = Boolean.getBoolean("jpy.stopIsNoOp") || ON_WINDOWS;
-    private static String dllFilePath;
-    private static Throwable dllProblem;
-    private static boolean dllLoaded;
+    private final PyLibConfig config;
+    private Throwable dllProblem;
+    private boolean dllLoaded;
 
     /**
      * The kind of callable Python objects.
@@ -78,10 +72,6 @@ public class PyLib {
      */
     @SuppressWarnings("UnusedDeclaration")
     public static class Diag {
-
-        static {
-            PyLib.loadLib();
-        }
 
         /**
          * Print no diagnostic information at all.
@@ -115,28 +105,36 @@ public class PyLib {
          * Print any diagnostic information.
          */
         public static final int F_ALL = 0xff;
+    }
 
-        /**
-         * @return the current diagnostic flags.
-         */
-        public static native int getFlags();
-
-        /**
-         * Sets the current diagnostic flags.
-         *
-         * @param flags the current diagnostic flags.
-         */
-        public static native void setFlags(int flags);
-
-        private Diag() {
+    public PyLib(PyLibConfig config) {
+        if (config == null) {
+            throw new NullPointerException("config == null");
         }
+        this.config = config;
+        if (DEBUG) System.out.println("org.jpy.PyLib: entered static initializer");
+        loadLib();
+        if (DEBUG) System.out.println("org.jpy.PyLib: exited static initializer");
     }
 
-    @SuppressWarnings("UnusedDeclaration")
-    public static String getDllFilePath() {
-        return dllFilePath;
+    /**
+     * @return the configuration.
+     */
+    public PyLibConfig getConfig() {
+        return config;
     }
 
+    /**
+     * @return the current diagnostic flags.
+     */
+    public native int getDiagFlags();
+
+    /**
+     * Sets the current diagnostic flags.
+     *
+     * @param flags the current diagnostic flags.
+     */
+    public native void setDiagFlags(int flags);
 
     /**
      * Throws a runtime exception if Python interpreter is not running. Possible reasons for this are
@@ -147,7 +145,7 @@ public class PyLib {
      * <li>The Python interpreter could not be initialised.</li>
      * </ul>
      */
-    public static void assertPythonRuns() {
+    public void assertPythonRuns() {
         if (dllProblem != null) {
             throw new RuntimeException("PyLib not initialized", dllProblem);
         }
@@ -159,7 +157,7 @@ public class PyLib {
     /**
      * @return {@code true} if the Python interpreter is running and the the 'jpy' module has been loaded.
      */
-    public static native boolean isPythonRunning();
+    public native boolean isPythonRunning();
 
     /**
      * Starts the Python interpreter. It does the following:
@@ -172,11 +170,13 @@ public class PyLib {
      * @param extraPaths List of paths that will be prepended to Python's 'sys.path'.
      * @throws RuntimeException if Python could not be started or if the 'jpy' extension module could not be loaded.
      */
-    public static void startPython(String... extraPaths) {
+    public void startPython(String... extraPaths) {
 
         ArrayList<File> dirList = new ArrayList<>(1 + extraPaths.length);
 
-        File moduleDir = new File(dllFilePath).getParentFile();
+        String jpyLibPath = config.getJpyLibPath();
+        assert jpyLibPath != null;
+        File moduleDir = new File(jpyLibPath).getParentFile();
         if (moduleDir != null) {
             dirList.add(moduleDir.getAbsoluteFile());
         }
@@ -198,7 +198,7 @@ public class PyLib {
             for (String path : extraPaths) {
                 System.out.printf("org.jpy.PyLib:   %s%n", path);
             }
-            Diag.setFlags(Diag.F_EXEC);
+            setDiagFlags(Diag.F_EXEC);
         }
 
         startPython0(extraPaths);
@@ -209,11 +209,11 @@ public class PyLib {
     /**
      * @return The Python interpreter version string.
      */
-    public static native String getPythonVersion();
+    public native String getPythonVersion();
 
     /**
      * Stops the Python interpreter.
-     *
+     * <p>
      * <strong>Important note:</strong> Stopping the Python interpreter again after it has been restarted using
      * {@link #startPython} currently causes a fatal error in the the Java Runtime Environment originating from
      * the Python interpreter (function {@code Py_Finalize} in standard CPython implementation).
@@ -221,34 +221,135 @@ public class PyLib {
      * your code.
      * For more information refer to https://github.com/bcdev/jpy/issues/70
      */
-    public static void stopPython() {
+    public void stopPython() {
         if (!STOP_IS_NO_OP) {
             stopPython0();
         }
     }
 
-    static native void stopPython0();
+    native void stopPython0();
 
-    @Deprecated
-    public static native int execScript(String script);
+    /**
+     * Get the Python interpreter's main module and return its Java representation.
+     * It can be used to access global scope variables and functions. For example:
+     * <pre>
+     *      pyLib.execScript("def incByOne(x): return x + 1");
+     *      PyModule mainModule = pyLib.getMain();
+     *      PyObject eleven = mainModule.call("incByOne", 10);
+     * </pre>
+     *
+     * @return The Python main module's Java representation.
+     * @since 0.8
+     */
+    public PyModule getMain() {
+        return importModule("__main__");
+    }
 
-    static native long executeCode(String code, int start, Map<String, Object> globals, Map<String, Object> locals);
+    /**
+     * Get the Python interpreter's buildins module and returns its Java representation.
+     * It can be used to call functions such as {@code len()}, {@code type()}, {@code list()}, etc. For example:
+     * <pre>
+     *      PyModule builtins = pyLib.getBuiltins();
+     *      PyObject size = builtins.call("len", pyList);
+     * </pre>
+     *
+     * @return Java representation of Python's builtin module.
+     * @see org.jpy.PyObject#call(String, Object...)
+     * @since 0.8
+     */
+    public PyModule getBuiltins() {
+        try {
+            //Python 3.3+
+            return importModule("builtins");
+        } catch (Exception e) {
+            //Python 2.7
+            return importModule("__builtin__");
+        }
+    }
 
-    static native void incRef(long pointer);
+    /**
+     * Import a Python module into the Python interpreter and return its Java representation.
+     *
+     * @param name The Python module's name.
+     * @return The Python module's Java representation.
+     */
+    public PyModule importModule(String name) {
+        assertPythonRuns();
+        long pointer = importModule0(name);
+        return pointer != 0 ? new PyModule(this, name, pointer) : null;
+    }
 
-    static native void decRef(long pointer);
+    /**
+     * Extends Python's 'sys.path' variable by the given module path.
+     *
+     * @param modulePath The new module path. Should be an absolute pathname.
+     * @param prepend    If true, the new path will be the new first element of 'sys.path', otherwise it will be the last.
+     * @return The altered 'sys.path' list.
+     * @since 0.8
+     */
+    public PyObject extendSysPath(String modulePath, boolean prepend) {
+        PyModule sys = importModule("sys");
+        PyObject sysPath = sys.getAttribute("path");
+        if (prepend) {
+            sysPath.call("insert", 0, modulePath);
+        } else {
+            sysPath.call("append", modulePath);
+        }
+        return sysPath;
+    }
 
-    static native int getIntValue(long pointer);
+    /**
+     * Executes Python source code.
+     *
+     * @param code The Python source code.
+     * @param mode The execution mode.
+     * @return The result of executing the code as a Python object.
+     */
+    public PyObject executeCode(String code, PyInputMode mode) {
+        return executeCode(code, mode, null, null);
+    }
 
-    static native double getDoubleValue(long pointer);
+    /**
+     * Executes Python source code in the context specified by the {@code globals} and {@code locals} maps.
+     * <p>
+     * If a Java value in the {@code globals} and {@code locals} maps cannot be directly converted into a Python object, a Java wrapper will be created instead.
+     * If a Java value is a wrapped Python object of type {@link PyObject}, it will be unwrapped.
+     *
+     * @param code    The Python source code.
+     * @param mode    The execution mode.
+     * @param globals The global variables to be set.
+     * @param locals  The locals variables to be set.
+     * @return The result of executing the code as a Python object.
+     */
+    public PyObject executeCode(String code, PyInputMode mode, Map<String, Object> globals, Map<String, Object> locals) {
+        if (code == null) {
+            throw new NullPointerException("code must not be null");
+        }
+        if (mode == null) {
+            throw new NullPointerException("mode must not be null");
+        }
+        return new PyObject(this, executeCode0(code, mode.value(), globals, locals));
+    }
 
-    static native String getStringValue(long pointer);
+    public native int execScript(String script);
 
-    static native Object getObjectValue(long pointer);
+    native long executeCode0(String code, int start, Map<String, Object> globals, Map<String, Object> locals);
 
-    static native <T> T[] getObjectArrayValue(long pointer, Class<? extends T> itemType);
+    native void incRef(long pointer);
 
-    static native long importModule(String name);
+    native void decRef(long pointer);
+
+    native int getIntValue(long pointer);
+
+    native double getDoubleValue(long pointer);
+
+    native String getStringValue(long pointer);
+
+    native Object getObjectValue(long pointer);
+
+    native <T> T[] getObjectArrayValue(long pointer, Class<? extends T> itemType);
+
+    native long importModule0(String name);
 
     /**
      * Gets the value of a given Python attribute as Python object pointer.
@@ -257,7 +358,7 @@ public class PyLib {
      * @param name    The attribute name.
      * @return Pointer to a Python object that is the value of the attribute (always a new reference).
      */
-    static native long getAttributeObject(long pointer, String name);
+    native long getAttributeObject(long pointer, String name);
 
     /**
      * Gets the value of a given Python attribute as Java value.
@@ -267,7 +368,7 @@ public class PyLib {
      * @param valueType The expected return type.
      * @return A value that represents the converted Python attribute value.
      */
-    static native <T> T getAttributeValue(long pointer, String name, Class<? extends T> valueType);
+    native <T> T getAttributeValue(long pointer, String name, Class<? extends T> valueType);
 
     /**
      * Sets the Python attribute given by {@code name} of the Python object pointed to by {@code pointer}.
@@ -282,7 +383,7 @@ public class PyLib {
      * @param value     The new attribute value.
      * @param valueType Optional type for converting the value to a Python object.
      */
-    static native <T> void setAttributeValue(long pointer, String name, T value, Class<? extends T> valueType);
+    native <T> void setAttributeValue(long pointer, String name, T value, Class<? extends T> valueType);
 
     /**
      * Calls a Python callable and returns the resulting Python object.
@@ -301,12 +402,12 @@ public class PyLib {
      *                   If not null, it must be an array of the same length as {@code args}.
      * @return The resulting Python object (always a new reference).
      */
-    static native long callAndReturnObject(long pointer,
-                                           boolean methodCall,
-                                           String name,
-                                           int argCount,
-                                           Object[] args,
-                                           Class<?>[] paramTypes);
+    native long callAndReturnObject(long pointer,
+                                    boolean methodCall,
+                                    String name,
+                                    int argCount,
+                                    Object[] args,
+                                    Class<?>[] paramTypes);
 
     /**
      * Calls a Python callable and returns the a Java Object.
@@ -327,33 +428,36 @@ public class PyLib {
      * @param returnType Optional return type.
      * @return The resulting Python object (always a new reference).
      */
-    static native <T> T callAndReturnValue(long pointer,
-                                           boolean methodCall,
-                                           String name,
-                                           int argCount,
-                                           Object[] args,
-                                           Class<?>[] paramTypes,
-                                           Class<T> returnType);
+    native <T> T callAndReturnValue(long pointer,
+                                    boolean methodCall,
+                                    String name,
+                                    int argCount,
+                                    Object[] args,
+                                    Class<?>[] paramTypes,
+                                    Class<T> returnType);
 
-    private static void loadLib() {
+    private void loadLib() {
         if (dllLoaded || dllProblem != null) {
             return;
         }
         try {
-            String pythonLibPath = getProperty(PYTHON_LIB_KEY, false);
+            String pythonLibPath = config.getPythonLibPath();
             if (pythonLibPath != null && new File(pythonLibPath).isFile()) {
                 preloadPythonLib(pythonLibPath);
             }
 
             // E.g. dllFilePath = "/usr/local/lib/python3.3/dist-packages/jpy.cpython-33m.so";
-            dllFilePath = getProperty(JPY_LIB_KEY, true);
-            dllFilePath = new File(dllFilePath).getAbsolutePath();
+            String jpyLibPath = config.getJpyLibPath();
+            if (jpyLibPath == null) {
+                throw new IllegalStateException("path to jpy shared library (DLL) must be specified");
+            }
+            jpyLibPath = new File(jpyLibPath).getAbsolutePath();
 
-            if (DEBUG) System.out.printf("org.jpy.PyLib: System.load(\"%s\")%n", dllFilePath);
+            if (DEBUG) System.out.printf("org.jpy.PyLib: System.load(\"%s\")%n", jpyLibPath);
             //if (DEBUG) System.out.println("org.jpy.PyLib: context class loader: " + Thread.currentThread().getContextClassLoader());
             //if (DEBUG) System.out.println("org.jpy.PyLib: class class loader:   " + PyLib.class.getClassLoader());
 
-            System.load(dllFilePath);
+            System.load(jpyLibPath);
             dllProblem = null;
             dllLoaded = true;
         } catch (Throwable t) {
@@ -363,7 +467,7 @@ public class PyLib {
     }
 
     private static void preloadPythonLib(String pythonLibPath) {
-        if (getOS() != OS.WINDOWS) {
+        if (Util.getOS() != Util.OS.WINDOWS) {
             // For PyLib, we load the shared library that was generated for the Python extension module 'jpy'.
             // However, to use 'jpy' from Java we also need the Python shared library to be loaded as well.
             // On Windows, this is done auto-magically, on Linux and Darwin we have to either change 'setup.py'
@@ -397,14 +501,6 @@ public class PyLib {
         }
     }
 
-    private PyLib() {
-    }
-
-    static {
-        if (DEBUG) System.out.println("org.jpy.PyLib: entered static initializer");
-        loadLib();
-        if (DEBUG) System.out.println("org.jpy.PyLib: exited static initializer");
-    }
 }
 
 
