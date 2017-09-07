@@ -14,6 +14,7 @@ TODO
 ----
 
 * Regenerate headers for native stubs since PyLib interface has changed entirely 
+* Rename PyLib into PyInterpreter
 
 Breaking Changes
 ----------------
