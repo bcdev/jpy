@@ -129,6 +129,16 @@ class TestOtherMethodResolutionCases(unittest.TestCase):
         # without the fix, we get str(s) = "java.lang.String@xxxxxx"
         self.assertEqual(str(s), '[A, B, C]')
 
+class TestDefaultMethods(unittest.TestCase):
+    def setUp(self):
+        self.Fixture = jpy.get_type('org.jpy.fixtures.DefaultInterfaceImplTestFixture')
+        self.assertIsNotNone(self.Fixture)
+
+    # see https://github.com/bcdev/jpy/issues/102
+    def test_defaultedInterfaces(self):
+	fixture = self.Fixture()
+        self.assertEqual(fixture.doItPlusOne(), 3)
+
 
 if __name__ == '__main__':
     print('\nRunning ' + __file__)

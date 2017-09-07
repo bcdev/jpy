@@ -1072,13 +1072,7 @@ int JType_ProcessClassMethods(JNIEnv* jenv, JPy_JType* type)
 
     classRef = type->classRef;
 
-    if (type->isInterface) {
-        methods = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetMethods_MID);
-    } else {
-        // TODO: write unit test case that justifies and verifies use of Class.getMethods(). See #102 by cpwright.
-        // methods = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetDeclaredMethods_MID);
-        methods = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetMethods_MID);
-    }
+    methods = (*jenv)->CallObjectMethod(jenv, classRef, JPy_Class_GetMethods_MID);
     methodCount = (*jenv)->GetArrayLength(jenv, methods);
 
     JPy_DIAG_PRINT(JPy_DIAG_F_TYPE, "JType_ProcessClassMethods: methodCount=%d\n", methodCount);
