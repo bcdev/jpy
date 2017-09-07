@@ -218,6 +218,13 @@ Variables
     Here a call to the ``read`` method will modify the numpy array's content as desired and return the
     same array instance as indicated by the Java method's specification.
 
+.. py:data:: type_translations
+    :module: jpy
+
+    Contains callbacks which are called when instantiating a Python object from a Java object.
+    After the standard wrapping of the Java object as a Python object, the Java type name is looked up in this
+    dictionary.  If the returned item is a callable, the callable is called with the JPy object as an argument,
+    and the callable's result is returned to the user.
 
 .. py:data:: diag
     :module: jpy

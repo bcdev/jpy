@@ -85,6 +85,7 @@ static struct PyModuleDef JPy_ModuleDef =
 PyObject* JPy_Module = NULL;
 PyObject* JPy_Types = NULL;
 PyObject* JPy_Type_Callbacks = NULL;
+PyObject* JPy_Type_Translations = NULL;
 PyObject* JException_Type = NULL;
 
 // A global reference to a Java VM singleton.
@@ -321,6 +322,12 @@ PyMODINIT_FUNC JPY_MODULE_INIT_FUNC(void)
     JPy_Type_Callbacks = PyDict_New();
     Py_INCREF(JPy_Type_Callbacks);
     PyModule_AddObject(JPy_Module, JPy_MODULE_ATTR_NAME_TYPE_CALLBACKS, JPy_Type_Callbacks);
+
+    /////////////////////////////////////////////////////////////////////////
+
+    JPy_Type_Translations = PyDict_New();
+    Py_INCREF(JPy_Type_Translations);
+    PyModule_AddObject(JPy_Module, JPy_MODULE_ATTR_NAME_TYPE_TRANSLATIONS, JPy_Type_Translations);
 
     /////////////////////////////////////////////////////////////////////////
 
@@ -987,6 +994,7 @@ void JPy_free(void* unused)
     JPy_Module = NULL;
     JPy_Types = NULL;
     JPy_Type_Callbacks = NULL;
+    JPy_Type_Translations = NULL;
     JException_Type = NULL;
 
     JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "JPy_free: done freeing module data\n");

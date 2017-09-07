@@ -32,6 +32,7 @@ extern "C" {
 extern PyObject* JPy_Module;
 extern PyObject* JPy_Types;
 extern PyObject* JPy_Type_Callbacks;
+extern PyObject* JPy_Type_Translations;
 extern PyObject* JException_Type;
 
 extern JavaVM* JPy_JVM;
@@ -42,6 +43,7 @@ extern jboolean JPy_MustDestroyJVM;
 
 #define JPy_MODULE_ATTR_NAME_TYPES "types"
 #define JPy_MODULE_ATTR_NAME_TYPE_CALLBACKS "type_callbacks"
+#define JPy_MODULE_ATTR_NAME_TYPE_TRANSLATIONS "type_translations"
 
 
 /**
