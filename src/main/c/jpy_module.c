@@ -1005,6 +1005,10 @@ void JPy_HandleJavaException(JNIEnv* jenv)
             stackTraceString = strdup("");
 
             jthrowable cause = error;
+
+            jarray enclosingElements = NULL;
+            jint enclosingSize = 0;
+
             do {
                 /* We want the type and the detail string, which is actually what a Throwable toString() does by
                  * default, as does the default printStackTrace(). */
@@ -1054,7 +1058,24 @@ void JPy_HandleJavaException(JNIEnv* jenv)
                 jarray stackTrace = (*jenv)->CallObjectMethod(jenv, cause, JPy_Throwable_getStackTrace_MID);
 
                 jint stackTraceElements = (*jenv)->GetArrayLength(jenv, stackTrace);
-                for (jint ii = 0; ii < stackTraceElements; ++ii) {
+                jint lastElementToPrint = stackTraceElements - 1;
+                jint enclosingIndex = enclosingSize - 1;
+
+                while (lastElementToPrint >= 0 && enclosingIndex >= 0) {
+                    jobject thisElement = (*jenv)->GetObjectArrayElement(jenv, stackTrace, lastElementToPrint);
+                    jobject thatElement = (*jenv)->GetObjectArrayElement(jenv, enclosingElements, enclosingIndex);
+
+                    // if they are equal, let's decrement, otherwise we break
+                    jboolean  equal = (*jenv)->CallBooleanMethod(jenv, thisElement, JPy_Object_Equals_MID, thatElement);
+                    if (!equal) {
+                        break;
+                    }
+
+                    lastElementToPrint--;
+                    enclosingIndex--;
+                }
+
+                for (jint ii = 0; ii <= lastElementToPrint; ++ii) {
                     jobject traceElement = (*jenv)->GetObjectArrayElement(jenv, stackTrace, ii);
                     if (traceElement != NULL) {
                         message = (jstring) (*jenv)->CallObjectMethod(jenv, traceElement, JPy_Object_ToString_MID);
@@ -1086,7 +1107,27 @@ void JPy_HandleJavaException(JNIEnv* jenv)
 
                     }
                 }
-                (*jenv)->DeleteLocalRef(jenv, stackTrace);
+
+                if (lastElementToPrint < stackTraceElements - 1) {
+                    char *newStackString = realloc(stackTraceString, stackTraceLength + 100);
+                    if (newStackString == NULL) {
+                        allocError = 1;
+                        break;
+                    }
+                    stackTraceString[stackTraceLength + 100] = '\0';
+
+                    stackTraceString = newStackString;
+                    int written = snprintf(stackTraceString + stackTraceLength, 99, "\t... %d more\n", (stackTraceElements - lastElementToPrint) - 1);
+                    if (written > 99) {
+                        stackTraceLength += 99;
+                    } else {
+                        stackTraceLength += written;
+                    }
+                }
+
+                /** So we can eliminate extra entries. */
+                enclosingElements = stackTrace;
+                enclosingSize = stackTraceElements;
 
                 /** Now the next cause. */
                 cause = (*jenv)->CallObjectMethod(jenv, cause, JPy_Throwable_getCause_MID);
