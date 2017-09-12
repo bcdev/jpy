@@ -63,6 +63,14 @@ public class VarArgsTestFixture {
         return stringifyArgs(prefix, a);
     }
 
+    public int chooseFixedArity(int... a) {
+	return 2;
+    }
+
+    public int chooseFixedArity() {
+	return 1;
+    }
+
     static String stringifyArgs(Object... args) {
         StringBuilder argString = new StringBuilder();
         for (int i = 0; i < args.length; i++) {

@@ -724,12 +724,19 @@ JPy_JMethod* JOverloadedMethod_FindMethod0(JNIEnv* jenv, JPy_JOverloadedMethod* 
     matchCount = 0;
     matchValueMax = -1;
     bestMethod = NULL;
+    bestIsVarArgsArray = 0;
 
     JPy_DIAG_PRINT(JPy_DIAG_F_METH, "JOverloadedMethod_FindMethod0: method '%s#%s': overloadCount=%d, argCount=%d\n",
                               overloadedMethod->declaringClass->javaName, JPy_AS_UTF8(overloadedMethod->name), overloadCount, argCount);
 
     for (i = 0; i < overloadCount; i++) {
         currMethod = (JPy_JMethod*) PyList_GetItem(overloadedMethod->methodList, i);
+
+        if (currMethod->isVarArgs && matchValueMax > 0 && !bestMethod->isVarArgs) {
+            // we should not process varargs if we have already found a suitable fixed arity method
+            break;
+        }
+
         matchValue = JMethod_MatchPyArgs(jenv, overloadedMethod->declaringClass, currMethod, argCount, pyArgs, &currentIsVarArgsArray);
 
         JPy_DIAG_PRINT(JPy_DIAG_F_METH, "JOverloadedMethod_FindMethod0: methodList[%d]: paramCount=%d, matchValue=%d, isVarArgs=%d\n", i,
@@ -867,7 +874,27 @@ JPy_JOverloadedMethod* JOverloadedMethod_New(JPy_JType* declaringClass, PyObject
 
 int JOverloadedMethod_AddMethod(JPy_JOverloadedMethod* overloadedMethod, JPy_JMethod* method)
 {
-    return PyList_Append(overloadedMethod->methodList, (PyObject*) method);
+    if (method->isVarArgs) {
+        return PyList_Append(overloadedMethod->methodList, (PyObject *) method);
+    } else {
+        // we need to insert this before the first varargs method
+        Py_ssize_t size = PyList_Size(overloadedMethod->methodList);
+        Py_ssize_t destinationIndex = -1;
+        for (Py_ssize_t ii = 0; ii < size; ii++) {
+            PyObject *check = PyList_GetItem(overloadedMethod->methodList, ii);
+            if (((JPy_JMethod *) check)->isVarArgs) {
+                // this is the first varargs method, so we should go before it
+                destinationIndex = ii;
+                break;
+            }
+        }
+
+        if (destinationIndex >= 0) {
+            return PyList_Insert(overloadedMethod->methodList, destinationIndex, (PyObject *) method);
+        } else {
+            return PyList_Append(overloadedMethod->methodList, (PyObject *) method);
+        }
+    }
 }
 
 /**

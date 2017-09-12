@@ -95,7 +95,7 @@ class TestVarArgs(unittest.TestCase):
         self.assertEqual(fixture.joinFloat("Prefix"), 'String(Prefix),float[]()')
 
         with self.assertRaises(RuntimeError, msg='RuntimeError expected') as e:
-            fixture.join("Prefix")
+            res = fixture.join("Prefix")
         self.assertEqual(str(e.exception), 'ambiguous Java method call, too many matching method overloads found')
 
     def test_varargs(self):
@@ -117,6 +117,14 @@ class TestVarArgs(unittest.TestCase):
 
         self.assertEqual(fixture.joinBoolean("Prefix", True, False), 'String(Prefix),boolean[](true,false)')
         self.assertEqual(fixture.joinObjects("Prefix", True, "A String", 3), 'String(Prefix),Object[](Boolean(true),String(A String),Integer(3))')
+
+    def test_fixedArity(self):
+        fixture = self.Fixture()
+
+        self.assertEqual(fixture.chooseFixedArity(), 1)
+        self.assertEqual(fixture.chooseFixedArity(1), 2)
+        self.assertEqual(fixture.chooseFixedArity(1, 2), 2)
+
 
 class TestOtherMethodResolutionCases(unittest.TestCase):
 
