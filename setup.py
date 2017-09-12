@@ -56,6 +56,7 @@ else:
 sources = [
     os.path.join(src_main_c_dir, 'jpy_module.c'),
     os.path.join(src_main_c_dir, 'jpy_diag.c'),
+    os.path.join(src_main_c_dir, 'jpy_verboseexcept.c'),
     os.path.join(src_main_c_dir, 'jpy_conv.c'),
     os.path.join(src_main_c_dir, 'jpy_compat.c'),
     os.path.join(src_main_c_dir, 'jpy_jtype.c'),

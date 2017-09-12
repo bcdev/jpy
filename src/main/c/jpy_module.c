@@ -16,6 +16,7 @@
 
 #include "jpy_module.h"
 #include "jpy_diag.h"
+#include "jpy_verboseexcept.h"
 #include "jpy_jtype.h"
 #include "jpy_jmethod.h"
 #include "jpy_jfield.h"
@@ -120,6 +121,8 @@ JPy_JType* JPy_JClass = NULL;
 JPy_JType* JPy_JString = NULL;
 JPy_JType* JPy_JPyObject = NULL;
 JPy_JType* JPy_JPyModule = NULL;
+JPy_JType* JPy_JThrowable = NULL;
+JPy_JType* JPy_JStackTraceElement = NULL;
 
 
 // java.lang.Comparable
@@ -203,6 +206,15 @@ jclass JPy_String_JClass = NULL;
 jmethodID JPy_PyObject_GetPointer_MID = NULL;
 jmethodID JPy_PyObject_Init_MID = NULL;
 jmethodID JPy_PyModule_Init_MID = NULL;
+
+// java.lang.Throwable
+jclass JPy_Throwable_JClass = NULL;
+jmethodID JPy_Throwable_getMessage_MID = NULL;
+jmethodID JPy_Throwable_getStackTrace_MID = NULL;
+jmethodID JPy_Throwable_getCause_MID = NULL;
+
+// stack trace element
+jclass JPy_StackTraceElement_JClass = NULL;
 
 // }}}
 
@@ -339,6 +351,15 @@ PyMODINIT_FUNC JPY_MODULE_INIT_FUNC(void)
         PyObject* pyDiag = Diag_New();
         Py_INCREF(pyDiag);
         PyModule_AddObject(JPy_Module, "diag", pyDiag);
+    }
+
+    if (PyType_Ready(&VerboseExceptions_Type) < 0) {
+        JPY_RETURN(NULL);
+    }
+    {
+        PyObject* pyVerboseExceptions = VerboseExceptions_New();
+        Py_INCREF(pyVerboseExceptions);
+        PyModule_AddObject(JPy_Module, "VerboseExceptions", pyVerboseExceptions);
     }
 
     /////////////////////////////////////////////////////////////////////////
@@ -795,6 +816,8 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     DEFINE_CLASS(JPy_Void_JClass, "java/lang/Void");
 
     DEFINE_CLASS(JPy_String_JClass, "java/lang/String");
+    DEFINE_CLASS(JPy_Throwable_JClass, "java/lang/Throwable");
+    DEFINE_CLASS(JPy_StackTraceElement_JClass, "java/lang/StackTraceElement");
 
     // Non-Object types: Primitive types and void.
     DEFINE_NON_OBJECT_TYPE(JPy_JBoolean, JPy_Boolean_JClass);
@@ -821,6 +844,10 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     DEFINE_OBJECT_TYPE(JPy_JDoubleObj, JPy_Double_JClass);
     // Other objects.
     DEFINE_OBJECT_TYPE(JPy_JString, JPy_String_JClass);
+    DEFINE_OBJECT_TYPE(JPy_JThrowable, JPy_Throwable_JClass);
+    DEFINE_OBJECT_TYPE(JPy_JStackTraceElement, JPy_StackTraceElement_JClass);
+    DEFINE_METHOD(JPy_Throwable_getCause_MID, JPy_Throwable_JClass, "getCause", "()Ljava/lang/Throwable;");
+    DEFINE_METHOD(JPy_Throwable_getStackTrace_MID, JPy_Throwable_JClass, "getStackTrace", "()[Ljava/lang/StackTraceElement;");
 
     // JType_AddClassAttribute is actually called from within JType_GetType(), but not for
     // JPy_JObject and JPy_JClass for an obvious reason. So we do it now:
@@ -954,31 +981,141 @@ void JPy_ClearGlobalVars(JNIEnv* jenv)
     JPy_JPyModule = NULL;
 }
 
+#define AT_STRING "\t at "
+#define AT_STRLEN 5
+#define CAUSED_BY_STRING "caused by "
+#define CAUSED_BY_STRLEN 10
+
 
 void JPy_HandleJavaException(JNIEnv* jenv)
 {
     jthrowable error = (*jenv)->ExceptionOccurred(jenv);
     if (error != NULL) {
         jstring message;
+        int allocError = 0;
 
         if (JPy_DiagFlags != 0) {
             (*jenv)->ExceptionDescribe(jenv);
         }
 
-        message = (jstring) (*jenv)->CallObjectMethod(jenv, error, JPy_Object_ToString_MID);
-        if (message != NULL) {
-            const char* messageChars;
+        if (JPy_VerboseExceptions) {
+            char *stackTraceString;
+            int stackTraceLength = 0;
 
-            messageChars = (*jenv)->GetStringUTFChars(jenv, message, NULL);
-            if (messageChars != NULL) {
-                PyErr_Format(PyExc_RuntimeError, "%s", messageChars);
-                (*jenv)->ReleaseStringUTFChars(jenv, message, messageChars);
+            stackTraceString = strdup("");
+
+            jthrowable cause = error;
+            do {
+                /* We want the type and the detail string, which is actually what a Throwable toString() does by
+                 * default, as does the default printStackTrace(). */
+
+                if (stackTraceLength > 0) {
+                    char *newStackString;
+
+                    newStackString = realloc(stackTraceString, CAUSED_BY_STRLEN + 1 + stackTraceLength);
+                    if (newStackString == NULL) {
+                        allocError = 1;
+                        break;
+                    }
+                    stackTraceString = newStackString;
+                    strcat(stackTraceString, CAUSED_BY_STRING);
+                    stackTraceLength += CAUSED_BY_STRLEN;
+                }
+
+                message = (jstring) (*jenv)->CallObjectMethod(jenv, cause, JPy_Object_ToString_MID);
+                if (message != NULL) {
+                    const char *messageChars = (*jenv)->GetStringUTFChars(jenv, message, NULL);
+                    if (messageChars != NULL) {
+                        char *newStackString;
+                        size_t len = strlen(messageChars);
+
+                        newStackString = realloc(stackTraceString, len + 2 + stackTraceLength);
+                        if (newStackString == NULL) {
+                            (*jenv)->ReleaseStringUTFChars(jenv, message, messageChars);
+                            allocError = 1;
+                            break;
+                        }
+
+                        stackTraceString = newStackString;
+                        strcat(stackTraceString, messageChars);
+                        stackTraceString[stackTraceLength + len] = '\n';
+                        stackTraceString[stackTraceLength + len + 1] = '\0';
+                        stackTraceLength += (len + 1);
+
+                        (*jenv)->ReleaseStringUTFChars(jenv, message, messageChars);
+                    } else {
+                        allocError = 1;
+                        break;
+                    }
+                    (*jenv)->DeleteLocalRef(jenv, message);
+                }
+
+                /* We should assemble a string based on the stack trace. */
+                jarray stackTrace = (*jenv)->CallObjectMethod(jenv, cause, JPy_Throwable_getStackTrace_MID);
+
+                jint stackTraceElements = (*jenv)->GetArrayLength(jenv, stackTrace);
+                for (jint ii = 0; ii < stackTraceElements; ++ii) {
+                    jobject traceElement = (*jenv)->GetObjectArrayElement(jenv, stackTrace, ii);
+                    if (traceElement != NULL) {
+                        message = (jstring) (*jenv)->CallObjectMethod(jenv, traceElement, JPy_Object_ToString_MID);
+                        if (message != NULL) {
+                            const char *messageChars = (*jenv)->GetStringUTFChars(jenv, message, NULL);
+                            if (messageChars == NULL) {
+                                (*jenv)->ReleaseStringUTFChars(jenv, message, messageChars);
+                                allocError = 1;
+                                break;
+                            }
+
+                            size_t len = strlen(messageChars);
+
+                            char *newStackString = realloc(stackTraceString, len + 2 + AT_STRLEN + stackTraceLength);
+                            if (newStackString == NULL) {
+                                allocError = 1;
+                                break;
+                            }
+
+                            stackTraceString = newStackString;
+                            strcat(stackTraceString, AT_STRING);
+                            strcat(stackTraceString, messageChars);
+                            stackTraceString[stackTraceLength + len + AT_STRLEN] = '\n';
+                            stackTraceString[stackTraceLength + len + AT_STRLEN + 1] = '\0';
+                            stackTraceLength += (len + 1 + AT_STRLEN);
+
+                            (*jenv)->ReleaseStringUTFChars(jenv, message, messageChars);
+                        }
+
+                    }
+                }
+                (*jenv)->DeleteLocalRef(jenv, stackTrace);
+
+                /** Now the next cause. */
+                cause = (*jenv)->CallObjectMethod(jenv, cause, JPy_Throwable_getCause_MID);
+            } while (cause != NULL && !allocError);
+
+            if (allocError == 0 && stackTraceString != NULL) {
+                PyErr_Format(PyExc_RuntimeError, "%s", stackTraceString);
             } else {
-                PyErr_SetString(PyExc_RuntimeError, "Java VM exception occurred, but failed to allocate message text");
+                PyErr_SetString(PyExc_RuntimeError,
+                                "Java VM exception occurred, but failed to allocate message text");
             }
-            (*jenv)->DeleteLocalRef(jenv, message);
+            free(stackTraceString);
         } else {
-            PyErr_SetString(PyExc_RuntimeError, "Java VM exception occurred, no message");
+            message = (jstring) (*jenv)->CallObjectMethod(jenv, error, JPy_Object_ToString_MID);
+            if (message != NULL) {
+                const char *messageChars;
+
+                messageChars = (*jenv)->GetStringUTFChars(jenv, message, NULL);
+                if (messageChars != NULL) {
+                    PyErr_Format(PyExc_RuntimeError, "%s", messageChars);
+                    (*jenv)->ReleaseStringUTFChars(jenv, message, messageChars);
+                } else {
+                    PyErr_SetString(PyExc_RuntimeError,
+                                    "Java VM exception occurred, but failed to allocate message text");
+                }
+                (*jenv)->DeleteLocalRef(jenv, message);
+            } else {
+                PyErr_SetString(PyExc_RuntimeError, "Java VM exception occurred, no message");
+            }
         }
 
         (*jenv)->DeleteLocalRef(jenv, error);

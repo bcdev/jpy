@@ -2,10 +2,8 @@ import unittest
 
 import jpyutil
 
-
 jpyutil.init_jvm(jvm_maxmem='512M', jvm_classpath=['target/test-classes'])
 import jpy
-
 
 class TestExceptions(unittest.TestCase):
     def setUp(self):
@@ -52,6 +50,24 @@ class TestExceptions(unittest.TestCase):
         with  self.assertRaises(RuntimeError, msg='Java IOException expected') as e:
             fixture.throwIoeIfMessageIsNotNull("Evil!")
         self.assertEqual(str(e.exception), 'java.io.IOException: Evil!')
+
+    def test_VerboseException(self):
+        fixture = self.Fixture()
+
+	jpy.VerboseExceptions.enabled = True
+
+        self.assertEqual(fixture.throwNpeIfArgIsNull("123456"), 6)
+
+        with self.assertRaises(RuntimeError) as e:
+            fixture.throwNpeIfArgIsNullNested(None)
+	if False:
+        	self.assertRegexpMatches(str(e.exception), """java.lang.RuntimeException: Nested exception
+	 at org.jpy.fixtures.ExceptionTestFixture.throwNpeIfArgIsNullNested(ExceptionTestFixture.java:40)
+caused by java.lang.NullPointerException
+	 at org.jpy.fixtures.ExceptionTestFixture.throwNpeIfArgIsNull(ExceptionTestFixture.java:29)
+	 at org.jpy.fixtures.ExceptionTestFixture.throwNpeIfArgIsNullNested(ExceptionTestFixture.java:38)\n""")
+
+	jpy.VerboseExceptions.enabled = False
 
 
 if __name__ == '__main__':

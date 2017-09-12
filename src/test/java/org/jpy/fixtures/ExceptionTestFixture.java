@@ -29,6 +29,18 @@ public class ExceptionTestFixture {
         return arg.length();
     }
 
+    public int throwNpeIfArgIsNull2(String arg) {
+        return throwNpeIfArgIsNull(arg);
+    }
+
+    public int throwNpeIfArgIsNullNested(String arg) {
+	try {
+        	return throwNpeIfArgIsNull(arg);
+	} catch (Exception e) {
+		throw new RuntimeException("Nested exception", e);
+	}
+    }
+
     public int throwAioobeIfIndexIsNotZero(int index) {
         int[] ints = new int[]{101};
         return ints[index];
