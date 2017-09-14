@@ -66,7 +66,7 @@ public class PyObjectTest {
     public void testToString() throws Exception {
         long pointer = PyLib.importModule("sys");
         PyObject pyObject = new PyObject(pointer);
-        assertEquals("PyObject(pointer=0x" + Long.toHexString(pointer) + ")", pyObject.toString());
+        assertEquals("<module 'sys' (built-in)>", pyObject.toString());
     }
 
     @Test

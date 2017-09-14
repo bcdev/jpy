@@ -1519,7 +1519,8 @@ int JType_MatchVarArgPyArgAsJObjectParam(JNIEnv* jenv, JPy_ParamDescriptor* para
     PyObject *varArgs = PyTuple_GetSlice(pyArg, idx, argCount);
 
     int minMatch = 100;
-    for (int ii = 0; ii < remaining; ii++) {
+    int ii;
+    for (ii = 0; ii < remaining; ii++) {
         PyObject *unpack = PyTuple_GetItem(varArgs, ii);
         int matchValue = JType_MatchPyArgAsJObject(jenv, componentType, unpack);
         if (matchValue == 0) {
@@ -1547,7 +1548,8 @@ int JType_MatchVarArgPyArgAsJStringParam(JNIEnv* jenv, JPy_ParamDescriptor* para
     PyObject *varArgs = PyTuple_GetSlice(pyArg, idx, argCount);
 
     int minMatch = 100;
-    for (int ii = 0; ii < remaining; ii++) {
+    int ii;
+    for (ii = 0; ii < remaining; ii++) {
         PyObject *unpack = PyTuple_GetItem(varArgs, ii);
         int matchValue = JType_MatchPyArgAsJStringParam(jenv, paramDescriptor, unpack);
         if (matchValue == 0) {
@@ -1576,7 +1578,8 @@ int JType_MatchVarArgPyArgAsJBooleanParam(JNIEnv *jenv, JPy_ParamDescriptor *par
     PyObject *varArgs = PyTuple_GetSlice(pyArg, idx, argCount);
 
     int minMatch = 100;
-    for (int ii = 0; ii < remaining; ii++) {
+    int ii;
+    for (ii = 0; ii < remaining; ii++) {
         PyObject *unpack = PyTuple_GetItem(varArgs, ii);
 
         int matchValue;
@@ -1632,7 +1635,8 @@ int JType_MatchVarArgPyArgIntType(const JPy_ParamDescriptor *paramDescriptor, Py
     PyObject *varArgs = PyTuple_GetSlice(pyArg, idx, argCount);
 
     int minMatch = 100;
-    for (int ii = 0; ii < remaining; ii++) {
+    int ii;
+    for (ii = 0; ii < remaining; ii++) {
         PyObject *unpack = PyTuple_GetItem(varArgs, ii);
 
         int matchValue;
@@ -1676,7 +1680,8 @@ int JType_MatchVarArgPyArgAsFPType(const JPy_ParamDescriptor *paramDescriptor, P
     PyObject *varArgs = PyTuple_GetSlice(pyArg, idx, argCount);
 
     int minMatch = 100;
-    for (int ii = 0; ii < remaining; ii++) {
+    int ii;
+    for (ii = 0; ii < remaining; ii++) {
         PyObject *unpack = PyTuple_GetItem(varArgs, ii);
 
         int matchValue;

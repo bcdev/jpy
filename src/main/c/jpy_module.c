@@ -1012,6 +1012,7 @@ void JPy_HandleJavaException(JNIEnv* jenv)
             do {
                 /* We want the type and the detail string, which is actually what a Throwable toString() does by
                  * default, as does the default printStackTrace(). */
+                jint ii;
 
                 if (stackTraceLength > 0) {
                     char *newStackString;
@@ -1075,7 +1076,7 @@ void JPy_HandleJavaException(JNIEnv* jenv)
                     enclosingIndex--;
                 }
 
-                for (jint ii = 0; ii <= lastElementToPrint; ++ii) {
+                for (ii = 0; ii <= lastElementToPrint; ++ii) {
                     jobject traceElement = (*jenv)->GetObjectArrayElement(jenv, stackTrace, ii);
                     if (traceElement != NULL) {
                         message = (jstring) (*jenv)->CallObjectMethod(jenv, traceElement, JPy_Object_ToString_MID);
