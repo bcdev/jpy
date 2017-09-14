@@ -55,6 +55,9 @@ JNIEXPORT jint JNICALL Java_org_jpy_PyLib_execScript
 JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeCode
   (JNIEnv *, jclass, jstring, jint, jobject, jobject);
 
+JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeScript
+  (JNIEnv *, jclass, jstring, jint, jobject, jobject);
+
 /*
  * Class:     org_jpy_PyLib
  * Method:    incRef
@@ -79,6 +82,8 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_decRef
 JNIEXPORT jint JNICALL Java_org_jpy_PyLib_getIntValue
   (JNIEnv *, jclass, jlong);
 
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_getBooleanValue
+        (JNIEnv* jenv, jclass jLibClass, jlong objId);
 /*
  * Class:     org_jpy_PyLib
  * Method:    getDoubleValue
@@ -101,6 +106,41 @@ JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_getStringValue
  * Signature: (J)Ljava/lang/Object;
  */
 JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_getObjectValue
+  (JNIEnv *, jclass, jlong);
+
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_isConvertible
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    getObjectValue
+ * Signature: (J)J
+ */
+JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_getType
+  (JNIEnv *, jclass, jlong);
+
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyDictCheck(JNIEnv *, jclass, jlong);
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyListCheck(JNIEnv *, jclass, jlong);
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyBoolCheck(JNIEnv *, jclass, jlong);
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyIntCheck(JNIEnv *, jclass, jlong);
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyLongCheck(JNIEnv *, jclass, jlong);
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyFloatCheck(JNIEnv *, jclass, jlong);
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyCallableCheck(JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    getObjectValue
+ * Signature: (J)Ljava/lang/Object;
+ */
+JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_str
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    getObjectValue
+ * Signature: (J)Ljava/lang/Object;
+ */
+JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_repr
   (JNIEnv *, jclass, jlong);
 
 /*

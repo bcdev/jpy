@@ -390,7 +390,7 @@ JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeCode
             jStart == JPy_IM_SCRIPT ? Py_file_input :
             Py_eval_input;
 
-    pyReturnValue = PyRun_String(codeChars, start, pyGlobals, pyLocals);
+    pyReturnValue = PyRun_String(codeChars, start, pyGlobals, pyGlobals);
     if (pyReturnValue == NULL) {
         PyLib_HandlePythonException(jenv);
         goto error;
@@ -405,6 +405,90 @@ JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeCode
 error:
     if (codeChars != NULL) {
         (*jenv)->ReleaseStringUTFChars(jenv, jCode, codeChars);
+    }
+
+    Py_XDECREF(pyLocals);
+
+    JPy_END_GIL_STATE
+
+    return (jlong) pyReturnValue;
+}
+
+JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeScript
+  (JNIEnv* jenv, jclass jLibClass, jstring jFile, jint jStart, jobject jGlobals, jobject jLocals)
+{
+    FILE *fp;
+    const char* fileChars;
+    PyObject* pyReturnValue;
+    PyObject* pyGlobals;
+    PyObject* pyLocals;
+    PyObject* pyMainModule;
+    int start;
+
+    JPy_BEGIN_GIL_STATE
+
+    fp = NULL;
+    pyGlobals = NULL;
+    pyLocals = NULL;
+    pyReturnValue = NULL;
+    pyMainModule = NULL;
+    fileChars = NULL;
+
+    pyMainModule = PyImport_AddModule("__main__"); // borrowed ref
+    if (pyMainModule == NULL) {
+        PyLib_HandlePythonException(jenv);
+        goto error;
+    }
+
+    fileChars = (*jenv)->GetStringUTFChars(jenv, jFile, NULL);
+    if (fileChars == NULL) {
+        // todo: Throw out-of-memory error
+        goto error;
+    }
+
+    fp = fopen(fileChars, "r");
+    if (!fp) {
+        goto error;
+    }
+
+    pyGlobals = PyModule_GetDict(pyMainModule); // borrowed ref
+    if (pyGlobals == NULL) {
+        PyLib_HandlePythonException(jenv);
+        goto error;
+    }
+
+    pyLocals = PyDict_New(); // new ref
+    if (pyLocals == NULL) {
+        PyLib_HandlePythonException(jenv);
+        goto error;
+    }
+
+    // todo for https://github.com/bcdev/jpy/issues/53
+    // - copy jGlobals into pyGlobals (convert Java --> Python values)
+    // - copy jLocals into pyLocals (convert Java --> Python values)
+
+    start = jStart == JPy_IM_STATEMENT ? Py_single_input :
+            jStart == JPy_IM_SCRIPT ? Py_file_input :
+            Py_eval_input;
+
+    pyReturnValue = PyRun_File(fp, fileChars, start, pyGlobals, pyGlobals);
+    if (pyReturnValue == NULL) {
+        PyLib_HandlePythonException(jenv);
+        goto error;
+    }
+
+    // todo for https://github.com/bcdev/jpy/issues/53
+    // - copy pyGlobals into jGlobals (convert Python --> Java values)
+    // - copy pyLocals into jLocals (convert Python --> Java values)
+    //dumpDict("pyGlobals", pyGlobals);
+    //dumpDict("pyLocals", pyLocals);
+
+error:
+    if (fileChars != NULL) {
+        (*jenv)->ReleaseStringUTFChars(jenv, jFile, fileChars);
+    }
+    if (fp != NULL) {
+        fclose(fp);
     }
 
     Py_XDECREF(pyLocals);
@@ -494,6 +578,31 @@ JNIEXPORT jint JNICALL Java_org_jpy_PyLib_getIntValue
 
 /*
  * Class:     org_jpy_python_PyLib
+ * Method:    getIntValue
+ * Signature: (J)I
+ */
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_getBooleanValue
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    PyObject* pyObject;
+    jboolean value;
+
+    JPy_BEGIN_GIL_STATE
+
+    pyObject = (PyObject*) objId;
+    if (PyBool_Check(pyObject)) {
+        value = (pyObject == Py_True) ? JNI_TRUE : JNI_FALSE;
+    } else {
+        value = JNI_FALSE;
+    }
+
+    JPy_END_GIL_STATE
+
+    return value;
+}
+
+/*
+ * Class:     org_jpy_python_PyLib
  * Method:    getDoubleValue
  * Signature: (J)D
  */
@@ -563,6 +672,267 @@ JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_getObjectValue
             PyLib_HandlePythonException(jenv);
         }
     }
+
+    JPy_END_GIL_STATE
+
+    return jObject;
+}
+
+/*
+ * Class:     org_jpy_python_PyLib
+ * Method:    getObjectValue
+ * Signature: (J)Ljava/lang/Object;
+ */
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_isConvertible
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    PyObject* pyObject;
+    jboolean result;
+
+    JPy_BEGIN_GIL_STATE
+
+    pyObject = (PyObject*) objId;
+
+    result = pyObject == Py_None || JObj_Check(pyObject) || PyBool_Check(pyObject) ||
+                 JPy_IS_CLONG(pyObject) || PyFloat_Check(pyObject) || JPy_IS_STR(pyObject) ? JNI_TRUE : JNI_FALSE;
+
+
+    JPy_END_GIL_STATE
+
+    return result;
+}
+
+/*
+ * Class:     org_jpy_python_PyLib
+ * Method:    getType
+ * Signature: (J)Lorg/jpy/PyObject;
+ */
+JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_getType
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    PyObject* pyObject;
+
+    JPy_BEGIN_GIL_STATE
+
+    pyObject = ((PyObject*) objId)->ob_type;
+
+    JPy_END_GIL_STATE
+
+    return (jlong)pyObject;
+}
+
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyDictCheck
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    jboolean result;
+
+    JPy_BEGIN_GIL_STATE
+
+    if (PyDict_Check(((PyObject*) objId))) {
+        result = JNI_TRUE;
+    } else {
+        result = JNI_FALSE;
+    }
+
+    JPy_END_GIL_STATE
+
+    return result;
+}
+
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyListCheck
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    jboolean result;
+
+    JPy_BEGIN_GIL_STATE
+
+    if (PyList_Check(((PyObject*) objId))) {
+        result = JNI_TRUE;
+    } else {
+        result = JNI_FALSE;
+    }
+
+    JPy_END_GIL_STATE
+
+    return result;
+}
+
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyBoolCheck
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    jboolean result;
+
+    JPy_BEGIN_GIL_STATE
+
+    if (PyBool_Check(((PyObject*) objId))) {
+        result = JNI_TRUE;
+    } else {
+        result = JNI_FALSE;
+    }
+
+    JPy_END_GIL_STATE
+
+    return result;
+}
+
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyNoneCheck
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    jboolean result;
+
+    JPy_BEGIN_GIL_STATE
+
+    if (Py_None == (((PyObject*) objId))) {
+        result = JNI_TRUE;
+    } else {
+        result = JNI_FALSE;
+    }
+
+    JPy_END_GIL_STATE
+
+    return result;
+}
+
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyIntCheck
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    jboolean result;
+
+    JPy_BEGIN_GIL_STATE
+
+    if (PyInt_Check(((PyObject*) objId))) {
+        result = JNI_TRUE;
+    } else {
+        result = JNI_FALSE;
+    }
+
+    JPy_END_GIL_STATE
+
+    return result;
+}
+
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyLongCheck
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    jboolean result;
+
+    JPy_BEGIN_GIL_STATE
+
+    if (PyLong_Check(((PyObject*) objId))) {
+        result = JNI_TRUE;
+    } else {
+        result = JNI_FALSE;
+    }
+
+    JPy_END_GIL_STATE
+
+    return result;
+}
+
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyFloatCheck
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    jboolean result;
+
+    JPy_BEGIN_GIL_STATE
+
+    if (PyFloat_Check(((PyObject*) objId))) {
+        result = JNI_TRUE;
+    } else {
+        result = JNI_FALSE;
+    }
+
+    JPy_END_GIL_STATE
+
+    return result;
+}
+
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyStringCheck
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    jboolean result;
+
+    JPy_BEGIN_GIL_STATE
+
+    if (PyString_Check(((PyObject*) objId))) {
+        result = JNI_TRUE;
+    } else {
+        result = JNI_FALSE;
+    }
+
+    JPy_END_GIL_STATE
+
+    return result;
+}
+
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyCallableCheck
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    jboolean result;
+
+    JPy_BEGIN_GIL_STATE
+
+    if (PyCallable_Check(((PyObject*) objId))) {
+        result = JNI_TRUE;
+    } else {
+        result = JNI_FALSE;
+    }
+
+    JPy_END_GIL_STATE
+
+    return result;
+}
+
+/*
+ * Class:     org_jpy_python_PyLib
+ * Method:    getType
+ * Signature: (J)Lorg/jpy/PyObject;
+ */
+JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_str
+  (JNIEnv* jenv, jclass jLibClass, jlong objId) {
+    PyObject *pyObject;
+    jobject jObject;
+
+    JPy_BEGIN_GIL_STATE
+
+    pyObject = (PyObject *) objId;
+
+    PyObject *pyStr = PyObject_Str(pyObject);
+    if (pyStr) {
+        jObject = (*jenv)->NewStringUTF(jenv, PyString_AS_STRING(pyStr));
+        Py_DECREF(pyStr);
+    } else {
+        jObject = NULL;
+    }
+
+
+    JPy_END_GIL_STATE
+
+    return jObject;
+}
+
+/*
+ * Class:     org_jpy_python_PyLib
+ * Method:    getType
+ * Signature: (J)Lorg/jpy/PyObject;
+ */
+JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_repr
+  (JNIEnv* jenv, jclass jLibClass, jlong objId) {
+    PyObject *pyObject;
+    jobject jObject;
+
+    JPy_BEGIN_GIL_STATE
+
+    pyObject = (PyObject *) objId;
+
+    PyObject *pyStr = PyObject_Repr(pyObject);
+    if (pyStr) {
+        jObject = (*jenv)->NewStringUTF(jenv, PyString_AS_STRING(pyStr));
+        Py_DECREF(pyStr);
+    } else {
+        jObject = NULL;
+    }
+
 
     JPy_END_GIL_STATE
 
@@ -769,6 +1139,64 @@ error:
     (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
 
     JPy_END_GIL_STATE
+}
+
+/*
+ * Class:     org_jpy_python_PyLib
+ * Method:    setAttributeValue
+ * Signature: (JLjava/lang/String;J)V
+ */
+JNIEXPORT void JNICALL Java_org_jpy_PyLib_delAttribute
+  (JNIEnv* jenv, jclass jLibClass, jlong objId, jstring jName)
+{
+    PyObject* pyObject;
+    const char* nameChars;
+
+    JPy_BEGIN_GIL_STATE
+
+    pyObject = (PyObject*) objId;
+
+    nameChars = (*jenv)->GetStringUTFChars(jenv, jName, NULL);
+    JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_delAttribute: objId=%p, name='%s'\n", pyObject, nameChars);
+
+    if (PyObject_DelAttrString(pyObject, nameChars) < 0) {
+        JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_delAttribute: error: PyObject_DelAttrString failed on attribute '%s'\n", nameChars);
+        PyLib_HandlePythonException(jenv);
+        goto error;
+    }
+
+error:
+    (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
+
+    JPy_END_GIL_STATE
+}
+
+/*
+ * Class:     org_jpy_python_PyLib
+ * Method:    setAttributeValue
+ * Signature: (JLjava/lang/String;J)V
+ */
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_hasAttribute
+  (JNIEnv* jenv, jclass jLibClass, jlong objId, jstring jName)
+{
+    PyObject* pyObject;
+    const char* nameChars;
+    jboolean result;
+
+    JPy_BEGIN_GIL_STATE
+
+    pyObject = (PyObject*) objId;
+
+    nameChars = (*jenv)->GetStringUTFChars(jenv, jName, NULL);
+    JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_delAttribute: objId=%p, name='%s'\n", pyObject, nameChars);
+
+    result = PyObject_HasAttrString(pyObject, nameChars) ? JNI_TRUE : JNI_FALSE;
+
+    (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
+
+    JPy_END_GIL_STATE
+
+    return result;
 }
 
 

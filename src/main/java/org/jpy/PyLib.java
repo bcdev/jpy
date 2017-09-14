@@ -234,17 +234,38 @@ public class PyLib {
 
     static native long executeCode(String code, int start, Map<String, Object> globals, Map<String, Object> locals);
 
+    static native long executeScript
+            (String file, int start, Map<String, Object> globals, Map<String, Object> locals);
+
     static native void incRef(long pointer);
 
     static native void decRef(long pointer);
 
     static native int getIntValue(long pointer);
 
+    static native boolean getBooleanValue(long pointer);
+
     static native double getDoubleValue(long pointer);
 
     static native String getStringValue(long pointer);
 
     static native Object getObjectValue(long pointer);
+
+    static native boolean isConvertible(long pointer);
+    static native boolean pyNoneCheck(long pointer);
+    static native boolean pyDictCheck(long pointer);
+    static native boolean pyListCheck(long pointer);
+    static native boolean pyBoolCheck(long pointer);
+    static native boolean pyIntCheck(long pointer);
+    static native boolean pyLongCheck(long pointer);
+    static native boolean pyFloatCheck(long pointer);
+    static native boolean pyCallableCheck(long pointer);
+
+    static native long getType(long pointer);
+
+    static native String str(long pointer);
+
+    static native String repr(long pointer);
 
     static native <T> T[] getObjectArrayValue(long pointer, Class<? extends T> itemType);
 
@@ -283,6 +304,9 @@ public class PyLib {
      * @param valueType Optional type for converting the value to a Python object.
      */
     static native <T> void setAttributeValue(long pointer, String name, T value, Class<? extends T> valueType);
+
+    static native void delAttribute(long pointer, String name);
+    static native boolean hasAttribute(long pointer, String name);
 
     /**
      * Calls a Python callable and returns the resulting Python object.
