@@ -339,7 +339,14 @@ void dumpDict(const char* dictName, PyObject* dict)
     }
 }
 
-
+/*
+ * Calls PyRun_String under the covers to execute a python script using the __main__ globals.
+ *
+ * jStart must be JPy_IM_STATEMENT, JPy_IM_SCRIPT, JPy_IM_EXPRESSION; matching what you are trying to
+ * run.  If you use a statement or expression instead of a script; some of your code may be ignored.
+ *
+ * The jGLobals and jLocals parameters are ignored.
+ */
 JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeCode
   (JNIEnv* jenv, jclass jLibClass, jstring jCode, jint jStart, jobject jGlobals, jobject jLocals)
 {
@@ -390,6 +397,8 @@ JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeCode
             jStart == JPy_IM_SCRIPT ? Py_file_input :
             Py_eval_input;
 
+    // by using the pyGlobals for the locals variable, we are able to execute Python code and
+    // retrieve values afterwards
     pyReturnValue = PyRun_String(codeChars, start, pyGlobals, pyGlobals);
     if (pyReturnValue == NULL) {
         PyLib_HandlePythonException(jenv);
@@ -414,6 +423,15 @@ error:
     return (jlong) pyReturnValue;
 }
 
+/**
+ * Calls PyRun_File under the covers to execute a python script using the __main__ globals.
+ *
+ * jStart must be JPy_IM_STATEMENT, JPy_IM_SCRIPT, JPy_IM_EXPRESSION; matching what you are trying to
+ * run.  If you use a statement or expression instead of a script; some of your code may be ignored.
+ *
+ * The jGLobals and jLocals parameters are ignored.
+ *
+ */
 JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeScript
   (JNIEnv* jenv, jclass jLibClass, jstring jFile, jint jStart, jobject jGlobals, jobject jLocals)
 {
@@ -578,8 +596,12 @@ JNIEXPORT jint JNICALL Java_org_jpy_PyLib_getIntValue
 
 /*
  * Class:     org_jpy_python_PyLib
- * Method:    getIntValue
+ * Method:    getBooleanValue
  * Signature: (J)I
+ *
+ * Used to convert a python object into it's corresponding boolean.  If the PyObject is not a boolean;
+ * then return false.
+ *
  */
 JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_getBooleanValue
   (JNIEnv* jenv, jclass jLibClass, jlong objId)
@@ -679,9 +701,10 @@ JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_getObjectValue
 }
 
 /*
- * Class:     org_jpy_python_PyLib
- * Method:    getObjectValue
- * Signature: (J)Ljava/lang/Object;
+ * Returns true if this object can be converted from a Python object into a Java object (or primitive);
+ * if this returns false, when you fetch an Object from Python it will be a PyObject wrapper.
+ *
+ * objId is a pointer to a PyObject.
  */
 JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_isConvertible
   (JNIEnv* jenv, jclass jLibClass, jlong objId)
@@ -706,6 +729,10 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_isConvertible
  * Class:     org_jpy_python_PyLib
  * Method:    getType
  * Signature: (J)Lorg/jpy/PyObject;
+ *
+ * Gets the Python type object of specified objId.
+ *
+ * objId is a pointer to a PyObject.
  */
 JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_getType
   (JNIEnv* jenv, jclass jLibClass, jlong objId)
@@ -721,6 +748,14 @@ JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_getType
     return (jlong)pyObject;
 }
 
+/**
+ * Evaluate PyDict_Check against a Python object.
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass the PyLib class object
+ * @param objId a pointer to a python object
+ * @return true if objId is a python dictionary
+ */
 JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyDictCheck
   (JNIEnv* jenv, jclass jLibClass, jlong objId)
 {
@@ -739,6 +774,14 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyDictCheck
     return result;
 }
 
+/**
+ * Evaluate PyDict_Check against a Python object.
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass the PyLib class object
+ * @param objId a pointer to a python object
+ * @return true if objId is a python list
+ */
 JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyListCheck
   (JNIEnv* jenv, jclass jLibClass, jlong objId)
 {
@@ -757,6 +800,14 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyListCheck
     return result;
 }
 
+/**
+ * Evaluate PyBool_Check against a Python object.
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass
+ * @param objId a pointer to a python object
+ * @return true if objId is a python boolean
+ */
 JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyBoolCheck
   (JNIEnv* jenv, jclass jLibClass, jlong objId)
 {
@@ -775,6 +826,14 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyBoolCheck
     return result;
 }
 
+/**
+ * Check equality against Py_None and a Python object.
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass
+ * @param objId a pointer to a python object
+ * @return true if objId is a None
+ */
 JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyNoneCheck
   (JNIEnv* jenv, jclass jLibClass, jlong objId)
 {
@@ -793,6 +852,14 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyNoneCheck
     return result;
 }
 
+/**
+ * Evaluate PyInt_Check against a Python object.
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass
+ * @param objId a pointer to a python object
+ * @return true if objId is a python int
+ */
 JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyIntCheck
   (JNIEnv* jenv, jclass jLibClass, jlong objId)
 {
@@ -811,6 +878,14 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyIntCheck
     return result;
 }
 
+/**
+ * Evaluate PyLong_Check against a Python object.
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass
+ * @param objId a pointer to a python object
+ * @return true if objId is a python long
+ */
 JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyLongCheck
   (JNIEnv* jenv, jclass jLibClass, jlong objId)
 {
@@ -829,6 +904,14 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyLongCheck
     return result;
 }
 
+/**
+ * Evaluate PyFloat_Check against a Python object.
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass
+ * @param objId a pointer to a python object
+ * @return true if objId is a python float
+ */
 JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyFloatCheck
   (JNIEnv* jenv, jclass jLibClass, jlong objId)
 {
@@ -847,6 +930,14 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyFloatCheck
     return result;
 }
 
+/**
+ * Evaluate PyString_Check against a Python object.
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass
+ * @param objId a pointer to a python object
+ * @return true if objId is a python String
+ */
 JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyStringCheck
   (JNIEnv* jenv, jclass jLibClass, jlong objId)
 {
@@ -865,6 +956,14 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyStringCheck
     return result;
 }
 
+/**
+ * Evaluate PyCallable_Check against a Python object.
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass
+ * @param objId a pointer to a python object
+ * @return true if objId is a python callable
+ */
 JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyCallableCheck
   (JNIEnv* jenv, jclass jLibClass, jlong objId)
 {
@@ -883,10 +982,13 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyCallableCheck
     return result;
 }
 
-/*
- * Class:     org_jpy_python_PyLib
- * Method:    getType
- * Signature: (J)Lorg/jpy/PyObject;
+/**
+ * Runs the str function on a Python object.
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass the class object for PyLib
+ * @param objId a pointer to a python object
+ * @return the Python toString of this object
  */
 JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_str
   (JNIEnv* jenv, jclass jLibClass, jlong objId) {
@@ -911,10 +1013,14 @@ JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_str
     return jObject;
 }
 
-/*
- * Class:     org_jpy_python_PyLib
- * Method:    getType
- * Signature: (J)Lorg/jpy/PyObject;
+
+/**
+ * Runs the repr function on a Python object.
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass the class object for PyLib
+ * @param objId a pointer to a python object
+ * @return the Python representation string of this object
  */
 JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_repr
   (JNIEnv* jenv, jclass jLibClass, jlong objId) {
@@ -1142,9 +1248,12 @@ error:
 }
 
 /*
- * Class:     org_jpy_python_PyLib
- * Method:    setAttributeValue
- * Signature: (JLjava/lang/String;J)V
+ * Deletes an attribute from an object.
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass the PyLib class object
+ * @param objId a pointer to a python object
+ * @param jName the java string naming the attribute to delete
  */
 JNIEXPORT void JNICALL Java_org_jpy_PyLib_delAttribute
   (JNIEnv* jenv, jclass jLibClass, jlong objId, jstring jName)
@@ -1172,10 +1281,16 @@ error:
 }
 
 /*
- * Class:     org_jpy_python_PyLib
- * Method:    setAttributeValue
- * Signature: (JLjava/lang/String;J)V
+ * Checks for an attribute's existence.
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass the PyLib class object
+ * @param objId a pointer to a python object
+ * @param jName the java string naming the attribute to delete
+ *
+ * @return true if the attribute exists on this object
  */
+
 JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_hasAttribute
   (JNIEnv* jenv, jclass jLibClass, jlong objId, jstring jName)
 {

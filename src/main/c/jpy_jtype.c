@@ -1660,7 +1660,7 @@ int JType_MatchVarArgPyArgAsJFloatParam(JNIEnv *jenv, JPy_ParamDescriptor *param
     return JType_MatchVarArgPyArgAsFPType(paramDescriptor, pyArg, idx, JPy_JFloat, 90);
 }
 
-/* The float and double match functions are almost didentical, but for the expected componentType and the match value
+/* The float and double match functions are almost identical, but for the expected componentType and the match value
  * for floating point numbers should give a preference to double over float. */
 int JType_MatchVarArgPyArgAsFPType(const JPy_ParamDescriptor *paramDescriptor, PyObject *pyArg, int idx,
                                    struct JPy_JType *expectedType, int floatMatch) {

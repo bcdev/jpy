@@ -209,7 +209,6 @@ jmethodID JPy_PyModule_Init_MID = NULL;
 
 // java.lang.Throwable
 jclass JPy_Throwable_JClass = NULL;
-jmethodID JPy_Throwable_getMessage_MID = NULL;
 jmethodID JPy_Throwable_getStackTrace_MID = NULL;
 jmethodID JPy_Throwable_getCause_MID = NULL;
 

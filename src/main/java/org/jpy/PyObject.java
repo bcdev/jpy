@@ -423,7 +423,7 @@ public class PyObject implements java.io.Serializable {
      */
     @Override
     public final String toString() {
-	return PyLib.str(pointer);
+	    return PyLib.str(pointer);
     }
 
     /**
@@ -433,7 +433,7 @@ public class PyObject implements java.io.Serializable {
      * @see #getPointer()
      */
     public final String repr() {
-	return PyLib.repr(pointer);
+	    return PyLib.repr(pointer);
     }
 
     /**

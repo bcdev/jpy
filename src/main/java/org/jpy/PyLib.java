@@ -305,7 +305,23 @@ public class PyLib {
      */
     static native <T> void setAttributeValue(long pointer, String name, T value, Class<? extends T> valueType);
 
+    /**
+     * Deletes the Python attribute given by {@code name} of the Python object pointed to by {@code pointer}.
+     * <p>
+     *
+     * @param pointer   Identifies the Python object which contains the attribute {@code name}.
+     * @param name      The attribute name.
+     */
     static native void delAttribute(long pointer, String name);
+
+    /**
+     * Checks for the existence the Python attribute given by {@code name} of the Python object pointed to by {@code pointer}.
+     * <p>
+     *
+     * @param pointer   Identifies the Python object which contains the attribute {@code name}.
+     * @param name      The attribute name.
+     * @return true if the Python object has an attribute named {@code name}
+     */
     static native boolean hasAttribute(long pointer, String name);
 
     /**

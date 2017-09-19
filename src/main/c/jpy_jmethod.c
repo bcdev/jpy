@@ -86,6 +86,9 @@ void JMethod_Del(JPy_JMethod* method)
  * Matches the give Python argument tuple against the Java method's formal parameters.
  * Returns the sum of the i-th argument against the i-th Java parameter.
  * The maximum match value returned is 100 * method->paramCount.
+ *
+ * The isVarArgsArray pointer is set to 1 if this is a varargs match for an object array
+ * argument.
  */
 int JMethod_MatchPyArgs(JNIEnv* jenv, JPy_JType* declaringClass, JPy_JMethod* method, int argCount, PyObject* pyArgs, int *isVarArgArray)
 {

@@ -37,7 +37,6 @@ PyObject* VerboseExceptions_getattro(PyObject* self, PyObject *attr_name)
 
 int VerboseExceptions_setattro(PyObject* self, PyObject *attr_name, PyObject *v)
 {
-    //printf("Diag_setattro: attr_name=%s\n", JPy_AS_UTF8(attr_name));
     if (strcmp(JPy_AS_UTF8(attr_name), "enabled") == 0) {
         if (PyBool_Check(v)) {
             JPy_VerboseExceptions =  v == Py_True;

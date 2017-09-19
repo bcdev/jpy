@@ -2,6 +2,10 @@ package org.jpy;
 
 import java.util.*;
 
+/**
+  * A simple wrapper around PyObjects that are actually Python dictionaries, to present the most useful parts of a
+  * Map interface.
+  */
 public class PyDictWrapper implements Map<PyObject, PyObject> {
     private PyObject pyObject;
 

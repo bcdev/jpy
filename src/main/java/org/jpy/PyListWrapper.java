@@ -2,6 +2,9 @@ package org.jpy;
 
 import java.util.*;
 
+/**
+ * A simple wrapper around a Python List object that implements a java List of PyObjects.
+ */
 class PyListWrapper implements List<PyObject> {
     private PyObject pyObject;
 
