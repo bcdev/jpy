@@ -2176,7 +2176,7 @@ void JType_DisposeWritableBufferArg(JNIEnv* jenv, jvalue* value, void* data)
     }
 }
 
-void JType_InitParamDescriptorFunctions(JPy_ParamDescriptor* paramDescriptor, jboolean lastVarArg)
+void JType_InitParamDescriptorFunctions(JPy_ParamDescriptor* paramDescriptor, jboolean isLastVarArg)
 {
     JPy_JType* paramType = paramDescriptor->type;
 
@@ -2217,7 +2217,7 @@ void JType_InitParamDescriptorFunctions(JPy_ParamDescriptor* paramDescriptor, jb
         paramDescriptor->MatchPyArg = JType_MatchPyArgAsJObjectParam;
         paramDescriptor->ConvertPyArg = JType_ConvertPyArgToJObjectArg;
     }
-    if (lastVarArg) {
+    if (isLastVarArg) {
         paramDescriptor->ConvertVarArgPyArg = JType_ConvertVarArgPyArgToJObjectArg;
 
         if (paramType->componentType == JPy_JBoolean) {
