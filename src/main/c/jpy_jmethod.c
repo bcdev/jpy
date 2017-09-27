@@ -877,12 +877,11 @@ JPy_JOverloadedMethod* JOverloadedMethod_New(JPy_JType* declaringClass, PyObject
 
 int JOverloadedMethod_AddMethod(JPy_JOverloadedMethod* overloadedMethod, JPy_JMethod* method)
 {
-    if (method->isVarArgs) {
-        return PyList_Append(overloadedMethod->methodList, (PyObject *) method);
-    } else {
+    Py_ssize_t destinationIndex = -1;
+
+    if (!method->isVarArgs) {
         // we need to insert this before the first varargs method
         Py_ssize_t size = PyList_Size(overloadedMethod->methodList);
-        Py_ssize_t destinationIndex = -1;
         for (Py_ssize_t ii = 0; ii < size; ii++) {
             PyObject *check = PyList_GetItem(overloadedMethod->methodList, ii);
             if (((JPy_JMethod *) check)->isVarArgs) {
@@ -891,12 +890,12 @@ int JOverloadedMethod_AddMethod(JPy_JOverloadedMethod* overloadedMethod, JPy_JMe
                 break;
             }
         }
+    }
 
-        if (destinationIndex >= 0) {
-            return PyList_Insert(overloadedMethod->methodList, destinationIndex, (PyObject *) method);
-        } else {
-            return PyList_Append(overloadedMethod->methodList, (PyObject *) method);
-        }
+    if (destinationIndex >= 0) {
+        return PyList_Insert(overloadedMethod->methodList, destinationIndex, (PyObject *) method);
+    } else {
+        return PyList_Append(overloadedMethod->methodList, (PyObject *) method);
     }
 }
 
