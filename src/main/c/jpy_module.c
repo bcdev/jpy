@@ -982,8 +982,8 @@ void JPy_ClearGlobalVars(JNIEnv* jenv)
     JPy_JPyModule = NULL;
 }
 
-#define AT_STRING "\t at "
-#define AT_STRLEN 5
+#define AT_STRING "\tat "
+#define AT_STRLEN 4
 #define CAUSED_BY_STRING "caused by "
 #define CAUSED_BY_STRLEN 10
 #define ELIDED_STRING_MAX_SIZE 30

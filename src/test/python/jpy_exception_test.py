@@ -56,16 +56,19 @@ class TestExceptions(unittest.TestCase):
 
 	jpy.VerboseExceptions.enabled = True
 
-        self.assertEqual(fixture.throwNpeIfArgIsNull("123456"), 6)
+	self.assertEqual(fixture.throwNpeIfArgIsNull("123456"), 6)
 
-        with self.assertRaises(RuntimeError) as e:
+	with self.assertRaises(RuntimeError) as e:
             fixture.throwNpeIfArgIsNullNested(None)
-	if False:
-        	self.assertRegexpMatches(str(e.exception), """java.lang.RuntimeException: Nested exception
-	 at org.jpy.fixtures.ExceptionTestFixture.throwNpeIfArgIsNullNested(ExceptionTestFixture.java:40)
-caused by java.lang.NullPointerException
-	 at org.jpy.fixtures.ExceptionTestFixture.throwNpeIfArgIsNull(ExceptionTestFixture.java:29)
-	 at org.jpy.fixtures.ExceptionTestFixture.throwNpeIfArgIsNullNested(ExceptionTestFixture.java:38)\n""")
+	actualMessage = str(e.exception)
+	expectedMessage = "java.lang.RuntimeException: Nested exception\n\tat org.jpy.fixtures.ExceptionTestFixture.throwNpeIfArgIsNullNested(ExceptionTestFixture.java:40)\ncaused by java.lang.NullPointerException\n\tat org.jpy.fixtures.ExceptionTestFixture.throwNpeIfArgIsNull(ExceptionTestFixture.java:29)\n\tat org.jpy.fixtures.ExceptionTestFixture.throwNpeIfArgIsNullNested(ExceptionTestFixture.java:38)\n"
+	self.assertEquals(actualMessage, expectedMessage)
+
+	with self.assertRaises(RuntimeError) as e:
+            fixture.throwNpeIfArgIsNullNested3(None)
+	actualMessage = str(e.exception)
+	expectedMessage = "java.lang.RuntimeException: Nested exception 3\n\tat org.jpy.fixtures.ExceptionTestFixture.throwNpeIfArgIsNullNested3(ExceptionTestFixture.java:52)\ncaused by java.lang.RuntimeException: Nested exception\n\tat org.jpy.fixtures.ExceptionTestFixture.throwNpeIfArgIsNullNested(ExceptionTestFixture.java:40)\n\tat org.jpy.fixtures.ExceptionTestFixture.throwNpeIfArgIsNullNested2(ExceptionTestFixture.java:45)\n\tat org.jpy.fixtures.ExceptionTestFixture.throwNpeIfArgIsNullNested3(ExceptionTestFixture.java:50)\ncaused by java.lang.NullPointerException\n\tat org.jpy.fixtures.ExceptionTestFixture.throwNpeIfArgIsNull(ExceptionTestFixture.java:29)\n\tat org.jpy.fixtures.ExceptionTestFixture.throwNpeIfArgIsNullNested(ExceptionTestFixture.java:38)\n\t... 2 more\n"
+	self.assertEquals(actualMessage, expectedMessage)
 
 	jpy.VerboseExceptions.enabled = False
 

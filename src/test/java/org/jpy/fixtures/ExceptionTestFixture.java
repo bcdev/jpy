@@ -34,11 +34,23 @@ public class ExceptionTestFixture {
     }
 
     public int throwNpeIfArgIsNullNested(String arg) {
-	try {
-        	return throwNpeIfArgIsNull(arg);
-	} catch (Exception e) {
-		throw new RuntimeException("Nested exception", e);
-	}
+        try {
+            return throwNpeIfArgIsNull(arg);
+	    } catch (Exception e) {
+    		throw new RuntimeException("Nested exception", e);
+	    }
+    }
+
+    public int throwNpeIfArgIsNullNested2(String arg) {
+        return throwNpeIfArgIsNullNested(arg);
+    }
+
+    public int throwNpeIfArgIsNullNested3(String arg) {
+        try {
+            return throwNpeIfArgIsNullNested2(arg);
+	    } catch (Exception e) {
+    		throw new RuntimeException("Nested exception 3", e);
+	    }
     }
 
     public int throwAioobeIfIndexIsNotZero(int index) {
