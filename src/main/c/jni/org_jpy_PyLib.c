@@ -348,7 +348,7 @@ void dumpDict(const char* dictName, PyObject* dict)
     }
 }
 
-/*
+/**
  * Calls PyRun_String under the covers to execute a python script using the __main__ globals.
  *
  * jStart must be JPy_IM_STATEMENT, JPy_IM_SCRIPT, JPy_IM_EXPRESSION; matching what you are trying to
@@ -617,14 +617,9 @@ JNIEXPORT jint JNICALL Java_org_jpy_PyLib_getIntValue
     return value;
 }
 
-/*
- * Class:     org_jpy_python_PyLib
- * Method:    getBooleanValue
- * Signature: (J)I
- *
+/**
  * Used to convert a python object into it's corresponding boolean.  If the PyObject is not a boolean;
  * then return false.
- *
  */
 JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_getBooleanValue
   (JNIEnv* jenv, jclass jLibClass, jlong objId)
@@ -723,7 +718,7 @@ JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_getObjectValue
     return jObject;
 }
 
-/*
+/**
  * Returns true if this object can be converted from a Python object into a Java object (or primitive);
  * if this returns false, when you fetch an Object from Python it will be a PyObject wrapper.
  *
@@ -748,11 +743,7 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_isConvertible
     return result;
 }
 
-/*
- * Class:     org_jpy_python_PyLib
- * Method:    getType
- * Signature: (J)Lorg/jpy/PyObject;
- *
+/**
  * Gets the Python type object of specified objId.
  *
  * objId is a pointer to a PyObject.
@@ -798,7 +789,7 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyDictCheck
 }
 
 /**
- * Evaluate PyDict_Check against a Python object.
+ * Evaluate PyList_Check against a Python object.
  *
  * @param jenv JNI environment.
  * @param jLibClass the PyLib class object
@@ -1284,7 +1275,7 @@ error:
     JPy_END_GIL_STATE
 }
 
-/*
+/**
  * Deletes an attribute from an object.
  *
  * @param jenv JNI environment.
@@ -1722,8 +1713,12 @@ void PyLib_HandlePythonException(JNIEnv* jenv)
     PyErr_Clear();
 }
 
+/**
+ * Throw an OutOfMemoryError.
+ * @param jenv the jni environment
+ */
 void PyLib_ThrowOOM(JNIEnv* jenv) {
-    (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, "Out of memory");
+    (*jenv)->ThrowNew(jenv, JPy_OutOfMemoryError_JClass, "Out of memory");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
