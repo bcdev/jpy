@@ -166,6 +166,7 @@ jmethodID JPy_Field_GetModifiers_MID = NULL;
 jmethodID JPy_Field_GetType_MID = NULL;
 
 jclass JPy_RuntimeException_JClass = NULL;
+jclass JPy_OutOfMemoryError_JClass = NULL;
 
 // java.lang.Boolean
 jclass JPy_Boolean_JClass = NULL;
@@ -780,6 +781,7 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     DEFINE_METHOD(JPy_Method_GetReturnType_MID, JPy_Method_JClass, "getReturnType", "()Ljava/lang/Class;");
 
     DEFINE_CLASS(JPy_RuntimeException_JClass, "java/lang/RuntimeException");
+    DEFINE_CLASS(JPy_OutOfMemoryError_JClass, "java/lang/OutOfMemoryError");
 
     DEFINE_CLASS(JPy_Boolean_JClass, "java/lang/Boolean");
     DEFINE_METHOD(JPy_Boolean_Init_MID, JPy_Boolean_JClass, "<init>", "(Z)V");

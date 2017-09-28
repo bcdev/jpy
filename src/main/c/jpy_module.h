@@ -152,6 +152,7 @@ extern jmethodID JPy_Field_GetModifiers_MID;
 extern jmethodID JPy_Field_GetType_MID;
 
 extern jclass JPy_RuntimeException_JClass;
+extern jclass JPy_OutOfMemoryError_JClass;
 
 extern jclass JPy_Boolean_JClass;
 extern jmethodID JPy_Boolean_Init_MID;

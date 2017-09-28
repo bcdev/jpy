@@ -32,6 +32,7 @@
 PyObject* PyLib_GetAttributeObject(JNIEnv* jenv, PyObject* pyValue, jstring jName);
 PyObject* PyLib_CallAndReturnObject(JNIEnv *jenv, PyObject* pyValue, jboolean isMethodCall, jstring jName, jint argCount, jobjectArray jArgs, jobjectArray jParamClasses);
 void PyLib_HandlePythonException(JNIEnv* jenv);
+void PyLib_ThrowOOM(JNIEnv* jenv);
 void PyLib_RedirectStdOut(void);
 
 static int JPy_InitThreads = 0;
@@ -291,18 +292,26 @@ JNIEXPORT jint JNICALL Java_org_jpy_PyLib_execScript
   (JNIEnv* jenv, jclass jLibClass, jstring jScript)
 {
     const char* scriptChars;
-    int retCode;
+    int retCode = -1;
 
     JPy_BEGIN_GIL_STATE
 
     scriptChars = (*jenv)->GetStringUTFChars(jenv, jScript, NULL);
+    if (scriptChars == NULL) {
+        PyLib_ThrowOOM(jenv);
+        goto error;
+    }
     JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_execScript: script='%s'\n", scriptChars);
     retCode = PyRun_SimpleString(scriptChars);
     if (retCode < 0) {
         JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_execScript: error: PyRun_SimpleString(\"%s\") returned %d\n", scriptChars, retCode);
         // Note that we cannot retrieve last Python exception after a calling PyRun_SimpleString, see documentation of PyRun_SimpleString.
     }
-    (*jenv)->ReleaseStringUTFChars(jenv, jScript, scriptChars);
+
+error:
+    if (scriptChars != NULL) {
+        (*jenv)->ReleaseStringUTFChars(jenv, jScript, scriptChars);
+    }
 
     JPy_END_GIL_STATE
 
@@ -373,7 +382,7 @@ JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeCode
 
     codeChars = (*jenv)->GetStringUTFChars(jenv, jCode, NULL);
     if (codeChars == NULL) {
-        // todo: Throw out-of-memory error
+        PyLib_ThrowOOM(jenv);
         goto error;
     }
 
@@ -466,7 +475,7 @@ JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeScript
 
     fileChars = (*jenv)->GetStringUTFChars(jenv, jFile, NULL);
     if (fileChars == NULL) {
-        // todo: Throw out-of-memory error
+        PyLib_ThrowOOM(jenv);
         goto error;
     }
 
@@ -1130,12 +1139,16 @@ JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_importModule
   (JNIEnv* jenv, jclass jLibClass, jstring jName)
 {
     PyObject* pyName;
-    PyObject* pyModule;
+    PyObject* pyModule = NULL;
     const char* nameChars;
 
     JPy_BEGIN_GIL_STATE
 
     nameChars = (*jenv)->GetStringUTFChars(jenv, jName, NULL);
+    if (nameChars == NULL) {
+        PyLib_ThrowOOM(jenv);
+        goto error;
+    }
     JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_importModule: name='%s'\n", nameChars);
     /* Note: pyName is a new reference */
     pyName = JPy_FROM_CSTR(nameChars);
@@ -1145,7 +1158,11 @@ JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_importModule
         PyLib_HandlePythonException(jenv);
     }
     Py_XDECREF(pyName);
-    (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
+
+error:
+    if (nameChars != NULL) {
+        (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
+    }
 
     JPy_END_GIL_STATE
 
@@ -1229,6 +1246,10 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_setAttributeValue
     pyObject = (PyObject*) objId;
 
     nameChars = (*jenv)->GetStringUTFChars(jenv, jName, NULL);
+    if (nameChars == NULL) {
+        PyLib_ThrowOOM(jenv);
+        goto error;
+    }
     JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_setAttributeValue: objId=%p, name='%s', jValue=%p, jValueClass=%p\n", pyObject, nameChars, jValue, jValueClass);
 
     if (jValueClass != NULL) {
@@ -1256,7 +1277,9 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_setAttributeValue
     }
 
 error:
-    (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
+    if (nameChars != NULL) {
+        (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
+    }
 
     JPy_END_GIL_STATE
 }
@@ -1280,6 +1303,10 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_delAttribute
     pyObject = (PyObject*) objId;
 
     nameChars = (*jenv)->GetStringUTFChars(jenv, jName, NULL);
+    if (nameChars == NULL) {
+        PyLib_ThrowOOM(jenv);
+        goto error;
+    }
     JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_delAttribute: objId=%p, name='%s'\n", pyObject, nameChars);
 
     if (PyObject_DelAttrString(pyObject, nameChars) < 0) {
@@ -1289,7 +1316,10 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_delAttribute
     }
 
 error:
-    (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
+    if (nameChars != NULL) {
+        (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
+    }
+
 
     JPy_END_GIL_STATE
 }
@@ -1310,18 +1340,25 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_hasAttribute
 {
     PyObject* pyObject;
     const char* nameChars;
-    jboolean result;
+    jboolean result = JNI_FALSE;
 
     JPy_BEGIN_GIL_STATE
 
     pyObject = (PyObject*) objId;
 
     nameChars = (*jenv)->GetStringUTFChars(jenv, jName, NULL);
+    if (nameChars == NULL) {
+        PyLib_ThrowOOM(jenv);
+        goto error;
+    }
     JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_delAttribute: objId=%p, name='%s'\n", pyObject, nameChars);
 
     result = PyObject_HasAttrString(pyObject, nameChars) ? JNI_TRUE : JNI_FALSE;
 
-    (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
+error:
+    if (nameChars != NULL) {
+        (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
+    }
 
     JPy_END_GIL_STATE
 
@@ -1416,10 +1453,14 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_00024Diag_setFlags
 
 PyObject* PyLib_GetAttributeObject(JNIEnv* jenv, PyObject* pyObject, jstring jName)
 {
-    PyObject* pyValue;
+    PyObject* pyValue = NULL;
     const char* nameChars;
 
     nameChars = (*jenv)->GetStringUTFChars(jenv, jName, NULL);
+    if (nameChars == NULL) {
+        PyLib_ThrowOOM(jenv);
+        goto error;
+    }
     JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "PyLib_GetAttributeObject: objId=%p, name='%s'\n", pyObject, nameChars);
     /* Note: pyValue is a new reference */
     pyValue = PyObject_GetAttrString(pyObject, nameChars);
@@ -1427,7 +1468,10 @@ PyObject* PyLib_GetAttributeObject(JNIEnv* jenv, PyObject* pyObject, jstring jNa
         JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "PyLib_GetAttributeObject: error: attribute not found '%s'\n", nameChars);
         PyLib_HandlePythonException(jenv);
     }
-    (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
+error:
+    if (nameChars != NULL) {
+        (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
+    }
     return pyValue;
 }
 
@@ -1436,7 +1480,7 @@ PyObject* PyLib_CallAndReturnObject(JNIEnv *jenv, PyObject* pyObject, jboolean i
     PyObject* pyCallable;
     PyObject* pyArgs;
     PyObject* pyArg;
-    PyObject* pyReturnValue;
+    PyObject* pyReturnValue = Py_None;
     const char* nameChars;
     jint i;
     jobject jArg;
@@ -1446,6 +1490,10 @@ PyObject* PyLib_CallAndReturnObject(JNIEnv *jenv, PyObject* pyObject, jboolean i
     pyReturnValue = NULL;
 
     nameChars = (*jenv)->GetStringUTFChars(jenv, jName, NULL);
+    if (nameChars == NULL) {
+        PyLib_ThrowOOM(jenv);
+        goto error;
+    }
 
     JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "PyLib_CallAndReturnObject: objId=%p, isMethodCall=%d, name='%s', argCount=%d\n", pyObject, isMethodCall, nameChars, argCount);
 
@@ -1526,7 +1574,9 @@ PyObject* PyLib_CallAndReturnObject(JNIEnv *jenv, PyObject* pyObject, jboolean i
     Py_INCREF(pyReturnValue);
 
 error:
-    (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
+    if (nameChars != NULL) {
+        (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
+    }
     Py_XDECREF(pyCallable);
     Py_XDECREF(pyArgs);
 
@@ -1670,6 +1720,10 @@ void PyLib_HandlePythonException(JNIEnv* jenv)
     Py_XDECREF(pyNamespaceUtf8);
 
     PyErr_Clear();
+}
+
+void PyLib_ThrowOOM(JNIEnv* jenv) {
+    (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, "Out of memory");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
