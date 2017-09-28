@@ -49,12 +49,17 @@ JNIEXPORT jint JNICALL Java_org_jpy_PyLib_execScript
 
 /*
  * Class:     org_jpy_PyLib
- * Method:    execute
+ * Method:    executeCode
  * Signature: (Ljava/lang/String;ILjava/util/Map;Ljava/util/Map;)J
  */
 JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeCode
   (JNIEnv *, jclass, jstring, jint, jobject, jobject);
 
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    executeScript
+ * Signature: (Ljava/lang/String;ILjava/util/Map;Ljava/util/Map;)J
+ */
 JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeScript
   (JNIEnv *, jclass, jstring, jint, jobject, jobject);
 
@@ -82,8 +87,14 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_decRef
 JNIEXPORT jint JNICALL Java_org_jpy_PyLib_getIntValue
   (JNIEnv *, jclass, jlong);
 
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    getBooleanValue
+ * Signature: (J)Z
+ */
 JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_getBooleanValue
-        (JNIEnv* jenv, jclass jLibClass, jlong objId);
+  (JNIEnv *, jclass, jlong);
+
 /*
  * Class:     org_jpy_PyLib
  * Method:    getDoubleValue
@@ -108,37 +119,98 @@ JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_getStringValue
 JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_getObjectValue
   (JNIEnv *, jclass, jlong);
 
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    isConvertible
+ * Signature: (J)Z
+ */
 JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_isConvertible
   (JNIEnv *, jclass, jlong);
 
 /*
  * Class:     org_jpy_PyLib
- * Method:    getObjectValue
+ * Method:    pyNoneCheck
+ * Signature: (J)Z
+ */
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyNoneCheck
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    pyDictCheck
+ * Signature: (J)Z
+ */
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyDictCheck
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    pyListCheck
+ * Signature: (J)Z
+ */
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyListCheck
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    pyBoolCheck
+ * Signature: (J)Z
+ */
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyBoolCheck
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    pyIntCheck
+ * Signature: (J)Z
+ */
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyIntCheck
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    pyLongCheck
+ * Signature: (J)Z
+ */
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyLongCheck
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    pyFloatCheck
+ * Signature: (J)Z
+ */
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyFloatCheck
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    pyCallableCheck
+ * Signature: (J)Z
+ */
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyCallableCheck
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    getType
  * Signature: (J)J
  */
 JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_getType
   (JNIEnv *, jclass, jlong);
 
-JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyDictCheck(JNIEnv *, jclass, jlong);
-JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyListCheck(JNIEnv *, jclass, jlong);
-JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyBoolCheck(JNIEnv *, jclass, jlong);
-JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyIntCheck(JNIEnv *, jclass, jlong);
-JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyLongCheck(JNIEnv *, jclass, jlong);
-JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyFloatCheck(JNIEnv *, jclass, jlong);
-JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyCallableCheck(JNIEnv *, jclass, jlong);
-
 /*
  * Class:     org_jpy_PyLib
- * Method:    getObjectValue
- * Signature: (J)Ljava/lang/Object;
+ * Method:    str
+ * Signature: (J)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_str
   (JNIEnv *, jclass, jlong);
 
 /*
  * Class:     org_jpy_PyLib
- * Method:    getObjectValue
- * Signature: (J)Ljava/lang/Object;
+ * Method:    repr
+ * Signature: (J)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_repr
   (JNIEnv *, jclass, jlong);
@@ -182,6 +254,22 @@ JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_getAttributeValue
  */
 JNIEXPORT void JNICALL Java_org_jpy_PyLib_setAttributeValue
   (JNIEnv *, jclass, jlong, jstring, jobject, jclass);
+
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    delAttribute
+ * Signature: (JLjava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_org_jpy_PyLib_delAttribute
+  (JNIEnv *, jclass, jlong, jstring);
+
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    hasAttribute
+ * Signature: (JLjava/lang/String;)Z
+ */
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_hasAttribute
+  (JNIEnv *, jclass, jlong, jstring);
 
 /*
  * Class:     org_jpy_PyLib
