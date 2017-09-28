@@ -399,6 +399,12 @@ JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeCode
 
     // by using the pyGlobals for the locals variable, we are able to execute Python code and
     // retrieve values afterwards
+    //
+    // if we have no locals specified, using globals for it matches the behavior of eval, "The expression argument is
+    // parsed and evaluated as a Python expression (technically speaking, a condition list) using the globals and
+    // locals dictionaries as global and local namespace. ... If the locals dictionary is omitted it defaults to the
+    // globals dictionary. If both dictionaries are omitted, the expression is executed in the environment where eval()
+    // is called. The return value is the result of the evaluated expression.
     pyReturnValue = PyRun_String(codeChars, start, pyGlobals, pyGlobals);
     if (pyReturnValue == NULL) {
         PyLib_HandlePythonException(jenv);
@@ -489,6 +495,14 @@ JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeScript
             jStart == JPy_IM_SCRIPT ? Py_file_input :
             Py_eval_input;
 
+    // by using the pyGlobals for the locals variable, we are able to execute Python code and
+    // retrieve values afterwards
+    //
+    // if we have no locals specified, using globals for it matches the behavior of eval, "The expression argument is
+    // parsed and evaluated as a Python expression (technically speaking, a condition list) using the globals and
+    // locals dictionaries as global and local namespace. ... If the locals dictionary is omitted it defaults to the
+    // globals dictionary. If both dictionaries are omitted, the expression is executed in the environment where eval()
+    // is called. The return value is the result of the evaluated expression.
     pyReturnValue = PyRun_File(fp, fileChars, start, pyGlobals, pyGlobals);
     if (pyReturnValue == NULL) {
         PyLib_HandlePythonException(jenv);
