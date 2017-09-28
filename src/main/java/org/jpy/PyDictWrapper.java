@@ -92,7 +92,7 @@ public class PyDictWrapper implements Map<PyObject, PyObject> {
 
         @Override
         public boolean contains(Object o) {
-            return false;
+            throw new UnsupportedOperationException();
         }
 
         @Override
@@ -116,7 +116,7 @@ public class PyDictWrapper implements Map<PyObject, PyObject> {
 
                 @Override
                 public Entry<PyObject, PyObject> next() {
-                    PyObject oldNext = next;
+                    final PyObject oldNext = next;
                     prepareNext();
                     return new Entry<PyObject, PyObject>() {
 

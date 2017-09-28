@@ -312,12 +312,9 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**
-     * Sets the value of a Python attribute from the given Java object.
-     * <p>
-     * If the Java {@code value} cannot be directly converted into a Python object, a Java wrapper will be created instead.
-     * If the Java {@code value} is a wrapped Python object of type {@link PyObject}, it will be unwrapped.
+     * Deletes the value of a Python attribute.
      *
-     * @param name  A name of the Python attribute.
+     * @param name the name of the Python attribute.
      */
     public void delAttribute(String name) {
         assertPythonRuns();
@@ -325,12 +322,10 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**
-     * Sets the value of a Python attribute from the given Java object.
-     * <p>
-     * If the Java {@code value} cannot be directly converted into a Python object, a Java wrapper will be created instead.
-     * If the Java {@code value} is a wrapped Python object of type {@link PyObject}, it will be unwrapped.
+     * Checks for the existence of a Python attribute..
      *
-     * @param name  A name of the Python attribute.
+     * @param name the name of the Python attribute.
+     * @return whether this attribute exists for this object
      */
     public boolean hasAttribute(String name) {
         assertPythonRuns();

@@ -66,7 +66,7 @@ class PyListWrapper implements List<PyObject> {
     public <T> T[] toArray(T[] a) {
         int size = size();
 
-        if (a.length <  size()) {
+        if (a.length < size) {
             a = Arrays.copyOf(a, size);
         }
         for (int ii = 0; ii < size; ++ii) {

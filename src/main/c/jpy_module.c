@@ -986,7 +986,7 @@ void JPy_ClearGlobalVars(JNIEnv* jenv)
 #define AT_STRLEN 5
 #define CAUSED_BY_STRING "caused by "
 #define CAUSED_BY_STRLEN 10
-
+#define ELIDED_STRING_MAX_SIZE 30
 
 void JPy_HandleJavaException(JNIEnv* jenv)
 {
@@ -1001,7 +1001,7 @@ void JPy_HandleJavaException(JNIEnv* jenv)
 
         if (JPy_VerboseExceptions) {
             char *stackTraceString;
-            int stackTraceLength = 0;
+            size_t stackTraceLength = 0;
 
             stackTraceString = strdup("");
 
@@ -1014,6 +1014,11 @@ void JPy_HandleJavaException(JNIEnv* jenv)
                 /* We want the type and the detail string, which is actually what a Throwable toString() does by
                  * default, as does the default printStackTrace(). */
                 jint ii;
+
+                jarray stackTrace;
+                jint stackTraceElements;
+                jint lastElementToPrint;
+                jint enclosingIndex;
 
                 if (stackTraceLength > 0) {
                     char *newStackString;
@@ -1057,11 +1062,10 @@ void JPy_HandleJavaException(JNIEnv* jenv)
                 }
 
                 /* We should assemble a string based on the stack trace. */
-                jarray stackTrace = (*jenv)->CallObjectMethod(jenv, cause, JPy_Throwable_getStackTrace_MID);
-
-                jint stackTraceElements = (*jenv)->GetArrayLength(jenv, stackTrace);
-                jint lastElementToPrint = stackTraceElements - 1;
-                jint enclosingIndex = enclosingSize - 1;
+                stackTrace = (*jenv)->CallObjectMethod(jenv, cause, JPy_Throwable_getStackTrace_MID);
+                stackTraceElements = (*jenv)->GetArrayLength(jenv, stackTrace);
+                lastElementToPrint = stackTraceElements - 1;
+                enclosingIndex = enclosingSize - 1;
 
                 while (lastElementToPrint >= 0 && enclosingIndex >= 0) {
                     jobject thisElement = (*jenv)->GetObjectArrayElement(jenv, stackTrace, lastElementToPrint);
@@ -1082,17 +1086,19 @@ void JPy_HandleJavaException(JNIEnv* jenv)
                     if (traceElement != NULL) {
                         message = (jstring) (*jenv)->CallObjectMethod(jenv, traceElement, JPy_Object_ToString_MID);
                         if (message != NULL) {
+                            size_t len;
+                            char *newStackString;
                             const char *messageChars = (*jenv)->GetStringUTFChars(jenv, message, NULL);
                             if (messageChars == NULL) {
-                                (*jenv)->ReleaseStringUTFChars(jenv, message, messageChars);
                                 allocError = 1;
                                 break;
                             }
 
-                            size_t len = strlen(messageChars);
+                            len = strlen(messageChars);
 
-                            char *newStackString = realloc(stackTraceString, len + 2 + AT_STRLEN + stackTraceLength);
+                            newStackString = realloc(stackTraceString, len + 2 + AT_STRLEN + stackTraceLength);
                             if (newStackString == NULL) {
+                                (*jenv)->ReleaseStringUTFChars(jenv, message, messageChars);
                                 allocError = 1;
                                 break;
                             }
@@ -1111,17 +1117,18 @@ void JPy_HandleJavaException(JNIEnv* jenv)
                 }
 
                 if (lastElementToPrint < stackTraceElements - 1) {
-                    char *newStackString = realloc(stackTraceString, stackTraceLength + 100);
+                    int written;
+                    char *newStackString = realloc(stackTraceString, stackTraceLength + ELIDED_STRING_MAX_SIZE);
                     if (newStackString == NULL) {
                         allocError = 1;
                         break;
                     }
-                    stackTraceString[stackTraceLength + 100] = '\0';
+                    stackTraceString[stackTraceLength + ELIDED_STRING_MAX_SIZE - 1] = '\0';
 
                     stackTraceString = newStackString;
-                    int written = snprintf(stackTraceString + stackTraceLength, 99, "\t... %d more\n", (stackTraceElements - lastElementToPrint) - 1);
-                    if (written > 99) {
-                        stackTraceLength += 99;
+                    written = snprintf(stackTraceString + stackTraceLength, ELIDED_STRING_MAX_SIZE - 1, "\t... %d more\n", (stackTraceElements - lastElementToPrint) - 1);
+                    if (written > (ELIDED_STRING_MAX_SIZE - 1)) {
+                        stackTraceLength += (ELIDED_STRING_MAX_SIZE - 1);
                     } else {
                         stackTraceLength += written;
                     }
