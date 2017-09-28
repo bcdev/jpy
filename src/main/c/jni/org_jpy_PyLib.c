@@ -1468,8 +1468,8 @@ error:
 
 PyObject* PyLib_CallAndReturnObject(JNIEnv *jenv, PyObject* pyObject, jboolean isMethodCall, jstring jName, jint argCount, jobjectArray jArgs, jobjectArray jParamClasses)
 {
-    PyObject* pyCallable;
-    PyObject* pyArgs;
+    PyObject* pyCallable = NULL;
+    PyObject* pyArgs = NULL;
     PyObject* pyArg;
     PyObject* pyReturnValue = Py_None;
     const char* nameChars;
