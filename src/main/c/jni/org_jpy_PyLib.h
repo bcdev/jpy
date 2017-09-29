@@ -50,7 +50,7 @@ JNIEXPORT jint JNICALL Java_org_jpy_PyLib_execScript
 /*
  * Class:     org_jpy_PyLib
  * Method:    executeCode
- * Signature: (Ljava/lang/String;ILjava/util/Map;Ljava/util/Map;)J
+ * Signature: (Ljava/lang/String;ILjava/lang/Object;Ljava/lang/Object;)J
  */
 JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeCode
   (JNIEnv *, jclass, jstring, jint, jobject, jobject);
@@ -58,10 +58,26 @@ JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeCode
 /*
  * Class:     org_jpy_PyLib
  * Method:    executeScript
- * Signature: (Ljava/lang/String;ILjava/util/Map;Ljava/util/Map;)J
+ * Signature: (Ljava/lang/String;ILjava/lang/Object;Ljava/lang/Object;)J
  */
 JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeScript
   (JNIEnv *, jclass, jstring, jint, jobject, jobject);
+
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    getMainGlobals
+ * Signature: ()Lorg/jpy/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_getMainGlobals
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    copyDict
+ * Signature: (J)Lorg/jpy/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_copyDict
+  (JNIEnv *, jclass, jlong);
 
 /*
  * Class:     org_jpy_PyLib
@@ -185,6 +201,14 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyFloatCheck
 
 /*
  * Class:     org_jpy_PyLib
+ * Method:    pyStringCheck
+ * Signature: (J)Z
+ */
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyStringCheck
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     org_jpy_PyLib
  * Method:    pyCallableCheck
  * Signature: (J)Z
  */
@@ -214,6 +238,14 @@ JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_str
  */
 JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_repr
   (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    newDict
+ * Signature: ()Lorg/jpy/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_newDict
+  (JNIEnv *, jclass);
 
 /*
  * Class:     org_jpy_PyLib

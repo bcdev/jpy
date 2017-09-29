@@ -20,6 +20,8 @@ import org.junit.*;
 
 import static org.junit.Assert.*;
 
+import java.util.Map;
+
 public class PyLibTest {
 
     @Before
@@ -141,4 +143,37 @@ public class PyLibTest {
         //PyLib.Diag.setFlags(PyLib.Diag.F_ALL);
         assertEquals("Z", new PyObject(pointer).getStringValue());
     }
+
+    @Test
+    public void testGetMainGlobals() throws Exception {
+        PyObject globals = PyLib.getMainGlobals();
+        Map<PyObject, PyObject> dict = globals.asDict();
+        assertFalse(dict.isEmpty());
+
+        boolean foundName = false;
+
+        for (Map.Entry<PyObject, PyObject> entry : dict.entrySet()) {
+            if (entry.getKey().isString()) {
+                if (entry.getKey().getObjectValue().equals("__name__")) {
+                    foundName = true;
+                    break;
+                }
+            }
+        }
+
+        assertTrue(foundName);
+    }
+
+    @Test
+    public void testNewDict() throws Exception {
+        PyObject dict = PyLib.newDict();
+        assertTrue(dict.asDict().isEmpty());
+
+        PyObject globals = PyLib.getMainGlobals();
+
+        PyObject.executeCode("x = 42", PyInputMode.STATEMENT, globals, dict);
+
+        assertFalse(dict.asDict().isEmpty());
+    }
+
 }

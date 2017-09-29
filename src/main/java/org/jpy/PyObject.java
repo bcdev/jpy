@@ -81,7 +81,7 @@ public class PyObject implements java.io.Serializable {
      * @param locals  The locals variables to be set.
      * @return The result of executing the code as a Python object.
      */
-    public static PyObject executeCode(String code, PyInputMode mode, Map<String, Object> globals, Map<String, Object> locals) {
+    public static PyObject executeCode(String code, PyInputMode mode, Object globals, Object locals) {
         if (code == null) {
             throw new NullPointerException("code must not be null");
         }
@@ -231,6 +231,11 @@ public class PyObject implements java.io.Serializable {
         return PyLib.pyCallableCheck(getPointer());
     }
 
+    public boolean isString() {
+        assertPythonRuns();
+        return PyLib.pyStringCheck(getPointer());
+    }
+
     public boolean isConvertible() {
         assertPythonRuns();
         return PyLib.isConvertible(getPointer());
@@ -243,7 +248,7 @@ public class PyObject implements java.io.Serializable {
         return new PyListWrapper(this);
     }
 
-    public Map<PyObject, PyObject> asDict() {
+    public PyDictWrapper asDict() {
         if (!isDict()) {
             throw new ClassCastException("Can not convert non-list type to a dictionary!");
         }

@@ -97,6 +97,14 @@ public class PyDictWrapper implements Map<PyObject, PyObject> {
         return new EntrySet();
     }
 
+    PyObject unwrap() {
+        return pyObject;
+    }
+
+    PyDictWrapper copy() {
+        return new PyDictWrapper(PyLib.copyDict(pyObject.getPointer()));
+    }
+
     private class EntrySet implements Set<Entry<PyObject, PyObject>> {
         @Override
         public int size() {

@@ -216,6 +216,32 @@ public class PyObjectTest {
         Assert.assertEquals("Tut tut!", a.getStringValue());
     }
 
+    private boolean hasKey(Map<PyObject, PyObject> dict, String key) {
+        for (Map.Entry<PyObject, PyObject> entry : dict.entrySet()) {
+            if (entry.getKey().isString()) {
+                if (entry.getKey().getObjectValue().equals(key)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @Test
+    public void testDictCopy() throws Exception {
+        PyObject globals = PyLib.getMainGlobals();
+        PyDictWrapper dict = globals.asDict();
+        PyDictWrapper dictCopy = dict.copy();
+
+        PyObject.executeCode("x = 42", PyInputMode.STATEMENT, globals, dictCopy.unwrap());
+
+        boolean copyHasX = hasKey(dictCopy, "x");
+        boolean origHasX = hasKey(dict, "x");
+
+        assertTrue(copyHasX);
+        assertFalse(origHasX);
+    }
+
     @Test
     public void testCreateProxyAndCallSingleThreaded() throws Exception {
         //addTestDirToPythonSysPath();

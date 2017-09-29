@@ -240,6 +240,10 @@ public class PyLib {
     static native long executeScript
             (String file, int start, Object globals, Object locals);
 
+    static native PyObject getMainGlobals();
+
+    static native PyObject copyDict(long pyPointer);
+
     static native void incRef(long pointer);
 
     static native void decRef(long pointer);
@@ -262,6 +266,7 @@ public class PyLib {
     static native boolean pyIntCheck(long pointer);
     static native boolean pyLongCheck(long pointer);
     static native boolean pyFloatCheck(long pointer);
+    static native boolean pyStringCheck(long pointer);
     static native boolean pyCallableCheck(long pointer);
 
     static native long getType(long pointer);
@@ -269,6 +274,8 @@ public class PyLib {
     static native String str(long pointer);
 
     static native String repr(long pointer);
+
+    static native PyObject newDict();
 
     static native <T> T[] getObjectArrayValue(long pointer, Class<? extends T> itemType);
 

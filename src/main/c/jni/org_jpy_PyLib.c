@@ -364,14 +364,68 @@ PyObject *getMainGlobals() {
     PyObject* pyMainModule;
     PyObject* pyGlobals;
 
+    JPy_BEGIN_GIL_STATE
+
     pyMainModule = PyImport_AddModule("__main__"); // borrowed ref
+
     if (pyMainModule == NULL) {
         return NULL;
     }
 
+
     pyGlobals = PyModule_GetDict(pyMainModule); // borrowed ref
 
+    JPy_END_GIL_STATE
+
     return pyGlobals;
+}
+
+JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_getMainGlobals
+        (JNIEnv *jenv, jclass libClass) {
+    jobject objectRef;
+
+    PyObject *globals = getMainGlobals();
+
+    if (JType_ConvertPythonToJavaObject(jenv, JPy_JPyObject, globals, &objectRef, JNI_FALSE) < 0) {
+        return NULL;
+    }
+
+    return objectRef;
+}
+
+JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_copyDict
+        (JNIEnv *jenv, jclass libClass, jlong pyPointer) {
+    jobject objectRef;
+    PyObject *src, *copy;
+
+    src = (PyObject*)pyPointer;
+
+    if (!PyDict_Check(src)) {
+        PyLib_ThrowUOE(jenv, "Not a dictionary!");
+        return NULL;
+    }
+
+    copy = PyDict_Copy(src);
+
+    if (JType_ConvertPythonToJavaObject(jenv, JPy_JPyObject, copy, &objectRef, JNI_FALSE) < 0) {
+        return NULL;
+    }
+
+    return objectRef;
+}
+
+JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_newDict
+        (JNIEnv *jenv, jclass libClass) {
+    jobject objectRef;
+    PyObject *dict;
+
+    dict = PyDict_New();
+
+    if (JType_ConvertPythonToJavaObject(jenv, JPy_JPyObject, dict, &objectRef, JNI_FALSE) < 0) {
+        return NULL;
+    }
+
+    return objectRef;
 }
 
 /**
@@ -424,8 +478,6 @@ PyObject *copyJavaStringObjectMapToPyDict(JNIEnv *jenv, jobject jMap) {
         if (keyChars == NULL) {
             goto error;
         }
-
-        printf("Key: %s\n", keyChars);
 
         pyKey = JPy_FROM_CSTR(keyChars);
         (*jenv)->ReleaseStringUTFChars(jenv, (jstring)key, keyChars);
