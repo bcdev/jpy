@@ -104,7 +104,7 @@ public class PyObject implements java.io.Serializable {
      * @param locals  The locals variables to be set.
      * @return The result of executing the script as a Python object.
      */
-    public static PyObject executeScript(String script, PyInputMode mode, Map<String, Object> globals, Map<String, Object> locals) {
+    public static PyObject executeScript(String script, PyInputMode mode, Object globals, Object locals) {
         if (script == null) {
             throw new NullPointerException("script must not be null");
         }

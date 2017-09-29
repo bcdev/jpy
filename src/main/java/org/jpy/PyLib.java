@@ -240,7 +240,7 @@ public class PyLib {
     static native long executeScript
             (String file, int start, Object globals, Object locals);
 
-    static native PyObject getMainGlobals();
+    public static native PyObject getMainGlobals();
 
     static native PyObject copyDict(long pyPointer);
 

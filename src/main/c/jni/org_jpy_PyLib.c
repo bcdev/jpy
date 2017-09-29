@@ -613,6 +613,10 @@ jlong executeInternal(JNIEnv* jenv, jclass jLibClass, jint jStart, jobject jGlob
         // if we are an instance of PyObject, just use the object
         pyGlobals = (PyObject *)((*jenv)->CallLongMethod(jenv, jGlobals, JPy_PyObject_GetPointer_MID));
         JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using PyObject globals\n");
+    } else if ((*jenv)->IsInstanceOf(jenv, jGlobals, JPy_PyDictWrapper_JClass)) {
+        // if we are an instance of PyObject, just use the object
+        pyGlobals = (PyObject *)((*jenv)->CallLongMethod(jenv, jGlobals, JPy_PyDictWrapper_GetPointer_MID));
+        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using PyDictWrapper globals\n");
     } else if ((*jenv)->IsInstanceOf(jenv, jGlobals, JPy_Map_JClass)) {
         JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using Java Map globals\n");
         // this is a java Map and we need to convert it
@@ -635,6 +639,10 @@ jlong executeInternal(JNIEnv* jenv, jclass jLibClass, jint jStart, jobject jGlob
         // if we are an instance of PyObject, just use the object
         JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using PyObject locals\n");
         pyLocals = (PyObject *)((*jenv)->CallLongMethod(jenv, jLocals, JPy_PyObject_GetPointer_MID));
+    } else if ((*jenv)->IsInstanceOf(jenv, jGlobals, JPy_PyDictWrapper_JClass)) {
+        // if we are an instance of PyObject, just use the object
+        pyLocals = (PyObject *)((*jenv)->CallLongMethod(jenv, jLocals, JPy_PyDictWrapper_GetPointer_MID));
+        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using PyDictWrapper locals\n");
     } else if ((*jenv)->IsInstanceOf(jenv, jLocals, JPy_Map_JClass)) {
         JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using Java Map locals\n");
         // this is a java Map and we need to convert it
@@ -1860,6 +1868,8 @@ void PyLib_HandlePythonException(JNIEnv* jenv)
     char* filenameChars = NULL;
     char* namespaceChars = NULL;
 
+    jclass jExceptionClass;
+
     if (PyErr_Occurred() == NULL) {
         return;
     }
@@ -1873,6 +1883,13 @@ void PyLib_HandlePythonException(JNIEnv* jenv)
 
     typeChars = PyLib_ObjToChars(pyType, &pyTypeUtf8);
     valueChars = PyLib_ObjToChars(pyValue, &pyValueUtf8);
+    if (PyObject_TypeCheck(pyValue, (PyTypeObject*) PyExc_KeyError)) {
+        jExceptionClass = JPy_KeyError_JClass;
+    } else if (PyObject_TypeCheck(pyValue, (PyTypeObject*) PyExc_StopIteration)) {
+        jExceptionClass = JPy_StopIteration_JClass;
+    } else {
+        jExceptionClass = JPy_RuntimeException_JClass;
+    }
 
     if (pyTraceback != NULL) {
         PyObject* pyFrame = NULL;
@@ -1915,13 +1932,13 @@ void PyLib_HandlePythonException(JNIEnv* jenv)
                     linenoChars != NULL ? linenoChars : JPY_NOT_AVAILABLE_MSG,
                     namespaceChars != NULL ? namespaceChars : JPY_NOT_AVAILABLE_MSG,
                     filenameChars != NULL ? filenameChars : JPY_NOT_AVAILABLE_MSG);
-            (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, javaMessage);
+            (*jenv)->ThrowNew(jenv, jExceptionClass, javaMessage);
             PyMem_Del(javaMessage);
         } else {
-            (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, JPY_INFO_ALLOC_FAILED_MSG);
+            (*jenv)->ThrowNew(jenv, jExceptionClass, JPY_INFO_ALLOC_FAILED_MSG);
         }
     } else {
-        (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, JPY_NO_INFO_MSG);
+        (*jenv)->ThrowNew(jenv, jExceptionClass, JPY_NO_INFO_MSG);
     }
 
     Py_XDECREF(pyType);

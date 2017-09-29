@@ -187,6 +187,8 @@ jmethodID JPy_Iterator_hasNext_MID = NULL;
 jclass JPy_RuntimeException_JClass = NULL;
 jclass JPy_OutOfMemoryError_JClass = NULL;
 jclass JPy_UnsupportedOperationException_JClass = NULL;
+jclass JPy_KeyError_JClass = NULL;
+jclass JPy_StopIteration_JClass = NULL;
 
 // java.lang.Boolean
 jclass JPy_Boolean_JClass = NULL;
@@ -224,10 +226,13 @@ jmethodID JPy_Number_DoubleValue_MID = NULL;
 jclass JPy_Void_JClass = NULL;
 jclass JPy_String_JClass = NULL;
 jclass JPy_PyObject_JClass = NULL;
+jclass JPy_PyDictWrapper_JClass = NULL;
 
 jmethodID JPy_PyObject_GetPointer_MID = NULL;
 jmethodID JPy_PyObject_Init_MID = NULL;
 jmethodID JPy_PyModule_Init_MID = NULL;
+
+jmethodID JPy_PyDictWrapper_GetPointer_MID = NULL;
 
 // java.lang.Throwable
 jclass JPy_Throwable_JClass = NULL;
@@ -758,6 +763,32 @@ int initGlobalPyObjectVars(JNIEnv* jenv)
         PyErr_Clear();
         return -1;
     }
+
+    JPy_JType *dictType = JType_GetTypeForName(jenv, "org.jpy.PyDictWrapper", JNI_FALSE);
+    if (dictType == NULL) {
+        PyErr_Clear();
+        return -1;
+    } else {
+        JPy_PyDictWrapper_JClass = dictType->classRef;
+        DEFINE_METHOD(JPy_PyDictWrapper_GetPointer_MID, JPy_PyDictWrapper_JClass, "getPointer", "()J");
+    }
+
+    JPy_JType *keyErrorType = JType_GetTypeForName(jenv, "org.jpy.KeyError", JNI_FALSE);
+    if (keyErrorType == NULL) {
+        PyErr_Clear();
+        return -1;
+    } else {
+        JPy_KeyError_JClass = keyErrorType->classRef;
+    }
+
+    JPy_JType *stopIterationType = JType_GetTypeForName(jenv, "org.jpy.StopIteration", JNI_FALSE);
+    if (stopIterationType == NULL) {
+        PyErr_Clear();
+        return -1;
+    } else {
+        JPy_StopIteration_JClass = stopIterationType->classRef;
+    }
+
     return 0;
 }
 

@@ -172,6 +172,8 @@ extern jmethodID JPy_Iterator_hasNext_MID;
 extern jclass JPy_RuntimeException_JClass;
 extern jclass JPy_OutOfMemoryError_JClass;
 extern jclass JPy_UnsupportedOperationException_JClass;
+extern jclass JPy_KeyError_JClass;
+extern jclass JPy_StopIteration_JClass;
 
 extern jclass JPy_Boolean_JClass;
 extern jmethodID JPy_Boolean_Init_MID;
@@ -210,6 +212,9 @@ extern jclass JPy_Void_JClass;
 extern jclass JPy_PyObject_JClass;
 extern jmethodID JPy_PyObject_GetPointer_MID;
 extern jmethodID JPy_PyObject_Init_MID;
+
+extern jclass JPy_PyDictWrapper_JClass;
+extern jmethodID JPy_PyDictWrapper_GetPointer_MID;
 
 #ifdef __cplusplus
 } /* extern "C" */

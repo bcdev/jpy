@@ -46,6 +46,10 @@ public class PyDictWrapper implements Map<PyObject, PyObject> {
         return pyObject.callMethod("has_key", key).getBooleanValue();
     }
 
+    public boolean containsKey(String key) {
+        return pyObject.callMethod("has_key", key).getBooleanValue();
+    }
+
     @Override
     public boolean containsValue(Object value) {
         return pyObject.callMethod("values").asList().contains(value);
@@ -61,14 +65,28 @@ public class PyDictWrapper implements Map<PyObject, PyObject> {
         return pyObject.callMethod("__setitem__", key, value);
     }
 
+    public PyObject putObject(Object key, Object value) {
+        return pyObject.callMethod("__setitem__", key, value);
+    }
+
     @Override
     public PyObject remove(Object key) {
-        PyObject value = get(key);
-        if (value.isNone()) {
-            return null;
-        } else {
+        try {
+            PyObject value = get(key);
             pyObject.callMethod("__delitem__", key);
             return value;
+        } catch (KeyError ke) {
+            return null;
+        }
+    }
+
+    public PyObject remove(String key) {
+        try {
+            PyObject value = get(key);
+            pyObject.callMethod("__delitem__", key);
+            return value;
+        } catch (KeyError ke) {
+            return null;
         }
     }
 
@@ -97,11 +115,30 @@ public class PyDictWrapper implements Map<PyObject, PyObject> {
         return new EntrySet();
     }
 
-    PyObject unwrap() {
+    /**
+      * Gets the underlying PyObject.
+      *
+      * @return the PyObject wrapped by this dictionary.
+      */
+    public PyObject unwrap() {
         return pyObject;
     }
 
-    PyDictWrapper copy() {
+    /**
+      * Gets the underlying PyObject.
+      *
+      * @return the PyObject wrapped by this dictionary.
+      */
+    long getPointer() {
+        return pyObject.getPointer();
+    }
+
+    /**
+      * Copy this dictionary into a new dictionary.
+      *
+      * @return a wrapped copy of this Python dictionary.
+      */
+    public PyDictWrapper copy() {
         return new PyDictWrapper(PyLib.copyDict(pyObject.getPointer()));
     }
 
@@ -130,7 +167,7 @@ public class PyDictWrapper implements Map<PyObject, PyObject> {
                 private PyObject prepareNext() {
                     try {
                         return next = it.callMethod("next");
-                    } catch (Exception e) {
+                    } catch (Stopteration e) {
                         return next = null;
                     }
                 }
