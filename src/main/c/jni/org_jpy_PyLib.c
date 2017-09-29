@@ -347,6 +347,11 @@ void dumpDict(const char* dictName, PyObject* dict)
     Py_ssize_t pos = 0;
     Py_ssize_t i = 0;
 
+    if (!PyDict_Check(dict)) {
+        printf(">> dumpDict: %s is not a dictionary!\n", dictName);
+        return;
+    }
+
     size = PyDict_Size(dict);
     printf(">> dumpDict: %s.size = %ld\n", dictName, size);
     while (PyDict_Next(dict, &pos, &key, &value)) {
@@ -639,7 +644,7 @@ jlong executeInternal(JNIEnv* jenv, jclass jLibClass, jint jStart, jobject jGlob
         // if we are an instance of PyObject, just use the object
         JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using PyObject locals\n");
         pyLocals = (PyObject *)((*jenv)->CallLongMethod(jenv, jLocals, JPy_PyObject_GetPointer_MID));
-    } else if ((*jenv)->IsInstanceOf(jenv, jGlobals, JPy_PyDictWrapper_JClass)) {
+    } else if ((*jenv)->IsInstanceOf(jenv, jLocals, JPy_PyDictWrapper_JClass)) {
         // if we are an instance of PyObject, just use the object
         pyLocals = (PyObject *)((*jenv)->CallLongMethod(jenv, jLocals, JPy_PyDictWrapper_GetPointer_MID));
         JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using PyDictWrapper locals\n");
