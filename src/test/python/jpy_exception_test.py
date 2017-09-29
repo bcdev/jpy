@@ -2,7 +2,7 @@
 import unittest
 
 import jpyutil
-#import string
+import string
 
 jpyutil.init_jvm(jvm_maxmem='512M', jvm_classpath=['target/test-classes'])
 import jpy
@@ -54,11 +54,11 @@ class TestExceptions(unittest.TestCase):
         self.assertEqual(str(e.exception), 'java.io.IOException: Evil!')
 
     # Checking the exceptions for differences (e.g. in white space) can be a huge pain, this helps)
-    #def hexdump(self, s):
-        #for i in xrange(0, len(s), 32):
-            #sl = s[i:min(i + 32, len(s))]
-     	    #fsl = map(lambda x : x if (x in string.printable and not x in "\n\t\r") else ".", sl)
-            #print "%08d %s %s %s" % (i, " ".join("{:02x}".format(ord(c)) for c in sl), ("   ".join(map(lambda x : "", xrange(32 - len(sl))))), sl)
+    def hexdump(self, s):
+        for i in xrange(0, len(s), 32):
+            sl = s[i:min(i + 32, len(s))]
+	    fsl = map(lambda x : x if (x in string.printable and not x in "\n\t\r") else ".", sl)
+            print "%08d %s %s %s" % (i, " ".join("{:02x}".format(ord(c)) for c in sl), ("   ".join(map(lambda x : "", xrange(32 - len(sl))))), sl)
 
     def test_VerboseException(self):
         fixture = self.Fixture()
@@ -72,6 +72,10 @@ class TestExceptions(unittest.TestCase):
 	actualMessage = str(e.exception)
 	expectedMessage = "java.lang.RuntimeException: Nested exception\n\tat org.jpy.fixtures.ExceptionTestFixture.throwNpeIfArgIsNullNested(ExceptionTestFixture.java:43)\ncaused by java.lang.NullPointerException\n\tat org.jpy.fixtures.ExceptionTestFixture.throwNpeIfArgIsNull(ExceptionTestFixture.java:32)\n\tat org.jpy.fixtures.ExceptionTestFixture.throwNpeIfArgIsNullNested(ExceptionTestFixture.java:41)\n"
 
+	#self.hexdump(actualMessage)
+	#self.hexdump(expectedMessage)
+	#print [i for i in xrange(min(len(expectedMessage), len(actualMessage))) if actualMessage[i] != expectedMessage[i]]
+
 	self.assertEquals(actualMessage, expectedMessage)
 
 	with self.assertRaises(RuntimeError) as e:
@@ -81,7 +85,7 @@ class TestExceptions(unittest.TestCase):
 
 	#self.hexdump(actualMessage)
 	#self.hexdump(expectedMessage)
-    	#print [i for i in xrange(min(len(expectedMessage), len(actualMessage))) if actualMessage[i] != expectedMessage[i]]
+	#print [i for i in xrange(min(len(expectedMessage), len(actualMessage))) if actualMessage[i] != expectedMessage[i]]
 
 	self.assertEquals(actualMessage, expectedMessage)
 

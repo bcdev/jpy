@@ -1195,9 +1195,10 @@ void JPy_HandleJavaException(JNIEnv* jenv)
                         allocError = 1;
                         break;
                     }
-                    stackTraceString[stackTraceLength + ELIDED_STRING_MAX_SIZE - 1] = '\0';
 
                     stackTraceString = newStackString;
+                    stackTraceString[stackTraceLength + ELIDED_STRING_MAX_SIZE - 1] = '\0';
+
                     written = snprintf(stackTraceString + stackTraceLength, ELIDED_STRING_MAX_SIZE - 1, "\t... %d more\n", (stackTraceElements - lastElementToPrint) - 1);
                     if (written > (ELIDED_STRING_MAX_SIZE - 1)) {
                         stackTraceLength += (ELIDED_STRING_MAX_SIZE - 1);

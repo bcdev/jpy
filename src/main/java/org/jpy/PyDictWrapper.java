@@ -167,7 +167,7 @@ public class PyDictWrapper implements Map<PyObject, PyObject> {
                 private PyObject prepareNext() {
                     try {
                         return next = it.callMethod("next");
-                    } catch (Stopteration e) {
+                    } catch (StopIteration e) {
                         return next = null;
                     }
                 }
