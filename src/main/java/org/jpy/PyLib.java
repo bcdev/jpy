@@ -235,10 +235,10 @@ public class PyLib {
     @Deprecated
     public static native int execScript(String script);
 
-    static native long executeCode(String code, int start, Map<String, Object> globals, Map<String, Object> locals);
+    static native long executeCode(String code, int start, Object globals, Object locals);
 
     static native long executeScript
-            (String file, int start, Map<String, Object> globals, Map<String, Object> locals);
+            (String file, int start, Object globals, Object locals);
 
     static native void incRef(long pointer);
 

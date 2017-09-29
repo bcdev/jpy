@@ -448,7 +448,7 @@ int JType_CreateJavaPyObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, job
     return JType_CreateJavaObject(jenv, type, pyArg, type->classRef, JPy_PyObject_Init_MID, value, objectRef);
 }
 
-int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* componentType, PyObject* pyArg, jobject* objectRef)
+int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* componentType, PyObject* pyArg, jobject* objectRef, jboolean allowObjectWrapping)
 {
     jint itemCount;
     jarray arrayRef;
@@ -722,7 +722,7 @@ int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* componentType, PyObject* pyAr
                 (*jenv)->DeleteLocalRef(jenv, arrayRef);
                 return -1;
             }
-            if (JType_ConvertPythonToJavaObject(jenv, componentType, pyItem, &jItem) < 0) {
+            if (JType_ConvertPythonToJavaObject(jenv, componentType, pyItem, &jItem, allowObjectWrapping) < 0) {
                 (*jenv)->DeleteLocalRef(jenv, arrayRef);
                 Py_DECREF(pyItem);
                 return -1;
@@ -745,8 +745,7 @@ int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* componentType, PyObject* pyAr
     return 0;
 }
 
-
-int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef)
+int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg, jobject* objectRef, jboolean allowObjectWrapping)
 {
     // Note: There may be a potential memory leak here.
     // If a new local reference is created in this function and assigned to *objectRef, the reference may escape.
@@ -761,9 +760,12 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
         // If it is already a Java object wrapper JObj, then we are done
         *objectRef = ((JPy_JObj*) pyArg)->objectRef;
         return 0;
+    } else if (JType_Check(pyArg)) {
+        *objectRef = ((JPy_JType*)pyArg)->classRef;
+        return 0;
     } else if (type->componentType != NULL) {
         // For any other Python argument create a Java object (a new local reference)
-        return JType_CreateJavaArray(jenv, type->componentType, pyArg, objectRef);
+        return JType_CreateJavaArray(jenv, type->componentType, pyArg, objectRef, allowObjectWrapping);
     } else if (type == JPy_JBoolean || type == JPy_JBooleanObj) {
         return JType_CreateJavaBooleanObject(jenv, type, pyArg, objectRef);
     } else if (type == JPy_JChar || type == JPy_JCharacterObj) {
@@ -791,6 +793,8 @@ int JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyA
             return JType_CreateJavaDoubleObject(jenv, type, pyArg, objectRef);
         } else if (JPy_IS_STR(pyArg)) {
             return JPy_AsJString(jenv, pyArg, objectRef);
+        } else if (allowObjectWrapping) {
+            return JType_CreateJavaPyObject(jenv, JPy_JPyObject, pyArg, objectRef);
         }
     } else if (type == JPy_JString) {
         if (JPy_IS_STR(pyArg)) {
@@ -1818,7 +1822,7 @@ int JType_ConvertVarArgPyArgToJObjectArg(JNIEnv* jenv, JPy_ParamDescriptor* para
             disposer->DisposeArg = paramDescriptor->isMutable ? JType_DisposeWritableBufferArg : JType_DisposeReadOnlyBufferArg;
         } else {
             jobject objectRef;
-            if (JType_ConvertPythonToJavaObject(jenv, paramType, pyArg, &objectRef) < 0) {
+            if (JType_ConvertPythonToJavaObject(jenv, paramType, pyArg, &objectRef, JNI_FALSE) < 0) {
                 return -1;
             }
             value->l = objectRef;
@@ -2109,7 +2113,7 @@ int JType_ConvertPyArgToJObjectArg(JNIEnv* jenv, JPy_ParamDescriptor* paramDescr
             disposer->DisposeArg = paramDescriptor->isMutable ? JType_DisposeWritableBufferArg : JType_DisposeReadOnlyBufferArg;
         } else {
             jobject objectRef;
-            if (JType_ConvertPythonToJavaObject(jenv, paramType, pyArg, &objectRef) < 0) {
+            if (JType_ConvertPythonToJavaObject(jenv, paramType, pyArg, &objectRef, JNI_FALSE) < 0) {
                 return -1;
             }
             value->l = objectRef;

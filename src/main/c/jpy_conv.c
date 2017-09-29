@@ -23,14 +23,14 @@
 
 
 
-int JPy_AsJObject(JNIEnv* jenv, PyObject* pyObj, jobject* objectRef)
+int JPy_AsJObject(JNIEnv* jenv, PyObject* pyObj, jobject* objectRef, jboolean allowJavaWrapping)
 {
-    return JType_ConvertPythonToJavaObject(jenv, JPy_JObject, pyObj, objectRef);
+    return JType_ConvertPythonToJavaObject(jenv, JPy_JObject, pyObj, objectRef, allowJavaWrapping);
 }
 
 int JPy_AsJObjectWithType(JNIEnv* jenv, PyObject* pyObj, jobject* objectRef, JPy_JType* type)
 {
-    return JType_ConvertPythonToJavaObject(jenv, type, pyObj, objectRef);
+    return JType_ConvertPythonToJavaObject(jenv, type, pyObj, objectRef, JNI_FALSE);
 }
 
 int JPy_AsJObjectWithClass(JNIEnv* jenv, PyObject* pyObj, jobject* objectRef, jclass classRef)
@@ -52,7 +52,7 @@ int JPy_AsJObjectWithClass(JNIEnv* jenv, PyObject* pyObj, jobject* objectRef, jc
             return -1;
         }
     } else {
-        if (JPy_AsJObject(jenv, pyObj, objectRef) < 0) {
+        if (JPy_AsJObject(jenv, pyObj, objectRef, JNI_FALSE) < 0) {
             return -1;
         }
     }

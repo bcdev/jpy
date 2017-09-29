@@ -36,7 +36,13 @@ PyObject* PyLib_GetAttributeObject(JNIEnv* jenv, PyObject* pyValue, jstring jNam
 PyObject* PyLib_CallAndReturnObject(JNIEnv *jenv, PyObject* pyValue, jboolean isMethodCall, jstring jName, jint argCount, jobjectArray jArgs, jobjectArray jParamClasses);
 void PyLib_HandlePythonException(JNIEnv* jenv);
 void PyLib_ThrowOOM(JNIEnv* jenv);
+void PyLib_ThrowUOE(JNIEnv* jenv, const char *message);
 void PyLib_RedirectStdOut(void);
+int copyPythonDictToJavaMap(JNIEnv *jenv, PyObject *pyDict, jobject jMap);
+
+static const char *repr(PyObject *po) {
+    return PyString_AsString(PyObject_Repr(po));
+}
 
 static int JPy_InitThreads = 0;
 
@@ -331,7 +337,7 @@ PyObject* PyLib_ConvertJavaToPythonObject(JNIEnv* jenv, jobject jObject)
 
 int PyLib_ConvertPythonToJavaObject(JNIEnv* jenv, PyObject* pyObject, jobject* jObject)
 {
-    return JType_ConvertPythonToJavaObject(jenv, JPy_JPyObject, pyObject, jObject);
+    return JType_ConvertPythonToJavaObject(jenv, JPy_JPyObject, pyObject, jObject, JNI_FALSE);
 }
 
 void dumpDict(const char* dictName, PyObject* dict)
@@ -352,194 +358,356 @@ void dumpDict(const char* dictName, PyObject* dict)
 }
 
 /**
- * Calls PyRun_String under the covers to execute a python script using the __main__ globals.
- *
- * jStart must be JPy_IM_STATEMENT, JPy_IM_SCRIPT, JPy_IM_EXPRESSION; matching what you are trying to
- * run.  If you use a statement or expression instead of a script; some of your code may be ignored.
- *
- * The jGLobals and jLocals parameters are ignored.
+ * Get the globals from the __main__ module.
  */
-JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeCode
-  (JNIEnv* jenv, jclass jLibClass, jstring jCode, jint jStart, jobject jGlobals, jobject jLocals)
-{
-    const char* codeChars;
-    PyObject* pyReturnValue;
-    PyObject* pyGlobals;
-    PyObject* pyLocals;
+PyObject *getMainGlobals() {
     PyObject* pyMainModule;
-    int start;
-
-    JPy_BEGIN_GIL_STATE
-
-    pyGlobals = NULL;
-    pyLocals = NULL;
-    pyReturnValue = NULL;
-    pyMainModule = NULL;
-    codeChars = NULL;
+    PyObject* pyGlobals;
 
     pyMainModule = PyImport_AddModule("__main__"); // borrowed ref
     if (pyMainModule == NULL) {
-        PyLib_HandlePythonException(jenv);
+        return NULL;
+    }
+
+    pyGlobals = PyModule_GetDict(pyMainModule); // borrowed ref
+
+    return pyGlobals;
+}
+
+/**
+ * Copies a Java Map<String, Object> into a new Python dictionary.
+ */
+PyObject *copyJavaStringObjectMapToPyDict(JNIEnv *jenv, jobject jMap) {
+    PyObject *result;
+    jobject entrySet, iterator, mapEntry;
+    jboolean hasNext;
+
+    result = PyDict_New();
+    if (result == NULL) {
+        return result;
+    }
+
+    entrySet = (*jenv)->CallObjectMethod(jenv, jMap, JPy_Map_entrySet_MID);
+    if (entrySet == NULL) {
         goto error;
     }
 
-    codeChars = (*jenv)->GetStringUTFChars(jenv, jCode, NULL);
-    if (codeChars == NULL) {
+    iterator = (*jenv)->CallObjectMethod(jenv, entrySet, JPy_Set_Iterator_MID);
+    if (iterator == NULL) {
+        goto error;
+    }
+
+    hasNext = (*jenv)->CallBooleanMethod(jenv, iterator, JPy_Iterator_hasNext_MID);
+
+    while (hasNext) {
+        jobject key, value;
+        char const *keyChars;
+        PyObject *pyKey;
+        PyObject *pyValue;
+        JPy_JType* type;
+
+        mapEntry = (*jenv)->CallObjectMethod(jenv, iterator, JPy_Iterator_next_MID);
+        if (mapEntry == NULL) {
+            goto error;
+        }
+
+        key = (*jenv)->CallObjectMethod(jenv, mapEntry, JPy_Map_Entry_getKey_MID);
+        if (key == NULL) {
+            goto error;
+        }
+        if (!(*jenv)->IsInstanceOf(jenv, key, JPy_String_JClass)) {
+            goto error;
+        }
+
+        // we require string keys
+        keyChars = (*jenv)->GetStringUTFChars(jenv, (jstring)key, NULL);
+        if (keyChars == NULL) {
+            goto error;
+        }
+
+        printf("Key: %s\n", keyChars);
+
+        pyKey = JPy_FROM_CSTR(keyChars);
+        (*jenv)->ReleaseStringUTFChars(jenv, (jstring)key, keyChars);
+
+        value = (*jenv)->CallObjectMethod(jenv, mapEntry, JPy_Map_Entry_getValue_MID);
+
+        type = JType_GetTypeForObject(jenv, value);
+        pyValue = JType_ConvertJavaToPythonObject(jenv, type, value);
+
+        PyDict_SetItem(result, pyKey, pyValue);
+
+        hasNext = (*jenv)->CallBooleanMethod(jenv, iterator, JPy_Iterator_hasNext_MID);
+    }
+
+    return result;
+
+error:
+    if (result != NULL) {
+        Py_XDECREF(result);
+    }
+    return NULL;
+}
+
+int copyPythonDictToJavaMap(JNIEnv *jenv, PyObject *pyDict, jobject jMap) {
+    PyObject *pyKey, *pyValue;
+    Py_ssize_t pos = 0;
+    Py_ssize_t dictSize;
+    jobject *jValues = NULL;
+    jobject *jKeys = NULL;
+    int ii;
+    jboolean exceptionAlready = JNI_FALSE;
+    jthrowable savedException = NULL;
+    int retcode = -1;
+
+    if (!PyDict_Check(pyDict)) {
+        PyLib_ThrowUOE(jenv, "PyObject is not a dictionary!");
+        return -1;
+    }
+
+    dictSize = PyDict_Size(pyDict);
+    printf("Doing copy back of dictionary: %zd\n", dictSize);
+
+    jKeys = malloc(dictSize * sizeof(jobject));
+    jValues = malloc(dictSize * sizeof(jobject));
+    if (jKeys == NULL || jValues == NULL) {
         PyLib_ThrowOOM(jenv);
         goto error;
     }
 
-    pyGlobals = PyModule_GetDict(pyMainModule); // borrowed ref
-    if (pyGlobals == NULL) {
-        PyLib_HandlePythonException(jenv);
+    exceptionAlready = (*jenv)->ExceptionCheck(jenv);
+    if (exceptionAlready) {
+        // save the exception away, because otherwise the conversion methods might spuriously fail
+        savedException = (*jenv)->ExceptionOccurred(jenv);
+        (*jenv)->ExceptionClear(jenv);
+    }
+
+    // first convert everything
+    ii = 0;
+    while (PyDict_Next(pyDict, &pos, &pyKey, &pyValue)) {
+        if (JPy_AsJObjectWithClass(jenv, pyKey, &(jKeys[ii]), JPy_String_JClass) < 0) {
+            // an error occurred
+            goto error;
+        }
+        printf("Converting: %s\n", repr(pyValue));
+        if (JPy_AsJObject(jenv, pyValue, &(jValues[ii]), JNI_TRUE) < 0) {
+            printf("Value Conversion Error!\n");
+            // an error occurred
+            goto error;
+        }
+        ii++;
+    }
+
+    // now that we've converted, clear out the map and repopulate it
+    (*jenv)->CallVoidMethod(jenv, jMap, JPy_Map_clear_MID);
+    for (ii = 0; ii < dictSize; ++ii) {
+        // since the map is cleared, we want to plow through all of the put
+        (*jenv)->CallObjectMethod(jenv, jMap, JPy_Map_put_MID, jKeys[ii], jValues[ii]);
+    }
+    // and we are successful!
+    retcode = 0;
+
+error:
+    if (exceptionAlready) {
+        // restore our original exception
+        (*jenv)->Throw(jenv, savedException);
+    }
+
+    free(jKeys);
+    free(jValues);
+    return retcode;
+}
+
+typedef PyObject * (*DoRun)(const void *,int,PyObject*,PyObject*);
+
+/**
+ * After setting up the globals and locals, calls the provided function.
+ *
+ * jStart must be JPy_IM_STATEMENT, JPy_IM_SCRIPT, JPy_IM_EXPRESSION; matching what you are trying to
+ * run.  If you use a statement or expression instead of a script; some of your code may be ignored.
+ *
+ * If jGlobals is not specified, then the main module globals are used.
+ *
+ * If jLocals is not specified, then the globals are used.
+ *
+ * jGlobals and jLocals may be a PyObject, in which case they are used without translation.  Otherwise,
+ * they must be a map from String to Object, and will be copied to a new python dictionary.  After execution
+ * completes the dictionary entries will be copied back.
+ *
+ */
+jlong executeInternal(JNIEnv* jenv, jclass jLibClass, jint jStart, jobject jGlobals, jobject jLocals, DoRun runFunction, void *runArg) {
+    PyObject *pyReturnValue;
+    PyObject *pyGlobals;
+    PyObject *pyLocals;
+    int start;
+    jboolean decGlobals, decLocals, copyGlobals, copyLocals;
+
+    JPy_BEGIN_GIL_STATE
+
+    decGlobals = decLocals = JNI_FALSE;
+    copyGlobals = copyLocals = JNI_FALSE;
+    pyGlobals = NULL;
+    pyLocals = NULL;
+    pyReturnValue = NULL;
+
+    if (jGlobals == NULL) {
+        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using main globals\n");
+        pyGlobals = getMainGlobals();
+        if (pyGlobals == NULL) {
+            PyLib_HandlePythonException(jenv);
+            goto error;
+        }
+    } else if ((*jenv)->IsInstanceOf(jenv, jGlobals, JPy_PyObject_JClass)) {
+        // if we are an instance of PyObject, just use the object
+        pyGlobals = (PyObject *)((*jenv)->CallLongMethod(jenv, jGlobals, JPy_PyObject_GetPointer_MID));
+        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using PyObject globals\n");
+    } else if ((*jenv)->IsInstanceOf(jenv, jGlobals, JPy_Map_JClass)) {
+        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using Java Map globals\n");
+        // this is a java Map and we need to convert it
+        copyGlobals = decGlobals = JNI_TRUE;
+        pyGlobals = copyJavaStringObjectMapToPyDict(jenv, jGlobals);
+    } else {
+        PyLib_ThrowUOE(jenv, "Unsupported globals type");
         goto error;
     }
 
-    pyLocals = PyDict_New(); // new ref
-    if (pyLocals == NULL) {
-        PyLib_HandlePythonException(jenv);
-        goto error;
-    }
-
-    // todo for https://github.com/bcdev/jpy/issues/53
-    // - copy jGlobals into pyGlobals (convert Java --> Python values)
-    // - copy jLocals into pyLocals (convert Java --> Python values)
-
-    start = jStart == JPy_IM_STATEMENT ? Py_single_input :
-            jStart == JPy_IM_SCRIPT ? Py_file_input :
-            Py_eval_input;
-
-    // by using the pyGlobals for the locals variable, we are able to execute Python code and
-    // retrieve values afterwards
-    //
     // if we have no locals specified, using globals for it matches the behavior of eval, "The expression argument is
     // parsed and evaluated as a Python expression (technically speaking, a condition list) using the globals and
     // locals dictionaries as global and local namespace. ... If the locals dictionary is omitted it defaults to the
     // globals dictionary. If both dictionaries are omitted, the expression is executed in the environment where eval()
     // is called. The return value is the result of the evaluated expression.
-    pyReturnValue = PyRun_String(codeChars, start, pyGlobals, pyGlobals);
+    if (jLocals == NULL) {
+        pyLocals = pyGlobals;
+        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using globals for locals\n");
+    } else if ((*jenv)->IsInstanceOf(jenv, jLocals, JPy_PyObject_JClass)) {
+        // if we are an instance of PyObject, just use the object
+        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using PyObject locals\n");
+        pyLocals = (PyObject *)((*jenv)->CallLongMethod(jenv, jLocals, JPy_PyObject_GetPointer_MID));
+    } else if ((*jenv)->IsInstanceOf(jenv, jLocals, JPy_Map_JClass)) {
+        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using Java Map locals\n");
+        // this is a java Map and we need to convert it
+        copyLocals = decLocals = JNI_TRUE;
+        pyLocals = copyJavaStringObjectMapToPyDict(jenv, jLocals);
+    } else {
+        PyLib_ThrowUOE(jenv, "Unsupported locals type");
+        goto error;
+    }
+
+    start = jStart == JPy_IM_STATEMENT ? Py_single_input :
+            jStart == JPy_IM_SCRIPT ? Py_file_input :
+            Py_eval_input;
+
+    pyReturnValue = runFunction(runArg, start, pyGlobals, pyLocals);
     if (pyReturnValue == NULL) {
+        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: Handle Python Exception\n");
         PyLib_HandlePythonException(jenv);
         goto error;
     }
 
-    // todo for https://github.com/bcdev/jpy/issues/53
-    // - copy pyGlobals into jGlobals (convert Python --> Java values)
-    // - copy pyLocals into jLocals (convert Python --> Java values)
-    //dumpDict("pyGlobals", pyGlobals);
-    //dumpDict("pyLocals", pyLocals);
-
 error:
-    if (codeChars != NULL) {
-        (*jenv)->ReleaseStringUTFChars(jenv, jCode, codeChars);
+    if (copyGlobals) {
+        copyPythonDictToJavaMap(jenv, pyGlobals, jGlobals);
+        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: copied back Java global\n");
+    }
+    if (copyLocals) {
+        copyPythonDictToJavaMap(jenv, pyLocals, jLocals);
+        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: copied back Java locals\n");
+    }
+    if (decGlobals) {
+        Py_XDECREF(pyGlobals);
+    }
+    if (decLocals) {
+        Py_XDECREF(pyLocals);
     }
 
-    Py_XDECREF(pyLocals);
+    JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: return value %s\n", repr(pyReturnValue));
 
     JPy_END_GIL_STATE
 
     return (jlong) pyReturnValue;
 }
 
+PyObject *pyRunStringWrapper(const char *code, int start, PyObject *globals, PyObject *locals) {
+    PyObject *result = PyRun_String(code, start, globals, locals);
+    JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Result in wrapper: %s\n", repr(result));
+    return result;
+}
+
 /**
- * Calls PyRun_File under the covers to execute a python script using the __main__ globals.
+ * Calls PyRun_String under the covers to execute a python script using the __main__ globals.
  *
  * jStart must be JPy_IM_STATEMENT, JPy_IM_SCRIPT, JPy_IM_EXPRESSION; matching what you are trying to
  * run.  If you use a statement or expression instead of a script; some of your code may be ignored.
  *
- * The jGLobals and jLocals parameters are ignored.
+ * If jGlobals is not specified, then the main module globals are used.
  *
+ * If jLocals is not specified, then the globals are used.
+ *
+ * jGlobals and jLocals may be a PyObject, in which case they are used without translation.  Otherwise,
+ * they must be a map from String to Object, and will be copied to a new python dictionary.  After execution
+ * completes the dictionary entries will be copied back.
  */
-JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeScript
-  (JNIEnv* jenv, jclass jLibClass, jstring jFile, jint jStart, jobject jGlobals, jobject jLocals)
-{
-    FILE *fp;
-    const char* fileChars;
-    PyObject* pyReturnValue;
-    PyObject* pyGlobals;
-    PyObject* pyLocals;
-    PyObject* pyMainModule;
-    int start;
+JNIEXPORT
+jlong JNICALL Java_org_jpy_PyLib_executeCode
+        (JNIEnv* jenv, jclass jLibClass, jstring jCode, jint jStart, jobject jGlobals, jobject jLocals) {
+    const char *codeChars;
+    jlong result;
 
-    JPy_BEGIN_GIL_STATE
-
-    fp = NULL;
-    pyGlobals = NULL;
-    pyLocals = NULL;
-    pyReturnValue = NULL;
-    pyMainModule = NULL;
-    fileChars = NULL;
-
-    pyMainModule = PyImport_AddModule("__main__"); // borrowed ref
-    if (pyMainModule == NULL) {
-        PyLib_HandlePythonException(jenv);
-        goto error;
+    codeChars = (*jenv)->GetStringUTFChars(jenv, jCode, NULL);
+    if (codeChars == NULL) {
+        PyLib_ThrowOOM(jenv);
+        return NULL;
     }
 
-    fileChars = (*jenv)->GetStringUTFChars(jenv, jFile, NULL);
-    if (fileChars == NULL) {
+    JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeCode: code='%s'\n", codeChars);
+
+    result = executeInternal(jenv, jLibClass, jStart, jGlobals, jLocals, (DoRun)pyRunStringWrapper, codeChars);
+
+    if (codeChars != NULL) {
+        (*jenv)->ReleaseStringUTFChars(jenv, jCode, codeChars);
+    }
+
+    return result;
+}
+
+typedef struct {
+    FILE *fp;
+    const char *filechars;
+} RunFileArgs;
+
+PyObject *pyRunFileWrapper(RunFileArgs *args, int start, PyObject *globals, PyObject *locals) {
+    return PyRun_File(args->fp, args->filechars, start, globals, locals);
+}
+
+JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeScript
+        (JNIEnv* jenv, jclass jLibClass, jstring jFile, jint jStart, jobject jGlobals, jobject jLocals) {
+    RunFileArgs runFileArgs;
+    jlong result;
+
+    runFileArgs.fp = NULL;
+    runFileArgs.filechars = NULL;
+
+    runFileArgs.filechars = (*jenv)->GetStringUTFChars(jenv, jFile, NULL);
+    if (runFileArgs.filechars == NULL) {
         PyLib_ThrowOOM(jenv);
         goto error;
     }
 
-    fp = fopen(fileChars, "r");
-    if (!fp) {
+    runFileArgs.fp = fopen(runFileArgs.filechars, "r");
+    if (!runFileArgs.fp) {
         goto error;
     }
 
-    pyGlobals = PyModule_GetDict(pyMainModule); // borrowed ref
-    if (pyGlobals == NULL) {
-        PyLib_HandlePythonException(jenv);
-        goto error;
+    result = executeInternal(jenv, jLibClass, jStart, jGlobals, jLocals, (DoRun)pyRunFileWrapper, &runFileArgs);
+
+    error:
+    if (runFileArgs.filechars != NULL) {
+        (*jenv)->ReleaseStringUTFChars(jenv, jFile, runFileArgs.filechars);
     }
-
-    pyLocals = PyDict_New(); // new ref
-    if (pyLocals == NULL) {
-        PyLib_HandlePythonException(jenv);
-        goto error;
+    if (runFileArgs.fp != NULL) {
+        fclose(runFileArgs.fp);
     }
-
-    // todo for https://github.com/bcdev/jpy/issues/53
-    // - copy jGlobals into pyGlobals (convert Java --> Python values)
-    // - copy jLocals into pyLocals (convert Java --> Python values)
-
-    start = jStart == JPy_IM_STATEMENT ? Py_single_input :
-            jStart == JPy_IM_SCRIPT ? Py_file_input :
-            Py_eval_input;
-
-    // by using the pyGlobals for the locals variable, we are able to execute Python code and
-    // retrieve values afterwards
-    //
-    // if we have no locals specified, using globals for it matches the behavior of eval, "The expression argument is
-    // parsed and evaluated as a Python expression (technically speaking, a condition list) using the globals and
-    // locals dictionaries as global and local namespace. ... If the locals dictionary is omitted it defaults to the
-    // globals dictionary. If both dictionaries are omitted, the expression is executed in the environment where eval()
-    // is called. The return value is the result of the evaluated expression.
-    pyReturnValue = PyRun_File(fp, fileChars, start, pyGlobals, pyGlobals);
-    if (pyReturnValue == NULL) {
-        PyLib_HandlePythonException(jenv);
-        goto error;
-    }
-
-    // todo for https://github.com/bcdev/jpy/issues/53
-    // - copy pyGlobals into jGlobals (convert Python --> Java values)
-    // - copy pyLocals into jLocals (convert Python --> Java values)
-    //dumpDict("pyGlobals", pyGlobals);
-    //dumpDict("pyLocals", pyLocals);
-
-error:
-    if (fileChars != NULL) {
-        (*jenv)->ReleaseStringUTFChars(jenv, jFile, fileChars);
-    }
-    if (fp != NULL) {
-        fclose(fp);
-    }
-
-    Py_XDECREF(pyLocals);
-
-    JPy_END_GIL_STATE
-
-    return (jlong) pyReturnValue;
+    return result;
 }
 
 /*
@@ -709,7 +877,7 @@ JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_getObjectValue
     if (JObj_Check(pyObject)) {
         jObject = ((JPy_JObj*) pyObject)->objectRef;
     } else {
-        if (JPy_AsJObject(jenv, pyObject, &jObject) < 0) {
+        if (JPy_AsJObject(jenv, pyObject, &jObject, JNI_FALSE) < 0) {
             jObject = NULL;
             JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_getObjectValue: error: failed to convert Python object to Java Object\n");
             PyLib_HandlePythonException(jenv);
@@ -1097,7 +1265,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_jpy_PyLib_getObjectArrayValue
                 jObject = NULL;
                 goto error;
             }
-            if (JPy_AsJObject(jenv, pyItem, &jItem) < 0) {
+            if (JPy_AsJObject(jenv, pyItem, &jItem, JNI_FALSE) < 0) {
                 (*jenv)->DeleteLocalRef(jenv, jObject);
                 jObject = NULL;
                 JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_getObjectArrayValue: error: failed to convert Python item to Java Object\n");
@@ -1722,6 +1890,15 @@ void PyLib_HandlePythonException(JNIEnv* jenv)
  */
 void PyLib_ThrowOOM(JNIEnv* jenv) {
     (*jenv)->ThrowNew(jenv, JPy_OutOfMemoryError_JClass, "Out of memory");
+}
+
+/**
+ * Throw an UnsupportedOperationException.
+ * @param jenv the jni environment
+ * @param message the exception message
+ */
+void PyLib_ThrowUOE(JNIEnv* jenv, const char *message) {
+    (*jenv)->ThrowNew(jenv, JPy_UnsupportedOperationException_JClass, message);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////

@@ -123,13 +123,13 @@ JPy_JType* JType_GetTypeForName(JNIEnv* jenv, const char* typeName, jboolean res
 JPy_JType* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve);
 
 PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject objectRef);
-int       JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* arg, jobject* objectRef);
+int       JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* arg, jobject* objectRef, jboolean allowObjectWrapping);
 
 PyObject* JType_GetOverloadedMethod(JNIEnv* jenv, JPy_JType* type, PyObject* methodName, jboolean useSuperClass);
 
 int JType_MatchPyArgAsJObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg);
 
-int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* componentType, PyObject* pyArg, jobject* objectRef);
+int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* componentType, PyObject* pyArg, jobject* objectRef, jboolean allowObjectWrapping);
 
 // Non-API. Defined in jpy_jobj.c
 int JType_InitSlots(JPy_JType* type);

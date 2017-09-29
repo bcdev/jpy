@@ -168,8 +168,25 @@ jmethodID JPy_Field_GetName_MID = NULL;
 jmethodID JPy_Field_GetModifiers_MID = NULL;
 jmethodID JPy_Field_GetType_MID = NULL;
 
+// java.util.Map
+jclass JPy_Map_JClass = NULL;
+jclass JPy_Map_Entry_JClass = NULL;
+jmethodID JPy_Map_entrySet_MID = NULL;
+jmethodID JPy_Map_put_MID = NULL;
+jmethodID JPy_Map_clear_MID = NULL;
+jmethodID JPy_Map_Entry_getKey_MID = NULL;
+jmethodID JPy_Map_Entry_getValue_MID = NULL;
+// java.util.Set
+jclass JPy_Set_JClass = NULL;
+jmethodID JPy_Set_Iterator_MID = NULL;
+// java.util.Iterator
+jclass JPy_Iterator_JClass = NULL;
+jmethodID JPy_Iterator_next_MID = NULL;
+jmethodID JPy_Iterator_hasNext_MID = NULL;
+
 jclass JPy_RuntimeException_JClass = NULL;
 jclass JPy_OutOfMemoryError_JClass = NULL;
+jclass JPy_UnsupportedOperationException_JClass = NULL;
 
 // java.lang.Boolean
 jclass JPy_Boolean_JClass = NULL;
@@ -206,6 +223,7 @@ jmethodID JPy_Number_DoubleValue_MID = NULL;
 
 jclass JPy_Void_JClass = NULL;
 jclass JPy_String_JClass = NULL;
+jclass JPy_PyObject_JClass = NULL;
 
 jmethodID JPy_PyObject_GetPointer_MID = NULL;
 jmethodID JPy_PyObject_Init_MID = NULL;
@@ -613,12 +631,12 @@ PyObject* JPy_array(PyObject* self, PyObject* args)
         if (arrayRef == NULL) {
             return PyErr_NoMemory();
         }
-        return (PyObject*) JObj_New(jenv, arrayRef);
+        return JObj_New(jenv, arrayRef);
     } else if (PySequence_Check(objInit)) {
-        if (JType_CreateJavaArray(jenv, componentType, objInit, &arrayRef) < 0) {
+        if (JType_CreateJavaArray(jenv, componentType, objInit, &arrayRef, JNI_FALSE) < 0) {
             return NULL;
         }
-        return (PyObject*) JObj_New(jenv, arrayRef);
+        return JObj_New(jenv, arrayRef);
     } else {
         PyErr_SetString(PyExc_ValueError, "array: argument 2 (init) must be either an integer array length or any sequence");
         return NULL;
@@ -729,8 +747,9 @@ int initGlobalPyObjectVars(JNIEnv* jenv)
         PyErr_Clear();
         return -1;
     } else {
-        DEFINE_METHOD(JPy_PyObject_GetPointer_MID, JPy_JPyObject->classRef, "getPointer", "()J");
-        DEFINE_METHOD(JPy_PyObject_Init_MID, JPy_JPyObject->classRef, "<init>", "(J)V");
+        JPy_PyObject_JClass = JPy_JPyObject->classRef;
+        DEFINE_METHOD(JPy_PyObject_GetPointer_MID, JPy_PyObject_JClass, "getPointer", "()J");
+        DEFINE_METHOD(JPy_PyObject_Init_MID, JPy_PyObject_JClass, "<init>", "(J)V");
     }
 
     JPy_JPyModule = JType_GetTypeForName(jenv, "org.jpy.PyModule", JNI_FALSE);
@@ -783,8 +802,27 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     DEFINE_METHOD(JPy_Method_GetParameterTypes_MID, JPy_Method_JClass, "getParameterTypes", "()[Ljava/lang/Class;");
     DEFINE_METHOD(JPy_Method_GetReturnType_MID, JPy_Method_JClass, "getReturnType", "()Ljava/lang/Class;");
 
+    DEFINE_CLASS(JPy_Map_JClass, "java/util/Map");
+    DEFINE_METHOD(JPy_Map_entrySet_MID, JPy_Map_JClass, "entrySet", "()Ljava/util/Set;");
+    DEFINE_METHOD(JPy_Map_put_MID, JPy_Map_JClass, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+    DEFINE_METHOD(JPy_Map_clear_MID, JPy_Map_JClass, "clear", "()V");
+
+    DEFINE_CLASS(JPy_Map_Entry_JClass, "java/util/Map$Entry");
+    DEFINE_METHOD(JPy_Map_Entry_getKey_MID, JPy_Map_Entry_JClass, "getKey", "()Ljava/lang/Object;");
+    DEFINE_METHOD(JPy_Map_Entry_getValue_MID, JPy_Map_Entry_JClass, "getValue", "()Ljava/lang/Object;");
+
+
+    // java.util.Set
+    DEFINE_CLASS(JPy_Set_JClass, "java/util/Set");
+    DEFINE_METHOD(JPy_Set_Iterator_MID, JPy_Set_JClass, "iterator", "()Ljava/util/Iterator;");
+    // java.util.Iterator
+    DEFINE_CLASS(JPy_Iterator_JClass, "java/util/Iterator");
+    DEFINE_METHOD(JPy_Iterator_next_MID, JPy_Iterator_JClass, "next", "()Ljava/lang/Object;");
+    DEFINE_METHOD(JPy_Iterator_hasNext_MID, JPy_Iterator_JClass, "hasNext", "()Z");
+
     DEFINE_CLASS(JPy_RuntimeException_JClass, "java/lang/RuntimeException");
     DEFINE_CLASS(JPy_OutOfMemoryError_JClass, "java/lang/OutOfMemoryError");
+    DEFINE_CLASS(JPy_UnsupportedOperationException_JClass, "java/lang/UnsupportedOperationException");
 
     DEFINE_CLASS(JPy_Boolean_JClass, "java/lang/Boolean");
     DEFINE_METHOD(JPy_Boolean_Init_MID, JPy_Boolean_JClass, "<init>", "(Z)V");

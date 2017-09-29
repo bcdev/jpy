@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -131,7 +132,6 @@ public class PyObjectTest {
         assertNotNull(pyVoid);
         assertEquals(null, pyVoid.getObjectValue());
 
-/*
         assertNotNull(localMap.get("jpy"));
         assertNotNull(localMap.get("File"));
         assertNotNull(localMap.get("f"));
@@ -140,7 +140,31 @@ public class PyObjectTest {
         assertEquals(File.class, localMap.get("f").getClass());
 
         assertEquals(new File("test.txt"), localMap.get("f"));
-*/
+    }
+
+    @Test
+    public void testLocals() throws Exception {
+        HashMap<String, Object> localMap = new HashMap<>();
+        localMap.put("x", 7);
+        localMap.put("y", 6);
+        PyObject pyVoid = PyObject.executeCode("z = x + y",
+                                               PyInputMode.STATEMENT,
+                                               null,
+                                               localMap);
+        assertEquals(null, pyVoid.getObjectValue());
+
+        System.out.println("LocalMap size = " + localMap.size());
+        for (Map.Entry<String, Object> entry : localMap.entrySet()) {
+            System.out.println("LocalMap[" + entry.getKey() + "]: " + entry.getValue());
+        }
+
+        assertNotNull(localMap.get("x"));
+        assertNotNull(localMap.get("y"));
+        assertNotNull(localMap.get("z"));
+
+        assertEquals(7, localMap.get("x"));
+        assertEquals(6, localMap.get("y"));
+        assertEquals(13, localMap.get("z"));
     }
 
     @Test
