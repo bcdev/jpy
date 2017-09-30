@@ -1962,6 +1962,23 @@ int JType_MatchPyArgAsJObject(JNIEnv* jenv, JPy_JType* paramType, PyObject* pyAr
                 return matchValue;
             }
         } else if (PySequence_Check(pyArg)) {
+            // if we know the type of the array is a string, we should preferentially match it
+            if ((*jenv)->IsAssignableFrom(jenv, paramComponentType->classRef, JPy_String_JClass)) {
+                // it's a string array
+                Py_ssize_t len = PySequence_Length(pyArg);
+                Py_ssize_t ii;
+
+                for (ii = 0; ii < len; ++ii) {
+                    PyObject *element = PySequence_GetItem(pyArg, ii);
+                    if (!PyString_Check(element)) {
+                        // if the element is not a string, this is not a good match
+                        return 0;
+                    }
+                }
+
+                // a String sequence is a good match for a String array
+                return 80;
+            }
             return 10;
         }
     } else if (paramType == JPy_JObject) {

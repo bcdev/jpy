@@ -67,11 +67,18 @@ public class VarArgsTestFixture {
     }
 
     public int chooseFixedArity(int... a) {
-	return 2;
+	    return 2;
     }
 
     public int chooseFixedArity() {
-	return 1;
+	    return 1;
+    }
+
+    public int stringOrObjectVarArgs(String ... a) {
+        return 1 + a.length;
+    }
+    public int stringOrObjectVarArgs(Object ... a) {
+        return 2 + a.length;
     }
 
     static String stringifyArgs(Object... args) {

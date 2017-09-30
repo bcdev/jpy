@@ -126,6 +126,12 @@ class TestVarArgs(unittest.TestCase):
         self.assertEqual(fixture.chooseFixedArity(1), 2)
         self.assertEqual(fixture.chooseFixedArity(1, 2), 2)
 
+    def test_stringVsObject(self):
+        fixture = self.Fixture()
+        self.assertEqual(fixture.stringOrObjectVarArgs(["a", "b"]), 3)
+        self.assertEqual(fixture.stringOrObjectVarArgs([1, 2, 3]), 5)
+
+
 
 class TestOtherMethodResolutionCases(unittest.TestCase):
 
