@@ -20,6 +20,7 @@
 package org.jpy;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -238,7 +239,7 @@ public class PyLib {
     static native long executeCode(String code, int start, Object globals, Object locals);
 
     static native long executeScript
-            (String file, int start, Object globals, Object locals);
+            (String file, int start, Object globals, Object locals) throws FileNotFoundException;
 
     public static native PyObject getMainGlobals();
 

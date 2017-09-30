@@ -171,6 +171,7 @@ extern jmethodID JPy_Iterator_hasNext_MID;
 
 extern jclass JPy_RuntimeException_JClass;
 extern jclass JPy_OutOfMemoryError_JClass;
+extern jclass JPy_FileNotFoundException_JClass;
 extern jclass JPy_UnsupportedOperationException_JClass;
 extern jclass JPy_KeyError_JClass;
 extern jclass JPy_StopIteration_JClass;

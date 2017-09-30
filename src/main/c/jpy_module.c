@@ -187,6 +187,7 @@ jmethodID JPy_Iterator_hasNext_MID = NULL;
 jclass JPy_RuntimeException_JClass = NULL;
 jclass JPy_OutOfMemoryError_JClass = NULL;
 jclass JPy_UnsupportedOperationException_JClass = NULL;
+jclass JPy_FileNotFoundException_JClass = NULL;
 jclass JPy_KeyError_JClass = NULL;
 jclass JPy_StopIteration_JClass = NULL;
 
@@ -853,6 +854,7 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
 
     DEFINE_CLASS(JPy_RuntimeException_JClass, "java/lang/RuntimeException");
     DEFINE_CLASS(JPy_OutOfMemoryError_JClass, "java/lang/OutOfMemoryError");
+    DEFINE_CLASS(JPy_FileNotFoundException_JClass, "java/io/FileNotFoundException");
     DEFINE_CLASS(JPy_UnsupportedOperationException_JClass, "java/lang/UnsupportedOperationException");
 
     DEFINE_CLASS(JPy_Boolean_JClass, "java/lang/Boolean");

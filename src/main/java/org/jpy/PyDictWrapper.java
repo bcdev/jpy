@@ -60,6 +60,10 @@ public class PyDictWrapper implements Map<PyObject, PyObject> {
         return pyObject.callMethod("__getitem__", key);
     }
 
+    public PyObject get(String key) {
+        return pyObject.callMethod("__getitem__", key);
+    }
+
     @Override
     public PyObject put(PyObject key, PyObject value) {
         return pyObject.callMethod("__setitem__", key, value);

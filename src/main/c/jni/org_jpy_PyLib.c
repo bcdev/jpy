@@ -36,6 +36,7 @@ PyObject* PyLib_GetAttributeObject(JNIEnv* jenv, PyObject* pyValue, jstring jNam
 PyObject* PyLib_CallAndReturnObject(JNIEnv *jenv, PyObject* pyValue, jboolean isMethodCall, jstring jName, jint argCount, jobjectArray jArgs, jobjectArray jParamClasses);
 void PyLib_HandlePythonException(JNIEnv* jenv);
 void PyLib_ThrowOOM(JNIEnv* jenv);
+void PyLib_ThrowFNFE(JNIEnv* jenv, const char *file);
 void PyLib_ThrowUOE(JNIEnv* jenv, const char *message);
 void PyLib_RedirectStdOut(void);
 int copyPythonDictToJavaMap(JNIEnv *jenv, PyObject *pyDict, jobject jMap);
@@ -747,7 +748,7 @@ PyObject *pyRunFileWrapper(RunFileArgs *args, int start, PyObject *globals, PyOb
 JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeScript
         (JNIEnv* jenv, jclass jLibClass, jstring jFile, jint jStart, jobject jGlobals, jobject jLocals) {
     RunFileArgs runFileArgs;
-    jlong result;
+    jlong result = 0;
 
     runFileArgs.fp = NULL;
     runFileArgs.filechars = NULL;
@@ -760,12 +761,13 @@ JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeScript
 
     runFileArgs.fp = fopen(runFileArgs.filechars, "r");
     if (!runFileArgs.fp) {
+        PyLib_ThrowFNFE(jenv, runFileArgs.filechars);
         goto error;
     }
 
     result = executeInternal(jenv, jLibClass, jStart, jGlobals, jLocals, (DoRun)pyRunFileWrapper, &runFileArgs);
 
-    error:
+error:
     if (runFileArgs.filechars != NULL) {
         (*jenv)->ReleaseStringUTFChars(jenv, jFile, runFileArgs.filechars);
     }
@@ -1964,6 +1966,14 @@ void PyLib_HandlePythonException(JNIEnv* jenv)
  */
 void PyLib_ThrowOOM(JNIEnv* jenv) {
     (*jenv)->ThrowNew(jenv, JPy_OutOfMemoryError_JClass, "Out of memory");
+}
+
+/**
+ * Throw a FileNotFoundException.
+ * @param jenv the jni environment
+ */
+void PyLib_ThrowFNFE(JNIEnv* jenv, const char *file) {
+    (*jenv)->ThrowNew(jenv, JPy_FileNotFoundException_JClass, file);
 }
 
 /**

@@ -23,6 +23,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.Map;
+import java.io.FileNotFoundException;
 
 import static org.jpy.PyLib.assertPythonRuns;
 
@@ -65,7 +66,7 @@ public class PyObject implements java.io.Serializable {
      * @param mode The execution mode.
      * @return The result of executing the script as a Python object.
      */
-    public static PyObject executeScript(String script, PyInputMode mode) {
+    public static PyObject executeScript(String script, PyInputMode mode) throws FileNotFoundException {
         return executeScript(script, mode, null, null);
     }
 
@@ -103,8 +104,9 @@ public class PyObject implements java.io.Serializable {
      * @param globals The global variables to be set.
      * @param locals  The locals variables to be set.
      * @return The result of executing the script as a Python object.
+     * @throws FileNotFoundException if the script file is not found
      */
-    public static PyObject executeScript(String script, PyInputMode mode, Object globals, Object locals) {
+    public static PyObject executeScript(String script, PyInputMode mode, Object globals, Object locals) throws FileNotFoundException {
         if (script == null) {
             throw new NullPointerException("script must not be null");
         }
