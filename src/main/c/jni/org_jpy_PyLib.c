@@ -553,7 +553,7 @@ int copyPythonDictToJavaMap(JNIEnv *jenv, PyObject *pyDict, jobject jMap) {
     // now that we've converted, clear out the map and repopulate it
     (*jenv)->CallVoidMethod(jenv, jMap, JPy_Map_clear_MID);
     for (ii = 0; ii < dictSize; ++ii) {
-        // since the map is cleared, we want to plow through all of the put
+        // since the map is cleared, we want to plow through all of the put operations
         (*jenv)->CallObjectMethod(jenv, jMap, JPy_Map_put_MID, jKeys[ii], jValues[ii]);
     }
     // and we are successful!
