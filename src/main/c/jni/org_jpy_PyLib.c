@@ -41,10 +41,6 @@ void PyLib_ThrowUOE(JNIEnv* jenv, const char *message);
 void PyLib_RedirectStdOut(void);
 int copyPythonDictToJavaMap(JNIEnv *jenv, PyObject *pyDict, jobject jMap);
 
-static const char *repr(PyObject *po) {
-    return PyString_AsString(PyObject_Repr(po));
-}
-
 static int JPy_InitThreads = 0;
 
 //#define JPy_JNI_DEBUG 1
@@ -524,7 +520,6 @@ int copyPythonDictToJavaMap(JNIEnv *jenv, PyObject *pyDict, jobject jMap) {
     }
 
     dictSize = PyDict_Size(pyDict);
-    printf("Doing copy back of dictionary: %zd\n", dictSize);
 
     jKeys = malloc(dictSize * sizeof(jobject));
     jValues = malloc(dictSize * sizeof(jobject));
@@ -547,9 +542,7 @@ int copyPythonDictToJavaMap(JNIEnv *jenv, PyObject *pyDict, jobject jMap) {
             // an error occurred
             goto error;
         }
-        printf("Converting: %s\n", repr(pyValue));
         if (JPy_AsJObject(jenv, pyValue, &(jValues[ii]), JNI_TRUE) < 0) {
-            printf("Value Conversion Error!\n");
             // an error occurred
             goto error;
         }
@@ -685,8 +678,6 @@ error:
     if (decLocals) {
         Py_XDECREF(pyLocals);
     }
-
-    JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: return value %s\n", repr(pyReturnValue));
 
     JPy_END_GIL_STATE
 
