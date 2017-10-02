@@ -129,9 +129,9 @@ public class PyDictWrapper implements Map<PyObject, PyObject> {
     }
 
     /**
-      * Gets the underlying PyObject.
+      * Gets the underlying pointer for this object.
       *
-      * @return the PyObject wrapped by this dictionary.
+      * @return the pointer to the underlying Python object wrapped by this dictionary.
       */
     long getPointer() {
         return pyObject.getPointer();
