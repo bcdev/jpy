@@ -699,7 +699,7 @@ PyObject *pyRunStringWrapper(const char *code, int start, PyObject *globals, PyO
 }
 
 /**
- * Calls PyRun_String under the covers to execute a python script using the __main__ globals.
+ * Calls PyRun_String under the covers to execute the string contents.
  *
  * jStart must be JPy_IM_STATEMENT, JPy_IM_SCRIPT, JPy_IM_EXPRESSION; matching what you are trying to
  * run.  If you use a statement or expression instead of a script; some of your code may be ignored.
@@ -744,6 +744,20 @@ PyObject *pyRunFileWrapper(RunFileArgs *args, int start, PyObject *globals, PyOb
     return PyRun_File(args->fp, args->filechars, start, globals, locals);
 }
 
+/**
+ * Calls PyRun_Script under the covers to execute the script contents.
+ *
+ * jStart must be JPy_IM_STATEMENT, JPy_IM_SCRIPT, JPy_IM_EXPRESSION; matching what you are trying to
+ * run.  If you use a statement or expression instead of a script; some of your code may be ignored.
+ *
+ * If jGlobals is not specified, then the main module globals are used.
+ *
+ * If jLocals is not specified, then the globals are used.
+ *
+ * jGlobals and jLocals may be a PyObject, in which case they are used without translation.  Otherwise,
+ * they must be a map from String to Object, and will be copied to a new python dictionary.  After execution
+ * completes the dictionary entries will be copied back.
+ */
 JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeScript
         (JNIEnv* jenv, jclass jLibClass, jstring jFile, jint jStart, jobject jGlobals, jobject jLocals) {
     RunFileArgs runFileArgs;
