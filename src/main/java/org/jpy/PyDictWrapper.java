@@ -46,8 +46,11 @@ public class PyDictWrapper implements Map<PyObject, PyObject> {
         return pyObject.callMethod("has_key", key).getBooleanValue();
     }
 
+    /**
+      * An extension to the Map interface that allows the use of String keys without generating warnings.
+      */
     public boolean containsKey(String key) {
-        return pyObject.callMethod("has_key", key).getBooleanValue();
+        return containsKey((Object)key);
     }
 
     @Override
@@ -60,15 +63,21 @@ public class PyDictWrapper implements Map<PyObject, PyObject> {
         return pyObject.callMethod("__getitem__", key);
     }
 
+    /**
+      * An extension to the Map interface that allows the use of String keys without generating warnings.
+      */
     public PyObject get(String key) {
         return pyObject.callMethod("__getitem__", key);
     }
 
     @Override
     public PyObject put(PyObject key, PyObject value) {
-        return pyObject.callMethod("__setitem__", key, value);
+        return putObject(key, value);
     }
 
+    /**
+      * An extension to the Map interface that allows the use of Object key-values without generating warnings.
+      */
     public PyObject putObject(Object key, Object value) {
         return pyObject.callMethod("__setitem__", key, value);
     }
@@ -85,13 +94,7 @@ public class PyDictWrapper implements Map<PyObject, PyObject> {
     }
 
     public PyObject remove(String key) {
-        try {
-            PyObject value = get(key);
-            pyObject.callMethod("__delitem__", key);
-            return value;
-        } catch (KeyError ke) {
-            return null;
-        }
+        return remove((Object)key);
     }
 
     @Override
