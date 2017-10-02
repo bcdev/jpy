@@ -614,7 +614,7 @@ jlong executeInternal(JNIEnv* jenv, jclass jLibClass, jint jStart, jobject jGlob
         pyGlobals = (PyObject *)((*jenv)->CallLongMethod(jenv, jGlobals, JPy_PyObject_GetPointer_MID));
         JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using PyObject globals\n");
     } else if ((*jenv)->IsInstanceOf(jenv, jGlobals, JPy_PyDictWrapper_JClass)) {
-        // if we are an instance of PyObject, just use the object
+        // if we are an instance of a wrapped dictionary, just use the underlying dictionary
         pyGlobals = (PyObject *)((*jenv)->CallLongMethod(jenv, jGlobals, JPy_PyDictWrapper_GetPointer_MID));
         JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using PyDictWrapper globals\n");
     } else if ((*jenv)->IsInstanceOf(jenv, jGlobals, JPy_Map_JClass)) {
@@ -644,7 +644,7 @@ jlong executeInternal(JNIEnv* jenv, jclass jLibClass, jint jStart, jobject jGlob
         JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using PyObject locals\n");
         pyLocals = (PyObject *)((*jenv)->CallLongMethod(jenv, jLocals, JPy_PyObject_GetPointer_MID));
     } else if ((*jenv)->IsInstanceOf(jenv, jLocals, JPy_PyDictWrapper_JClass)) {
-        // if we are an instance of PyObject, just use the object
+        // if we are an instance of a wrapped dictionary, just use the underlying dictionary
         pyLocals = (PyObject *)((*jenv)->CallLongMethod(jenv, jLocals, JPy_PyDictWrapper_GetPointer_MID));
         JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using PyDictWrapper locals\n");
     } else if ((*jenv)->IsInstanceOf(jenv, jLocals, JPy_Map_JClass)) {
