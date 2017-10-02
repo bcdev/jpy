@@ -38,6 +38,7 @@ void PyLib_HandlePythonException(JNIEnv* jenv);
 void PyLib_ThrowOOM(JNIEnv* jenv);
 void PyLib_ThrowFNFE(JNIEnv* jenv, const char *file);
 void PyLib_ThrowUOE(JNIEnv* jenv, const char *message);
+void PyLib_ThrowRTE(JNIEnv* jenv, const char *message);
 void PyLib_RedirectStdOut(void);
 int copyPythonDictToJavaMap(JNIEnv *jenv, PyObject *pyDict, jobject jMap);
 
@@ -619,8 +620,12 @@ jlong executeInternal(JNIEnv* jenv, jclass jLibClass, jint jStart, jobject jGlob
     } else if ((*jenv)->IsInstanceOf(jenv, jGlobals, JPy_Map_JClass)) {
         JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using Java Map globals\n");
         // this is a java Map and we need to convert it
-        copyGlobals = decGlobals = JNI_TRUE;
         pyGlobals = copyJavaStringObjectMapToPyDict(jenv, jGlobals);
+        if (pyGlobals == NULL) {
+            PyLib_ThrowRTE(jenv, "Could not convert globals from Java Map to Python dictionary");
+            goto error;
+        }
+        copyGlobals = decGlobals = JNI_TRUE;
     } else {
         PyLib_ThrowUOE(jenv, "Unsupported globals type");
         goto error;
@@ -645,8 +650,12 @@ jlong executeInternal(JNIEnv* jenv, jclass jLibClass, jint jStart, jobject jGlob
     } else if ((*jenv)->IsInstanceOf(jenv, jLocals, JPy_Map_JClass)) {
         JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using Java Map locals\n");
         // this is a java Map and we need to convert it
-        copyLocals = decLocals = JNI_TRUE;
         pyLocals = copyJavaStringObjectMapToPyDict(jenv, jLocals);
+        if (pyLocals == NULL) {
+            PyLib_ThrowRTE(jenv, "Could not convert locals from Java Map to Python dictionary");
+            goto error;
+        }
+        copyLocals = decLocals = JNI_TRUE;
     } else {
         PyLib_ThrowUOE(jenv, "Unsupported locals type");
         goto error;
@@ -686,7 +695,6 @@ error:
 
 PyObject *pyRunStringWrapper(const char *code, int start, PyObject *globals, PyObject *locals) {
     PyObject *result = PyRun_String(code, start, globals, locals);
-    JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Result in wrapper: %s\n", repr(result));
     return result;
 }
 
@@ -1974,6 +1982,15 @@ void PyLib_ThrowFNFE(JNIEnv* jenv, const char *file) {
  */
 void PyLib_ThrowUOE(JNIEnv* jenv, const char *message) {
     (*jenv)->ThrowNew(jenv, JPy_UnsupportedOperationException_JClass, message);
+}
+
+/**
+ * Throw an UnsupportedOperationException.
+ * @param jenv the jni environment
+ * @param message the exception message
+ */
+void PyLib_ThrowRTE(JNIEnv* jenv, const char *message) {
+    (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, message);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
