@@ -472,11 +472,11 @@ PyObject *copyJavaStringObjectMapToPyDict(JNIEnv *jenv, jobject jMap) {
         if (key == NULL) {
             goto error;
         }
+
+        // we require string keys
         if (!(*jenv)->IsInstanceOf(jenv, key, JPy_String_JClass)) {
             goto error;
         }
-
-        // we require string keys
         keyChars = (*jenv)->GetStringUTFChars(jenv, (jstring)key, NULL);
         if (keyChars == NULL) {
             goto error;
