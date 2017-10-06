@@ -882,9 +882,10 @@ int JOverloadedMethod_AddMethod(JPy_JOverloadedMethod* overloadedMethod, JPy_JMe
     Py_ssize_t destinationIndex = -1;
 
     if (!method->isVarArgs) {
+        Py_ssize_t ii;
         // we need to insert this before the first varargs method
         Py_ssize_t size = PyList_Size(overloadedMethod->methodList);
-        for (Py_ssize_t ii = 0; ii < size; ii++) {
+        for (ii = 0; ii < size; ii++) {
             PyObject *check = PyList_GetItem(overloadedMethod->methodList, ii);
             if (((JPy_JMethod *) check)->isVarArgs) {
                 // this is the first varargs method, so we should go before it
