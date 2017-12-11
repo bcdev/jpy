@@ -85,6 +85,26 @@ class TestMethodOverloads(unittest.TestCase):
             fixture.join('x', 'y', 'z', 'u', 'v')
         self.assertEqual(str(e.exception), 'no matching Java method overloads found')
 
+    def test_stringAsComparable(self):
+        fixture = self.Fixture()
+        self.assertEqual(fixture.join2("a", 1, "c", "d"), 'String(a),Integer(1),String(c),String(d)')
+
+    def test_stringAsNumber(self):
+        fixture = self.Fixture()
+        with self.assertRaises(RuntimeError, msg='RuntimeError expected') as e:
+            fixture.join3('x', 2)
+        self.assertEqual(str(e.exception), 'no matching Java method overloads found')
+
+    def test_numbersAsNumber(self):
+        fixture = self.Fixture()
+        self.assertEqual(fixture.join3(1, 2), 'Integer(1),Integer(2)')
+        self.assertEqual(fixture.join3(1.1, 2), 'Double(1.1),Integer(2)')
+
+    def test_numbersAsComparable(self):
+        fixture = self.Fixture()
+        self.assertEqual(fixture.join2(1, 2, "c", "d"), 'Integer(1),Integer(2),String(c),String(d)')
+        self.assertEqual(fixture.join2(1.1, 2, "c", "d"), 'Double(1.1),Integer(2),String(c),String(d)')
+
 class TestVarArgs(unittest.TestCase):
     def setUp(self):
         self.Fixture = jpy.get_type('org.jpy.fixtures.VarArgsTestFixture')

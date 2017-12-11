@@ -72,6 +72,16 @@ public class MethodOverloadTestFixture {
         return stringifyArgs(a, b, c);
     }
 
+    //////////////////////////////////////////////
+    public String join2(Comparable a, int b, String c, String d) {
+        return stringifyArgs(a, b, c, d);
+    }
+
+    //////////////////////////////////////////////
+    public String join3(Number a, int b) {
+        return stringifyArgs(a, b);
+    }
+
     /**
      * Used to test that we also find overloaded methods in class hierarchies
      */
