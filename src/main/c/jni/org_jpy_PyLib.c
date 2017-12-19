@@ -929,6 +929,14 @@ PyObject* PyLib_CallAndReturnObject(JNIEnv *jenv, PyObject* pyObject, jboolean i
             (*jenv)->DeleteLocalRef(jenv, jParamClass);
         } else {
             pyArg = JPy_FromJObject(jenv, jArg);
+            // We must keep unchanged the reference counter when calling a Python method
+            // with a complex Python object as parameter. 
+            // Per example:
+            // PyObject x = pymodule.call("create_dataFrame");
+            // String[] columns = pymodule.call("list",x.columns.values).getObjectArrayValue(String.class);
+            if (paramType->componentType == NULL && paramType == JPy_JPyObject) {
+                Py_INCREF(pyArg);
+            } 
         }
 
         (*jenv)->DeleteLocalRef(jenv, jArg);
