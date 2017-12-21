@@ -203,8 +203,18 @@ class TestDefaultMethods(unittest.TestCase):
 
     # see https://github.com/bcdev/jpy/issues/102
     def test_defaultedInterfaces(self):
-	fixture = self.Fixture()
+        fixture = self.Fixture()
         self.assertEqual(fixture.doItPlusOne(), 3)
+
+
+class TestCovariantReturn(unittest.TestCase):
+    def setUp(self):
+        self.Fixture = jpy.get_type('org.jpy.fixtures.CovariantOverloadExtendTestFixture')
+        self.assertIsNotNone(self.Fixture)
+
+    def test_covariantReturn(self):
+        fixture = self.Fixture(1)
+        self.assertEqual(fixture.foo(4, 1).getX(), 6)
 
 
 if __name__ == '__main__':

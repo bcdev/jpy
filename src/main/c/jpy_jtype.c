@@ -1080,6 +1080,7 @@ int JType_ProcessClassMethods(JNIEnv* jenv, JPy_JType* type)
     jboolean isStatic;
     jboolean isVarArg;
     jboolean isPublic;
+    jboolean isBridge;
     const char* methodName;
     jmethodID mid;
     PyObject* methodKey;
@@ -1098,7 +1099,9 @@ int JType_ProcessClassMethods(JNIEnv* jenv, JPy_JType* type)
         isPublic   = (modifiers & 0x0001) != 0;
         isStatic   = (modifiers & 0x0008) != 0;
         isVarArg   = (modifiers & 0x0080) != 0;
-        if (isPublic) {
+        isBridge   = (modifiers & 0x0040) != 0;
+        // we exclude bridge methods; as covariant return types will result in bridge methods that cause ambiguity
+        if (isPublic && !isBridge) {
             methodNameStr = (*jenv)->CallObjectMethod(jenv, method, JPy_Method_GetName_MID);
             returnType = (*jenv)->CallObjectMethod(jenv, method, JPy_Method_GetReturnType_MID);
             parameterTypes = (*jenv)->CallObjectMethod(jenv, method, JPy_Method_GetParameterTypes_MID);
