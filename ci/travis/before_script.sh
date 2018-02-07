@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 
     # Install some custom requirements on OS X
