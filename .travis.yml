@@ -57,6 +57,7 @@ before_script:
   - bash ./ci/travis/before_script.sh
 
 script:
+  - pyenv activate jpy-venv
   - python --version
   # oracle-java8-set-default seems to modify PATH but not JAVA_HOME :(
   - java -version
