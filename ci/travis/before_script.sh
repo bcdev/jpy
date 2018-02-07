@@ -12,6 +12,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
     eval "$(pyenv init -)"
     eval "$(pyenv virtualenv-init -)"
 
+    pyenv install $TOXENV
     pyenv virtualenv $TOXENV jpy-venv
 
 else
@@ -31,6 +32,7 @@ else
     pyenv virtualenv jpy-venv
 fi
 
+pyenv rehash
 pyenv activate jpy-venv
 pip install wheel
 
