@@ -57,7 +57,7 @@ before_script:
   - bash ./ci/travis/before_script.sh
 
 script:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export PATH="$HOME/.pyenv/bin:$PATH"; eval "$(pyenv init -)"; eval "$(pyenv virtualenv-init -)"; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export PATH="$HOME/.pyenv/bin:$PATH"; eval "$(pyenv init -)"; which pyenv; pyenv commands; eval "$(pyenv virtualenv-init -)"; fi
   - pyenv activate jpy-venv
   - python --version
   # oracle-java8-set-default seems to modify PATH but not JAVA_HOME :(
