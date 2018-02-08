@@ -10,6 +10,7 @@ This version includes a number of contributions from supportive GitHub users. Th
 Fixes
 -----
 
+* Corrected Java reference count of complex PyObject passed back and forth to methods (issue #120). Fix by sbarnoud.
 * Fixed problem where default methods on Java 8 Interfaces were not found (issue #102). Fix by Charles P. Wright.
 * Fixed error caused by missing `sys.argv` in Python when called from Java (issue #81). Fix by Dave Voutila.
 * Fixed problem where calling jpy.get_type() too many times causes a memory access error (issue #74). Fix by Dave Voutila.

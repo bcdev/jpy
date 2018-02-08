@@ -937,7 +937,7 @@ PyObject* PyLib_CallAndReturnObject(JNIEnv *jenv, PyObject* pyObject, jboolean i
             if (paramType->componentType == NULL && paramType == JPy_JPyObject) {
                 Py_INCREF(pyArg);
             } 
-            
+
             (*jenv)->DeleteLocalRef(jenv, jParamClass);
         } else {
             pyArg = JPy_FromJObject(jenv, jArg);
