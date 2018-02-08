@@ -27,16 +27,16 @@ matrix:
     # OS-X ------------------------
     - os: osx
       language: generic
-      env: TOXENV='2.7.14'
+      env: TOXENV='2.7'
     - os: osx
       language: generic
-      env: TOXENV='3.4.7'
+      env: TOXENV='3.4'
     - os: osx
       language: generic
-      env: TOXENV='3.5.4'
+      env: TOXENV='3.5'
     - os: osx
       language: generic
-      env: TOXENV='3.6.3'
+      env: TOXENV='3.6'
 
 # matrix end #####################################
 
@@ -57,12 +57,4 @@ before_script:
   - bash ./ci/travis/before_script.sh
 
 script:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export PATH="$HOME/.pyenv/bin:$PATH"; eval "$(pyenv init -)"; which pyenv; pyenv commands; eval "$(pyenv virtualenv-init -)"; fi
-  - pyenv activate jpy-venv
-  - python --version
-  # oracle-java8-set-default seems to modify PATH but not JAVA_HOME :(
-  - java -version
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export JAVA_HOME=$(/usr/libexec/java_home -v 1.8); fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export JAVA_HOME=/usr/lib/jvm/java-8-oracle; fi
-  - echo $JAVA_HOME
-  - python setup.py --maven bdist_wheel
+  - bash ./ci/travis/run.sh

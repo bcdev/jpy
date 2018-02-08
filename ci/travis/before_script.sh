@@ -1,6 +1,4 @@
-#!/bin/bash
-
-set -x
+#!/usr/bin/env bash
 
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 
