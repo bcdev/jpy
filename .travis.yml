@@ -11,32 +11,29 @@ matrix:
     - os: linux
       language: python
       python: 2.7
-      env: TOXENV='2.7'
     - os: linux
       language: python
       python: 3.4
-      env: TOXENV='3.4'
     - os: linux
       language: python
       python: 3.5
-      env: TOXENV='3.5'
     - os: linux
       language: python
       python: 3.6
-      env: TOXENV='3.6'
     # OS-X ------------------------
     - os: osx
       language: generic
-      env: TOXENV='2.7'
+      env: PYTHON_VERSION='2.7'
     - os: osx
       language: generic
-      env: TOXENV='3.4'
+      # exact version required: 3.4  is not available
+      env: PYTHON_VERSION='3.4.7'
     - os: osx
       language: generic
-      env: TOXENV='3.5'
+      env: PYTHON_VERSION='3.5.4'
     - os: osx
       language: generic
-      env: TOXENV='3.6'
+      env: PYTHON_VERSION='3.6.4'
 
 # matrix end #####################################
 

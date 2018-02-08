@@ -5,6 +5,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
     # Install some custom requirements on OS X
     # e.g. brew install pyenv-virtualenv
     # See https://gist.github.com/Bouke/11261620
+    # and https://github.com/bincrafters/conan-bazel_installer
 
     brew update || brew update
     brew outdated pyenv || brew upgrade pyenv
@@ -12,8 +13,9 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
     eval "$(pyenv init -)"
     eval "$(pyenv virtualenv-init -)"
 
-    pyenv install --skip-existing $TOXENV
-    pyenv virtualenv $TOXENV jpy-venv
+    pyenv install --list
+    pyenv install --skip-existing $PYTHON_VERSION
+    pyenv virtualenv $PYTHON_VERSION jpy-venv
 
 else
     # Install pyenv
