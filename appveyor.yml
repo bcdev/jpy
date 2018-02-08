@@ -78,6 +78,6 @@ deploy:
     host: ftp.brockmann-consult.de
     username: jpy
     password:
-      secure: Q/pKbj/UOz0YPzget7ghKg==
+      secure: AMte8IErI/LRGmLGq4Y5YQ==
     folder: software
     debug: true    
