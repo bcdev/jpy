@@ -67,5 +67,5 @@ script:
 after_success:
   # only publish artifacts on master branch when pushed (not from cron or PRs)
   - if [ "$TRAVIS_BRANCH" = "master" -a "$TRAVIS_EVENT_TYPE" = "push" ]; then
-      bash ./upload-to-ftp.sh;
+      bash ./ci/upload-to-ftp.sh;
     fi
