@@ -21,3 +21,5 @@ fi
 echo $JAVA_HOME
 
 python setup.py --maven bdist_wheel
+
+ls -l dist/*
