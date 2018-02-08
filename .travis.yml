@@ -21,12 +21,12 @@ matrix:
       language: python
       python: 3.6
     # OS-X ------------------------
+    # exact versions required (e.g. 3.4 is not available) 
     - os: osx
       language: generic
-      env: PYTHON_VERSION='2.7'
+      env: PYTHON_VERSION='2.7.14'
     - os: osx
       language: generic
-      # exact version required: 3.4  is not available
       env: PYTHON_VERSION='3.4.7'
     - os: osx
       language: generic
