@@ -2,8 +2,8 @@
 jpy Changelog
 *************
 
-Version 0.9 (dev)
-=================
+Version 0.9
+===========
 
 This version includes a number of contributions from supportive GitHub users. Thanks to all of you! 
 
