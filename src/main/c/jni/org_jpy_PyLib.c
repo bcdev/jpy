@@ -934,7 +934,7 @@ PyObject* PyLib_CallAndReturnObject(JNIEnv *jenv, PyObject* pyObject, jboolean i
             // for (DataFrameColumn column : values) {
             //    kycProcessor.addColumn(dt_X, column.getName(), column.getValues());
             // }
-            if (paramType->componentType == NULL && paramType == JPy_JPyObject) {
+            if (paramType == JPy_JPyObject && paramType->componentType == NULL) {
                 Py_INCREF(pyArg);
             } 
 
