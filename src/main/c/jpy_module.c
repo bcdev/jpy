@@ -747,6 +747,10 @@ jmethodID JPy_GetMethod(JNIEnv* jenv, jclass classRef, const char* name, const c
 
 int initGlobalPyObjectVars(JNIEnv* jenv)
 {
+    JPy_JType *dictType;
+    JPy_JType *keyErrorType;
+    JPy_JType *stopIterationType;
+
     JPy_JPyObject = JType_GetTypeForName(jenv, "org.jpy.PyObject", JNI_FALSE);
     if (JPy_JPyObject == NULL) {
         // org.jpy.PyObject may not be on the classpath, which is ok
@@ -765,7 +769,7 @@ int initGlobalPyObjectVars(JNIEnv* jenv)
         return -1;
     }
 
-    JPy_JType *dictType = JType_GetTypeForName(jenv, "org.jpy.PyDictWrapper", JNI_FALSE);
+    dictType = JType_GetTypeForName(jenv, "org.jpy.PyDictWrapper", JNI_FALSE);
     if (dictType == NULL) {
         PyErr_Clear();
         return -1;
@@ -774,7 +778,7 @@ int initGlobalPyObjectVars(JNIEnv* jenv)
         DEFINE_METHOD(JPy_PyDictWrapper_GetPointer_MID, JPy_PyDictWrapper_JClass, "getPointer", "()J");
     }
 
-    JPy_JType *keyErrorType = JType_GetTypeForName(jenv, "org.jpy.KeyError", JNI_FALSE);
+    keyErrorType = JType_GetTypeForName(jenv, "org.jpy.KeyError", JNI_FALSE);
     if (keyErrorType == NULL) {
         PyErr_Clear();
         return -1;
@@ -782,7 +786,7 @@ int initGlobalPyObjectVars(JNIEnv* jenv)
         JPy_KeyError_JClass = keyErrorType->classRef;
     }
 
-    JPy_JType *stopIterationType = JType_GetTypeForName(jenv, "org.jpy.StopIteration", JNI_FALSE);
+    stopIterationType = JType_GetTypeForName(jenv, "org.jpy.StopIteration", JNI_FALSE);
     if (stopIterationType == NULL) {
         PyErr_Clear();
         return -1;
@@ -1076,13 +1080,11 @@ void JPy_HandleJavaException(JNIEnv* jenv)
         if (JPy_VerboseExceptions) {
             char *stackTraceString;
             size_t stackTraceLength = 0;
-
-            stackTraceString = strdup("");
-
             jthrowable cause = error;
-
             jarray enclosingElements = NULL;
             jint enclosingSize = 0;
+
+            stackTraceString = strdup("");
 
             do {
                 /* We want the type and the detail string, which is actually what a Throwable toString() does by

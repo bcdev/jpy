@@ -1259,12 +1259,13 @@ JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_str
   (JNIEnv* jenv, jclass jLibClass, jlong objId) {
     PyObject *pyObject;
     jobject jObject;
+    PyObject *pyStr;
 
     JPy_BEGIN_GIL_STATE
 
     pyObject = (PyObject *) objId;
 
-    PyObject *pyStr = PyObject_Str(pyObject);
+    pyStr = PyObject_Str(pyObject);
     if (pyStr) {
         jObject = (*jenv)->NewStringUTF(jenv, PyString_AS_STRING(pyStr));
         Py_DECREF(pyStr);
@@ -1291,12 +1292,13 @@ JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_repr
   (JNIEnv* jenv, jclass jLibClass, jlong objId) {
     PyObject *pyObject;
     jobject jObject;
+    PyObject *pyStr;
 
     JPy_BEGIN_GIL_STATE
 
     pyObject = (PyObject *) objId;
 
-    PyObject *pyStr = PyObject_Repr(pyObject);
+    pyStr = PyObject_Repr(pyObject);
     if (pyStr) {
         jObject = (*jenv)->NewStringUTF(jenv, PyString_AS_STRING(pyStr));
         Py_DECREF(pyStr);

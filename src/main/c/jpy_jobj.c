@@ -99,6 +99,7 @@ int JObj_init(JPy_JObj* self, PyObject* args, PyObject* kwds)
     jobject objectRef;
     jvalue* jArgs;
     JPy_ArgDisposer* jDisposers;
+    int isVarArgsArray;
 
     JPy_GET_JNI_ENV_OR_RETURN(jenv, -1)
 
@@ -120,8 +121,6 @@ int JObj_init(JPy_JObj* self, PyObject* args, PyObject* kwds)
         PyErr_SetString(PyExc_RuntimeError, "internal error: Java class reference is NULL");
         return -1;
     }
-
-    int isVarArgsArray;
 
     jMethod = JOverloadedMethod_FindMethod(jenv, (JPy_JOverloadedMethod*) constructor, args, JNI_FALSE, &isVarArgsArray);
     if (jMethod == NULL) {

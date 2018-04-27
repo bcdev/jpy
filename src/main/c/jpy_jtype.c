@@ -1516,6 +1516,10 @@ int JType_MatchVarArgPyArgAsJObjectParam(JNIEnv* jenv, JPy_ParamDescriptor* para
     Py_ssize_t remaining = (argCount - idx);
 
     JPy_JType *componentType = paramDescriptor->type->componentType;
+    PyObject *varArgs;
+    int minMatch = 100;
+    int ii;
+
     if (componentType == NULL) {
         return 0;
     }
@@ -1524,10 +1528,7 @@ int JType_MatchVarArgPyArgAsJObjectParam(JNIEnv* jenv, JPy_ParamDescriptor* para
         return 10;
     }
 
-    PyObject *varArgs = PyTuple_GetSlice(pyArg, idx, argCount);
-
-    int minMatch = 100;
-    int ii;
+    varArgs = PyTuple_GetSlice(pyArg, idx, argCount);
     for (ii = 0; ii < remaining; ii++) {
         PyObject *unpack = PyTuple_GetItem(varArgs, ii);
         int matchValue = JType_MatchPyArgAsJObject(jenv, componentType, unpack);
@@ -1545,6 +1546,10 @@ int JType_MatchVarArgPyArgAsJStringParam(JNIEnv* jenv, JPy_ParamDescriptor* para
     Py_ssize_t remaining = (argCount - idx);
 
     JPy_JType *componentType = paramDescriptor->type->componentType;
+    PyObject *varArgs;
+    int minMatch = 100;
+    int ii;
+
     if (componentType != JPy_JString) {
         return 0;
     }
@@ -1553,10 +1558,7 @@ int JType_MatchVarArgPyArgAsJStringParam(JNIEnv* jenv, JPy_ParamDescriptor* para
         return 10;
     }
 
-    PyObject *varArgs = PyTuple_GetSlice(pyArg, idx, argCount);
-
-    int minMatch = 100;
-    int ii;
+    varArgs = PyTuple_GetSlice(pyArg, idx, argCount);
     for (ii = 0; ii < remaining; ii++) {
         PyObject *unpack = PyTuple_GetItem(varArgs, ii);
         int matchValue = JType_MatchPyArgAsJStringParam(jenv, paramDescriptor, unpack);
@@ -1574,6 +1576,10 @@ int JType_MatchVarArgPyArgAsJBooleanParam(JNIEnv *jenv, JPy_ParamDescriptor *par
     Py_ssize_t remaining = (argCount - idx);
 
     JPy_JType *componentType = paramDescriptor->type->componentType;
+    PyObject *varArgs;
+    int minMatch = 100;
+    int ii;
+
     if (componentType != JPy_JBoolean) {
         // something is horribly wrong here!
         return 0;
@@ -1583,10 +1589,7 @@ int JType_MatchVarArgPyArgAsJBooleanParam(JNIEnv *jenv, JPy_ParamDescriptor *par
         return 10;
     }
 
-    PyObject *varArgs = PyTuple_GetSlice(pyArg, idx, argCount);
-
-    int minMatch = 100;
-    int ii;
+    varArgs = PyTuple_GetSlice(pyArg, idx, argCount);
     for (ii = 0; ii < remaining; ii++) {
         PyObject *unpack = PyTuple_GetItem(varArgs, ii);
 
@@ -1631,6 +1634,10 @@ int JType_MatchVarArgPyArgIntType(const JPy_ParamDescriptor *paramDescriptor, Py
     Py_ssize_t remaining = (argCount - idx);
 
     JPy_JType *componentType = paramDescriptor->type->componentType;
+    PyObject *varArgs;
+    int minMatch = 100;
+    int ii;
+
     if (componentType != expectedComponentType) {
         // something is horribly wrong here!
         return 0;
@@ -1640,10 +1647,7 @@ int JType_MatchVarArgPyArgIntType(const JPy_ParamDescriptor *paramDescriptor, Py
         return 10;
     }
 
-    PyObject *varArgs = PyTuple_GetSlice(pyArg, idx, argCount);
-
-    int minMatch = 100;
-    int ii;
+    varArgs = PyTuple_GetSlice(pyArg, idx, argCount);
     for (ii = 0; ii < remaining; ii++) {
         PyObject *unpack = PyTuple_GetItem(varArgs, ii);
 
@@ -1676,6 +1680,10 @@ int JType_MatchVarArgPyArgAsFPType(const JPy_ParamDescriptor *paramDescriptor, P
     Py_ssize_t remaining = (argCount - idx);
 
     JPy_JType *componentType = paramDescriptor->type->componentType;
+    PyObject *varArgs;
+    int minMatch = 100;
+    int ii;
+
     if (componentType != expectedType) {
         // something is horribly wrong here!
         return 0;
@@ -1685,10 +1693,7 @@ int JType_MatchVarArgPyArgAsFPType(const JPy_ParamDescriptor *paramDescriptor, P
         return 10;
     }
 
-    PyObject *varArgs = PyTuple_GetSlice(pyArg, idx, argCount);
-
-    int minMatch = 100;
-    int ii;
+    varArgs = PyTuple_GetSlice(pyArg, idx, argCount);
     for (ii = 0; ii < remaining; ii++) {
         PyObject *unpack = PyTuple_GetItem(varArgs, ii);
 
