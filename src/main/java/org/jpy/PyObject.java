@@ -19,6 +19,7 @@ package org.jpy;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 import java.util.Map;
+import java.util.Objects;
 
 import static org.jpy.PyLib.assertPythonRuns;
 
@@ -228,6 +229,7 @@ public class PyObject implements java.io.Serializable {
      */
     public PyObject callMethod(String name, Object... args) {
         assertPythonRuns();
+        Objects.requireNonNull(name);
         long pointer = PyLib.callAndReturnObject(getPointer(), true, name, args.length, args, null);
         return pointer != 0 ? new PyObject(pointer) : null;
     }
@@ -244,6 +246,7 @@ public class PyObject implements java.io.Serializable {
      */
     public PyObject call(String name, Object... args) {
         assertPythonRuns();
+        Objects.requireNonNull(name);
         long pointer = PyLib.callAndReturnObject(getPointer(), false, name, args.length, args, null);
         return pointer != 0 ? new PyObject(pointer) : null;
     }
