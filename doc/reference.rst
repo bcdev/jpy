@@ -226,6 +226,13 @@ Variables
     dictionary.  If the returned item is a callable, the callable is called with the JPy object as an argument,
     and the callable's result is returned to the user.
 
+
+.. py:data:: VerboseExceptions.enabled
+    :module: jpy
+
+    If set to true, then jpy will produce more verbose exception messages; which include the full Java stack trace.
+    If set to false, then jpy produces exceptions using only the underlying Java exception's toString method.
+
 .. py:data:: diag
     :module: jpy
 
@@ -416,6 +423,9 @@ given above, the a match value of 10 applies, as long as the item size of a buff
 
 Java object array types
 -----------------------
+
+For String arrays, if a sequence is matched with a value of 80 if all the elements in the sequence are Python strings.
+
 
 todo
 
