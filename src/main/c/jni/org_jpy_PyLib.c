@@ -1128,19 +1128,19 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyNoneCheck
 JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyIntCheck
   (JNIEnv* jenv, jclass jLibClass, jlong objId)
 {
-    jboolean result;
+    int check;
 
     JPy_BEGIN_GIL_STATE
 
-    if (PyInt_Check(((PyObject*) objId))) {
-        result = JNI_TRUE;
-    } else {
-        result = JNI_FALSE;
-    }
+#ifdef JPY_COMPAT_27
+    check = PyInt_Check(((PyObject*) objId));
+#else
+    check = JPy_IS_CLONG(((PyObject*) objId));
+#endif
 
     JPy_END_GIL_STATE
 
-    return result;
+    return check ? (jboolean)JNI_TRUE : (jboolean)JNI_FALSE;
 }
 
 /**
@@ -1210,7 +1210,7 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyStringCheck
 
     JPy_BEGIN_GIL_STATE
 
-    if (PyString_Check(((PyObject*) objId))) {
+    if (JPy_IS_STR(((PyObject*) objId))) {
         result = JNI_TRUE;
     } else {
         result = JNI_FALSE;
@@ -1267,7 +1267,7 @@ JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_str
 
     pyStr = PyObject_Str(pyObject);
     if (pyStr) {
-        jObject = (*jenv)->NewStringUTF(jenv, PyString_AS_STRING(pyStr));
+        jObject = (*jenv)->NewStringUTF(jenv, JPy_AsUTF8_PriorToPy33(pyStr));
         Py_DECREF(pyStr);
     } else {
         jObject = NULL;
