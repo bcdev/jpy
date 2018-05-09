@@ -1300,7 +1300,7 @@ JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_repr
 
     pyStr = PyObject_Repr(pyObject);
     if (pyStr) {
-        jObject = (*jenv)->NewStringUTF(jenv, PyString_AS_STRING(pyStr));
+        jObject = (*jenv)->NewStringUTF(jenv, JPy_AS_UTF8(pyStr));
         Py_DECREF(pyStr);
     } else {
         jObject = NULL;
