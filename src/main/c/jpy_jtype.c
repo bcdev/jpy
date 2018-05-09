@@ -1976,7 +1976,7 @@ int JType_MatchPyArgAsJObject(JNIEnv* jenv, JPy_JType* paramType, PyObject* pyAr
 
                 for (ii = 0; ii < len; ++ii) {
                     PyObject *element = PySequence_GetItem(pyArg, ii);
-                    if (!PyString_Check(element)) {
+                    if (!JPy_IS_STR(element)) {
                         // if the element is not a string, this is not a good match
                         return 0;
                     }
@@ -2016,7 +2016,7 @@ int JType_MatchPyArgAsJObject(JNIEnv* jenv, JPy_JType* paramType, PyObject* pyAr
             return 10;
         }
     } else {
-        if (PyString_Check(pyArg)) {
+        if (JPy_IS_STR(pyArg)) {
             if ((*jenv)->IsAssignableFrom(jenv, JPy_JString->classRef, paramType->classRef)) {
                 return 80;
             }
