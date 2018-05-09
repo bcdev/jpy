@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/bcdev/jpy.svg?branch=master)](https://travis-ci.org/bcdev/jpy)
-[![Build Status](https://ci.appveyor.com/api/projects/status/32r7s2skrgm9ubva?svg=true)](https://ci.appveyor.com/project/forman/jpy)
+[![Build Status](https://ci.appveyor.com/api/projects/status/ywkcey4nlt0avasf?svg=true)](https://ci.appveyor.com/project/bcdev/jpy)
 [![Documentation Status](https://readthedocs.org/projects/jpy/badge/?version=latest)](http://jpy.readthedocs.org/en/latest/?badge=latest)
 
 
@@ -20,7 +20,7 @@ It comes with a number of outstanding features:
 * Java arrays translate into Python sequence objects
 * Java API for accessing Python objects (`jpy.jar`)
 
-jpy has been tested with Python 2.7, 3.3, 3.4 and Oracle Java 7 and 8 JDKs. 
+jpy has been tested with Python 2.7, 3.3-3.6 and Oracle Java 7 and 8 JDKs. 
 
 The initial development of jpy has been driven by the need to write Python extensions to an established scientific
 imaging application programmed in Java, namely the [BEAM](http://www.brockmann-consult.de/beam/) toolbox

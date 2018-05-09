@@ -1775,6 +1775,18 @@ PyObject* PyLib_CallAndReturnObject(JNIEnv *jenv, PyObject* pyObject, jboolean i
                 goto error;
             }
             pyArg = JPy_FromJObjectWithType(jenv, jArg, paramType);
+
+            // We must keep unchanged the reference counter when calling a Python method
+            // with a complex Python object as parameter. 
+            // Per example:
+            // PyObject dt_X = kycProcessor.getDataFrame(inputColumns.toArray(new String[0]));
+            // for (DataFrameColumn column : values) {
+            //    kycProcessor.addColumn(dt_X, column.getName(), column.getValues());
+            // }
+            if (paramType == JPy_JPyObject && paramType->componentType == NULL) {
+                Py_INCREF(pyArg);
+            } 
+
             (*jenv)->DeleteLocalRef(jenv, jParamClass);
         } else {
             pyArg = JPy_FromJObject(jenv, jArg);

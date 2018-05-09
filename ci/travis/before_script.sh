@@ -1,26 +1,21 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 
     # Install some custom requirements on OS X
     # e.g. brew install pyenv-virtualenv
     # See https://gist.github.com/Bouke/11261620
+    # and https://github.com/bincrafters/conan-bazel_installer
 
-    brew update
-    brew install pyenv
+    brew update || brew update
+    brew outdated pyenv || brew upgrade pyenv
     brew install pyenv-virtualenv
     eval "$(pyenv init -)"
     eval "$(pyenv virtualenv-init -)"
 
-    if [[ $TOXENV == '2.7' ]]; then
-        pyenv virtualenv 2.7 jpy-venv
-    elif [[ $TOXENV == '3.4' ]]; then
-        pyenv virtualenv 3.4 jpy-venv
-    elif [[ $TOXENV == '3.5' ]]; then
-        pyenv virtualenv 3.5 jpy-venv
-    elif [[ $TOXENV == '3.6' ]]; then
-        pyenv virtualenv 3.6 jpy-venv
-    fi
+    pyenv install --list
+    pyenv install --skip-existing $PYTHON_VERSION
+    pyenv virtualenv $PYTHON_VERSION jpy-venv
 
 else
     # Install pyenv
@@ -39,6 +34,7 @@ else
     pyenv virtualenv jpy-venv
 fi
 
+pyenv rehash
 pyenv activate jpy-venv
 pip install wheel
 
