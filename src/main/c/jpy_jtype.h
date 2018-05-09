@@ -12,6 +12,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ *
+ * This file was modified by Illumon.
+ *
  */
 
 #ifndef JPY_JTYPE_H
@@ -74,7 +78,9 @@ JPy_ArgDisposer;
 struct JPy_ParamDescriptor;
 
 typedef int (*JPy_MatchPyArg)(JNIEnv*, struct JPy_ParamDescriptor*, PyObject*);
+typedef int (*JPy_MatchVarArgPyArg)(JNIEnv*, struct JPy_ParamDescriptor*, PyObject*, int);
 typedef int (*JPy_ConvertPyArg)(JNIEnv*, struct JPy_ParamDescriptor*, PyObject*, jvalue*, JPy_ArgDisposer*);
+typedef int (*JPy_ConvertVarArgPyArg)(JNIEnv*, struct JPy_ParamDescriptor*, PyObject*, int, jvalue*, JPy_ArgDisposer*);
 
 /**
  * Method return value descriptor.
@@ -103,7 +109,9 @@ typedef struct JPy_ParamDescriptor
     jboolean isOutput;
     jboolean isReturn;
     JPy_MatchPyArg MatchPyArg;
+    JPy_MatchVarArgPyArg MatchVarArgPyArg;
     JPy_ConvertPyArg ConvertPyArg;
+    JPy_ConvertVarArgPyArg ConvertVarArgPyArg;
 }
 JPy_ParamDescriptor;
 
@@ -115,13 +123,13 @@ JPy_JType* JType_GetTypeForName(JNIEnv* jenv, const char* typeName, jboolean res
 JPy_JType* JType_GetType(JNIEnv* jenv, jclass classRef, jboolean resolve);
 
 PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject objectRef);
-int       JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* arg, jobject* objectRef);
+int       JType_ConvertPythonToJavaObject(JNIEnv* jenv, JPy_JType* type, PyObject* arg, jobject* objectRef, jboolean allowObjectWrapping);
 
 PyObject* JType_GetOverloadedMethod(JNIEnv* jenv, JPy_JType* type, PyObject* methodName, jboolean useSuperClass);
 
 int JType_MatchPyArgAsJObject(JNIEnv* jenv, JPy_JType* type, PyObject* pyArg);
 
-int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* componentType, PyObject* pyArg, jobject* objectRef);
+int JType_CreateJavaArray(JNIEnv* jenv, JPy_JType* componentType, PyObject* pyArg, jobject* objectRef, jboolean allowObjectWrapping);
 
 // Non-API. Defined in jpy_jobj.c
 int JType_InitSlots(JPy_JType* type);

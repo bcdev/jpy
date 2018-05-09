@@ -17,36 +17,18 @@
  *
  */
 
-#ifndef JPY_JOBJ_H
-#define JPY_JOBJ_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include "jpy_compat.h"
+package org.jpy.fixtures;
 
 /**
- * The Java Object representation in Python.
- * @see JPy_JArray
+ * Used as a test class for the test cases in jpy_retval_test.py
+ * Note: Please make sure to not add any method overloads to this class.
+ * This is done in {@link MethodOverloadTestFixture}.
+ *
+ * @author Norman Fomferra
  */
-typedef struct JPy_JObj
-{
-    PyObject_HEAD
-    jobject objectRef;
+@SuppressWarnings("UnusedDeclaration")
+public class TypeTranslationTestFixture {
+    public Thing makeThing(int value) {
+        return new Thing(value);
+    }
 }
-JPy_JObj;
-
-
-int JObj_Check(PyObject* arg);
-
-PyObject* JObj_New(JNIEnv* jenv, jobject objectRef);
-PyObject* JObj_FromType(JNIEnv* jenv, JPy_JType* type, jobject objectRef);
-
-int JObj_InitTypeSlots(PyTypeObject* type, const char* typeName, PyTypeObject* superType);
-
-
-#ifdef __cplusplus
-}  /* extern "C" */
-#endif
-#endif /* !JPY_JOBJ_H */

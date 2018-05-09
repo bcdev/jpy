@@ -25,7 +25,19 @@ Improvements
   and should work on Windows with Visual Studio 15 installed. 
   Contribution by Dave Voutila. 
 * Java `PyObject` is now serializable. Contribution by Mario Briggs. 
-
+* Improved Varargs method matching.  You may pass in either an array (as in the
+  past) or individual Python arguments, the match for a varargs method call is
+  the minimum match for each of the arguments. Zero length arrays (i.e. no
+  arguments) are also permitted with a match value of 10.
+* `jpy.type_translations` dictionary for callbacks when instantiating Python objects.
+* `jpy.VerboseExceptions` enables full Java stack traces.
+* More Python exceptions are translated to the corresponding Java type.
+* Globals and locals are converted when executing code with PyLib, to allow variables to be
+  used across statement invocation; and interrogated from Java.
+* PyObject wrappers for dictionary, list, and introspection functions to tell
+  you whether or not you can convert the object.
+* Support for isAssignable checks when dealing with Python Strings and primitives, to allow
+  matches for argument types such as `java.lang.Comparable` or `java.lang.Number`.
 
 Version 0.8
 ===========

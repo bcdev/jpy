@@ -14,39 +14,25 @@
  * limitations under the License.
  *
  * This file was modified by Illumon.
- *
  */
 
-#ifndef JPY_JOBJ_H
-#define JPY_JOBJ_H
+package org.jpy.fixtures;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include "jpy_compat.h"
+import java.lang.reflect.Array;
+import java.lang.reflect.Method;
 
 /**
- * The Java Object representation in Python.
- * @see JPy_JArray
+ * Used as a test class for the test cases in jpy_overload_test.py
+ *
+ * @author Charles P. Wright
  */
-typedef struct JPy_JObj
-{
-    PyObject_HEAD
-    jobject objectRef;
+@SuppressWarnings("UnusedDeclaration")
+public class CovariantOverloadExtendTestFixture extends CovariantOverloadTestFixture {
+    public CovariantOverloadExtendTestFixture(int x) {
+        super(x * 2);
+    }
+
+    public CovariantOverloadExtendTestFixture foo(Number a, int b) {
+        return new CovariantOverloadExtendTestFixture(a.intValue() - b);
+    }
 }
-JPy_JObj;
-
-
-int JObj_Check(PyObject* arg);
-
-PyObject* JObj_New(JNIEnv* jenv, jobject objectRef);
-PyObject* JObj_FromType(JNIEnv* jenv, JPy_JType* type, jobject objectRef);
-
-int JObj_InitTypeSlots(PyTypeObject* type, const char* typeName, PyTypeObject* superType);
-
-
-#ifdef __cplusplus
-}  /* extern "C" */
-#endif
-#endif /* !JPY_JOBJ_H */

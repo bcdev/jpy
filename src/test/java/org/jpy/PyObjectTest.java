@@ -12,6 +12,9 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * This file was modified by Illumon.
+ *
  */
 
 package org.jpy;
@@ -23,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -66,7 +70,7 @@ public class PyObjectTest {
     public void testToString() throws Exception {
         long pointer = PyLib.importModule("sys");
         PyObject pyObject = new PyObject(pointer);
-        assertEquals("PyObject(pointer=0x" + Long.toHexString(pointer) + ")", pyObject.toString());
+        assertEquals("<module 'sys' (built-in)>", pyObject.toString());
     }
 
     @Test
@@ -128,7 +132,6 @@ public class PyObjectTest {
         assertNotNull(pyVoid);
         assertEquals(null, pyVoid.getObjectValue());
 
-/*
         assertNotNull(localMap.get("jpy"));
         assertNotNull(localMap.get("File"));
         assertNotNull(localMap.get("f"));
@@ -137,7 +140,31 @@ public class PyObjectTest {
         assertEquals(File.class, localMap.get("f").getClass());
 
         assertEquals(new File("test.txt"), localMap.get("f"));
-*/
+    }
+
+    @Test
+    public void testLocals() throws Exception {
+        HashMap<String, Object> localMap = new HashMap<>();
+        localMap.put("x", 7);
+        localMap.put("y", 6);
+        PyObject pyVoid = PyObject.executeCode("z = x + y",
+                                               PyInputMode.STATEMENT,
+                                               null,
+                                               localMap);
+        assertEquals(null, pyVoid.getObjectValue());
+
+        System.out.println("LocalMap size = " + localMap.size());
+        for (Map.Entry<String, Object> entry : localMap.entrySet()) {
+            System.out.println("LocalMap[" + entry.getKey() + "]: " + entry.getValue());
+        }
+
+        assertNotNull(localMap.get("x"));
+        assertNotNull(localMap.get("y"));
+        assertNotNull(localMap.get("z"));
+
+        assertEquals(7, localMap.get("x"));
+        assertEquals(6, localMap.get("y"));
+        assertEquals(13, localMap.get("z"));
     }
 
     @Test
@@ -187,6 +214,32 @@ public class PyObjectTest {
         Assert.assertEquals("Tut tut!", myobj.getAttribute("a", String.class));
         PyObject a = myobj.getAttribute("a");
         Assert.assertEquals("Tut tut!", a.getStringValue());
+    }
+
+    private boolean hasKey(Map<PyObject, PyObject> dict, String key) {
+        for (Map.Entry<PyObject, PyObject> entry : dict.entrySet()) {
+            if (entry.getKey().isString()) {
+                if (entry.getKey().getObjectValue().equals(key)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @Test
+    public void testDictCopy() throws Exception {
+        PyObject globals = PyLib.getMainGlobals();
+        PyDictWrapper dict = globals.asDict();
+        PyDictWrapper dictCopy = dict.copy();
+
+        PyObject.executeCode("x = 42", PyInputMode.STATEMENT, globals, dictCopy.unwrap());
+
+        boolean copyHasX = hasKey(dictCopy, "x");
+        boolean origHasX = hasKey(dict, "x");
+
+        assertTrue(copyHasX);
+        assertFalse(origHasX);
     }
 
     @Test

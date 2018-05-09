@@ -12,13 +12,18 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * This file was modified by Illumon.
+ *
  */
 
 package org.jpy;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
+import java.util.List;
 import java.util.Map;
+import java.io.FileNotFoundException;
 import java.util.Objects;
 
 import static org.jpy.PyLib.assertPythonRuns;
@@ -56,6 +61,17 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**
+     * Executes Python source script.
+     *
+     * @param script The Python source script.
+     * @param mode The execution mode.
+     * @return The result of executing the script as a Python object.
+     */
+    public static PyObject executeScript(String script, PyInputMode mode) throws FileNotFoundException {
+        return executeScript(script, mode, null, null);
+    }
+
+    /**
      * Executes Python source code in the context specified by the {@code globals} and {@code locals} maps.
      * <p>
      * If a Java value in the {@code globals} and {@code locals} maps cannot be directly converted into a Python object, a Java wrapper will be created instead.
@@ -67,7 +83,7 @@ public class PyObject implements java.io.Serializable {
      * @param locals  The locals variables to be set.
      * @return The result of executing the code as a Python object.
      */
-    public static PyObject executeCode(String code, PyInputMode mode, Map<String, Object> globals, Map<String, Object> locals) {
+    public static PyObject executeCode(String code, PyInputMode mode, Object globals, Object locals) {
         if (code == null) {
             throw new NullPointerException("code must not be null");
         }
@@ -75,6 +91,30 @@ public class PyObject implements java.io.Serializable {
             throw new NullPointerException("mode must not be null");
         }
         return new PyObject(PyLib.executeCode(code, mode.value(), globals, locals));
+    }
+
+
+    /**
+     * Executes Python source script in the context specified by the {@code globals} and {@code locals} maps.
+     * <p>
+     * If a Java value in the {@code globals} and {@code locals} maps cannot be directly converted into a Python object, a Java wrapper will be created instead.
+     * If a Java value is a wrapped Python object of type {@link PyObject}, it will be unwrapped.
+     *
+     * @param script    The Python source script.
+     * @param mode    The execution mode.
+     * @param globals The global variables to be set.
+     * @param locals  The locals variables to be set.
+     * @return The result of executing the script as a Python object.
+     * @throws FileNotFoundException if the script file is not found
+     */
+    public static PyObject executeScript(String script, PyInputMode mode, Object globals, Object locals) throws FileNotFoundException {
+        if (script == null) {
+            throw new NullPointerException("script must not be null");
+        }
+        if (mode == null) {
+            throw new NullPointerException("mode must not be null");
+        }
+        return new PyObject(PyLib.executeScript(script, mode.value(), globals, locals));
     }
 
     /**
@@ -108,6 +148,14 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**
+     * @return This Python object as a Java {@code boolean} value.
+     */
+    public boolean getBooleanValue() {
+        assertPythonRuns();
+        return PyLib.getBooleanValue(getPointer());
+    }
+
+    /**
      * @return This Python object as a Java {@code double} value.
      */
     public double getDoubleValue() {
@@ -134,6 +182,80 @@ public class PyObject implements java.io.Serializable {
     public Object getObjectValue() {
         assertPythonRuns();
         return PyLib.getObjectValue(getPointer());
+    }
+
+    /**
+     * Gets the Python type object for this wrapped object.
+     *
+     * @return This Python object's type as a {@code PyObject} wrapped value.
+     */
+    public PyObject getType() {
+        assertPythonRuns();
+        return new PyObject(PyLib.getType(getPointer()));
+    }
+
+    public boolean isDict() {
+        assertPythonRuns();
+        return PyLib.pyDictCheck(getPointer());
+    }
+
+    public boolean isList() {
+        assertPythonRuns();
+        return PyLib.pyListCheck(getPointer());
+    }
+
+    public boolean isBoolean() {
+        assertPythonRuns();
+        return PyLib.pyBoolCheck(getPointer());
+    }
+
+    public boolean isLong() {
+        assertPythonRuns();
+        return PyLib.pyLongCheck(getPointer());
+    }
+
+    public boolean isInt() {
+        assertPythonRuns();
+        return PyLib.pyIntCheck(getPointer());
+    }
+
+    public boolean isNone() {
+        assertPythonRuns();
+        return PyLib.pyNoneCheck(getPointer());
+    }
+
+    public boolean isFloat() {
+        assertPythonRuns();
+        return PyLib.pyFloatCheck(getPointer());
+    }
+
+    public boolean isCallable() {
+        assertPythonRuns();
+        return PyLib.pyCallableCheck(getPointer());
+    }
+
+    public boolean isString() {
+        assertPythonRuns();
+        return PyLib.pyStringCheck(getPointer());
+    }
+
+    public boolean isConvertible() {
+        assertPythonRuns();
+        return PyLib.isConvertible(getPointer());
+    }
+
+    public List<PyObject> asList() {
+        if (!isList()) {
+            throw new ClassCastException("Can not convert non-list type to a list!");
+        }
+        return new PyListWrapper(this);
+    }
+
+    public PyDictWrapper asDict() {
+        if (!isDict()) {
+            throw new ClassCastException("Can not convert non-list type to a dictionary!");
+        }
+        return new PyDictWrapper(this);
     }
 
     /**
@@ -198,6 +320,27 @@ public class PyObject implements java.io.Serializable {
     public <T> void setAttribute(String name, T value) {
         assertPythonRuns();
         PyLib.setAttributeValue(getPointer(), name, value, value != null ? value.getClass() : null);
+    }
+
+    /**
+     * Deletes the value of a Python attribute.
+     *
+     * @param name the name of the Python attribute.
+     */
+    public void delAttribute(String name) {
+        assertPythonRuns();
+        PyLib.delAttribute(getPointer(), name);
+    }
+
+    /**
+     * Checks for the existence of a Python attribute..
+     *
+     * @param name the name of the Python attribute.
+     * @return whether this attribute exists for this object
+     */
+    public boolean hasAttribute(String name) {
+        assertPythonRuns();
+        return PyLib.hasAttribute(getPointer(), name);
     }
 
     /**
@@ -281,14 +424,24 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**
-     * Gets a string representation of the object using the format "PyObject(pointer=&lt;value&gt;)".
+     * Gets the python string representation of this object.
      *
      * @return A string representation of the object.
      * @see #getPointer()
      */
     @Override
     public final String toString() {
-        return String.format("%s(pointer=0x%s)", getClass().getSimpleName(), Long.toHexString(pointer));
+	    return PyLib.str(pointer);
+    }
+
+    /**
+     * Gets a the python repr of this object
+     *
+     * @return A string representation of the object.
+     * @see #getPointer()
+     */
+    public final String repr() {
+	    return PyLib.repr(pointer);
     }
 
     /**

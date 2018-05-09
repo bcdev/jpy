@@ -12,10 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * This file was modified by Illumon.
+ *
  */
 
 #include "jpy_module.h"
 #include "jpy_diag.h"
+#include "jpy_verboseexcept.h"
 #include "jpy_jtype.h"
 #include "jpy_jmethod.h"
 #include "jpy_jfield.h"
@@ -85,6 +89,7 @@ static struct PyModuleDef JPy_ModuleDef =
 PyObject* JPy_Module = NULL;
 PyObject* JPy_Types = NULL;
 PyObject* JPy_Type_Callbacks = NULL;
+PyObject* JPy_Type_Translations = NULL;
 PyObject* JException_Type = NULL;
 
 // A global reference to a Java VM singleton.
@@ -119,6 +124,8 @@ JPy_JType* JPy_JClass = NULL;
 JPy_JType* JPy_JString = NULL;
 JPy_JType* JPy_JPyObject = NULL;
 JPy_JType* JPy_JPyModule = NULL;
+JPy_JType* JPy_JThrowable = NULL;
+JPy_JType* JPy_JStackTraceElement = NULL;
 
 
 // java.lang.Comparable
@@ -161,7 +168,28 @@ jmethodID JPy_Field_GetName_MID = NULL;
 jmethodID JPy_Field_GetModifiers_MID = NULL;
 jmethodID JPy_Field_GetType_MID = NULL;
 
+// java.util.Map
+jclass JPy_Map_JClass = NULL;
+jclass JPy_Map_Entry_JClass = NULL;
+jmethodID JPy_Map_entrySet_MID = NULL;
+jmethodID JPy_Map_put_MID = NULL;
+jmethodID JPy_Map_clear_MID = NULL;
+jmethodID JPy_Map_Entry_getKey_MID = NULL;
+jmethodID JPy_Map_Entry_getValue_MID = NULL;
+// java.util.Set
+jclass JPy_Set_JClass = NULL;
+jmethodID JPy_Set_Iterator_MID = NULL;
+// java.util.Iterator
+jclass JPy_Iterator_JClass = NULL;
+jmethodID JPy_Iterator_next_MID = NULL;
+jmethodID JPy_Iterator_hasNext_MID = NULL;
+
 jclass JPy_RuntimeException_JClass = NULL;
+jclass JPy_OutOfMemoryError_JClass = NULL;
+jclass JPy_UnsupportedOperationException_JClass = NULL;
+jclass JPy_FileNotFoundException_JClass = NULL;
+jclass JPy_KeyError_JClass = NULL;
+jclass JPy_StopIteration_JClass = NULL;
 
 // java.lang.Boolean
 jclass JPy_Boolean_JClass = NULL;
@@ -198,10 +226,22 @@ jmethodID JPy_Number_DoubleValue_MID = NULL;
 
 jclass JPy_Void_JClass = NULL;
 jclass JPy_String_JClass = NULL;
+jclass JPy_PyObject_JClass = NULL;
+jclass JPy_PyDictWrapper_JClass = NULL;
 
 jmethodID JPy_PyObject_GetPointer_MID = NULL;
 jmethodID JPy_PyObject_Init_MID = NULL;
 jmethodID JPy_PyModule_Init_MID = NULL;
+
+jmethodID JPy_PyDictWrapper_GetPointer_MID = NULL;
+
+// java.lang.Throwable
+jclass JPy_Throwable_JClass = NULL;
+jmethodID JPy_Throwable_getStackTrace_MID = NULL;
+jmethodID JPy_Throwable_getCause_MID = NULL;
+
+// stack trace element
+jclass JPy_StackTraceElement_JClass = NULL;
 
 // }}}
 
@@ -324,6 +364,12 @@ PyMODINIT_FUNC JPY_MODULE_INIT_FUNC(void)
 
     /////////////////////////////////////////////////////////////////////////
 
+    JPy_Type_Translations = PyDict_New();
+    Py_INCREF(JPy_Type_Translations);
+    PyModule_AddObject(JPy_Module, JPy_MODULE_ATTR_NAME_TYPE_TRANSLATIONS, JPy_Type_Translations);
+
+    /////////////////////////////////////////////////////////////////////////
+
     if (PyType_Ready(&Diag_Type) < 0) {
         JPY_RETURN(NULL);
     }
@@ -332,6 +378,15 @@ PyMODINIT_FUNC JPY_MODULE_INIT_FUNC(void)
         PyObject* pyDiag = Diag_New();
         Py_INCREF(pyDiag);
         PyModule_AddObject(JPy_Module, "diag", pyDiag);
+    }
+
+    if (PyType_Ready(&VerboseExceptions_Type) < 0) {
+        JPY_RETURN(NULL);
+    }
+    {
+        PyObject* pyVerboseExceptions = VerboseExceptions_New();
+        Py_INCREF(pyVerboseExceptions);
+        PyModule_AddObject(JPy_Module, "VerboseExceptions", pyVerboseExceptions);
     }
 
     /////////////////////////////////////////////////////////////////////////
@@ -582,12 +637,12 @@ PyObject* JPy_array(PyObject* self, PyObject* args)
         if (arrayRef == NULL) {
             return PyErr_NoMemory();
         }
-        return (PyObject*) JObj_New(jenv, arrayRef);
+        return JObj_New(jenv, arrayRef);
     } else if (PySequence_Check(objInit)) {
-        if (JType_CreateJavaArray(jenv, componentType, objInit, &arrayRef) < 0) {
+        if (JType_CreateJavaArray(jenv, componentType, objInit, &arrayRef, JNI_FALSE) < 0) {
             return NULL;
         }
-        return (PyObject*) JObj_New(jenv, arrayRef);
+        return JObj_New(jenv, arrayRef);
     } else {
         PyErr_SetString(PyExc_ValueError, "array: argument 2 (init) must be either an integer array length or any sequence");
         return NULL;
@@ -692,14 +747,19 @@ jmethodID JPy_GetMethod(JNIEnv* jenv, jclass classRef, const char* name, const c
 
 int initGlobalPyObjectVars(JNIEnv* jenv)
 {
+    JPy_JType *dictType;
+    JPy_JType *keyErrorType;
+    JPy_JType *stopIterationType;
+
     JPy_JPyObject = JType_GetTypeForName(jenv, "org.jpy.PyObject", JNI_FALSE);
     if (JPy_JPyObject == NULL) {
         // org.jpy.PyObject may not be on the classpath, which is ok
         PyErr_Clear();
         return -1;
     } else {
-        DEFINE_METHOD(JPy_PyObject_GetPointer_MID, JPy_JPyObject->classRef, "getPointer", "()J");
-        DEFINE_METHOD(JPy_PyObject_Init_MID, JPy_JPyObject->classRef, "<init>", "(J)V");
+        JPy_PyObject_JClass = JPy_JPyObject->classRef;
+        DEFINE_METHOD(JPy_PyObject_GetPointer_MID, JPy_PyObject_JClass, "getPointer", "()J");
+        DEFINE_METHOD(JPy_PyObject_Init_MID, JPy_PyObject_JClass, "<init>", "(J)V");
     }
 
     JPy_JPyModule = JType_GetTypeForName(jenv, "org.jpy.PyModule", JNI_FALSE);
@@ -708,6 +768,32 @@ int initGlobalPyObjectVars(JNIEnv* jenv)
         PyErr_Clear();
         return -1;
     }
+
+    dictType = JType_GetTypeForName(jenv, "org.jpy.PyDictWrapper", JNI_FALSE);
+    if (dictType == NULL) {
+        PyErr_Clear();
+        return -1;
+    } else {
+        JPy_PyDictWrapper_JClass = dictType->classRef;
+        DEFINE_METHOD(JPy_PyDictWrapper_GetPointer_MID, JPy_PyDictWrapper_JClass, "getPointer", "()J");
+    }
+
+    keyErrorType = JType_GetTypeForName(jenv, "org.jpy.KeyError", JNI_FALSE);
+    if (keyErrorType == NULL) {
+        PyErr_Clear();
+        return -1;
+    } else {
+        JPy_KeyError_JClass = keyErrorType->classRef;
+    }
+
+    stopIterationType = JType_GetTypeForName(jenv, "org.jpy.StopIteration", JNI_FALSE);
+    if (stopIterationType == NULL) {
+        PyErr_Clear();
+        return -1;
+    } else {
+        JPy_StopIteration_JClass = stopIterationType->classRef;
+    }
+
     return 0;
 }
 
@@ -752,7 +838,28 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     DEFINE_METHOD(JPy_Method_GetParameterTypes_MID, JPy_Method_JClass, "getParameterTypes", "()[Ljava/lang/Class;");
     DEFINE_METHOD(JPy_Method_GetReturnType_MID, JPy_Method_JClass, "getReturnType", "()Ljava/lang/Class;");
 
+    DEFINE_CLASS(JPy_Map_JClass, "java/util/Map");
+    DEFINE_METHOD(JPy_Map_entrySet_MID, JPy_Map_JClass, "entrySet", "()Ljava/util/Set;");
+    DEFINE_METHOD(JPy_Map_put_MID, JPy_Map_JClass, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+    DEFINE_METHOD(JPy_Map_clear_MID, JPy_Map_JClass, "clear", "()V");
+
+    DEFINE_CLASS(JPy_Map_Entry_JClass, "java/util/Map$Entry");
+    DEFINE_METHOD(JPy_Map_Entry_getKey_MID, JPy_Map_Entry_JClass, "getKey", "()Ljava/lang/Object;");
+    DEFINE_METHOD(JPy_Map_Entry_getValue_MID, JPy_Map_Entry_JClass, "getValue", "()Ljava/lang/Object;");
+
+
+    // java.util.Set
+    DEFINE_CLASS(JPy_Set_JClass, "java/util/Set");
+    DEFINE_METHOD(JPy_Set_Iterator_MID, JPy_Set_JClass, "iterator", "()Ljava/util/Iterator;");
+    // java.util.Iterator
+    DEFINE_CLASS(JPy_Iterator_JClass, "java/util/Iterator");
+    DEFINE_METHOD(JPy_Iterator_next_MID, JPy_Iterator_JClass, "next", "()Ljava/lang/Object;");
+    DEFINE_METHOD(JPy_Iterator_hasNext_MID, JPy_Iterator_JClass, "hasNext", "()Z");
+
     DEFINE_CLASS(JPy_RuntimeException_JClass, "java/lang/RuntimeException");
+    DEFINE_CLASS(JPy_OutOfMemoryError_JClass, "java/lang/OutOfMemoryError");
+    DEFINE_CLASS(JPy_FileNotFoundException_JClass, "java/io/FileNotFoundException");
+    DEFINE_CLASS(JPy_UnsupportedOperationException_JClass, "java/lang/UnsupportedOperationException");
 
     DEFINE_CLASS(JPy_Boolean_JClass, "java/lang/Boolean");
     DEFINE_METHOD(JPy_Boolean_Init_MID, JPy_Boolean_JClass, "<init>", "(Z)V");
@@ -788,6 +895,8 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     DEFINE_CLASS(JPy_Void_JClass, "java/lang/Void");
 
     DEFINE_CLASS(JPy_String_JClass, "java/lang/String");
+    DEFINE_CLASS(JPy_Throwable_JClass, "java/lang/Throwable");
+    DEFINE_CLASS(JPy_StackTraceElement_JClass, "java/lang/StackTraceElement");
 
     // Non-Object types: Primitive types and void.
     DEFINE_NON_OBJECT_TYPE(JPy_JBoolean, JPy_Boolean_JClass);
@@ -814,6 +923,10 @@ int JPy_InitGlobalVars(JNIEnv* jenv)
     DEFINE_OBJECT_TYPE(JPy_JDoubleObj, JPy_Double_JClass);
     // Other objects.
     DEFINE_OBJECT_TYPE(JPy_JString, JPy_String_JClass);
+    DEFINE_OBJECT_TYPE(JPy_JThrowable, JPy_Throwable_JClass);
+    DEFINE_OBJECT_TYPE(JPy_JStackTraceElement, JPy_StackTraceElement_JClass);
+    DEFINE_METHOD(JPy_Throwable_getCause_MID, JPy_Throwable_JClass, "getCause", "()Ljava/lang/Throwable;");
+    DEFINE_METHOD(JPy_Throwable_getStackTrace_MID, JPy_Throwable_JClass, "getStackTrace", "()[Ljava/lang/StackTraceElement;");
 
     // JType_AddClassAttribute is actually called from within JType_GetType(), but not for
     // JPy_JObject and JPy_JClass for an obvious reason. So we do it now:
@@ -947,31 +1060,189 @@ void JPy_ClearGlobalVars(JNIEnv* jenv)
     JPy_JPyModule = NULL;
 }
 
+#define AT_STRING "\tat "
+#define AT_STRLEN 4
+#define CAUSED_BY_STRING "caused by "
+#define CAUSED_BY_STRLEN 10
+#define ELIDED_STRING_MAX_SIZE 30
 
 void JPy_HandleJavaException(JNIEnv* jenv)
 {
     jthrowable error = (*jenv)->ExceptionOccurred(jenv);
     if (error != NULL) {
         jstring message;
+        int allocError = 0;
 
         if (JPy_DiagFlags != 0) {
             (*jenv)->ExceptionDescribe(jenv);
         }
 
-        message = (jstring) (*jenv)->CallObjectMethod(jenv, error, JPy_Object_ToString_MID);
-        if (message != NULL) {
-            const char* messageChars;
+        if (JPy_VerboseExceptions) {
+            char *stackTraceString;
+            size_t stackTraceLength = 0;
+            jthrowable cause = error;
+            jarray enclosingElements = NULL;
+            jint enclosingSize = 0;
 
-            messageChars = (*jenv)->GetStringUTFChars(jenv, message, NULL);
-            if (messageChars != NULL) {
-                PyErr_Format(PyExc_RuntimeError, "%s", messageChars);
-                (*jenv)->ReleaseStringUTFChars(jenv, message, messageChars);
+            stackTraceString = strdup("");
+
+            do {
+                /* We want the type and the detail string, which is actually what a Throwable toString() does by
+                 * default, as does the default printStackTrace(). */
+                jint ii;
+
+                jarray stackTrace;
+                jint stackTraceElements;
+                jint lastElementToPrint;
+                jint enclosingIndex;
+
+                if (stackTraceLength > 0) {
+                    char *newStackString;
+
+                    newStackString = realloc(stackTraceString, CAUSED_BY_STRLEN + 1 + stackTraceLength);
+                    if (newStackString == NULL) {
+                        allocError = 1;
+                        break;
+                    }
+                    stackTraceString = newStackString;
+                    strcat(stackTraceString, CAUSED_BY_STRING);
+                    stackTraceLength += CAUSED_BY_STRLEN;
+                }
+
+                message = (jstring) (*jenv)->CallObjectMethod(jenv, cause, JPy_Object_ToString_MID);
+                if (message != NULL) {
+                    const char *messageChars = (*jenv)->GetStringUTFChars(jenv, message, NULL);
+                    if (messageChars != NULL) {
+                        char *newStackString;
+                        size_t len = strlen(messageChars);
+
+                        newStackString = realloc(stackTraceString, len + 2 + stackTraceLength);
+                        if (newStackString == NULL) {
+                            (*jenv)->ReleaseStringUTFChars(jenv, message, messageChars);
+                            allocError = 1;
+                            break;
+                        }
+
+                        stackTraceString = newStackString;
+                        strcat(stackTraceString, messageChars);
+                        stackTraceString[stackTraceLength + len] = '\n';
+                        stackTraceString[stackTraceLength + len + 1] = '\0';
+                        stackTraceLength += (len + 1);
+
+                        (*jenv)->ReleaseStringUTFChars(jenv, message, messageChars);
+                    } else {
+                        allocError = 1;
+                        break;
+                    }
+                    (*jenv)->DeleteLocalRef(jenv, message);
+                }
+
+                /* We should assemble a string based on the stack trace. */
+                stackTrace = (*jenv)->CallObjectMethod(jenv, cause, JPy_Throwable_getStackTrace_MID);
+                stackTraceElements = (*jenv)->GetArrayLength(jenv, stackTrace);
+                lastElementToPrint = stackTraceElements - 1;
+                enclosingIndex = enclosingSize - 1;
+
+                while (lastElementToPrint >= 0 && enclosingIndex >= 0) {
+                    jobject thisElement = (*jenv)->GetObjectArrayElement(jenv, stackTrace, lastElementToPrint);
+                    jobject thatElement = (*jenv)->GetObjectArrayElement(jenv, enclosingElements, enclosingIndex);
+
+                    // if they are equal, let's decrement, otherwise we break
+                    jboolean  equal = (*jenv)->CallBooleanMethod(jenv, thisElement, JPy_Object_Equals_MID, thatElement);
+                    if (!equal) {
+                        break;
+                    }
+
+                    lastElementToPrint--;
+                    enclosingIndex--;
+                }
+
+                for (ii = 0; ii <= lastElementToPrint; ++ii) {
+                    jobject traceElement = (*jenv)->GetObjectArrayElement(jenv, stackTrace, ii);
+                    if (traceElement != NULL) {
+                        message = (jstring) (*jenv)->CallObjectMethod(jenv, traceElement, JPy_Object_ToString_MID);
+                        if (message != NULL) {
+                            size_t len;
+                            char *newStackString;
+                            const char *messageChars = (*jenv)->GetStringUTFChars(jenv, message, NULL);
+                            if (messageChars == NULL) {
+                                allocError = 1;
+                                break;
+                            }
+
+                            len = strlen(messageChars);
+
+                            newStackString = realloc(stackTraceString, len + 2 + AT_STRLEN + stackTraceLength);
+                            if (newStackString == NULL) {
+                                (*jenv)->ReleaseStringUTFChars(jenv, message, messageChars);
+                                allocError = 1;
+                                break;
+                            }
+
+                            stackTraceString = newStackString;
+                            strcat(stackTraceString, AT_STRING);
+                            strcat(stackTraceString, messageChars);
+                            stackTraceString[stackTraceLength + len + AT_STRLEN] = '\n';
+                            stackTraceString[stackTraceLength + len + AT_STRLEN + 1] = '\0';
+                            stackTraceLength += (len + 1 + AT_STRLEN);
+
+                            (*jenv)->ReleaseStringUTFChars(jenv, message, messageChars);
+                        }
+
+                    }
+                }
+
+                if (lastElementToPrint < stackTraceElements - 1) {
+                    int written;
+                    char *newStackString = realloc(stackTraceString, stackTraceLength + ELIDED_STRING_MAX_SIZE);
+                    if (newStackString == NULL) {
+                        allocError = 1;
+                        break;
+                    }
+
+                    stackTraceString = newStackString;
+                    stackTraceString[stackTraceLength + ELIDED_STRING_MAX_SIZE - 1] = '\0';
+
+                    written = snprintf(stackTraceString + stackTraceLength, ELIDED_STRING_MAX_SIZE - 1, "\t... %d more\n", (stackTraceElements - lastElementToPrint) - 1);
+                    if (written > (ELIDED_STRING_MAX_SIZE - 1)) {
+                        stackTraceLength += (ELIDED_STRING_MAX_SIZE - 1);
+                    } else {
+                        stackTraceLength += written;
+                    }
+                }
+
+                /** So we can eliminate extra entries. */
+                enclosingElements = stackTrace;
+                enclosingSize = stackTraceElements;
+
+                /** Now the next cause. */
+                cause = (*jenv)->CallObjectMethod(jenv, cause, JPy_Throwable_getCause_MID);
+            } while (cause != NULL && !allocError);
+
+            if (allocError == 0 && stackTraceString != NULL) {
+                PyErr_Format(PyExc_RuntimeError, "%s", stackTraceString);
             } else {
-                PyErr_SetString(PyExc_RuntimeError, "Java VM exception occurred, but failed to allocate message text");
+                PyErr_SetString(PyExc_RuntimeError,
+                                "Java VM exception occurred, but failed to allocate message text");
             }
-            (*jenv)->DeleteLocalRef(jenv, message);
+            free(stackTraceString);
         } else {
-            PyErr_SetString(PyExc_RuntimeError, "Java VM exception occurred, no message");
+            message = (jstring) (*jenv)->CallObjectMethod(jenv, error, JPy_Object_ToString_MID);
+            if (message != NULL) {
+                const char *messageChars;
+
+                messageChars = (*jenv)->GetStringUTFChars(jenv, message, NULL);
+                if (messageChars != NULL) {
+                    PyErr_Format(PyExc_RuntimeError, "%s", messageChars);
+                    (*jenv)->ReleaseStringUTFChars(jenv, message, messageChars);
+                } else {
+                    PyErr_SetString(PyExc_RuntimeError,
+                                    "Java VM exception occurred, but failed to allocate message text");
+                }
+                (*jenv)->DeleteLocalRef(jenv, message);
+            } else {
+                PyErr_SetString(PyExc_RuntimeError, "Java VM exception occurred, no message");
+            }
         }
 
         (*jenv)->DeleteLocalRef(jenv, error);
@@ -987,6 +1258,7 @@ void JPy_free(void* unused)
     JPy_Module = NULL;
     JPy_Types = NULL;
     JPy_Type_Callbacks = NULL;
+    JPy_Type_Translations = NULL;
     JException_Type = NULL;
 
     JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "JPy_free: done freeing module data\n");

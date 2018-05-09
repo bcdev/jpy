@@ -12,6 +12,9 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * This file was modified by Illumon.
+ *
  */
 
 package org.jpy.fixtures;
@@ -24,79 +27,58 @@ import java.lang.reflect.Array;
  * @author Norman Fomferra
  */
 @SuppressWarnings("UnusedDeclaration")
-public class MethodOverloadTestFixture {
+public class VarArgsTestFixture {
 
-    public String join(int a, int b) {
-        return stringifyArgs(a, b);
+    public String join(String prefix, int ... a) {
+        return stringifyArgs(prefix, a);
     }
 
-    public String join(int a, double b) {
-        return stringifyArgs(a, b);
+    public String join(String prefix, double ... a) {
+        return stringifyArgs(prefix, a);
+    }
+    public String join(String prefix, float ... a) {
+        return stringifyArgs(prefix, a);
+    }
+    public String join(String prefix, String ... a) {
+        return stringifyArgs(prefix, a);
     }
 
-    public String join(int a, String b) {
-        return stringifyArgs(a, b);
+    public String joinFloat(String prefix, float ... a) {
+        return stringifyArgs(prefix, a);
     }
 
-    public String join(double a, int b) {
-        return stringifyArgs(a, b);
+    public String joinLong(String prefix, long ... a) {
+        return stringifyArgs(prefix, a);
+    }
+    public String joinShort(String prefix, short ... a) {
+        return stringifyArgs(prefix, a);
+    }
+    public String joinByte(String prefix, byte ... a) {
+        return stringifyArgs(prefix, a);
+    }
+    public String joinChar(String prefix, char ... a) {
+        return stringifyArgs(prefix, a);
+    }
+    public String joinBoolean(String prefix, boolean ... a) {
+        return stringifyArgs(prefix, a);
+    }
+    public String joinObjects(String prefix, Object ... a) {
+        return stringifyArgs(prefix, a);
     }
 
-    public String join(double a, double b) {
-        return stringifyArgs(a, b);
+    public int chooseFixedArity(int... a) {
+	    return 2;
     }
 
-    public String join(double a, String b) {
-        return stringifyArgs(a, b);
+    public int chooseFixedArity() {
+	    return 1;
     }
 
-    public String join(String a, int b) {
-        return stringifyArgs(a, b);
+    public int stringOrObjectVarArgs(String ... a) {
+        return 1 + a.length;
     }
-
-    public String join(String a, double b) {
-        return stringifyArgs(a, b);
-    }
-
-    public String join(String a, String b) {
-        return stringifyArgs(a, b);
-    }
-
-    //////////////////////////////////////////////
-
-    public String join(String a) {
-        return stringifyArgs(a);
-    }
-
-    public String join(String a, String b, String c) {
-        return stringifyArgs(a, b, c);
-    }
-
-    //////////////////////////////////////////////
-    public String join2(Comparable a, int b, String c, String d) {
-        return stringifyArgs(a, b, c, d);
-    }
-
-    //////////////////////////////////////////////
-    public String join3(Number a, int b) {
-        return stringifyArgs(a, b);
-    }
-
-    /**
-     * Used to test that we also find overloaded methods in class hierarchies
-     */
-    public static class MethodOverloadTestFixture2 extends MethodOverloadTestFixture {
-
-        public String join(String a, String b, String c, String d) {
-            return stringifyArgs(a, b, c, d);
-        }
-    }
-
-    //////////////////////////////////////////////
-
-    // Should never been found, since 'float' is not present in Python
-    public String join(int a, float b) {
-        return stringifyArgs(a, b);
+    public int stringOrObjectVarArgs(Object ... a) {
+        return 2 + a.length;
     }
 
     static String stringifyArgs(Object... args) {

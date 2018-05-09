@@ -12,11 +12,15 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * This file was modified by Illumon.
+ *
  */
 
 package org.jpy;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -232,7 +236,14 @@ public class PyLib {
     @Deprecated
     public static native int execScript(String script);
 
-    static native long executeCode(String code, int start, Map<String, Object> globals, Map<String, Object> locals);
+    static native long executeCode(String code, int start, Object globals, Object locals);
+
+    static native long executeScript
+            (String file, int start, Object globals, Object locals) throws FileNotFoundException;
+
+    public static native PyObject getMainGlobals();
+
+    static native PyObject copyDict(long pyPointer);
 
     static native void incRef(long pointer);
 
@@ -240,11 +251,32 @@ public class PyLib {
 
     static native int getIntValue(long pointer);
 
+    static native boolean getBooleanValue(long pointer);
+
     static native double getDoubleValue(long pointer);
 
     static native String getStringValue(long pointer);
 
     static native Object getObjectValue(long pointer);
+
+    static native boolean isConvertible(long pointer);
+    static native boolean pyNoneCheck(long pointer);
+    static native boolean pyDictCheck(long pointer);
+    static native boolean pyListCheck(long pointer);
+    static native boolean pyBoolCheck(long pointer);
+    static native boolean pyIntCheck(long pointer);
+    static native boolean pyLongCheck(long pointer);
+    static native boolean pyFloatCheck(long pointer);
+    static native boolean pyStringCheck(long pointer);
+    static native boolean pyCallableCheck(long pointer);
+
+    static native long getType(long pointer);
+
+    static native String str(long pointer);
+
+    static native String repr(long pointer);
+
+    static native PyObject newDict();
 
     static native <T> T[] getObjectArrayValue(long pointer, Class<? extends T> itemType);
 
@@ -283,6 +315,25 @@ public class PyLib {
      * @param valueType Optional type for converting the value to a Python object.
      */
     static native <T> void setAttributeValue(long pointer, String name, T value, Class<? extends T> valueType);
+
+    /**
+     * Deletes the Python attribute given by {@code name} of the Python object pointed to by {@code pointer}.
+     * <p>
+     *
+     * @param pointer   Identifies the Python object which contains the attribute {@code name}.
+     * @param name      The attribute name.
+     */
+    static native void delAttribute(long pointer, String name);
+
+    /**
+     * Checks for the existence the Python attribute given by {@code name} of the Python object pointed to by {@code pointer}.
+     * <p>
+     *
+     * @param pointer   Identifies the Python object which contains the attribute {@code name}.
+     * @param name      The attribute name.
+     * @return true if the Python object has an attribute named {@code name}
+     */
+    static native boolean hasAttribute(long pointer, String name);
 
     /**
      * Calls a Python callable and returns the resulting Python object.

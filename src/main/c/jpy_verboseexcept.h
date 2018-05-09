@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef JPY_JOBJ_H
-#define JPY_JOBJ_H
+#ifndef JPY_VERBOSEEXCEPT_H
+#define JPY_VERBOSEEXCEPT_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,27 +26,12 @@ extern "C" {
 
 #include "jpy_compat.h"
 
-/**
- * The Java Object representation in Python.
- * @see JPy_JArray
- */
-typedef struct JPy_JObj
-{
-    PyObject_HEAD
-    jobject objectRef;
-}
-JPy_JObj;
+extern PyTypeObject VerboseExceptions_Type;
+extern int JPy_VerboseExceptions;
 
-
-int JObj_Check(PyObject* arg);
-
-PyObject* JObj_New(JNIEnv* jenv, jobject objectRef);
-PyObject* JObj_FromType(JNIEnv* jenv, JPy_JType* type, jobject objectRef);
-
-int JObj_InitTypeSlots(PyTypeObject* type, const char* typeName, PyTypeObject* superType);
-
+PyObject* VerboseExceptions_New(void);
 
 #ifdef __cplusplus
 }  /* extern "C" */
 #endif
-#endif /* !JPY_JOBJ_H */
+#endif /* !JPY_DIAG_H */
