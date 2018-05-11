@@ -19,8 +19,8 @@
 package org.jpy;
 
 /**
-  * Translation of Python StopIteration so that they can be programmatically detected from Java.
-  */
+ * Translation of Python StopIteration so that they can be programmatically detected from Java.
+ */
 public class StopIteration extends RuntimeException {
     StopIteration(String message) {
         super(message);
