@@ -22,7 +22,6 @@ package org.jpy;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 import java.util.List;
-import java.util.Map;
 import java.io.FileNotFoundException;
 import java.util.Objects;
 
@@ -79,17 +78,13 @@ public class PyObject implements java.io.Serializable {
      *
      * @param code    The Python source code.
      * @param mode    The execution mode.
-     * @param globals The global variables to be set.
-     * @param locals  The locals variables to be set.
+     * @param globals The global variables to be set, or {@code null}.
+     * @param locals  The locals variables to be set, or {@code null}.
      * @return The result of executing the code as a Python object.
      */
     public static PyObject executeCode(String code, PyInputMode mode, Object globals, Object locals) {
-        if (code == null) {
-            throw new NullPointerException("code must not be null");
-        }
-        if (mode == null) {
-            throw new NullPointerException("mode must not be null");
-        }
+        Objects.requireNonNull(code, "code must not be null");
+        Objects.requireNonNull(mode, "mode must not be null");
         return new PyObject(PyLib.executeCode(code, mode.value(), globals, locals));
     }
 
@@ -102,18 +97,14 @@ public class PyObject implements java.io.Serializable {
      *
      * @param script    The Python source script.
      * @param mode    The execution mode.
-     * @param globals The global variables to be set.
-     * @param locals  The locals variables to be set.
+     * @param globals The global variables to be set, or {@code null}.
+     * @param locals  The locals variables to be set, or {@code null}.
      * @return The result of executing the script as a Python object.
      * @throws FileNotFoundException if the script file is not found
      */
     public static PyObject executeScript(String script, PyInputMode mode, Object globals, Object locals) throws FileNotFoundException {
-        if (script == null) {
-            throw new NullPointerException("script must not be null");
-        }
-        if (mode == null) {
-            throw new NullPointerException("mode must not be null");
-        }
+        Objects.requireNonNull(script, "script must not be null");
+        Objects.requireNonNull(mode, "mode must not be null");
         return new PyObject(PyLib.executeScript(script, mode.value(), globals, locals));
     }
 
@@ -272,6 +263,7 @@ public class PyObject implements java.io.Serializable {
      */
     public <T> T[] getObjectArrayValue(Class<? extends T> itemType) {
         assertPythonRuns();
+        Objects.requireNonNull(itemType, "itemType must not be null");
         return PyLib.getObjectArrayValue(getPointer(), itemType);
     }
 
@@ -286,6 +278,7 @@ public class PyObject implements java.io.Serializable {
      */
     public PyObject getAttribute(String name) {
         assertPythonRuns();
+        Objects.requireNonNull(name, "name must not be null");
         long pointer = PyLib.getAttributeObject(getPointer(), name);
         return pointer != 0 ? new PyObject(pointer) : null;
     }
@@ -298,12 +291,13 @@ public class PyObject implements java.io.Serializable {
      * If the Python value is a wrapped Java object, it will be unwrapped.
      *
      * @param name      A name of the Python attribute.
-     * @param valueType The type of the value or {@code null}, if unknown
+     * @param valueType The type of the value or {@code null}, if unknown.
      * @param <T>       The expected value type name.
      * @return The Python attribute value as Java object.
      */
     public <T> T getAttribute(String name, Class<? extends T> valueType) {
         assertPythonRuns();
+        Objects.requireNonNull(name, "name must not be null");
         return PyLib.getAttributeValue(getPointer(), name, valueType);
     }
 
@@ -314,11 +308,12 @@ public class PyObject implements java.io.Serializable {
      * If the Java {@code value} is a wrapped Python object of type {@link PyObject}, it will be unwrapped.
      *
      * @param name  A name of the Python attribute.
-     * @param value The new attribute value as Java object.
+     * @param value The new attribute value as Java object. May be {@code null}.
      * @param <T>   The value type name.
      */
     public <T> void setAttribute(String name, T value) {
         assertPythonRuns();
+        Objects.requireNonNull(name, "name must not be null");
         PyLib.setAttributeValue(getPointer(), name, value, value != null ? value.getClass() : null);
     }
 
@@ -329,6 +324,7 @@ public class PyObject implements java.io.Serializable {
      */
     public void delAttribute(String name) {
         assertPythonRuns();
+        Objects.requireNonNull(name, "name must not be null");
         PyLib.delAttribute(getPointer(), name);
     }
 
@@ -340,6 +336,7 @@ public class PyObject implements java.io.Serializable {
      */
     public boolean hasAttribute(String name) {
         assertPythonRuns();
+        Objects.requireNonNull(name, "name must not be null");
         return PyLib.hasAttribute(getPointer(), name);
     }
 
@@ -357,6 +354,7 @@ public class PyObject implements java.io.Serializable {
      */
     public <T> void setAttribute(String name, T value, Class<? extends T> valueType) {
         assertPythonRuns();
+        Objects.requireNonNull(name, "name must not be null");
         PyLib.setAttributeValue(getPointer(), name, value, valueType);
     }
 
@@ -372,7 +370,7 @@ public class PyObject implements java.io.Serializable {
      */
     public PyObject callMethod(String name, Object... args) {
         assertPythonRuns();
-        Objects.requireNonNull(name);
+        Objects.requireNonNull(name, "name must not be null");
         long pointer = PyLib.callAndReturnObject(getPointer(), true, name, args.length, args, null);
         return pointer != 0 ? new PyObject(pointer) : null;
     }
@@ -389,7 +387,7 @@ public class PyObject implements java.io.Serializable {
      */
     public PyObject call(String name, Object... args) {
         assertPythonRuns();
-        Objects.requireNonNull(name);
+        Objects.requireNonNull(name, "name must not be null");
         long pointer = PyLib.callAndReturnObject(getPointer(), false, name, args.length, args, null);
         return pointer != 0 ? new PyObject(pointer) : null;
     }
@@ -405,6 +403,7 @@ public class PyObject implements java.io.Serializable {
     public <T> T createProxy(Class<T> type) {
         assertPythonRuns();
         //noinspection unchecked
+        Objects.requireNonNull(type, "type must not be null");
         return (T) createProxy(PyLib.CallableKind.METHOD, type);
     }
 
