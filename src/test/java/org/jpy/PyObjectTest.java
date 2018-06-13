@@ -279,6 +279,10 @@ public class PyObjectTest {
         assertEquals("computeTile-100,200", result);
         result = processor.computeTile(200, 200, new float[100 * 100]);
         assertEquals("computeTile-200,200", result);
+        processor.setVal(1234);
+        int val = processor.getVal();
+        assertEquals(val, 1234);
+        assertEquals(true, processor.check1234());
         result = processor.dispose();
         assertEquals("dispose", result);
     }

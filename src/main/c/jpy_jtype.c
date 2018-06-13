@@ -284,23 +284,23 @@ PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject
 
     if (type->componentType == NULL) {
         // Scalar type, not an array, try to convert to Python equivalent
-        if (type == JPy_JBooleanObj) {
+        if (type == JPy_JBooleanObj || type == JPy_JBoolean) {
             jboolean value = (*jenv)->CallBooleanMethod(jenv, objectRef, JPy_Boolean_BooleanValue_MID);
             JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
             return JPy_FROM_JBOOLEAN(value);
-        } else if (type == JPy_JCharacterObj) {
+        } else if (type == JPy_JCharacterObj || type == JPy_JChar) {
             jchar value = (*jenv)->CallCharMethod(jenv, objectRef, JPy_Character_CharValue_MID);
             JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
             return JPy_FROM_JCHAR(value);
-        } else if (type == JPy_JByteObj || type == JPy_JShortObj || type == JPy_JIntegerObj) {
+        } else if (type == JPy_JByteObj || type == JPy_JShortObj || type == JPy_JIntegerObj || type == JPy_JShort || type == JPy_JInt) {
             jint value = (*jenv)->CallIntMethod(jenv, objectRef, JPy_Number_IntValue_MID);
             JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
             return JPy_FROM_JINT(value);
-        } else if (type == JPy_JLongObj) {
+        } else if (type == JPy_JLongObj || type == JPy_JLong) {
             jlong value = (*jenv)->CallLongMethod(jenv, objectRef, JPy_Number_LongValue_MID);
             JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
             return JPy_FROM_JLONG(value);
-        } else if (type == JPy_JFloatObj || type == JPy_JDoubleObj) {
+        } else if (type == JPy_JFloatObj || type == JPy_JDoubleObj || type == JPy_JFloat || type == JPy_JDouble) {
             jdouble value = (*jenv)->CallDoubleMethod(jenv, objectRef, JPy_Number_DoubleValue_MID);
             JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
             return JPy_FROM_JDOUBLE(value);
