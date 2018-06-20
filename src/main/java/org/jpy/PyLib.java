@@ -213,6 +213,7 @@ public class PyLib {
     /**
      * Does the equivalent of setting the PYTHONHOME environment variable.  If used,
      * this must be called prior to calling {@code startPython()}.
+     * Supported for Python 2.7, and Python 3.5 or higher
      * @param pythonHome  Path to Python Home (must be less than 256 characters!)
      * @return  true if successful, false if it fails
      */
