@@ -17,6 +17,14 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_isPythonRunning
 
 /*
  * Class:     org_jpy_PyLib
+ * Method:    setPythonHome
+ * Signature: (Ljava/lang/String;)Z
+ */
+JNIEXPORT jint JNICALL Java_org_jpy_PyLib_setPythonHome
+  (JNIEnv* jenv, jclass jLibClass, jstring jPythonHome);
+
+/*
+ * Class:     org_jpy_PyLib
  * Method:    startPython0
  * Signature: ([Ljava/lang/String;)Z
  */
