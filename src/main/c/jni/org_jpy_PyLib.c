@@ -140,9 +140,9 @@ char staticPythonHome[MAX_PYTHON_HOME];
 JNIEXPORT jint JNICALL Java_org_jpy_PyLib_setPythonHome
   (JNIEnv* jenv, jclass jLibClass, jstring jPythonHome)
 {
-    #if defined(JPY_COMPAT_33P) && !defined(JPY_COMPAT_35P)
-        return 0;  // Not supported because DecodeLocale didn't exist in 3.4
-    #endif
+#if defined(JPY_COMPAT_33P) && !defined(JPY_COMPAT_35P)
+    return 0;  // Not supported because DecodeLocale didn't exist in 3.4
+#else
 
     #if defined(JPY_COMPAT_35P)
     const wchar_t* pythonHome = NULL;
@@ -189,6 +189,7 @@ JNIEXPORT jint JNICALL Java_org_jpy_PyLib_setPythonHome
     }
 
     return result;
+#endif
 }
 
 /*
