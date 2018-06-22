@@ -27,4 +27,10 @@ public interface Processor {
     String computeTile(int w, int h, float[] data);
 
     String dispose();
+    
+    void setVal(int n);
+    
+    int getVal();
+    
+    boolean check1234();
 }

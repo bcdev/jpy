@@ -125,6 +125,73 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_isPythonRunning
     return init && JPy_Module != NULL;
 }
 
+#define  MAX_PYTHON_HOME   256
+#if defined(JPY_COMPAT_33P)
+wchar_t staticPythonHome[MAX_PYTHON_HOME];
+#elif defined(JPY_COMPAT_27)
+char staticPythonHome[MAX_PYTHON_HOME];
+#endif
+
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    setPythonHome
+ * Signature: (Ljava/lang/String;)Z
+ */
+JNIEXPORT jint JNICALL Java_org_jpy_PyLib_setPythonHome
+  (JNIEnv* jenv, jclass jLibClass, jstring jPythonHome)
+{
+#if defined(JPY_COMPAT_33P) && !defined(JPY_COMPAT_35P)
+    return 0;  // Not supported because DecodeLocale didn't exist in 3.4
+#else
+
+    #if defined(JPY_COMPAT_35P)
+    const wchar_t* pythonHome = NULL;
+    #elif defined(JPY_COMPAT_27)
+    const char* pythonHome = NULL;
+    #endif
+
+    const char *nonWidePythonHome = NULL;
+    jboolean result = 0;
+    nonWidePythonHome = (*jenv)->GetStringUTFChars(jenv, jPythonHome, NULL);
+
+    if (nonWidePythonHome != NULL) {
+
+        #if defined(JPY_COMPAT_35P)
+        pythonHome = Py_DecodeLocale(nonWidePythonHome, NULL);
+        if (pythonHome != NULL) {
+            if (wcslen(pythonHome) < MAX_PYTHON_HOME) {
+                 wcscpy(staticPythonHome, pythonHome);
+                 result = 1;
+            }
+            else {
+                PyMem_RawFree(pythonHome);
+            }
+               
+        }
+          
+        #elif defined(JPY_COMPAT_27)
+        pythonHome = nonWidePythonHome;
+        if (strlen(pythonHome) < MAX_PYTHON_HOME) {
+            strcpy(staticPythonHome, pythonHome);
+            result = 1;
+        }
+        #endif
+        
+        if (result) {
+            Py_SetPythonHome(staticPythonHome);
+    
+            #if defined(JPY_COMPAT_35P)
+            PyMem_RawFree(pythonHome);
+            #endif
+        }
+
+        (*jenv)->ReleaseStringUTFChars(jenv, jPythonHome, nonWidePythonHome);
+    }
+
+    return result;
+#endif
+}
+
 /*
  * Class:     org_jpy_PyLib
  * Method:    startPython0

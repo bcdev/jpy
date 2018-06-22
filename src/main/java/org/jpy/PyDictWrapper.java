@@ -168,12 +168,13 @@ public class PyDictWrapper implements Map<PyObject, PyObject> {
         @Override
         public Iterator<Entry<PyObject, PyObject>> iterator() {
             return new Iterator<Entry<PyObject, PyObject>>() {
+                PyModule builtins = PyModule.getBuiltins();
                 PyObject it = pyObject.callMethod("__iter__");
                 PyObject next = prepareNext();
 
                 private PyObject prepareNext() {
                     try {
-                        return next = it.callMethod("next");
+                        return next = builtins.call("next", it);
                     } catch (StopIteration e) {
                         return next = null;
                     }
