@@ -357,4 +357,32 @@ public class PyObjectTest {
             return processor.computeTile(x, y, new float[100 * 100]);
         }
     }
+    
+    private static interface ISimple {
+    	public int getValue();
+    }
+    
+    private static ISimple newTestObj(PyModule pyModule, String pythonClass, int value) {
+        PyObject procObj = pyModule.call(pythonClass, value);
+        ISimple simple = procObj.createProxy(ISimple.class);
+        return simple;
+    }
+    @Test
+    public void testHashEqStr() {
+        PyModule pyModule = PyModule.importModule("hasheqstr");
+        testOneClass(pyModule, "Simple", false);
+        testOneClass(pyModule, "HashSimple", true);
+    }
+    private static void testOneClass(PyModule pyModule, String pythonClass, boolean eqResExpected) {
+        ISimple simple = newTestObj(pyModule, pythonClass, 1234);
+        int value = simple.getValue();
+        assertEquals(value, 1234);
+        String rep = simple.toString();
+        assertEquals(rep, pythonClass + ": 1234");
+        ISimple simple2 = newTestObj(pyModule, pythonClass, 1234);
+        boolean eqRes = simple.equals(simple2);
+        assertEquals(eqRes, eqResExpected);
+        assertEquals(simple.hashCode()==simple2.hashCode(), eqResExpected);
+        assertEquals(simple.equals(simple), true);
+    }
 }
