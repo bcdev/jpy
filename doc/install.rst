@@ -90,6 +90,13 @@ All the parameters can be passed directly to the JVM either as Java system prope
 
 Such property file is also written for each build and is found in ``build/lib-<os-platform>-<python-version>/jpyconfig.properties``.
 
+Setting PYTHONHOME
+------------------
+
+If the environment variable ``PYTHONHOME`` is not set when you call Python from Java, you may get an error about
+file system encodings not being found. It is possible to set the location of Python from your
+Java program.  Use ``PyLib.setPythonHome(pathToPythonHome)`` to do that, where ``pathToPythonHome`` is a ``String`` that 
+contains the location of the Python installation.
 
 ========================
 Build for Linux / Darwin
