@@ -218,6 +218,20 @@ Variables
     Here a call to the ``read`` method will modify the numpy array's content as desired and return the
     same array instance as indicated by the Java method's specification.
 
+.. py:data:: type_translations
+    :module: jpy
+
+    Contains callbacks which are called when instantiating a Python object from a Java object.
+    After the standard wrapping of the Java object as a Python object, the Java type name is looked up in this
+    dictionary.  If the returned item is a callable, the callable is called with the JPy object as an argument,
+    and the callable's result is returned to the user.
+
+
+.. py:data:: VerboseExceptions.enabled
+    :module: jpy
+
+    If set to true, then jpy will produce more verbose exception messages; which include the full Java stack trace.
+    If set to false, then jpy produces exceptions using only the underlying Java exception's toString method.
 
 .. py:data:: diag
     :module: jpy
@@ -379,7 +393,7 @@ Java object types
 | ``java.lang.String``    |      1       |     0    |     0   |      0     |   100   |
 +-------------------------+--------------+----------+---------+------------+---------+
 | ``java.lang.Object``    |      1       |    10    |    10   |     10     |    10   |
-+-------------------------+--------------+----------+---------+------------+---------+
++-------------------------+--------------+----------+---------+------------+---------+jpy
 
 Java primitive array types
 --------------------------
@@ -409,6 +423,9 @@ given above, the a match value of 10 applies, as long as the item size of a buff
 
 Java object array types
 -----------------------
+
+For String arrays, if a sequence is matched with a value of 80 if all the elements in the sequence are Python strings.
+
 
 todo
 

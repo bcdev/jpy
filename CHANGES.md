@@ -2,10 +2,21 @@
 jpy Changelog
 *************
 
+Version 0.10 (in development)
+=============================
+
+* Make jpy work with Anaconda by setting environment variable 
+  `PYTHONHOME` from Java 
+  [#143](https://github.com/bcdev/jpy/issues/143). Contribution by Dr-Irv.  
+* Fixed: Constants are not properly passed from Java to Python when using interfaces 
+  [#140](https://github.com/bcdev/jpy/issues/140). Contribution by Dr-Irv.
+* Fixed: Cannot iterate through a dict in Python 3.x 
+  [#136](https://github.com/bcdev/jpy/issues/136). Contribution by Dr-Irv.
+
 Version 0.9
 ===========
 
-This version includes a number of contributions from supportive GitHub users. Thanks to all of you! 
+This version includes a number of contributions from supportive GitHub users. Thanks to all of you!
 
 Fixes
 -----
@@ -14,18 +25,31 @@ Fixes
 * Fixed problem where default methods on Java 8 Interfaces were not found (issue #102). Fix by Charles P. Wright.
 * Fixed error caused by missing `sys.argv` in Python when called from Java (issue #81). Fix by Dave Voutila.
 * Fixed problem where calling jpy.get_type() too many times causes a memory access error (issue #74). Fix by Dave Voutila.
-* Fixed a corruption when retrieving long values (#72). Fix by chipkent. 
+* Fixed a corruption when retrieving long values (#72). Fix by chipkent.
 * Fixed fatal error when stopping python session (issue #70, #77). Fix by Dave Voutila.
+# Explicit null checks for avoiding JVM crash (issue #126). Fix by Geomatys.
 
 Improvements
 ------------
 
 * Can now use pip to install Python `jpy` package directly from GitHub (#83).
-  This works for Linux and OS X where C compilers are available by default 
-  and should work on Windows with Visual Studio 15 installed. 
-  Contribution by Dave Voutila. 
-* Java `PyObject` is now serializable. Contribution by Mario Briggs. 
-
+  This works for Linux and OS X where C compilers are available by default
+  and should work on Windows with Visual Studio 15 installed.
+  Contribution by Dave Voutila.
+* Java `PyObject` is now serializable. Contribution by Mario Briggs.
+* Improved Varargs method matching.  You may pass in either an array (as in the
+  past) or individual Python arguments, the match for a varargs method call is
+  the minimum match for each of the arguments. Zero length arrays (i.e. no
+  arguments) are also permitted with a match value of 10.
+* `jpy.type_translations` dictionary for callbacks when instantiating Python objects.
+* `jpy.VerboseExceptions` enables full Java stack traces.
+* More Python exceptions are translated to the corresponding Java type.
+* Globals and locals are converted when executing code with PyLib, to allow variables to be
+  used across statement invocation; and interrogated from Java.
+* PyObject wrappers for dictionary, list, and introspection functions to tell
+  you whether or not you can convert the object.
+* Support for isAssignable checks when dealing with Python Strings and primitives, to allow
+  matches for argument types such as `java.lang.Comparable` or `java.lang.Number`.
 
 Version 0.8
 ===========

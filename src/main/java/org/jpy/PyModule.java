@@ -16,6 +16,7 @@
 
 package org.jpy;
 
+import java.util.Objects;
 import static org.jpy.PyLib.assertPythonRuns;
 
 /**
@@ -89,6 +90,7 @@ public class PyModule extends PyObject {
      */
     public static PyModule importModule(String name) {
         assertPythonRuns();
+        Objects.requireNonNull(name, "name must not be null");
         long pointer = PyLib.importModule(name);
         return pointer != 0 ? new PyModule(name, pointer) : null;
     }
@@ -102,6 +104,7 @@ public class PyModule extends PyObject {
      * @since 0.8
      */
     public static PyObject extendSysPath(String modulePath, boolean prepend) {
+        Objects.requireNonNull(modulePath, "path must not be null");
         PyModule sys = importModule("sys");
         PyObject sysPath = sys.getAttribute("path");
         if (prepend) {
@@ -121,8 +124,10 @@ public class PyModule extends PyObject {
      * @param <T>  The interface name.
      * @return A (proxy) instance implementing the given interface.
      */
+    @Override
     public <T> T createProxy(Class<T> type) {
         assertPythonRuns();
+        Objects.requireNonNull(type, "type must not be null");
         return (T) createProxy(PyLib.CallableKind.FUNCTION, type);
     }
 }

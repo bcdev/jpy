@@ -84,12 +84,23 @@ Another optional parameter
 
 * ``jpy.debug`` - which is either ``true`` or ``false`` can be used to output extra debugging information.
 
+The optional parameter
+
+* ``jpy.pythonPrefix`` - points to the location of the PYTHONHOME.  If set, then jpy will call ``PyLib.setPythonHome()`` with the value of this parameter.
+
 All the parameters can be passed directly to the JVM either as Java system properties or by using the single system property
 
 * ``jpy.config`` - which is a path to a Java properties files containing the definitions of the two parameters named above.
 
 Such property file is also written for each build and is found in ``build/lib-<os-platform>-<python-version>/jpyconfig.properties``.
 
+Setting PYTHONHOME
+------------------
+
+If the environment variable ``PYTHONHOME`` is not set when you call Python from Java, you may get an error about
+file system encodings not being found. It is possible to set the location of Python from your
+Java program.  Use ``PyLib.setPythonHome(pathToPythonHome)`` to do that, where ``pathToPythonHome`` is a ``String`` that 
+contains the location of the Python installation, or as described above, use the parameter ``jpy.pytyhonPrefix``.
 
 ========================
 Build for Linux / Darwin

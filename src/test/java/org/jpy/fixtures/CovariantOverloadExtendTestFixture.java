@@ -12,25 +12,27 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * This file was modified by Illumon.
  */
 
 package org.jpy.fixtures;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.Method;
+
 /**
- * Stands for an image data processor.
+ * Used as a test class for the test cases in jpy_overload_test.py
  *
- * Created by Norman on 19.12.13.
+ * @author Charles P. Wright
  */
-public interface Processor {
-    String initialize();
+@SuppressWarnings("UnusedDeclaration")
+public class CovariantOverloadExtendTestFixture extends CovariantOverloadTestFixture {
+    public CovariantOverloadExtendTestFixture(int x) {
+        super(x * 2);
+    }
 
-    String computeTile(int w, int h, float[] data);
-
-    String dispose();
-    
-    void setVal(int n);
-    
-    int getVal();
-    
-    boolean check1234();
+    public CovariantOverloadExtendTestFixture foo(Number a, int b) {
+        return new CovariantOverloadExtendTestFixture(a.intValue() - b);
+    }
 }

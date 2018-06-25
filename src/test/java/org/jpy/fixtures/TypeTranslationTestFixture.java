@@ -12,25 +12,23 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * This file was modified by Illumon.
+ *
  */
 
 package org.jpy.fixtures;
 
 /**
- * Stands for an image data processor.
+ * Used as a test class for the test cases in jpy_retval_test.py
+ * Note: Please make sure to not add any method overloads to this class.
+ * This is done in {@link MethodOverloadTestFixture}.
  *
- * Created by Norman on 19.12.13.
+ * @author Norman Fomferra
  */
-public interface Processor {
-    String initialize();
-
-    String computeTile(int w, int h, float[] data);
-
-    String dispose();
-    
-    void setVal(int n);
-    
-    int getVal();
-    
-    boolean check1234();
+@SuppressWarnings("UnusedDeclaration")
+public class TypeTranslationTestFixture {
+    public Thing makeThing(int value) {
+        return new Thing(value);
+    }
 }

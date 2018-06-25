@@ -19,5 +19,12 @@ class Processor:
         for i in range(10000):
             l.reverse()
 
+    def setVal(self, val):
+        self._val = val
+        
+    def getVal(self):
+        return self._val
 
-
+    def check1234(self):
+        return self._val == 1234
+    

@@ -12,25 +12,26 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-package org.jpy.fixtures;
-
-/**
- * Stands for an image data processor.
  *
- * Created by Norman on 19.12.13.
+ * This file was modified by Illumon.
+ *
  */
-public interface Processor {
-    String initialize();
 
-    String computeTile(int w, int h, float[] data);
+#ifndef JPY_VERBOSEEXCEPT_H
+#define JPY_VERBOSEEXCEPT_H
 
-    String dispose();
-    
-    void setVal(int n);
-    
-    int getVal();
-    
-    boolean check1234();
-}
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "jpy_compat.h"
+
+extern PyTypeObject VerboseExceptions_Type;
+extern int JPy_VerboseExceptions;
+
+PyObject* VerboseExceptions_New(void);
+
+#ifdef __cplusplus
+}  /* extern "C" */
+#endif
+#endif /* !JPY_DIAG_H */

@@ -12,6 +12,9 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * This file was modified by Illumon.
+ *
  */
 
 #ifndef JPY_MODULE_H
@@ -32,6 +35,7 @@ extern "C" {
 extern PyObject* JPy_Module;
 extern PyObject* JPy_Types;
 extern PyObject* JPy_Type_Callbacks;
+extern PyObject* JPy_Type_Translations;
 extern PyObject* JException_Type;
 
 extern JavaVM* JPy_JVM;
@@ -42,6 +46,7 @@ extern jboolean JPy_MustDestroyJVM;
 
 #define JPy_MODULE_ATTR_NAME_TYPES "types"
 #define JPy_MODULE_ATTR_NAME_TYPE_CALLBACKS "type_callbacks"
+#define JPy_MODULE_ATTR_NAME_TYPE_TRANSLATIONS "type_translations"
 
 
 /**
@@ -148,8 +153,28 @@ extern jclass JPy_Field_JClass;
 extern jmethodID JPy_Field_GetName_MID;
 extern jmethodID JPy_Field_GetModifiers_MID;
 extern jmethodID JPy_Field_GetType_MID;
+// java.util.Map
+extern jclass JPy_Map_JClass;
+extern jclass JPy_Map_Entry_JClass;
+extern jmethodID JPy_Map_entrySet_MID;
+extern jmethodID JPy_Map_put_MID;
+extern jmethodID JPy_Map_clear_MID;
+extern jmethodID JPy_Map_Entry_getKey_MID;
+extern jmethodID JPy_Map_Entry_getValue_MID;
+// java.util.Set
+extern jclass JPy_Set_JClass;
+extern jmethodID JPy_Set_Iterator_MID;
+// java.util.Iterator
+extern jclass JPy_Iterator_JClass;
+extern jmethodID JPy_Iterator_next_MID;
+extern jmethodID JPy_Iterator_hasNext_MID;
 
 extern jclass JPy_RuntimeException_JClass;
+extern jclass JPy_OutOfMemoryError_JClass;
+extern jclass JPy_FileNotFoundException_JClass;
+extern jclass JPy_UnsupportedOperationException_JClass;
+extern jclass JPy_KeyError_JClass;
+extern jclass JPy_StopIteration_JClass;
 
 extern jclass JPy_Boolean_JClass;
 extern jmethodID JPy_Boolean_Init_MID;
@@ -185,8 +210,12 @@ extern jmethodID JPy_Number_DoubleValue_MID;
 extern jclass JPy_String_JClass;
 extern jclass JPy_Void_JClass;
 
+extern jclass JPy_PyObject_JClass;
 extern jmethodID JPy_PyObject_GetPointer_MID;
 extern jmethodID JPy_PyObject_Init_MID;
+
+extern jclass JPy_PyDictWrapper_JClass;
+extern jmethodID JPy_PyDictWrapper_GetPointer_MID;
 
 #ifdef __cplusplus
 } /* extern "C" */
