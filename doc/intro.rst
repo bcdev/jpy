@@ -90,11 +90,8 @@ then we can call the Python code from Java as follows ::
     // Import the Python module
     PyModule plugInModule = PyLib.importModule("bibo_plugin");
 
-    // Get the Python class
-    PyObject plugInClass = plugInModule.getAttribute("BiboPlugIn");
-
     // Call the Python class to instantiate an object
-    PyObject plugInObj = plugInClass.call();
+    PyObject plugInObj = plugInModule.call("BiboPlugin");
 
     // Create a Java proxy object for the Python object
     PlugIn plugIn = plugInObj.createProxy(PlugIn.class);

@@ -12,6 +12,9 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * This file was modified by Illumon.
+ *
  */
 
 #include <jni.h>
@@ -32,7 +35,12 @@
 PyObject* PyLib_GetAttributeObject(JNIEnv* jenv, PyObject* pyValue, jstring jName);
 PyObject* PyLib_CallAndReturnObject(JNIEnv *jenv, PyObject* pyValue, jboolean isMethodCall, jstring jName, jint argCount, jobjectArray jArgs, jobjectArray jParamClasses);
 void PyLib_HandlePythonException(JNIEnv* jenv);
+void PyLib_ThrowOOM(JNIEnv* jenv);
+void PyLib_ThrowFNFE(JNIEnv* jenv, const char *file);
+void PyLib_ThrowUOE(JNIEnv* jenv, const char *message);
+void PyLib_ThrowRTE(JNIEnv* jenv, const char *message);
 void PyLib_RedirectStdOut(void);
+int copyPythonDictToJavaMap(JNIEnv *jenv, PyObject *pyDict, jobject jMap);
 
 static int JPy_InitThreads = 0;
 
@@ -115,6 +123,73 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_isPythonRunning
     int init;
     init = Py_IsInitialized();
     return init && JPy_Module != NULL;
+}
+
+#define  MAX_PYTHON_HOME   256
+#if defined(JPY_COMPAT_33P)
+wchar_t staticPythonHome[MAX_PYTHON_HOME];
+#elif defined(JPY_COMPAT_27)
+char staticPythonHome[MAX_PYTHON_HOME];
+#endif
+
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    setPythonHome
+ * Signature: (Ljava/lang/String;)Z
+ */
+JNIEXPORT jint JNICALL Java_org_jpy_PyLib_setPythonHome
+  (JNIEnv* jenv, jclass jLibClass, jstring jPythonHome)
+{
+#if defined(JPY_COMPAT_33P) && !defined(JPY_COMPAT_35P)
+    return 0;  // Not supported because DecodeLocale didn't exist in 3.4
+#else
+
+    #if defined(JPY_COMPAT_35P)
+    const wchar_t* pythonHome = NULL;
+    #elif defined(JPY_COMPAT_27)
+    const char* pythonHome = NULL;
+    #endif
+
+    const char *nonWidePythonHome = NULL;
+    jboolean result = 0;
+    nonWidePythonHome = (*jenv)->GetStringUTFChars(jenv, jPythonHome, NULL);
+
+    if (nonWidePythonHome != NULL) {
+
+        #if defined(JPY_COMPAT_35P)
+        pythonHome = Py_DecodeLocale(nonWidePythonHome, NULL);
+        if (pythonHome != NULL) {
+            if (wcslen(pythonHome) < MAX_PYTHON_HOME) {
+                 wcscpy(staticPythonHome, pythonHome);
+                 result = 1;
+            }
+            else {
+                PyMem_RawFree(pythonHome);
+            }
+               
+        }
+          
+        #elif defined(JPY_COMPAT_27)
+        pythonHome = nonWidePythonHome;
+        if (strlen(pythonHome) < MAX_PYTHON_HOME) {
+            strcpy(staticPythonHome, pythonHome);
+            result = 1;
+        }
+        #endif
+        
+        if (result) {
+            Py_SetPythonHome(staticPythonHome);
+    
+            #if defined(JPY_COMPAT_35P)
+            PyMem_RawFree(pythonHome);
+            #endif
+        }
+
+        (*jenv)->ReleaseStringUTFChars(jenv, jPythonHome, nonWidePythonHome);
+    }
+
+    return result;
+#endif
 }
 
 /*
@@ -291,18 +366,26 @@ JNIEXPORT jint JNICALL Java_org_jpy_PyLib_execScript
   (JNIEnv* jenv, jclass jLibClass, jstring jScript)
 {
     const char* scriptChars;
-    int retCode;
+    int retCode = -1;
 
     JPy_BEGIN_GIL_STATE
 
     scriptChars = (*jenv)->GetStringUTFChars(jenv, jScript, NULL);
+    if (scriptChars == NULL) {
+        PyLib_ThrowOOM(jenv);
+        goto error;
+    }
     JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_execScript: script='%s'\n", scriptChars);
     retCode = PyRun_SimpleString(scriptChars);
     if (retCode < 0) {
         JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_execScript: error: PyRun_SimpleString(\"%s\") returned %d\n", scriptChars, retCode);
         // Note that we cannot retrieve last Python exception after a calling PyRun_SimpleString, see documentation of PyRun_SimpleString.
     }
-    (*jenv)->ReleaseStringUTFChars(jenv, jScript, scriptChars);
+
+error:
+    if (scriptChars != NULL) {
+        (*jenv)->ReleaseStringUTFChars(jenv, jScript, scriptChars);
+    }
 
     JPy_END_GIL_STATE
 
@@ -319,7 +402,7 @@ PyObject* PyLib_ConvertJavaToPythonObject(JNIEnv* jenv, jobject jObject)
 
 int PyLib_ConvertPythonToJavaObject(JNIEnv* jenv, PyObject* pyObject, jobject* jObject)
 {
-    return JType_ConvertPythonToJavaObject(jenv, JPy_JPyObject, pyObject, jObject);
+    return JType_ConvertPythonToJavaObject(jenv, JPy_JPyObject, pyObject, jObject, JNI_FALSE);
 }
 
 void dumpDict(const char* dictName, PyObject* dict)
@@ -328,6 +411,11 @@ void dumpDict(const char* dictName, PyObject* dict)
     PyObject *key = NULL, *value = NULL;
     Py_ssize_t pos = 0;
     Py_ssize_t i = 0;
+
+    if (!PyDict_Check(dict)) {
+        printf(">> dumpDict: %s is not a dictionary!\n", dictName);
+        return;
+    }
 
     size = PyDict_Size(dict);
     printf(">> dumpDict: %s.size = %ld\n", dictName, size);
@@ -339,79 +427,434 @@ void dumpDict(const char* dictName, PyObject* dict)
     }
 }
 
-
-JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeCode
-  (JNIEnv* jenv, jclass jLibClass, jstring jCode, jint jStart, jobject jGlobals, jobject jLocals)
-{
-    const char* codeChars;
-    PyObject* pyReturnValue;
-    PyObject* pyGlobals;
-    PyObject* pyLocals;
+/**
+ * Get the globals from the __main__ module.
+ */
+PyObject *getMainGlobals() {
     PyObject* pyMainModule;
-    int start;
+    PyObject* pyGlobals;
 
     JPy_BEGIN_GIL_STATE
 
+    pyMainModule = PyImport_AddModule("__main__"); // borrowed ref
+
+    if (pyMainModule == NULL) {
+        return NULL;
+    }
+
+
+    pyGlobals = PyModule_GetDict(pyMainModule); // borrowed ref
+
+    JPy_END_GIL_STATE
+
+    return pyGlobals;
+}
+
+JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_getMainGlobals
+        (JNIEnv *jenv, jclass libClass) {
+    jobject objectRef;
+
+    PyObject *globals = getMainGlobals();
+
+    if (JType_ConvertPythonToJavaObject(jenv, JPy_JPyObject, globals, &objectRef, JNI_FALSE) < 0) {
+        return NULL;
+    }
+
+    return objectRef;
+}
+
+JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_copyDict
+        (JNIEnv *jenv, jclass libClass, jlong pyPointer) {
+    jobject objectRef;
+    PyObject *src, *copy;
+
+    src = (PyObject*)pyPointer;
+
+    if (!PyDict_Check(src)) {
+        PyLib_ThrowUOE(jenv, "Not a dictionary!");
+        return NULL;
+    }
+
+    copy = PyDict_Copy(src);
+
+    if (JType_ConvertPythonToJavaObject(jenv, JPy_JPyObject, copy, &objectRef, JNI_FALSE) < 0) {
+        return NULL;
+    }
+
+    return objectRef;
+}
+
+JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_newDict
+        (JNIEnv *jenv, jclass libClass) {
+    jobject objectRef;
+    PyObject *dict;
+
+    dict = PyDict_New();
+
+    if (JType_ConvertPythonToJavaObject(jenv, JPy_JPyObject, dict, &objectRef, JNI_FALSE) < 0) {
+        return NULL;
+    }
+
+    return objectRef;
+}
+
+/**
+ * Copies a Java Map<String, Object> into a new Python dictionary.
+ */
+PyObject *copyJavaStringObjectMapToPyDict(JNIEnv *jenv, jobject jMap) {
+    PyObject *result;
+    jobject entrySet, iterator, mapEntry;
+    jboolean hasNext;
+
+    result = PyDict_New();
+    if (result == NULL) {
+        return result;
+    }
+
+    entrySet = (*jenv)->CallObjectMethod(jenv, jMap, JPy_Map_entrySet_MID);
+    if (entrySet == NULL) {
+        goto error;
+    }
+
+    iterator = (*jenv)->CallObjectMethod(jenv, entrySet, JPy_Set_Iterator_MID);
+    if (iterator == NULL) {
+        goto error;
+    }
+
+    hasNext = (*jenv)->CallBooleanMethod(jenv, iterator, JPy_Iterator_hasNext_MID);
+
+    while (hasNext) {
+        jobject key, value;
+        char const *keyChars;
+        PyObject *pyKey;
+        PyObject *pyValue;
+        JPy_JType* type;
+
+        mapEntry = (*jenv)->CallObjectMethod(jenv, iterator, JPy_Iterator_next_MID);
+        if (mapEntry == NULL) {
+            goto error;
+        }
+
+        key = (*jenv)->CallObjectMethod(jenv, mapEntry, JPy_Map_Entry_getKey_MID);
+        if (key == NULL) {
+            goto error;
+        }
+
+        // we require string keys
+        if (!(*jenv)->IsInstanceOf(jenv, key, JPy_String_JClass)) {
+            goto error;
+        }
+        keyChars = (*jenv)->GetStringUTFChars(jenv, (jstring)key, NULL);
+        if (keyChars == NULL) {
+            goto error;
+        }
+
+        pyKey = JPy_FROM_CSTR(keyChars);
+        (*jenv)->ReleaseStringUTFChars(jenv, (jstring)key, keyChars);
+
+        value = (*jenv)->CallObjectMethod(jenv, mapEntry, JPy_Map_Entry_getValue_MID);
+
+        type = JType_GetTypeForObject(jenv, value);
+        pyValue = JType_ConvertJavaToPythonObject(jenv, type, value);
+
+        PyDict_SetItem(result, pyKey, pyValue);
+
+        hasNext = (*jenv)->CallBooleanMethod(jenv, iterator, JPy_Iterator_hasNext_MID);
+    }
+
+    return result;
+
+error:
+    if (result != NULL) {
+        Py_XDECREF(result);
+    }
+    return NULL;
+}
+
+int copyPythonDictToJavaMap(JNIEnv *jenv, PyObject *pyDict, jobject jMap) {
+    PyObject *pyKey, *pyValue;
+    Py_ssize_t pos = 0;
+    Py_ssize_t dictSize;
+    jobject *jValues = NULL;
+    jobject *jKeys = NULL;
+    int ii;
+    jboolean exceptionAlready = JNI_FALSE;
+    jthrowable savedException = NULL;
+    int retcode = -1;
+
+    if (!PyDict_Check(pyDict)) {
+        PyLib_ThrowUOE(jenv, "PyObject is not a dictionary!");
+        return -1;
+    }
+
+    dictSize = PyDict_Size(pyDict);
+
+    jKeys = malloc(dictSize * sizeof(jobject));
+    jValues = malloc(dictSize * sizeof(jobject));
+    if (jKeys == NULL || jValues == NULL) {
+        PyLib_ThrowOOM(jenv);
+        goto error;
+    }
+
+    exceptionAlready = (*jenv)->ExceptionCheck(jenv);
+    if (exceptionAlready) {
+        // save the exception away, because otherwise the conversion methods might spuriously fail
+        savedException = (*jenv)->ExceptionOccurred(jenv);
+        (*jenv)->ExceptionClear(jenv);
+    }
+
+    // first convert everything
+    ii = 0;
+    while (PyDict_Next(pyDict, &pos, &pyKey, &pyValue)) {
+        if (JPy_AsJObjectWithClass(jenv, pyKey, &(jKeys[ii]), JPy_String_JClass) < 0) {
+            // an error occurred
+            goto error;
+        }
+        if (JPy_AsJObject(jenv, pyValue, &(jValues[ii]), JNI_TRUE) < 0) {
+            // an error occurred
+            goto error;
+        }
+        ii++;
+    }
+
+    // now that we've converted, clear out the map and repopulate it
+    (*jenv)->CallVoidMethod(jenv, jMap, JPy_Map_clear_MID);
+    for (ii = 0; ii < dictSize; ++ii) {
+        // since the map is cleared, we want to plow through all of the put operations
+        (*jenv)->CallObjectMethod(jenv, jMap, JPy_Map_put_MID, jKeys[ii], jValues[ii]);
+    }
+    // and we are successful!
+    retcode = 0;
+
+error:
+    if (exceptionAlready) {
+        // restore our original exception
+        (*jenv)->Throw(jenv, savedException);
+    }
+
+    free(jKeys);
+    free(jValues);
+    return retcode;
+}
+
+typedef PyObject * (*DoRun)(const void *,int,PyObject*,PyObject*);
+
+/**
+ * After setting up the globals and locals, calls the provided function.
+ *
+ * jStart must be JPy_IM_STATEMENT, JPy_IM_SCRIPT, JPy_IM_EXPRESSION; matching what you are trying to
+ * run.  If you use a statement or expression instead of a script; some of your code may be ignored.
+ *
+ * If jGlobals is not specified, then the main module globals are used.
+ *
+ * If jLocals is not specified, then the globals are used.
+ *
+ * jGlobals and jLocals may be a PyObject, in which case they are used without translation.  Otherwise,
+ * they must be a map from String to Object, and will be copied to a new python dictionary.  After execution
+ * completes the dictionary entries will be copied back.
+ *
+ */
+jlong executeInternal(JNIEnv* jenv, jclass jLibClass, jint jStart, jobject jGlobals, jobject jLocals, DoRun runFunction, void *runArg) {
+    PyObject *pyReturnValue;
+    PyObject *pyGlobals;
+    PyObject *pyLocals;
+    int start;
+    jboolean decGlobals, decLocals, copyGlobals, copyLocals;
+
+    JPy_BEGIN_GIL_STATE
+
+    decGlobals = decLocals = JNI_FALSE;
+    copyGlobals = copyLocals = JNI_FALSE;
     pyGlobals = NULL;
     pyLocals = NULL;
     pyReturnValue = NULL;
-    pyMainModule = NULL;
-    codeChars = NULL;
 
-    pyMainModule = PyImport_AddModule("__main__"); // borrowed ref
-    if (pyMainModule == NULL) {
-        PyLib_HandlePythonException(jenv);
+    if (jGlobals == NULL) {
+        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using main globals\n");
+        pyGlobals = getMainGlobals();
+        if (pyGlobals == NULL) {
+            PyLib_HandlePythonException(jenv);
+            goto error;
+        }
+    } else if ((*jenv)->IsInstanceOf(jenv, jGlobals, JPy_PyObject_JClass)) {
+        // if we are an instance of PyObject, just use the object
+        pyGlobals = (PyObject *)((*jenv)->CallLongMethod(jenv, jGlobals, JPy_PyObject_GetPointer_MID));
+        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using PyObject globals\n");
+    } else if ((*jenv)->IsInstanceOf(jenv, jGlobals, JPy_PyDictWrapper_JClass)) {
+        // if we are an instance of a wrapped dictionary, just use the underlying dictionary
+        pyGlobals = (PyObject *)((*jenv)->CallLongMethod(jenv, jGlobals, JPy_PyDictWrapper_GetPointer_MID));
+        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using PyDictWrapper globals\n");
+    } else if ((*jenv)->IsInstanceOf(jenv, jGlobals, JPy_Map_JClass)) {
+        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using Java Map globals\n");
+        // this is a java Map and we need to convert it
+        pyGlobals = copyJavaStringObjectMapToPyDict(jenv, jGlobals);
+        if (pyGlobals == NULL) {
+            PyLib_ThrowRTE(jenv, "Could not convert globals from Java Map to Python dictionary");
+            goto error;
+        }
+        copyGlobals = decGlobals = JNI_TRUE;
+    } else {
+        PyLib_ThrowUOE(jenv, "Unsupported globals type");
         goto error;
     }
 
-    codeChars = (*jenv)->GetStringUTFChars(jenv, jCode, NULL);
-    if (codeChars == NULL) {
-        // todo: Throw out-of-memory error
+    // if we have no locals specified, using globals for it matches the behavior of eval, "The expression argument is
+    // parsed and evaluated as a Python expression (technically speaking, a condition list) using the globals and
+    // locals dictionaries as global and local namespace. ... If the locals dictionary is omitted it defaults to the
+    // globals dictionary. If both dictionaries are omitted, the expression is executed in the environment where eval()
+    // is called. The return value is the result of the evaluated expression.
+    if (jLocals == NULL) {
+        pyLocals = pyGlobals;
+        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using globals for locals\n");
+    } else if ((*jenv)->IsInstanceOf(jenv, jLocals, JPy_PyObject_JClass)) {
+        // if we are an instance of PyObject, just use the object
+        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using PyObject locals\n");
+        pyLocals = (PyObject *)((*jenv)->CallLongMethod(jenv, jLocals, JPy_PyObject_GetPointer_MID));
+    } else if ((*jenv)->IsInstanceOf(jenv, jLocals, JPy_PyDictWrapper_JClass)) {
+        // if we are an instance of a wrapped dictionary, just use the underlying dictionary
+        pyLocals = (PyObject *)((*jenv)->CallLongMethod(jenv, jLocals, JPy_PyDictWrapper_GetPointer_MID));
+        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using PyDictWrapper locals\n");
+    } else if ((*jenv)->IsInstanceOf(jenv, jLocals, JPy_Map_JClass)) {
+        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: using Java Map locals\n");
+        // this is a java Map and we need to convert it
+        pyLocals = copyJavaStringObjectMapToPyDict(jenv, jLocals);
+        if (pyLocals == NULL) {
+            PyLib_ThrowRTE(jenv, "Could not convert locals from Java Map to Python dictionary");
+            goto error;
+        }
+        copyLocals = decLocals = JNI_TRUE;
+    } else {
+        PyLib_ThrowUOE(jenv, "Unsupported locals type");
         goto error;
     }
-
-    pyGlobals = PyModule_GetDict(pyMainModule); // borrowed ref
-    if (pyGlobals == NULL) {
-        PyLib_HandlePythonException(jenv);
-        goto error;
-    }
-
-    pyLocals = PyDict_New(); // new ref
-    if (pyLocals == NULL) {
-        PyLib_HandlePythonException(jenv);
-        goto error;
-    }
-
-    // todo for https://github.com/bcdev/jpy/issues/53
-    // - copy jGlobals into pyGlobals (convert Java --> Python values)
-    // - copy jLocals into pyLocals (convert Java --> Python values)
 
     start = jStart == JPy_IM_STATEMENT ? Py_single_input :
             jStart == JPy_IM_SCRIPT ? Py_file_input :
             Py_eval_input;
 
-    pyReturnValue = PyRun_String(codeChars, start, pyGlobals, pyLocals);
+    pyReturnValue = runFunction(runArg, start, pyGlobals, pyLocals);
     if (pyReturnValue == NULL) {
+        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: Handle Python Exception\n");
         PyLib_HandlePythonException(jenv);
         goto error;
     }
 
-    // todo for https://github.com/bcdev/jpy/issues/53
-    // - copy pyGlobals into jGlobals (convert Python --> Java values)
-    // - copy pyLocals into jLocals (convert Python --> Java values)
-    //dumpDict("pyGlobals", pyGlobals);
-    //dumpDict("pyLocals", pyLocals);
-
 error:
-    if (codeChars != NULL) {
-        (*jenv)->ReleaseStringUTFChars(jenv, jCode, codeChars);
+    if (copyGlobals) {
+        copyPythonDictToJavaMap(jenv, pyGlobals, jGlobals);
+        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: copied back Java global\n");
     }
-
-    Py_XDECREF(pyLocals);
+    if (copyLocals) {
+        copyPythonDictToJavaMap(jenv, pyLocals, jLocals);
+        JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeInternal: copied back Java locals\n");
+    }
+    if (decGlobals) {
+        Py_XDECREF(pyGlobals);
+    }
+    if (decLocals) {
+        Py_XDECREF(pyLocals);
+    }
 
     JPy_END_GIL_STATE
 
     return (jlong) pyReturnValue;
+}
+
+PyObject *pyRunStringWrapper(const char *code, int start, PyObject *globals, PyObject *locals) {
+    PyObject *result = PyRun_String(code, start, globals, locals);
+    return result;
+}
+
+/**
+ * Calls PyRun_String under the covers to execute the string contents.
+ *
+ * jStart must be JPy_IM_STATEMENT, JPy_IM_SCRIPT, JPy_IM_EXPRESSION; matching what you are trying to
+ * run.  If you use a statement or expression instead of a script; some of your code may be ignored.
+ *
+ * If jGlobals is not specified, then the main module globals are used.
+ *
+ * If jLocals is not specified, then the globals are used.
+ *
+ * jGlobals and jLocals may be a PyObject, in which case they are used without translation.  Otherwise,
+ * they must be a map from String to Object, and will be copied to a new python dictionary.  After execution
+ * completes the dictionary entries will be copied back.
+ */
+JNIEXPORT
+jlong JNICALL Java_org_jpy_PyLib_executeCode
+        (JNIEnv* jenv, jclass jLibClass, jstring jCode, jint jStart, jobject jGlobals, jobject jLocals) {
+    const char *codeChars;
+    jlong result;
+
+    codeChars = (*jenv)->GetStringUTFChars(jenv, jCode, NULL);
+    if (codeChars == NULL) {
+        PyLib_ThrowOOM(jenv);
+        return NULL;
+    }
+
+    JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_executeCode: code='%s'\n", codeChars);
+
+    result = executeInternal(jenv, jLibClass, jStart, jGlobals, jLocals, (DoRun)pyRunStringWrapper, codeChars);
+
+    if (codeChars != NULL) {
+        (*jenv)->ReleaseStringUTFChars(jenv, jCode, codeChars);
+    }
+
+    return result;
+}
+
+typedef struct {
+    FILE *fp;
+    const char *filechars;
+} RunFileArgs;
+
+PyObject *pyRunFileWrapper(RunFileArgs *args, int start, PyObject *globals, PyObject *locals) {
+    return PyRun_File(args->fp, args->filechars, start, globals, locals);
+}
+
+/**
+ * Calls PyRun_Script under the covers to execute the script contents.
+ *
+ * jStart must be JPy_IM_STATEMENT, JPy_IM_SCRIPT, JPy_IM_EXPRESSION; matching what you are trying to
+ * run.  If you use a statement or expression instead of a script; some of your code may be ignored.
+ *
+ * If jGlobals is not specified, then the main module globals are used.
+ *
+ * If jLocals is not specified, then the globals are used.
+ *
+ * jGlobals and jLocals may be a PyObject, in which case they are used without translation.  Otherwise,
+ * they must be a map from String to Object, and will be copied to a new python dictionary.  After execution
+ * completes the dictionary entries will be copied back.
+ */
+JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_executeScript
+        (JNIEnv* jenv, jclass jLibClass, jstring jFile, jint jStart, jobject jGlobals, jobject jLocals) {
+    RunFileArgs runFileArgs;
+    jlong result = 0;
+
+    runFileArgs.fp = NULL;
+    runFileArgs.filechars = NULL;
+
+    runFileArgs.filechars = (*jenv)->GetStringUTFChars(jenv, jFile, NULL);
+    if (runFileArgs.filechars == NULL) {
+        PyLib_ThrowOOM(jenv);
+        goto error;
+    }
+
+    runFileArgs.fp = fopen(runFileArgs.filechars, "r");
+    if (!runFileArgs.fp) {
+        PyLib_ThrowFNFE(jenv, runFileArgs.filechars);
+        goto error;
+    }
+
+    result = executeInternal(jenv, jLibClass, jStart, jGlobals, jLocals, (DoRun)pyRunFileWrapper, &runFileArgs);
+
+error:
+    if (runFileArgs.filechars != NULL) {
+        (*jenv)->ReleaseStringUTFChars(jenv, jFile, runFileArgs.filechars);
+    }
+    if (runFileArgs.fp != NULL) {
+        fclose(runFileArgs.fp);
+    }
+    return result;
 }
 
 /*
@@ -492,6 +935,30 @@ JNIEXPORT jint JNICALL Java_org_jpy_PyLib_getIntValue
     return value;
 }
 
+/**
+ * Used to convert a python object into it's corresponding boolean.  If the PyObject is not a boolean;
+ * then return false.
+ */
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_getBooleanValue
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    PyObject* pyObject;
+    jboolean value;
+
+    JPy_BEGIN_GIL_STATE
+
+    pyObject = (PyObject*) objId;
+    if (PyBool_Check(pyObject)) {
+        value = (pyObject == Py_True) ? JNI_TRUE : JNI_FALSE;
+    } else {
+        value = JNI_FALSE;
+    }
+
+    JPy_END_GIL_STATE
+
+    return value;
+}
+
 /*
  * Class:     org_jpy_python_PyLib
  * Method:    getDoubleValue
@@ -557,12 +1024,355 @@ JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_getObjectValue
     if (JObj_Check(pyObject)) {
         jObject = ((JPy_JObj*) pyObject)->objectRef;
     } else {
-        if (JPy_AsJObject(jenv, pyObject, &jObject) < 0) {
+        if (JPy_AsJObject(jenv, pyObject, &jObject, JNI_FALSE) < 0) {
             jObject = NULL;
             JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_getObjectValue: error: failed to convert Python object to Java Object\n");
             PyLib_HandlePythonException(jenv);
         }
     }
+
+    JPy_END_GIL_STATE
+
+    return jObject;
+}
+
+/**
+ * Returns true if this object can be converted from a Python object into a Java object (or primitive);
+ * if this returns false, when you fetch an Object from Python it will be a PyObject wrapper.
+ *
+ * objId is a pointer to a PyObject.
+ */
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_isConvertible
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    PyObject* pyObject;
+    jboolean result;
+
+    JPy_BEGIN_GIL_STATE
+
+    pyObject = (PyObject*) objId;
+
+    result = pyObject == Py_None || JObj_Check(pyObject) || PyBool_Check(pyObject) ||
+                 JPy_IS_CLONG(pyObject) || PyFloat_Check(pyObject) || JPy_IS_STR(pyObject) ? JNI_TRUE : JNI_FALSE;
+
+
+    JPy_END_GIL_STATE
+
+    return result;
+}
+
+/**
+ * Gets the Python type object of specified objId.
+ *
+ * objId is a pointer to a PyObject.
+ */
+JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_getType
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    PyObject* pyObject;
+
+    JPy_BEGIN_GIL_STATE
+
+    pyObject = ((PyObject*) objId)->ob_type;
+
+    JPy_END_GIL_STATE
+
+    return (jlong)pyObject;
+}
+
+/**
+ * Evaluate PyDict_Check against a Python object.
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass the PyLib class object
+ * @param objId a pointer to a python object
+ * @return true if objId is a python dictionary
+ */
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyDictCheck
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    jboolean result;
+
+    JPy_BEGIN_GIL_STATE
+
+    if (PyDict_Check(((PyObject*) objId))) {
+        result = JNI_TRUE;
+    } else {
+        result = JNI_FALSE;
+    }
+
+    JPy_END_GIL_STATE
+
+    return result;
+}
+
+/**
+ * Evaluate PyList_Check against a Python object.
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass the PyLib class object
+ * @param objId a pointer to a python object
+ * @return true if objId is a python list
+ */
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyListCheck
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    jboolean result;
+
+    JPy_BEGIN_GIL_STATE
+
+    if (PyList_Check(((PyObject*) objId))) {
+        result = JNI_TRUE;
+    } else {
+        result = JNI_FALSE;
+    }
+
+    JPy_END_GIL_STATE
+
+    return result;
+}
+
+/**
+ * Evaluate PyBool_Check against a Python object.
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass
+ * @param objId a pointer to a python object
+ * @return true if objId is a python boolean
+ */
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyBoolCheck
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    jboolean result;
+
+    JPy_BEGIN_GIL_STATE
+
+    if (PyBool_Check(((PyObject*) objId))) {
+        result = JNI_TRUE;
+    } else {
+        result = JNI_FALSE;
+    }
+
+    JPy_END_GIL_STATE
+
+    return result;
+}
+
+/**
+ * Check equality against Py_None and a Python object.
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass
+ * @param objId a pointer to a python object
+ * @return true if objId is a None
+ */
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyNoneCheck
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    jboolean result;
+
+    JPy_BEGIN_GIL_STATE
+
+    if (Py_None == (((PyObject*) objId))) {
+        result = JNI_TRUE;
+    } else {
+        result = JNI_FALSE;
+    }
+
+    JPy_END_GIL_STATE
+
+    return result;
+}
+
+/**
+ * Evaluate PyInt_Check against a Python object.
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass
+ * @param objId a pointer to a python object
+ * @return true if objId is a python int
+ */
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyIntCheck
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    int check;
+
+    JPy_BEGIN_GIL_STATE
+
+#ifdef JPY_COMPAT_27
+    check = PyInt_Check(((PyObject*) objId));
+#else
+    check = JPy_IS_CLONG(((PyObject*) objId));
+#endif
+
+    JPy_END_GIL_STATE
+
+    return check ? (jboolean)JNI_TRUE : (jboolean)JNI_FALSE;
+}
+
+/**
+ * Evaluate PyLong_Check against a Python object.
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass
+ * @param objId a pointer to a python object
+ * @return true if objId is a python long
+ */
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyLongCheck
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    jboolean result;
+
+    JPy_BEGIN_GIL_STATE
+
+    if (PyLong_Check(((PyObject*) objId))) {
+        result = JNI_TRUE;
+    } else {
+        result = JNI_FALSE;
+    }
+
+    JPy_END_GIL_STATE
+
+    return result;
+}
+
+/**
+ * Evaluate PyFloat_Check against a Python object.
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass
+ * @param objId a pointer to a python object
+ * @return true if objId is a python float
+ */
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyFloatCheck
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    jboolean result;
+
+    JPy_BEGIN_GIL_STATE
+
+    if (PyFloat_Check(((PyObject*) objId))) {
+        result = JNI_TRUE;
+    } else {
+        result = JNI_FALSE;
+    }
+
+    JPy_END_GIL_STATE
+
+    return result;
+}
+
+/**
+ * Evaluate PyString_Check against a Python object.
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass
+ * @param objId a pointer to a python object
+ * @return true if objId is a python String
+ */
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyStringCheck
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    jboolean result;
+
+    JPy_BEGIN_GIL_STATE
+
+    if (JPy_IS_STR(((PyObject*) objId))) {
+        result = JNI_TRUE;
+    } else {
+        result = JNI_FALSE;
+    }
+
+    JPy_END_GIL_STATE
+
+    return result;
+}
+
+/**
+ * Evaluate PyCallable_Check against a Python object.
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass
+ * @param objId a pointer to a python object
+ * @return true if objId is a python callable
+ */
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyCallableCheck
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    jboolean result;
+
+    JPy_BEGIN_GIL_STATE
+
+    if (PyCallable_Check(((PyObject*) objId))) {
+        result = JNI_TRUE;
+    } else {
+        result = JNI_FALSE;
+    }
+
+    JPy_END_GIL_STATE
+
+    return result;
+}
+
+/**
+ * Runs the str function on a Python object.
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass the class object for PyLib
+ * @param objId a pointer to a python object
+ * @return the Python toString of this object
+ */
+JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_str
+  (JNIEnv* jenv, jclass jLibClass, jlong objId) {
+    PyObject *pyObject;
+    jobject jObject;
+    PyObject *pyStr;
+
+    JPy_BEGIN_GIL_STATE
+
+    pyObject = (PyObject *) objId;
+
+    pyStr = PyObject_Str(pyObject);
+    if (pyStr) {
+        jObject = (*jenv)->NewStringUTF(jenv, JPy_AS_UTF8(pyStr));
+        Py_DECREF(pyStr);
+    } else {
+        jObject = NULL;
+    }
+
+
+    JPy_END_GIL_STATE
+
+    return jObject;
+}
+
+
+/**
+ * Runs the repr function on a Python object.
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass the class object for PyLib
+ * @param objId a pointer to a python object
+ * @return the Python representation string of this object
+ */
+JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_repr
+  (JNIEnv* jenv, jclass jLibClass, jlong objId) {
+    PyObject *pyObject;
+    jobject jObject;
+    PyObject *pyStr;
+
+    JPy_BEGIN_GIL_STATE
+
+    pyObject = (PyObject *) objId;
+
+    pyStr = PyObject_Repr(pyObject);
+    if (pyStr) {
+        jObject = (*jenv)->NewStringUTF(jenv, JPy_AS_UTF8(pyStr));
+        Py_DECREF(pyStr);
+    } else {
+        jObject = NULL;
+    }
+
 
     JPy_END_GIL_STATE
 
@@ -604,7 +1414,7 @@ JNIEXPORT jobjectArray JNICALL Java_org_jpy_PyLib_getObjectArrayValue
                 jObject = NULL;
                 goto error;
             }
-            if (JPy_AsJObject(jenv, pyItem, &jItem) < 0) {
+            if (JPy_AsJObject(jenv, pyItem, &jItem, JNI_FALSE) < 0) {
                 (*jenv)->DeleteLocalRef(jenv, jObject);
                 jObject = NULL;
                 JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_getObjectArrayValue: error: failed to convert Python item to Java Object\n");
@@ -640,12 +1450,16 @@ JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_importModule
   (JNIEnv* jenv, jclass jLibClass, jstring jName)
 {
     PyObject* pyName;
-    PyObject* pyModule;
+    PyObject* pyModule = NULL;
     const char* nameChars;
 
     JPy_BEGIN_GIL_STATE
 
     nameChars = (*jenv)->GetStringUTFChars(jenv, jName, NULL);
+    if (nameChars == NULL) {
+        PyLib_ThrowOOM(jenv);
+        goto error;
+    }
     JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_importModule: name='%s'\n", nameChars);
     /* Note: pyName is a new reference */
     pyName = JPy_FROM_CSTR(nameChars);
@@ -655,7 +1469,11 @@ JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_importModule
         PyLib_HandlePythonException(jenv);
     }
     Py_XDECREF(pyName);
-    (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
+
+error:
+    if (nameChars != NULL) {
+        (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
+    }
 
     JPy_END_GIL_STATE
 
@@ -739,6 +1557,10 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_setAttributeValue
     pyObject = (PyObject*) objId;
 
     nameChars = (*jenv)->GetStringUTFChars(jenv, jName, NULL);
+    if (nameChars == NULL) {
+        PyLib_ThrowOOM(jenv);
+        goto error;
+    }
     JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_setAttributeValue: objId=%p, name='%s', jValue=%p, jValueClass=%p\n", pyObject, nameChars, jValue, jValueClass);
 
     if (jValueClass != NULL) {
@@ -766,9 +1588,92 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_setAttributeValue
     }
 
 error:
-    (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
+    if (nameChars != NULL) {
+        (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
+    }
 
     JPy_END_GIL_STATE
+}
+
+/**
+ * Deletes an attribute from an object.
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass the PyLib class object
+ * @param objId a pointer to a python object
+ * @param jName the java string naming the attribute to delete
+ */
+JNIEXPORT void JNICALL Java_org_jpy_PyLib_delAttribute
+  (JNIEnv* jenv, jclass jLibClass, jlong objId, jstring jName)
+{
+    PyObject* pyObject;
+    const char* nameChars;
+
+    JPy_BEGIN_GIL_STATE
+
+    pyObject = (PyObject*) objId;
+
+    nameChars = (*jenv)->GetStringUTFChars(jenv, jName, NULL);
+    if (nameChars == NULL) {
+        PyLib_ThrowOOM(jenv);
+        goto error;
+    }
+    JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_delAttribute: objId=%p, name='%s'\n", pyObject, nameChars);
+
+    if (PyObject_DelAttrString(pyObject, nameChars) < 0) {
+        JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_delAttribute: error: PyObject_DelAttrString failed on attribute '%s'\n", nameChars);
+        PyLib_HandlePythonException(jenv);
+        goto error;
+    }
+
+error:
+    if (nameChars != NULL) {
+        (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
+    }
+
+
+    JPy_END_GIL_STATE
+}
+
+/*
+ * Checks for an attribute's existence.
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass the PyLib class object
+ * @param objId a pointer to a python object
+ * @param jName the java string naming the attribute to delete
+ *
+ * @return true if the attribute exists on this object
+ */
+
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_hasAttribute
+  (JNIEnv* jenv, jclass jLibClass, jlong objId, jstring jName)
+{
+    PyObject* pyObject;
+    const char* nameChars;
+    jboolean result = JNI_FALSE;
+
+    JPy_BEGIN_GIL_STATE
+
+    pyObject = (PyObject*) objId;
+
+    nameChars = (*jenv)->GetStringUTFChars(jenv, jName, NULL);
+    if (nameChars == NULL) {
+        PyLib_ThrowOOM(jenv);
+        goto error;
+    }
+    JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "Java_org_jpy_PyLib_delAttribute: objId=%p, name='%s'\n", pyObject, nameChars);
+
+    result = PyObject_HasAttrString(pyObject, nameChars) ? JNI_TRUE : JNI_FALSE;
+
+error:
+    if (nameChars != NULL) {
+        (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
+    }
+
+    JPy_END_GIL_STATE
+
+    return result;
 }
 
 
@@ -859,10 +1764,14 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_00024Diag_setFlags
 
 PyObject* PyLib_GetAttributeObject(JNIEnv* jenv, PyObject* pyObject, jstring jName)
 {
-    PyObject* pyValue;
+    PyObject* pyValue = NULL;
     const char* nameChars;
 
     nameChars = (*jenv)->GetStringUTFChars(jenv, jName, NULL);
+    if (nameChars == NULL) {
+        PyLib_ThrowOOM(jenv);
+        goto error;
+    }
     JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "PyLib_GetAttributeObject: objId=%p, name='%s'\n", pyObject, nameChars);
     /* Note: pyValue is a new reference */
     pyValue = PyObject_GetAttrString(pyObject, nameChars);
@@ -870,16 +1779,19 @@ PyObject* PyLib_GetAttributeObject(JNIEnv* jenv, PyObject* pyObject, jstring jNa
         JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "PyLib_GetAttributeObject: error: attribute not found '%s'\n", nameChars);
         PyLib_HandlePythonException(jenv);
     }
-    (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
+error:
+    if (nameChars != NULL) {
+        (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
+    }
     return pyValue;
 }
 
 PyObject* PyLib_CallAndReturnObject(JNIEnv *jenv, PyObject* pyObject, jboolean isMethodCall, jstring jName, jint argCount, jobjectArray jArgs, jobjectArray jParamClasses)
 {
-    PyObject* pyCallable;
-    PyObject* pyArgs;
+    PyObject* pyCallable = NULL;
+    PyObject* pyArgs = NULL;
     PyObject* pyArg;
-    PyObject* pyReturnValue;
+    PyObject* pyReturnValue = Py_None;
     const char* nameChars;
     jint i;
     jobject jArg;
@@ -889,6 +1801,10 @@ PyObject* PyLib_CallAndReturnObject(JNIEnv *jenv, PyObject* pyObject, jboolean i
     pyReturnValue = NULL;
 
     nameChars = (*jenv)->GetStringUTFChars(jenv, jName, NULL);
+    if (nameChars == NULL) {
+        PyLib_ThrowOOM(jenv);
+        goto error;
+    }
 
     JPy_DIAG_PRINT(JPy_DIAG_F_EXEC, "PyLib_CallAndReturnObject: objId=%p, isMethodCall=%d, name='%s', argCount=%d\n", pyObject, isMethodCall, nameChars, argCount);
 
@@ -981,7 +1897,9 @@ PyObject* PyLib_CallAndReturnObject(JNIEnv *jenv, PyObject* pyObject, jboolean i
     Py_INCREF(pyReturnValue);
 
 error:
-    (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
+    if (nameChars != NULL) {
+        (*jenv)->ReleaseStringUTFChars(jenv, jName, nameChars);
+    }
     Py_XDECREF(pyCallable);
     Py_XDECREF(pyArgs);
 
@@ -1051,6 +1969,8 @@ void PyLib_HandlePythonException(JNIEnv* jenv)
     char* filenameChars = NULL;
     char* namespaceChars = NULL;
 
+    jclass jExceptionClass;
+
     if (PyErr_Occurred() == NULL) {
         return;
     }
@@ -1064,6 +1984,13 @@ void PyLib_HandlePythonException(JNIEnv* jenv)
 
     typeChars = PyLib_ObjToChars(pyType, &pyTypeUtf8);
     valueChars = PyLib_ObjToChars(pyValue, &pyValueUtf8);
+    if (PyObject_TypeCheck(pyValue, (PyTypeObject*) PyExc_KeyError)) {
+        jExceptionClass = JPy_KeyError_JClass;
+    } else if (PyObject_TypeCheck(pyValue, (PyTypeObject*) PyExc_StopIteration)) {
+        jExceptionClass = JPy_StopIteration_JClass;
+    } else {
+        jExceptionClass = JPy_RuntimeException_JClass;
+    }
 
     if (pyTraceback != NULL) {
         PyObject* pyFrame = NULL;
@@ -1106,13 +2033,13 @@ void PyLib_HandlePythonException(JNIEnv* jenv)
                     linenoChars != NULL ? linenoChars : JPY_NOT_AVAILABLE_MSG,
                     namespaceChars != NULL ? namespaceChars : JPY_NOT_AVAILABLE_MSG,
                     filenameChars != NULL ? filenameChars : JPY_NOT_AVAILABLE_MSG);
-            (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, javaMessage);
+            (*jenv)->ThrowNew(jenv, jExceptionClass, javaMessage);
             PyMem_Del(javaMessage);
         } else {
-            (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, JPY_INFO_ALLOC_FAILED_MSG);
+            (*jenv)->ThrowNew(jenv, jExceptionClass, JPY_INFO_ALLOC_FAILED_MSG);
         }
     } else {
-        (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, JPY_NO_INFO_MSG);
+        (*jenv)->ThrowNew(jenv, jExceptionClass, JPY_NO_INFO_MSG);
     }
 
     Py_XDECREF(pyType);
@@ -1125,6 +2052,40 @@ void PyLib_HandlePythonException(JNIEnv* jenv)
     Py_XDECREF(pyNamespaceUtf8);
 
     PyErr_Clear();
+}
+
+/**
+ * Throw an OutOfMemoryError.
+ * @param jenv the jni environment
+ */
+void PyLib_ThrowOOM(JNIEnv* jenv) {
+    (*jenv)->ThrowNew(jenv, JPy_OutOfMemoryError_JClass, "Out of memory");
+}
+
+/**
+ * Throw a FileNotFoundException.
+ * @param jenv the jni environment
+ */
+void PyLib_ThrowFNFE(JNIEnv* jenv, const char *file) {
+    (*jenv)->ThrowNew(jenv, JPy_FileNotFoundException_JClass, file);
+}
+
+/**
+ * Throw an UnsupportedOperationException.
+ * @param jenv the jni environment
+ * @param message the exception message
+ */
+void PyLib_ThrowUOE(JNIEnv* jenv, const char *message) {
+    (*jenv)->ThrowNew(jenv, JPy_UnsupportedOperationException_JClass, message);
+}
+
+/**
+ * Throw an UnsupportedOperationException.
+ * @param jenv the jni environment
+ * @param message the exception message
+ */
+void PyLib_ThrowRTE(JNIEnv* jenv, const char *message) {
+    (*jenv)->ThrowNew(jenv, JPy_RuntimeException_JClass, message);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////

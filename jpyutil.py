@@ -32,8 +32,8 @@ import logging
 import subprocess
 
 
-__author__ = "Norman Fomferra, Brockmann Consult GmbH"
-__copyright__ = "Copyright 2015-2017 Brockmann Consult GmbH"
+__author__ = "Norman Fomferra (Brockmann Consult GmbH) and contributors"
+__copyright__ = "Copyright 2015-2018 Brockmann Consult GmbH and contributors"
 __license__ = "Apache 2.0"
 __version__ = "0.9.1.dev1"
 

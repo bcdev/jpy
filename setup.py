@@ -56,6 +56,7 @@ else:
 sources = [
     os.path.join(src_main_c_dir, 'jpy_module.c'),
     os.path.join(src_main_c_dir, 'jpy_diag.c'),
+    os.path.join(src_main_c_dir, 'jpy_verboseexcept.c'),
     os.path.join(src_main_c_dir, 'jpy_conv.c'),
     os.path.join(src_main_c_dir, 'jpy_compat.c'),
     os.path.join(src_main_c_dir, 'jpy_jtype.c'),
@@ -98,6 +99,7 @@ python_java_jpy_tests = [
     os.path.join(src_test_py_dir, 'jpy_typeconv_test.py'),
     os.path.join(src_test_py_dir, 'jpy_typeres_test.py'),
     os.path.join(src_test_py_dir, 'jpy_modretparam_test.py'),
+    os.path.join(src_test_py_dir, 'jpy_translation_test.py'),
     os.path.join(src_test_py_dir, 'jpy_gettype_test.py'),
 ]
 
@@ -200,7 +202,7 @@ def test_python_java_classes():
     """ Run Python tests against JPY test classes """
     sub_env = {'PYTHONPATH': _build_dir()}
 
-    log.info('Executing Python unit tests (against Java runtime classes)...')
+    log.info('Executing Python unit tests (against JPY test classes)...')
     return jpyutil._execute_python_scripts(python_java_jpy_tests,
                                             env=sub_env)
     

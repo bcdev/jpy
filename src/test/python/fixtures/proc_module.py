@@ -15,6 +15,15 @@ def spend_some_time():
     for i in range(10000):
         l.reverse()
 
+_module_val = None
+def setVal(val):
+    global _module_val
+    _module_val = val
+    
+def getVal():
+    global _module_val
+    return _module_val
 
-
-
+def check1234():
+    global _module_val
+    return _module_val == 1234

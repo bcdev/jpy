@@ -12,6 +12,9 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * This file was modified by Illumon.
+ *
  */
 
 package org.jpy.fixtures;
@@ -27,6 +30,30 @@ import java.io.IOException;
 public class ExceptionTestFixture {
     public int throwNpeIfArgIsNull(String arg) {
         return arg.length();
+    }
+
+    public int throwNpeIfArgIsNull2(String arg) {
+        return throwNpeIfArgIsNull(arg);
+    }
+
+    public int throwNpeIfArgIsNullNested(String arg) {
+        try {
+            return throwNpeIfArgIsNull(arg);
+	    } catch (Exception e) {
+    		throw new RuntimeException("Nested exception", e);
+	    }
+    }
+
+    public int throwNpeIfArgIsNullNested2(String arg) {
+        return throwNpeIfArgIsNullNested(arg);
+    }
+
+    public int throwNpeIfArgIsNullNested3(String arg) {
+        try {
+            return throwNpeIfArgIsNullNested2(arg);
+	    } catch (Exception e) {
+    		throw new RuntimeException("Nested exception 3", e);
+	    }
     }
 
     public int throwAioobeIfIndexIsNotZero(int index) {

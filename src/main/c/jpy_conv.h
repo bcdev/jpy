@@ -86,8 +86,10 @@ int JPy_AsJString(JNIEnv* jenv, PyObject* pyObj, jstring* stringRef);
 
 /**
  * Convert any Python objects to Java object.
+ *
+ * @param allowObjectWrapping if true, may return a PyObject for unrecognized object types
  */
-int JPy_AsJObject(JNIEnv* jenv, PyObject* pyObj, jobject* objectRef);
+int JPy_AsJObject(JNIEnv* jenv, PyObject* pyObj, jobject* objectRef, jboolean allowObjectWrapping);
 
 /**
  * Convert Python objects to Java object with known type.

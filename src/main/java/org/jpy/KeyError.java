@@ -12,25 +12,17 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * This file was modified by Illumon.
+ *
  */
-
-package org.jpy.fixtures;
+package org.jpy;
 
 /**
- * Stands for an image data processor.
- *
- * Created by Norman on 19.12.13.
- */
-public interface Processor {
-    String initialize();
-
-    String computeTile(int w, int h, float[] data);
-
-    String dispose();
-    
-    void setVal(int n);
-    
-    int getVal();
-    
-    boolean check1234();
+  * Translation of Python KeyErrors so that they can be programmatically detected from Java.
+  */
+public class KeyError extends RuntimeException {
+    KeyError(String message) {
+        super(message);
+    }
 }
