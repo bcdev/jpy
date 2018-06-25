@@ -2,6 +2,14 @@
 jpy Changelog
 *************
 
+Version 0.10 (in development)
+=============================
+
+* Make jpy work with Anaconda by setting environment variable 
+  `PYTHONHOME` from Java [#143](https://github.com/bcdev/jpy/issues/143). Contribution by Dr-Irv.  
+* Constants are not properly passed from Java to Python when using interfaces 
+  [#140](https://github.com/bcdev/jpy/issues/140). Contribution by Dr-Irv.
+
 Version 0.9
 ===========
 
