@@ -7,7 +7,13 @@ class Simple(object):
     
     def getValue(self):
         return self._v
-    
+
+    def add(self, other):
+        if isinstance(other, self.__class__):
+            return self._v + other._v
+        else:
+            return self._v
+            
 class HashSimple(object):
     def __init__(self, v):
         self._v = v
@@ -27,3 +33,8 @@ class HashSimple(object):
         else:
             return False  # Java can't support NotImplemented
         
+    def add(self, other):
+        if isinstance(other, self.__class__):
+            return self._v + other._v
+        else:
+            return self._v

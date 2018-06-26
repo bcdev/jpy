@@ -100,9 +100,22 @@ class PyProxyHandler implements InvocationHandler {
         } else if (method.equals(toStringMethod)) {
             methodName = "__str__";
         }
+        Class<?>[] parameterTypes = method.getParameterTypes();
         
+        if (args != null) {
+	        for (int i = 0; i < args.length; i++) {
+	        	Object oneArg = args[i];
+	        	if (oneArg instanceof Proxy) {
+	        		PyObject possiblePyObject = proxyGetOtherPyObject(proxyObject, oneArg);
+	        		if (possiblePyObject != null) {
+	        			args[i] = possiblePyObject;
+	        			parameterTypes[i] = Object.class;
+	        		}
+	        	}
+	        }
+        }
         return PyLib.callAndReturnValue(this.pyObject.getPointer(), callableKind == PyLib.CallableKind.METHOD,
-                methodName, args != null ? args.length : 0, args, method.getParameterTypes(), returnType);
+                methodName, args != null ? args.length : 0, args, parameterTypes, returnType);
     }
     
     /**
