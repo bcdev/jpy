@@ -20,4 +20,3 @@ Vagrantfile
 *.so
 *.dll
 
-/bin/
