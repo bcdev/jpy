@@ -10,9 +10,9 @@ class Simple(object):
 
     def add(self, other):
         if isinstance(other, self.__class__):
-            return self._v + other._v
+            return Simple(self._v + other._v)
         else:
-            return self._v
+            return self
             
 class HashSimple(object):
     def __init__(self, v):
@@ -35,6 +35,6 @@ class HashSimple(object):
         
     def add(self, other):
         if isinstance(other, self.__class__):
-            return self._v + other._v
+            return HashSimple(self._v + other._v)
         else:
-            return self._v
+            return self

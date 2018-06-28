@@ -352,7 +352,7 @@ public class PyObjectTest {
     
     private static interface ISimple {
         public int getValue();
-        public int add(ISimple other);
+        public ISimple add(ISimple other);
     }
     
     private static ISimple newTestObj(PyModule pyModule, String pythonClass, int value) {
@@ -379,10 +379,10 @@ public class PyObjectTest {
         assertEquals(eqRes, eqResExpected);
         assertEquals(simple.hashCode() == simple2.hashCode(), eqResExpected);
         assertEquals(simple.equals(simple), true);
-        int sum = simple.add(simple2);
-        assertEquals(sum, 2468);
+        ISimple sum = simple.add(simple2);
+        assertEquals(sum.getValue(), 2468);
         ISimple simple3 = newTestObj(pyModule, pythonClass, 5678);
         sum = simple.add(simple3);
-        assertEquals(sum, 1234 + 5678);
+        assertEquals(sum.getValue(), 1234 + 5678);
     }
 }
