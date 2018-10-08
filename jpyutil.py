@@ -24,6 +24,7 @@ such a Python configuration file.
 
 import sys
 import sysconfig
+import os
 import os.path
 import platform
 import ctypes
@@ -40,13 +41,17 @@ __version__ = "0.10.0.dev1"
 
 # Setup a dedicated logger for jpyutil.
 # This way importing jpyutil does not interfere with logging in other modules
-
 logger = logging.getLogger('jpyutil')
-# set to logging.DEBUG for debugging
-logger.setLevel(logging.INFO)
+# Get log level from environment variable JPY_LOG_LEVEL. Default to INFO
+log_level = os.getenv('JPY_LOG_LEVEL', 'INFO')
+try:
+    logger.setLevel(getattr(logging, log_level))
+except AttributeError as ex:
+    print('JPY_LOG_LEVEL must be DEBUG, INFO, WARNING, ERROR or CRITICAL')
+    raise ex
 
 ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
+ch.setLevel(getattr(logging, log_level))
 formatter = logging.Formatter('%(name)s - %(levelname)s: %(message)s')
 ch.setFormatter(formatter)
 logger.addHandler(ch)
