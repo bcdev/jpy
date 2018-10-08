@@ -24,6 +24,7 @@ such a Python configuration file.
 
 import sys
 import sysconfig
+import os
 import os.path
 import platform
 import ctypes
@@ -38,8 +39,22 @@ __license__ = "Apache 2.0"
 __version__ = "0.10.0.dev1"
 
 
-# Uncomment for debugging
-# logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
+# Setup a dedicated logger for jpyutil.
+# This way importing jpyutil does not interfere with logging in other modules
+logger = logging.getLogger('jpyutil')
+# Get log level from environment variable JPY_LOG_LEVEL. Default to INFO
+log_level = os.getenv('JPY_LOG_LEVEL', 'INFO')
+try:
+    logger.setLevel(getattr(logging, log_level))
+except AttributeError as ex:
+    print('JPY_LOG_LEVEL must be DEBUG, INFO, WARNING, ERROR or CRITICAL')
+    raise ex
+
+ch = logging.StreamHandler()
+ch.setLevel(getattr(logging, log_level))
+formatter = logging.Formatter('%(name)s - %(levelname)s: %(message)s')
+ch.setFormatter(formatter)
+logger.addHandler(ch)
 
 JDK_HOME_VARS = ('JPY_JAVA_HOME', 'JPY_JDK_HOME', 'JAVA_HOME', 'JDK_HOME',)
 JRE_HOME_VARS = ('JPY_JAVA_HOME', 'JPY_JDK_HOME', 'JPY_JRE_HOME', 'JAVA_HOME', 'JDK_HOME', 'JRE_HOME', 'JAVA_JRE')
@@ -103,7 +118,7 @@ def _find_file(search_dirs, *filenames):
         for dir in search_dirs:
             path = os.path.normpath(os.path.join(dir, filename))
             path_exists = os.path.exists(path)
-            logging.debug("Exists '%s'? %s" % (path, "yes" if path_exists else "no"))
+            logger.debug("Exists '%s'? %s" % (path, "yes" if path_exists else "no"))
             if path_exists:
                 return path
     return None
@@ -131,7 +146,7 @@ def find_jdk_home_dir():
                 and os.path.exists(os.path.join(jdk_home_dir, 'include')) \
                 and os.path.exists(os.path.join(jdk_home_dir, 'lib')):
             return jdk_home_dir
-    logging.debug('Checking Maven for JAVA_HOME...')
+    logger.debug('Checking Maven for JAVA_HOME...')
     try:
         output = subprocess.check_output(['mvn', '-v'])
         if isinstance(output, bytes) and not isinstance(output, str):
@@ -145,7 +160,7 @@ def find_jdk_home_dir():
                 
     except Exception:
         # maven probably isn't installed or not on PATH
-        logging.debug('Maven not found on PATH. No JAVA_HOME found.')
+        logger.debug('Maven not found on PATH. No JAVA_HOME found.')
 
     return None
 
@@ -157,7 +172,7 @@ def find_jvm_dll_file(java_home_dir=None, fail=False):
     :return: pathname if found, else None
     """
 
-    logging.debug("Searching for JVM shared library file")
+    logger.debug("Searching for JVM shared library file")
 
     if java_home_dir:
         jvm_dll_path = _find_jvm_dll_file(java_home_dir)
@@ -177,7 +192,7 @@ def find_jvm_dll_file(java_home_dir=None, fail=False):
 
     jvm_dll_path = ctypes.util.find_library(JVM_LIB_NAME)
     if jvm_dll_path:
-        logging.debug("No JVM shared library file found in all search paths. Using fallback %s" % repr(jvm_dll_path))
+        logger.debug("No JVM shared library file found in all search paths. Using fallback %s" % repr(jvm_dll_path))
     elif fail:
         raise RuntimeError("can't find any JVM shared library")
 
@@ -211,7 +226,7 @@ def _get_existing_subdirs(dirs, subdirname):
 
 
 def _find_jvm_dll_file(java_home_dir):
-    logging.debug("Searching for JVM shared library file in %s" % repr(java_home_dir))
+    logger.debug("Searching for JVM shared library file in %s" % repr(java_home_dir))
 
     if not os.path.exists(java_home_dir):
         return None
@@ -234,7 +249,7 @@ def _find_jvm_dll_file(java_home_dir):
 
 
 def _find_python_dll_file(fail=False):
-    logging.debug("Searching for Python shared library file")
+    logger.debug("Searching for Python shared library file")
 
     #
     # Prepare list of search directories
@@ -258,7 +273,7 @@ def _find_python_dll_file(fail=False):
         extra_search_dirs = _get_existing_subdirs(search_dirs, multi_arch_sub_dir)
         search_dirs = extra_search_dirs + search_dirs
 
-    logging.debug("Potential Python shared library search dirs: %s" % repr(search_dirs))
+    logger.debug("Potential Python shared library search dirs: %s" % repr(search_dirs))
 
     #
     # Prepare list of possible library file names
@@ -278,7 +293,7 @@ def _find_python_dll_file(fail=False):
         versions = (vmaj + "." + vmin, vmaj, '')
         file_names = ['libpython' + v + '.so' for v in versions]
 
-    logging.debug("Potential Python shared library file names: %s" % repr(file_names))
+    logger.debug("Potential Python shared library file names: %s" % repr(file_names))
 
     python_dll_path = _find_file(search_dirs, *file_names)
     if python_dll_path:
@@ -286,7 +301,7 @@ def _find_python_dll_file(fail=False):
 
     python_dll_path = ctypes.util.find_library(PYTHON_LIB_NAME)
     if python_dll_path:
-        logging.debug(
+        logger.debug(
             "No Python shared library file found in all search paths. Using fallback %s" % repr(python_dll_path))
     elif fail:
         raise RuntimeError("can't find any Python shared library")
@@ -340,10 +355,10 @@ def preload_jvm_dll(jvm_dll_file=None,
         jvm_dll_file = find_jvm_dll_file(java_home_dir=java_home_dir, fail=fail)
 
     if jvm_dll_file:
-        logging.debug('Preloading JVM shared library %s' % repr(jvm_dll_file))
+        logger.debug('Preloading JVM shared library %s' % repr(jvm_dll_file))
         return ctypes.CDLL(jvm_dll_file, mode=ctypes.RTLD_GLOBAL)
     else:
-        logging.warning('Failed to preload JVM shared library. No shared library found.')
+        logger.warning('Failed to preload JVM shared library. No shared library found.')
         return None
 
 
@@ -434,7 +449,7 @@ def init_jvm(java_home=None,
                                       jvm_properties=jvm_properties,
                                       jvm_options=jvm_options,
                                       config=config)
-        logging.debug('Creating JVM with options %s' % repr(jvm_options))
+        logger.debug('Creating JVM with options %s' % repr(jvm_options))
         jpy.create_jvm(options=jvm_options)
     else:
         jvm_options = None
@@ -556,13 +571,13 @@ def write_config_files(out_dir='.',
                 f.write('jvm_classpath = []\n')
                 f.write('jvm_properties = {}\n')
                 f.write('jvm_options = []\n')
-            logging.info("jpy Python API configuration written to '%s'" % py_api_config_file)
+            logger.info("jpy Python API configuration written to '%s'" % py_api_config_file)
         except Exception:
-            logging.exception("Error while writing Python API configuration")
+            logger.exception("Error while writing Python API configuration")
             if req_py_api_conf:
                 retcode = 1
     else:
-        logging.error("Can't determine any JVM shared library")
+        logger.error("Can't determine any JVM shared library")
         if req_py_api_conf:
             retcode = 2
 
@@ -572,9 +587,9 @@ def write_config_files(out_dir='.',
         java_api_properties.store(java_api_config_file, comments=[
             "Created by '%s' tool on %s" % (tool_name, str(datetime.datetime.now())),
             "This file is read by the jpy Java API (org.jpy.PyLib class) in order to find shared libraries"])
-        logging.info("jpy Java API configuration written to '%s'" % java_api_config_file)
+        logger.info("jpy Java API configuration written to '%s'" % java_api_config_file)
     except Exception:
-        logging.exception("Error while writing Java API configuration")
+        logger.exception("Error while writing Java API configuration")
         if req_java_api_conf:
             retcode = 3
 
@@ -606,16 +621,16 @@ def _main():
     parser.add_argument("--install_dir", action='store', default=None, help="Optional. Used during pip install of JPY")
     args = parser.parse_args()
 
-    log_level = getattr(logging, args.log_level.upper(), None)
+    log_level = getattr(logger, args.log_level.upper(), None)
     if not isinstance(log_level, int):
         raise ValueError('Invalid log level: %s' % log_level)
 
     log_format = '%(levelname)s: %(message)s'
     log_file = args.log_file
     if log_file:
-        logging.basicConfig(format=log_format, level=log_level, filename=log_file, filemode='w')
+        logger.basicConfig(format=log_format, level=log_level, filename=log_file, filemode='w')
     else:
-        logging.basicConfig(format=log_format, level=log_level)
+        logger.basicConfig(format=log_format, level=log_level)
 
     try:
         retcode = write_config_files(out_dir=args.out,
@@ -625,11 +640,11 @@ def _main():
                                      req_py_api_conf=args.req_py,
                                      install_dir=args.install_dir)
     except:
-        logging.exception("Configuration failed")
+        logger.exception("Configuration failed")
         retcode = 100
 
     if retcode == 0:
-        logging.info("Configuration completed successfully")
+        logger.info("Configuration completed successfully")
 
     exit(retcode)
 
