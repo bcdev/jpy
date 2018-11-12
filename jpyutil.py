@@ -621,16 +621,16 @@ def _main():
     parser.add_argument("--install_dir", action='store', default=None, help="Optional. Used during pip install of JPY")
     args = parser.parse_args()
 
-    log_level = getattr(logger, args.log_level.upper(), None)
+    log_level = getattr(logging, args.log_level.upper(), None)
     if not isinstance(log_level, int):
         raise ValueError('Invalid log level: %s' % log_level)
 
     log_format = '%(levelname)s: %(message)s'
     log_file = args.log_file
     if log_file:
-        logger.basicConfig(format=log_format, level=log_level, filename=log_file, filemode='w')
+        logging.basicConfig(format=log_format, level=log_level, filename=log_file, filemode='w')
     else:
-        logger.basicConfig(format=log_format, level=log_level)
+        logging.basicConfig(format=log_format, level=log_level)
 
     try:
         retcode = write_config_files(out_dir=args.out,
