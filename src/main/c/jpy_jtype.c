@@ -314,6 +314,25 @@ PyObject* JType_ConvertJavaToPythonObject(JNIEnv* jenv, JPy_JType* type, jobject
             if (type != JPy_JObject) {
                 return JType_ConvertJavaToPythonObject(jenv, type, objectRef);
             }
+        } else if (JPy_JPyObject != NULL) {
+            // Note: JPy_JPyObject == NULL means that org.jpy.PyObject has not been loaded from the
+            // java classpath, which is OK. This is common when using jpy from Python.
+            // If org.jpy.PyObject has not been loaded, we know the object isn't a proxy.
+
+            // If this object was created by PyObject#createProxy, let's unwrap it and get back original PyObject.
+            jobject jPyObject = (*jenv)->CallStaticObjectMethod(jenv, JPy_JPyObject->classRef, JPy_PyObject_UnwrapProxy_SMID, objectRef);
+            JPy_ON_JAVA_EXCEPTION_RETURN(NULL);
+            if (jPyObject != NULL) {
+                // We know that jPyObject is of the proper type, no need to check it.
+
+                jlong value = (*jenv)->CallLongMethod(jenv, jPyObject, JPy_PyObject_GetPointer_MID);
+
+                // TODO: should we handle exceptions here, and make sure we cleanup after exceptions?
+                // The call to getPointer() a bit earlier in this method does *NOT* handle exceptions
+
+                (*jenv)->DeleteLocalRef(jenv, jPyObject);
+                return (PyObject*) value;
+            }
         }
     }
 

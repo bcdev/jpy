@@ -212,6 +212,7 @@ extern jclass JPy_Void_JClass;
 
 extern jclass JPy_PyObject_JClass;
 extern jmethodID JPy_PyObject_GetPointer_MID;
+extern jmethodID JPy_PyObject_UnwrapProxy_SMID;
 extern jmethodID JPy_PyObject_Init_MID;
 
 extern jclass JPy_PyDictWrapper_JClass;

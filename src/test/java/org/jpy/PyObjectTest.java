@@ -260,7 +260,21 @@ public class PyObjectTest {
         testCallProxyMultiThreaded(procObj);
         // PyLib.Diag.setFlags(PyLib.Diag.F_OFF);
     }
-    
+
+    @Test
+    public void testUnwrapProxy() {
+        PyModule procModule = PyModule.importModule("proc_class");
+        PyObject procObj = procModule.call("Processor");
+        Processor proxy = procObj.createProxy(Processor.class);
+        PyObject unwrapped = PyObject.unwrapProxy(proxy);
+        assertSame(procObj, unwrapped);
+    }
+
+    @Test
+    public void testUnwrapProxyNotAProxy() {
+        assertNull(PyObject.unwrapProxy(this));
+    }
+
     static void testCallProxySingleThreaded(PyObject procObject) {
         // Cast the Python object to a Java object of type 'Processor'
         Processor processor = procObject.createProxy(Processor.class);

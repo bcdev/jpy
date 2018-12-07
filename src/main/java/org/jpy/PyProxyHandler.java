@@ -17,7 +17,6 @@
 package org.jpy;
 
 import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Proxy;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
@@ -59,7 +58,7 @@ class PyProxyHandler implements InvocationHandler {
         this.pyObject = pyObject;
         this.callableKind = callableKind;
     }
-    
+
     @Override
     public Object invoke(Object proxyObject, Method method, Object[] args) throws Throwable {
         assertPythonRuns();
@@ -73,80 +72,25 @@ class PyProxyHandler implements InvocationHandler {
         if (method.equals(hashCodeMethod)) {
             return callPythonHash();
         } else if (method.equals(equalsMethod)) {
-            if (isProxyEqualsEligible(proxyObject, args[0])) {
-                PyObject otherPyObject = proxyGetOtherPyObject(proxyObject, args[0]);
-                if (this.pyObject == otherPyObject) {
-                    return true;
-                } else {
-                    args[0] = otherPyObject;
-                    if (this.pyObject.hasAttribute("__eq__")) {
-                        PyObject eqMethPtr = this.pyObject.getAttribute("__eq__");
-                        if (!eqMethPtr.hasAttribute("__func__")) { // Must not
-                                                                   // be
-                                                                   // implemented
-                            return false;
-                        }
-                    } else {
-                        return false;
-                    }
-                }
-            } else {
-                return false;
-            }
-            // It's proxy eligible, but not same object, and __eq__ was
-            // implemented
-            // so defer to the Python __eq__
-            methodName = "__eq__";
+            return this.pyObject.eq(args[0]);
         } else if (method.equals(toStringMethod)) {
-            methodName = "__str__";
+            return this.pyObject.str();
         }
-        
+
         return PyLib.callAndReturnValue(this.pyObject.getPointer(), callableKind == PyLib.CallableKind.METHOD,
                 methodName, args != null ? args.length : 0, args, method.getParameterTypes(), returnType);
     }
-    
-    /**
-     * Determines if the two proxy objects implement the same interfaces
-     * 
-     * @param proxyObject
-     * @param otherObject
-     * @return
-     */
-    private boolean isProxyEqualsEligible(Object proxyObject, Object otherObject) {
-        boolean result = ((proxyObject.getClass() == otherObject.getClass())
-                && (Arrays.deepEquals(proxyObject.getClass().getInterfaces(), otherObject.getClass().getInterfaces())));
-        
-        return result;
+
+    PyObject getPyObject() {
+        return pyObject;
     }
-    
+
     /**
-     * Determines the corresponding Python object for the other object passed
-     * 
-     * @param proxyObject
-     * @param otherObject
-     * @return
-     */
-    private PyObject proxyGetOtherPyObject(Object proxyObject, Object otherObject) {
-        PyObject result = null;
-        InvocationHandler otherProxyHandler = Proxy.getInvocationHandler(otherObject);
-        if (otherProxyHandler.getClass() == this.getClass()) {
-            PyProxyHandler otherPyProxyHandler = (PyProxyHandler) otherProxyHandler;
-            result = otherPyProxyHandler.pyObject;
-        }
-        
-        return result;
-    }
-    
-    /**
-     * Calls the Python __hash__ function on the Python object, and returns the
-     * last 32 bits of it, since Python hash codes are 64 bits on 64 bit
+     * Calls the Python hash() function on the Python object, and downsamples to
+     * 32 bits of it, since Python hash codes are 64 bits on 64 bit
      * machines.
-     * 
-     * @return
      */
     private int callPythonHash() {
-        long pythonHash = PyLib.callAndReturnValue(this.pyObject.getPointer(), true, "__hash__", 0, null,
-                new Class<?>[0], Long.class);
-        return (int) pythonHash;
+        return Long.hashCode(this.pyObject.hash());
     }
 }

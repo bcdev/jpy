@@ -431,6 +431,24 @@ public class PyObject {
     }
 
     /**
+     * Unwraps the original Python object used to create {@code object}. The inverse of
+     * {@link #createProxy(Class)}.
+     *
+     * @param object The object that may be a proxy.
+     * @return The Python object, or null if the object is not a proxy.
+     */
+    public static PyObject unwrapProxy(Object object) {
+        if (!Proxy.isProxyClass(object.getClass())) {
+            return null;
+        }
+        InvocationHandler handler = Proxy.getInvocationHandler(object);
+        if (!(handler instanceof PyProxyHandler)) {
+            return null;
+        }
+        return ((PyProxyHandler)handler).getPyObject();
+    }
+
+    /**
      * Gets the python string representation of this object.
      *
      * @return A string representation of the object.
