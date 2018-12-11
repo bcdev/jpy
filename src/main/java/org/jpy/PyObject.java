@@ -139,6 +139,14 @@ public class PyObject {
     }
 
     /**
+     * @return This Python object as a Java {@code long} value.
+     */
+    public long getLongValue() {
+        assertPythonRuns();
+        return PyLib.getLongValue(getPointer());
+    }
+
+    /**
      * @return This Python object as a Java {@code boolean} value.
      */
     public boolean getBooleanValue() {
@@ -430,7 +438,7 @@ public class PyObject {
      */
     @Override
     public final String toString() {
-	    return PyLib.str(pointer);
+	    return str();
     }
 
     /**
@@ -441,6 +449,26 @@ public class PyObject {
      */
     public final String repr() {
 	    return PyLib.repr(pointer);
+    }
+
+    /**
+     * Runs the python str function on this object.
+     * @return The String representation of this object.
+     */
+    public final String str() {
+        return PyLib.str(pointer);
+    }
+
+    /**
+     * Runs the python hash function on this object.
+     * @return The hash.
+     */
+    public final long hash() {
+        return PyLib.hash(pointer);
+    }
+
+    public final boolean eq(Object other) {
+        return PyLib.eq(pointer, other);
     }
 
     /**

@@ -395,6 +395,9 @@ error:
 
 PyObject* PyLib_ConvertJavaToPythonObject(JNIEnv* jenv, jobject jObject)
 {
+    if (jObject == NULL) {
+      return JPy_FROM_JNULL();
+    }
     JPy_JType* type;
     type = JType_GetTypeForObject(jenv, jObject);
     return JType_ConvertJavaToPythonObject(jenv, type, jObject);
@@ -935,6 +938,27 @@ JNIEXPORT jint JNICALL Java_org_jpy_PyLib_getIntValue
     return value;
 }
 
+/*
+ * Class:     org_jpy_python_PyLib
+ * Method:    getLongValue
+ * Signature: (J)J
+ */
+JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_getLongValue
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    PyObject* pyObject;
+    jlong value;
+
+    JPy_BEGIN_GIL_STATE
+
+    pyObject = (PyObject*) objId;
+    value = JPy_AS_CLONG(pyObject);
+
+    JPy_END_GIL_STATE
+
+    return value;
+}
+
 /**
  * Used to convert a python object into it's corresponding boolean.  If the PyObject is not a boolean;
  * then return false.
@@ -1333,13 +1357,13 @@ JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_str
     pyObject = (PyObject *) objId;
 
     pyStr = PyObject_Str(pyObject);
-    if (pyStr) {
+    if (pyStr != NULL) {
         jObject = (*jenv)->NewStringUTF(jenv, JPy_AS_UTF8(pyStr));
         Py_DECREF(pyStr);
     } else {
         jObject = NULL;
+        PyLib_HandlePythonException(jenv);
     }
-
 
     JPy_END_GIL_STATE
 
@@ -1377,6 +1401,84 @@ JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_repr
     JPy_END_GIL_STATE
 
     return jObject;
+}
+
+/*
+ * Compute and return the hash value of an object o. On failure, return -1.
+ * This is the equivalent of the Python expression hash(o).
+ *
+ * @param jenv JNI environment.
+ * @param jLibClass the class object for PyLib
+ * @param objId a pointer to a python object
+ * @return the hash code, -1 on failure
+ */
+JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_hash
+  (JNIEnv* jenv, jclass jLibClass, jlong objId)
+{
+    PyObject* pyObject;
+    long hash;
+
+    JPy_BEGIN_GIL_STATE
+
+    pyObject = (PyObject *) objId;
+
+    if ((hash = PyObject_Hash(pyObject)) == -1) {
+        PyLib_HandlePythonException(jenv);
+    }
+
+    JPy_END_GIL_STATE
+
+    return (jlong)hash;
+}
+
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_eq
+  (JNIEnv* jenv, jclass jLibClass, jlong objId1, jobject other)
+{
+    PyObject* pyObject1;
+    PyObject* pyObject2;
+    PyObject* eq;
+    jboolean result = JNI_FALSE;
+
+    JPy_BEGIN_GIL_STATE
+
+    pyObject1 = (PyObject *) objId1;
+    pyObject2 = PyLib_ConvertJavaToPythonObject(jenv, other);
+
+    // Note: there are subtle differences between PyObject_RichCompare and PyObject_RichCompareBool
+    // that make PyObject_RichCompareBool unacceptable to use here.
+    //
+    // Specifically, PyObject_RichCompareBool says that it will return True for the same object
+    // https://docs.python.org/2/c-api/object.html#c.PyObject_RichCompareBool
+    // We *DON'T* want that, we want to delegate to the implementations __eq__ function instead.
+    // i.e.
+    /*
+    >>> class AlwaysFalse:
+    ...     def __eq__(self, other):
+    ...             return False
+    ...
+    >>> a == a
+    False
+    */
+
+    eq = PyObject_RichCompare(pyObject1, pyObject2, Py_EQ);
+    if (eq == NULL) {
+        PyLib_HandlePythonException(jenv);
+    } else if (PyBool_Check(eq)) {
+      result = (eq == Py_True) ? JNI_TRUE : JNI_FALSE;
+      Py_DECREF(eq);
+    } else {
+      int val = PyObject_IsTrue(eq);
+      Py_DECREF(eq);
+      if (val == -1) {
+          PyLib_HandlePythonException(jenv);
+      } else {
+          result = val ? JNI_TRUE : JNI_FALSE;
+      }
+    }
+
+    JPy_END_GIL_STATE
+
+    return result;
 }
 
 /*

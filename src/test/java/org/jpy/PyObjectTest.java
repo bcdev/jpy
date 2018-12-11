@@ -19,6 +19,7 @@
 
 package org.jpy;
 
+import java.util.regex.Pattern;
 import org.junit.*;
 import org.jpy.fixtures.Processor;
 
@@ -36,7 +37,9 @@ import static org.junit.Assert.*;
  * @author Norman Fomferra
  */
 public class PyObjectTest {
-    
+
+    private PyModule SPECIAL_METHODS;
+
     @Before
     public void setUp() throws Exception {
         // System.out.println("PyModuleTest: Current thread: " +
@@ -47,6 +50,8 @@ public class PyObjectTest {
         assertEquals(true, PyLib.isPythonRunning());
         
         PyLib.Diag.setFlags(PyLib.Diag.F_ALL);
+
+        SPECIAL_METHODS = PyModule.importModule("special_methods");
     }
     
     @After
@@ -375,5 +380,237 @@ public class PyObjectTest {
         assertEquals(eqRes, eqResExpected);
         assertEquals(simple.hashCode() == simple2.hashCode(), eqResExpected);
         assertEquals(simple.equals(simple), true);
+    }
+
+    @Test
+    public void strSimple() {
+        PyObject obj = SPECIAL_METHODS.call("Simple", 1);
+        assertEquals("1", obj.str());
+    }
+
+    @Test
+    public void hashSimple() {
+        PyObject obj = SPECIAL_METHODS.call("Simple", 1);
+        assertEquals(1L, obj.hash());
+    }
+
+    @Test
+    public void eqSimple() {
+        PyObject obj1 = SPECIAL_METHODS.call("Simple", 1);
+        PyObject obj2 = SPECIAL_METHODS.call("Simple", 1);
+        PyObject none = PyObject.executeCode("None", PyInputMode.EXPRESSION);
+
+        assertTrue(obj1.eq(obj1));
+        assertTrue(obj2.eq(obj2));
+
+        assertTrue(obj1.eq(obj2));
+        assertTrue(obj2.eq(obj1));
+
+        assertFalse(obj1.eq(null));
+        assertFalse(obj2.eq(null));
+
+        assertFalse(obj1.eq(none));
+        assertFalse(obj2.eq(none));
+        assertFalse(none.eq(obj1));
+        assertFalse(none.eq(obj2));
+    }
+
+    @Test
+    public void eqSimpleDiff() {
+        PyObject obj1 = SPECIAL_METHODS.call("Simple", 1);
+        PyObject obj2 = SPECIAL_METHODS.call("Simple", 2);
+        PyObject none = PyObject.executeCode("None", PyInputMode.EXPRESSION);
+
+        assertTrue(obj1.eq(obj1));
+        assertTrue(obj2.eq(obj2));
+
+        assertFalse(obj1.eq(obj2));
+        assertFalse(obj2.eq(obj1));
+
+        assertFalse(obj1.eq(null));
+        assertFalse(obj2.eq(null));
+
+        assertFalse(obj1.eq(none));
+        assertFalse(obj2.eq(none));
+        assertFalse(none.eq(obj1));
+        assertFalse(none.eq(obj2));
+    }
+
+    @Test
+    public void noneEqNone() {
+        PyObject obj1 = PyObject.executeCode("None", PyInputMode.EXPRESSION);
+        PyObject obj2 = PyObject.executeCode("None", PyInputMode.EXPRESSION);
+
+        assertTrue(obj1.eq(obj1));
+        assertTrue(obj2.eq(obj2));
+
+        assertTrue(obj1.eq(obj2));
+        assertTrue(obj2.eq(obj1));
+
+        assertTrue(obj1.eq(null));
+        assertTrue(obj2.eq(null));
+    }
+
+    @Test
+    public void strException() {
+        PyObject obj = SPECIAL_METHODS.call("ThrowsException");
+        try {
+            obj.str();
+            fail("Expected exception");
+        } catch (RuntimeException e) {
+            // expected
+        }
+    }
+
+    @Test
+    public void hashException() {
+        PyObject obj = SPECIAL_METHODS.call("ThrowsException");
+        try {
+            obj.hash();
+            fail("Expected exception");
+        } catch (RuntimeException e) {
+            // expected
+        }
+    }
+
+    @Test
+    public void eqException() {
+        PyObject obj = SPECIAL_METHODS.call("ThrowsException");
+        try {
+            obj.eq(obj);
+            fail("Expected exception");
+        } catch (RuntimeException e) {
+            // expected
+        }
+    }
+
+    @Test
+    public void nonBooleanEq() {
+        PyObject obj1 = SPECIAL_METHODS.call("NonBooleanEq");
+        PyObject obj2 = SPECIAL_METHODS.call("NonBooleanEq");
+        PyObject none = PyObject.executeCode("None", PyInputMode.EXPRESSION);
+
+        assertTrue(obj1.eq(obj1));
+        assertTrue(obj2.eq(obj2));
+
+        assertFalse(obj1.eq(obj2));
+        assertFalse(obj2.eq(obj1));
+
+        assertFalse(obj1.eq(null));
+        assertFalse(obj2.eq(null));
+
+        assertFalse(obj1.eq(none));
+        assertFalse(obj2.eq(none));
+        assertFalse(none.eq(obj1));
+        assertFalse(none.eq(obj2));
+    }
+
+    @Test
+    public void nonStringStr() {
+        PyObject obj = SPECIAL_METHODS.call("NonStringStr");
+        try {
+            obj.str();
+            fail("Expected exception");
+        } catch (RuntimeException e) {
+            //
+        }
+    }
+
+    @Test
+    public void strNotDefined() {
+        PyObject obj = SPECIAL_METHODS.call("NoMethodsDefined");
+        // python2 uses instance, python3 uses object
+        Pattern pattern = Pattern
+            .compile("^<special_methods.NoMethodsDefined (instance|object) at 0x[0-9a-f]+>$");
+        assertTrue(pattern.matcher(obj.str()).matches());
+    }
+
+    @Test
+    public void hashNotDefined() {
+        PyObject obj = SPECIAL_METHODS.call("NoMethodsDefined");
+        obj.hash();
+    }
+
+    @Test
+    public void eqNotDefined() {
+        PyObject obj1 = SPECIAL_METHODS.call("NoMethodsDefined");
+        PyObject obj2 = SPECIAL_METHODS.call("NoMethodsDefined");
+        PyObject none = PyObject.executeCode("None", PyInputMode.EXPRESSION);
+
+        assertTrue(obj1.eq(obj1));
+        assertTrue(obj2.eq(obj2));
+
+        assertFalse(obj1.eq(obj2));
+        assertFalse(obj2.eq(obj1));
+
+        assertFalse(obj1.eq(null));
+        assertFalse(obj2.eq(null));
+
+        assertFalse(obj1.eq(none));
+        assertFalse(obj2.eq(none));
+        assertFalse(none.eq(obj1));
+        assertFalse(none.eq(obj2));
+    }
+
+    @Test
+    public void eqAlwaysFalse() {
+        PyObject obj1 = SPECIAL_METHODS.call("EqAlwaysFalse");
+        PyObject obj2 = SPECIAL_METHODS.call("EqAlwaysFalse");
+        PyObject none = PyObject.executeCode("None", PyInputMode.EXPRESSION);
+
+        assertFalse(obj1.eq(obj1));
+        assertFalse(obj2.eq(obj2));
+        assertFalse(obj1.eq(obj2));
+        assertFalse(obj2.eq(obj1));
+        assertFalse(obj1.eq(null));
+        assertFalse(obj2.eq(null));
+
+        assertFalse(obj1.eq(none));
+        assertFalse(obj2.eq(none));
+        assertFalse(none.eq(obj1));
+        assertFalse(none.eq(obj2));
+    }
+
+    @Test
+    public void eqAlwaysTrue() {
+        PyObject obj1 = SPECIAL_METHODS.call("EqAlwaysTrue");
+        PyObject obj2 = SPECIAL_METHODS.call("EqAlwaysTrue");
+        PyObject none = PyObject.executeCode("None", PyInputMode.EXPRESSION);
+
+        assertTrue(obj1.eq(obj1));
+        assertTrue(obj2.eq(obj2));
+        assertTrue(obj1.eq(obj2));
+        assertTrue(obj2.eq(obj1));
+        assertTrue(obj1.eq(null));
+        assertTrue(obj2.eq(null));
+
+        assertTrue(obj1.eq(none));
+        assertTrue(obj2.eq(none));
+
+        // this was a bit surprising to me, but None == obj must proxy to obj == None
+        assertTrue(none.eq(obj1));
+        assertTrue(none.eq(obj2));
+    }
+
+    @Test
+    public void eqMixed() {
+        PyObject alwaysFalse = SPECIAL_METHODS.call("EqAlwaysFalse");
+        PyObject alwaysTrue = SPECIAL_METHODS.call("EqAlwaysTrue");
+
+        assertFalse(alwaysFalse.eq(alwaysTrue));
+        assertTrue(alwaysTrue.eq(alwaysFalse));
+    }
+
+    @Test
+    public void hashNegativeOne() {
+        // note: the hash() function treats -1 as a special return value, thus if the underlying
+        // __hash__ returns -1, hash() will change that to -2.
+
+        PyObject obj = SPECIAL_METHODS.call("HashNegativeOne");
+        assertEquals(-2L, obj.hash());
+
+        PyObject result = obj.callMethod("__hash__");
+        assertTrue(result.isInt());
+        assertEquals(-1, obj.getIntValue());
     }
 }
