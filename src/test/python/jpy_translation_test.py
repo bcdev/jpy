@@ -7,15 +7,15 @@ jpyutil.init_jvm(jvm_maxmem='512M', jvm_classpath=['target/test-classes'])
 import jpy
 
 class DummyWrapper:
-	def __init__(self, theThing):
-		self.theThing = theThing
+    def __init__(self, theThing):
+        self.theThing = theThing
 
-	def getValue(self):
-		return 2 * self.theThing.getValue()
+    def getValue(self):
+        return 2 * self.theThing.getValue()
 
 def make_wrapper(type, thing):
-	return DummyWrapper(thing)
-     
+    return DummyWrapper(thing)
+
 
 class TestTypeTranslation(unittest.TestCase):
     def setUp(self):
@@ -24,12 +24,12 @@ class TestTypeTranslation(unittest.TestCase):
 
     def test_Translation(self):
         fixture = self.Fixture()
-	thing = fixture.makeThing(7)
+        thing = fixture.makeThing(7)
         self.assertEqual(thing.getValue(), 7)
-	self.assertEquals(repr(type(thing)), "<type 'org.jpy.fixtures.Thing'>")
+        self.assertTrue(repr(type(thing)) in ["<type 'org.jpy.fixtures.Thing'>", "<class 'org.jpy.fixtures.Thing'>"])
 
         jpy.type_translations['org.jpy.fixtures.Thing'] = make_wrapper
-	thing = fixture.makeThing(8)
+        thing = fixture.makeThing(8)
         self.assertEqual(thing.getValue(), 16)
         self.assertEqual(type(thing), type(DummyWrapper(None)))
 

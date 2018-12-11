@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+set -e
 
 if [[ $TRAVIS_OS_NAME != 'osx' ]]; then
     export PYENV_ROOT="$HOME/.pyenv"
@@ -20,4 +21,5 @@ else
 fi
 echo $JAVA_HOME
 
-python setup.py --maven bdist_wheel
+python setup.py test
+python setup.py bdist_wheel
