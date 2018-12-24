@@ -415,6 +415,19 @@ PyObject* JPy_has_jvm(PyObject* self)
     return PyBool_FromLong(JPy_JVM != NULL);
 }
 
+PyObject* JPy_get_jvm(PyObject* self)
+{
+    JavaVM** jvms;
+    jsize nVMs = 0;
+
+    JNI_GetCreatedJavaVMs(NULL, 0, &nVMs); // 1. just get the required array length
+    jvms = (JavaVM**)malloc(sizeof(JavaVM*) * nVMs);
+    JNI_GetCreatedJavaVMs(jvms, nVMs, &nVMs); // 2. get the data
+    printf("jvm status: %p:%u\nstarting python\n", *jvms, nVMs);
+    JPy_JVM = *jvms;
+    return PyBool_FromLong(JPy_JVM != NULL);
+}
+
 PyObject* JPy_create_jvm(PyObject* self, PyObject* args, PyObject* kwds)
 {
     static char* keywords[] = {"options", NULL};
@@ -1263,4 +1276,3 @@ void JPy_free(void* unused)
 
     JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "JPy_free: done freeing module data\n");
 }
-

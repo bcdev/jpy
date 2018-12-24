@@ -145,6 +145,35 @@ elif platform.system() == 'Darwin':
 
 
 # ----------- Functions -------------
+from distutils.ccompiler import new_compiler
+from sysconfig import get_paths
+
+class StaticLib(Command):
+    description = 'build static lib'
+    user_options = [] # do not remove, needs to be stubbed out!
+    python_info = get_paths()
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        # Create compiler with default options
+        c = new_compiler()
+
+        # Optionally add include directories etc.
+        for d in include_dirs:
+            c.add_include_dir(d)
+
+        c.add_include_dir(self.python_info['include'])
+        # Compile into .o files
+        objects = c.compile(sources)
+
+        # Create static or shared library
+        c.create_static_lib(objects, "jpy", output_dir=_build_dir())
+
 def _build_dir():
     # this is hacky, but use distutils logic to get build dir. see: distutils.command.build
     plat = ".%s-%d.%d" % (get_platform(), sys.version_info.major, sys.version_info.minor)
@@ -205,7 +234,7 @@ def test_python_java_classes():
     log.info('Executing Python unit tests (against JPY test classes)...')
     return jpyutil._execute_python_scripts(python_java_jpy_tests,
                                             env=sub_env)
-    
+
 def test_maven():
     jpy_config = os.path.join(_build_dir(),'jpyconfig.properties')
     mvn_args = '-DargLine=-Xmx512m -Djpy.config=' + jpy_config + ' -Djpy.debug=true'
@@ -220,7 +249,7 @@ def _write_jpy_config(target_dir=None, install_dir=None):
     """
     if not target_dir:
         target_dir = _build_dir()
-    
+
     args = [sys.executable,
             os.path.join(target_dir, 'jpyutil.py'),
             '--jvm_dll', jvm_dll_file,
@@ -245,14 +274,14 @@ def _build_jpy():
     package_maven()
     _copy_jpyutil()
     _write_jpy_config()
-    
+
 
 def test_suite():
     suite = unittest.TestSuite()
-    
+
     def test_python_with_java_runtime(self):
         assert 0 == test_python_java_rt()
-        
+
     def test_python_with_java_classes(self):
         assert 0 == test_python_java_classes()
 
@@ -287,12 +316,12 @@ class JpyBuildBeforeTest(test):
     def run(self):
         self.run_command('build')
         self.run_command('maven')
-        
+
         test.run(self)
 
 class JpyInstallLib(install_lib):
     """ Custom install_lib command for getting install_dir """
-    
+
     def run(self):
         _write_jpy_config(install_dir=self.install_dir)
         install_lib.run(self)
@@ -300,7 +329,7 @@ class JpyInstallLib(install_lib):
 
 class JpyInstall(install):
     """ Custom install command to trigger Maven steps """
-    
+
     def run(self):
         self.run_command('build')
         self.run_command('maven')
@@ -344,7 +373,8 @@ setup(name='jpy',
           'maven': MavenBuildCommand,
           'test': JpyBuildBeforeTest,
           'install': JpyInstall,
-          'install_lib': JpyInstallLib
+          'install_lib': JpyInstallLib,
+          'static': StaticLib
       },
       classifiers=['Development Status :: 4 - Beta',
                    # Indicate who your project is intended for
