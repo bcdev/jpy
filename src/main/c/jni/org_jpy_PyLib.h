@@ -257,6 +257,30 @@ JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_newDict
 
 /*
  * Class:     org_jpy_PyLib
+ * Method:    pyDictKeys
+ * Signature: (J)Lorg/jpy/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_pyDictKeys
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    pyDictValues
+ * Signature: (J)Lorg/jpy/PyObject;
+ */
+JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_pyDictValues
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    pyDictContains
+ * Signature: (JLjava/lang/Object;Ljava/lang/Class;)Z
+ */
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyDictContains
+  (JNIEnv *, jclass, jlong, jobject, jclass);
+
+/*
+ * Class:     org_jpy_PyLib
  * Method:    getObjectArrayValue
  * Signature: (JLjava/lang/Class;)[Ljava/lang/Object;
  */

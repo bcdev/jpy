@@ -16,6 +16,8 @@
 
 package org.jpy;
 
+import java.util.Collection;
+import java.util.Collections;
 import org.junit.*;
 
 import static org.junit.Assert.*;
@@ -176,4 +178,71 @@ public class PyLibTest {
         assertFalse(dict.asDict().isEmpty());
     }
 
+    @Test
+    public void testDictKeys() {
+        PyObject dict = PyLib.newDict();
+        PyDictWrapper wrapper = dict.asDict();
+        assertTrue(wrapper.keySet().isEmpty());
+
+        PyObject.executeCode("my_key = 42", PyInputMode.STATEMENT, PyLib.getMainGlobals(), dict);
+        PyObject pyKey = PyObject.executeCode("'my_key'", PyInputMode.EXPRESSION);
+
+        assertEquals(wrapper.keySet(), Collections.singleton(pyKey));
+        assertTrue(wrapper.containsKey(pyKey));
+        assertTrue(wrapper.containsKey("my_key"));
+        assertTrue(wrapper.containsKey((Object)pyKey));
+
+        assertFalse(wrapper.containsKey(1));
+        assertFalse(wrapper.containsKey(this));
+    }
+
+    @Test
+    public void testDictValues() {
+        PyObject dict = PyLib.newDict();
+        PyDictWrapper wrapper = dict.asDict();
+        assertTrue(wrapper.values().isEmpty());
+
+        PyObject.executeCode("my_key = 42", PyInputMode.STATEMENT, PyLib.getMainGlobals(), dict);
+        PyObject pyValue = PyObject.executeCode("42", PyInputMode.EXPRESSION);
+
+        // PyListWrapper doesn't implement the full List interface... can't check direct List equality
+        Collection<PyObject> values = wrapper.values();
+        assertFalse(values.isEmpty());
+        assertEquals(values.size(), 1);
+        assertEquals(values.iterator().next(), pyValue);
+        assertTrue(wrapper.containsValue(pyValue));
+    }
+
+    @Test
+    public void invalidPyDictKeys() {
+        PyObject pyValue = PyObject.executeCode("42", PyInputMode.EXPRESSION);
+        try {
+            PyLib.pyDictKeys(pyValue.getPointer());
+            fail("Expected exception");
+        } catch (UnsupportedOperationException e) {
+            // expected
+        }
+    }
+
+    @Test
+    public void invalidPyDictValues() {
+        PyObject pyValue = PyObject.executeCode("42", PyInputMode.EXPRESSION);
+        try {
+            PyLib.pyDictValues(pyValue.getPointer());
+            fail("Expected exception");
+        } catch (UnsupportedOperationException e) {
+            // expected
+        }
+    }
+
+    @Test
+    public void invalidPyDictContains() {
+        PyObject pyValue = PyObject.executeCode("42", PyInputMode.EXPRESSION);
+        try {
+            PyLib.pyDictContains(pyValue.getPointer(), pyValue, null);
+            fail("Expected exception");
+        } catch (UnsupportedOperationException e) {
+            // expected
+        }
+    }
 }

@@ -43,19 +43,23 @@ public class PyDictWrapper implements Map<PyObject, PyObject> {
 
     @Override
     public boolean containsKey(Object key) {
-        return pyObject.callMethod("has_key", key).getBooleanValue();
+        return PyLib.pyDictContains(pyObject.getPointer(), key, null);
     }
 
     /**
-      * An extension to the Map interface that allows the use of String keys without generating warnings.
-      */
+     * An extension to the Map interface that allows the use of String keys without generating warnings.
+     */
     public boolean containsKey(String key) {
-        return containsKey((Object)key);
+        return PyLib.pyDictContains(pyObject.getPointer(), key, String.class);
+    }
+
+    public boolean containsKey(PyObject key) {
+        return PyLib.pyDictContains(pyObject.getPointer(), key, PyObject.class);
     }
 
     @Override
     public boolean containsValue(Object value) {
-        return pyObject.callMethod("values").asList().contains(value);
+        return values().contains(value);
     }
 
     @Override
@@ -109,12 +113,12 @@ public class PyDictWrapper implements Map<PyObject, PyObject> {
 
     @Override
     public Set<PyObject> keySet() {
-        return new LinkedHashSet<>(pyObject.callMethod("keys").asList());
+        return new LinkedHashSet<>(PyLib.pyDictKeys(pyObject.getPointer()).asList());
     }
 
     @Override
     public Collection<PyObject> values() {
-        return pyObject.callMethod("values").asList();
+        return PyLib.pyDictValues(pyObject.getPointer()).asList();
     }
 
     @Override
