@@ -42,7 +42,7 @@ void PyLib_ThrowRTE(JNIEnv* jenv, const char *message);
 void PyLib_RedirectStdOut(void);
 int copyPythonDictToJavaMap(JNIEnv *jenv, PyObject *pyDict, jobject jMap);
 
-static int JPy_InitThreads = 0;
+static PyThreadState *_save = NULL;
 
 //#define JPy_JNI_DEBUG 1
 #define JPy_JNI_DEBUG 0
@@ -55,7 +55,7 @@ static int JPy_InitThreads = 0;
 #define JPy_GIL_AWARE
 
 #ifdef JPy_GIL_AWARE
-    #define JPy_BEGIN_GIL_STATE  { PyGILState_STATE gilState; if (!JPy_InitThreads) {JPy_InitThreads = 1; PyEval_InitThreads(); PyEval_SaveThread(); } gilState = PyGILState_Ensure();
+    #define JPy_BEGIN_GIL_STATE  { PyGILState_STATE gilState = PyGILState_Ensure();
     #define JPy_END_GIL_STATE    PyGILState_Release(gilState); }
 #else
     #define JPy_BEGIN_GIL_STATE
@@ -209,7 +209,10 @@ JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_startPython0
         // See https://github.com/bcdev/jpy/issues/81
         PySys_SetArgvEx(0, NULL, 0);
         PyLib_RedirectStdOut();
-        pyInit = Py_IsInitialized();
+        pyInit = Py_IsInitialized(); // todo: assert pyInit == 1?
+
+        PyEval_InitThreads();
+        _save = PyEval_SaveThread(); // todo: assert not null
     }
 
     if (pyInit) {
@@ -325,13 +328,17 @@ JNIEXPORT void JNICALL Java_org_jpy_PyLib_stopPython0
     JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_stopPython: entered: JPy_Module=%p\n", JPy_Module);
 
     if (Py_IsInitialized()) {
-        // Make sure we can get the GIL if needed before cleaning up.
-        PyGILState_STATE state = PyGILState_Ensure();
         // Cleanup the JPY stateful structures and shut down the interpreter.
+
+        JPy_BEGIN_GIL_STATE
+
         JPy_free();
+
+        JPy_END_GIL_STATE
+
+        PyEval_RestoreThread(_save);
+        _save = NULL;
         Py_Finalize();
-        // Make sure we reset our global flag
-        JPy_InitThreads = 0;
     }
 
     JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_stopPython: exiting: JPy_Module=%p\n", JPy_Module);
