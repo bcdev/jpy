@@ -21,7 +21,6 @@ import shutil
 import subprocess
 import sys
 import unittest
-
 from distutils import log
 from distutils.cmd import Command
 from distutils.util import get_platform
@@ -46,6 +45,7 @@ src_test_py_dir = os.path.join(base_dir, 'src', 'test', 'python')
 sources = [
     os.path.join(src_main_c_dir, 'jpy_module.c'),
     os.path.join(src_main_c_dir, 'jpy_diag.c'),
+    os.path.join(src_main_c_dir, 'jpy_verboseexcept.c'),
     os.path.join(src_main_c_dir, 'jpy_conv.c'),
     os.path.join(src_main_c_dir, 'jpy_compat.c'),
     os.path.join(src_main_c_dir, 'jpy_jtype.c'),
@@ -88,6 +88,7 @@ python_java_jpy_tests = [
     os.path.join(src_test_py_dir, 'jpy_typeconv_test.py'),
     os.path.join(src_test_py_dir, 'jpy_typeres_test.py'),
     os.path.join(src_test_py_dir, 'jpy_modretparam_test.py'),
+    os.path.join(src_test_py_dir, 'jpy_translation_test.py'),
     os.path.join(src_test_py_dir, 'jpy_gettype_test.py'),
 ]
 
@@ -183,17 +184,15 @@ def test_python_java_rt():
     sub_env = {'PYTHONPATH': _build_dir()}
 
     log.info('Executing Python unit tests (against Java runtime classes)...')
-    return jpyutil._execute_python_scripts(python_java_rt_tests,
-                                           env=sub_env)
+    return jpyutil._execute_python_scripts(python_java_rt_tests, env=sub_env)
 
 
 def test_python_java_classes():
     """ Run Python tests against JPY test classes """
     sub_env = {'PYTHONPATH': _build_dir()}
 
-    log.info('Executing Python unit tests (against Java runtime classes)...')
-    return jpyutil._execute_python_scripts(python_java_jpy_tests,
-                                           env=sub_env)
+    log.info('Executing Python unit tests (against JPY test classes)...')
+    return jpyutil._execute_python_scripts(python_java_jpy_tests, env=sub_env)
 
 
 def test_maven():
@@ -202,7 +201,6 @@ def test_maven():
     log.info("Executing Maven goal 'test' with arg line " + repr(mvn_args))
     code = subprocess.call(['mvn', 'test', mvn_args], shell=platform.system() == 'Windows')
     return code == 0
-
 
 def _write_jpy_config(target_dir=None, install_dir=None):
     """
@@ -257,7 +255,6 @@ def test_suite():
     suite.addTest(test_java)
 
     return suite
-
 
 class MavenBuildCommand(Command):
     """ Custom JPY Maven builder command """
