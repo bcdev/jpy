@@ -20,12 +20,11 @@ It comes with a number of outstanding features:
 * Java arrays translate into Python sequence objects
 * Java API for accessing Python objects (`jpy.jar`)
 
-jpy has been tested with Python 2.7, 3.3-3.6 and Oracle Java 7 and 8 JDKs. 
+jpy has been tested with Python 2.7, 3.3-3.6, Oracle Java 7 and 8 JDKs and OpenJDK 8. 
 
 The initial development of jpy has been driven by the need to write Python extensions to an established scientific
-imaging application programmed in Java, namely the [BEAM](http://www.brockmann-consult.de/beam/) toolbox
-funded by the [European Space Agency](http://www.esa.int/ESA) (ESA) which is now continued through
-[SNAP](http://step.esa.int/main/toolboxes/snap/), the SeNtinel Application Platform project, also funded by ESA.
+imaging application programmed in Java, namely the [SNAP](http://step.esa.int/) toolbox, the SeNtinel Application 
+Platform project, funded by the [European Space Agency](http://www.esa.int/ESA) (ESA).
 Writing such Python plug-ins for a Java application usually requires a bi-directional communication between Python and
 Java since the Python extension code must be able to call back into the Java APIs.
 
@@ -36,16 +35,16 @@ For more information please have a look into jpy's
 * [issue tracker](https://github.com/bcdev/jpy/issues?state=open)
 
 
-How to build on Linux and Mac
------------------------------
+How to build wheels for Linux and Mac
+-------------------------------------
 
-Install a JDK 8, preferrably the Oracle distribution. Set JDK_HOME or JPY_JDK_HOME to point to your JDK installation 
+Install a JDK 8, preferably the Oracle distribution. Set JDK_HOME or JPY_JDK_HOME to point to your JDK installation 
 and run the build script:
 
     $ export JDK_HOME=<your-jdk-dir>
     $ export JAVA_HOME=$JDK_HOME
     $ python get-pip.py
-    $ python setup.py --maven bdist_wheel
+    $ python setup.py build maven bdist_wheel
 
 On success, the wheel is found in the `dist` directory.
 
@@ -53,8 +52,8 @@ To deploy the `jpy.jar` (if you don't know why you need this step, this is not f
 
     $ mvn clean deploy -DskipTests=true
 
-How to build on Windows
------------------------
+How to build a wheel for Windows
+--------------------------------
 
 If you are on Windows, please note that if you run a 32-bit Python you'll also need a 32-bit JDK.
 Set JDK_HOME or JPY_JDK_HOME to point to your JDK installation. You'll need Windows SDK 7.1 or Visual Studio C++ to 
@@ -64,15 +63,22 @@ build the sources. With Windows SDK 7.1::
     > SET DISTUTILS_USE_SDK=1
     > C:\Program Files\Microsoft SDKs\Windows\v7.1\bin\setenv /x64 /release
     > SET JDK_HOME=<your-jdk-dir>
-    > python setup.py --maven bdist_wheel
+    > python get-pip.py
+    > python setup.py build maven bdist_wheel
     
 With Visual Studio 14 and higher it is much easier::
 
     > SET VS100COMNTOOLS=C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\
     > SET JDK_HOME=<your-jdk-dir>
-    > python setup.py --maven bdist_wheel
+    > python get-pip.py
+    > python setup.py build maven bdist_wheel
 
 On success, the wheel is found in the `dist` directory.
+
+
+How to install from sources
+---------------------------
+TBD
 
 
 Releasing jpy
