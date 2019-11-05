@@ -13,24 +13,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import sys
+import glob
 import os
 import os.path
 import platform
-import subprocess
 import shutil
-import glob
+import subprocess
+import sys
 import unittest
 
-from setuptools import setup
-from setuptools.command.test import test
-from setuptools.command.build_ext import build_ext
-from setuptools.command.install import install
-from setuptools.command.install_lib import install_lib
-from setuptools.extension import Extension
+from distutils import log
 from distutils.cmd import Command
 from distutils.util import get_platform
-from distutils import log
+from setuptools import setup
+from setuptools.command.install import install
+from setuptools.command.install_lib import install_lib
+from setuptools.command.test import test
+from setuptools.extension import Extension
 
 import jpyutil
 
@@ -43,20 +42,10 @@ base_dir = os.path.dirname(os.path.relpath(__file__))
 src_main_c_dir = os.path.join(base_dir, 'src', 'main', 'c')
 src_test_py_dir = os.path.join(base_dir, 'src', 'test', 'python')
 
-do_maven = False
-if '--maven' in sys.argv:
-    do_maven = True
-    sys.argv.remove('--maven')
-elif 'install' in sys.argv:
-    do_maven = True
-else:
-    print('Note that you can use non-standard global option [--maven] '
-          'to force a Java Maven build for the jpy Java API')
 
 sources = [
     os.path.join(src_main_c_dir, 'jpy_module.c'),
     os.path.join(src_main_c_dir, 'jpy_diag.c'),
-    os.path.join(src_main_c_dir, 'jpy_verboseexcept.c'),
     os.path.join(src_main_c_dir, 'jpy_conv.c'),
     os.path.join(src_main_c_dir, 'jpy_compat.c'),
     os.path.join(src_main_c_dir, 'jpy_jtype.c'),
@@ -99,7 +88,6 @@ python_java_jpy_tests = [
     os.path.join(src_test_py_dir, 'jpy_typeconv_test.py'),
     os.path.join(src_test_py_dir, 'jpy_typeres_test.py'),
     os.path.join(src_test_py_dir, 'jpy_modretparam_test.py'),
-    os.path.join(src_test_py_dir, 'jpy_translation_test.py'),
     os.path.join(src_test_py_dir, 'jpy_gettype_test.py'),
 ]
 
@@ -143,12 +131,12 @@ elif platform.system() == 'Darwin':
     extra_link_args += ['-Xlinker', '-rpath', jvm_dll_dir]
 
 
-
 # ----------- Functions -------------
 def _build_dir():
     # this is hacky, but use distutils logic to get build dir. see: distutils.command.build
     plat = ".%s-%d.%d" % (get_platform(), sys.version_info.major, sys.version_info.minor)
     return os.path.join('build', 'lib' + plat)
+
 
 def package_maven():
     """ Run maven package lifecycle """
@@ -198,20 +186,23 @@ def test_python_java_rt():
     return jpyutil._execute_python_scripts(python_java_rt_tests,
                                            env=sub_env)
 
+
 def test_python_java_classes():
     """ Run Python tests against JPY test classes """
     sub_env = {'PYTHONPATH': _build_dir()}
 
-    log.info('Executing Python unit tests (against JPY test classes)...')
+    log.info('Executing Python unit tests (against Java runtime classes)...')
     return jpyutil._execute_python_scripts(python_java_jpy_tests,
-                                            env=sub_env)
-    
+                                           env=sub_env)
+
+
 def test_maven():
-    jpy_config = os.path.join(_build_dir(),'jpyconfig.properties')
+    jpy_config = os.path.join(_build_dir(), 'jpyconfig.properties')
     mvn_args = '-DargLine=-Xmx512m -Djpy.config=' + jpy_config + ' -Djpy.debug=true'
     log.info("Executing Maven goal 'test' with arg line " + repr(mvn_args))
     code = subprocess.call(['mvn', 'test', mvn_args], shell=platform.system() == 'Windows')
     return code == 0
+
 
 def _write_jpy_config(target_dir=None, install_dir=None):
     """
@@ -220,7 +211,7 @@ def _write_jpy_config(target_dir=None, install_dir=None):
     """
     if not target_dir:
         target_dir = _build_dir()
-    
+
     args = [sys.executable,
             os.path.join(target_dir, 'jpyutil.py'),
             '--jvm_dll', jvm_dll_file,
@@ -235,24 +226,26 @@ def _write_jpy_config(target_dir=None, install_dir=None):
     log.info('Writing jpy configuration to %s using install_dir %s' % (target_dir, install_dir))
     return subprocess.call(args)
 
+
 def _copy_jpyutil():
     src = os.path.relpath(jpyutil.__file__)
     dest = _build_dir()
     log.info('Copying %s to %s' % (src, dest))
     shutil.copy(src, dest)
 
+
 def _build_jpy():
     package_maven()
     _copy_jpyutil()
     _write_jpy_config()
-    
+
 
 def test_suite():
     suite = unittest.TestSuite()
-    
+
     def test_python_with_java_runtime(self):
         assert 0 == test_python_java_rt()
-        
+
     def test_python_with_java_classes(self):
         assert 0 == test_python_java_classes()
 
@@ -265,10 +258,11 @@ def test_suite():
 
     return suite
 
+
 class MavenBuildCommand(Command):
     """ Custom JPY Maven builder command """
     description = 'run Maven to generate JPY jar'
-    user_options = [] # do not remove, needs to be stubbed out!
+    user_options = []  # do not remove, needs to be stubbed out!
 
     def initialize_options(self):
         pass
@@ -287,12 +281,12 @@ class JpyBuildBeforeTest(test):
     def run(self):
         self.run_command('build')
         self.run_command('maven')
-        
         test.run(self)
+
 
 class JpyInstallLib(install_lib):
     """ Custom install_lib command for getting install_dir """
-    
+
     def run(self):
         _write_jpy_config(install_dir=self.install_dir)
         install_lib.run(self)
@@ -300,7 +294,7 @@ class JpyInstallLib(install_lib):
 
 class JpyInstall(install):
     """ Custom install command to trigger Maven steps """
-    
+
     def run(self):
         self.run_command('build')
         self.run_command('maven')
@@ -309,8 +303,8 @@ class JpyInstall(install):
 
 setup(name='jpy',
       description='Bi-directional Python-Java bridge',
-             long_description=_read('README.md') + '\n\n' + _read('CHANGES.md'),
-             version=__version__,
+      long_description=_read('README.md') + '\n\n' + _read('CHANGES.md'),
+      version=__version__,
       platforms='Windows, Linux, Darwin',
       author=__author__,
       author_email='norman.fomferra@brockmann-consult.de',
@@ -338,7 +332,7 @@ setup(name='jpy',
                              extra_link_args=extra_link_args,
                              extra_compile_args=extra_compile_args,
                              define_macros=define_macros),
-      ],
+                   ],
       test_suite='setup.test_suite',
       cmdclass={
           'maven': MavenBuildCommand,
