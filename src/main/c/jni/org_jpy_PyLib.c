@@ -498,6 +498,103 @@ JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_newDict
     return objectRef;
 }
 
+JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_pyDictKeys
+        (JNIEnv *jenv, jclass libClass, jlong pyDict) {
+    jobject result;
+    PyObject* src;
+    PyObject* keys;
+
+    src = (PyObject*)pyDict;
+
+    JPy_BEGIN_GIL_STATE
+
+    if (!PyDict_Check(src)) {
+        result = NULL;
+        PyLib_ThrowUOE(jenv, "Not a dictionary!");
+        goto error;
+    }
+
+    keys = PyDict_Keys(src);
+    if (JType_CreateJavaPyObject(jenv, JPy_JPyObject, keys, &result) < 0) {
+        result = NULL;
+        goto error;
+    }
+
+error:
+    JPy_END_GIL_STATE
+    return result;
+}
+
+JNIEXPORT jobject JNICALL Java_org_jpy_PyLib_pyDictValues
+        (JNIEnv *jenv, jclass libClass, jlong pyDict) {
+    jobject result;
+    PyObject* src;
+    PyObject* values;
+
+    src = (PyObject*)pyDict;
+
+    JPy_BEGIN_GIL_STATE
+
+    if (!PyDict_Check(src)) {
+        result = NULL;
+        PyLib_ThrowUOE(jenv, "Not a dictionary!");
+        goto error;
+    }
+
+    values = PyDict_Values(src);
+    if (JType_CreateJavaPyObject(jenv, JPy_JPyObject, values, &result) < 0) {
+        result = NULL;
+        goto error;
+    }
+
+error:
+    JPy_END_GIL_STATE
+    return result;
+}
+
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_pyDictContains
+        (JNIEnv *jenv, jclass libClass, jlong pyDict, jobject jKey, jclass jKeyClass) {
+    PyObject* src;
+    PyObject* key;
+    int result;
+    JPy_JType* keyType;
+    PyObject* pyKey;
+
+    src = (PyObject*)pyDict;
+
+    JPy_BEGIN_GIL_STATE
+
+    if (!PyDict_Check(src)) {
+        result = -1;
+        PyLib_ThrowUOE(jenv, "Not a dictionary!");
+        goto error;
+    }
+
+    if (jKeyClass != NULL) {
+        keyType = JType_GetType(jenv, jKeyClass, JNI_FALSE);
+        if (keyType == NULL) {
+            result = -1;
+            JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_pyDictContains: failed to retrieve type\n");
+            PyLib_HandlePythonException(jenv);
+            goto error;
+        }
+        pyKey = JPy_FromJObjectWithType(jenv, jKey, keyType);
+    } else {
+        pyKey = JPy_FromJObject(jenv, jKey);
+    }
+
+    result = PyDict_Contains(src, pyKey);
+    if (result < 0) {
+        JPy_DIAG_PRINT(JPy_DIAG_F_ALL, "Java_org_jpy_PyLib_pyDictContains: PyDict_Contains error\n");
+        PyLib_HandlePythonException(jenv);
+        goto error;
+    }
+
+error:
+    JPy_END_GIL_STATE
+    return result == 1 ? JNI_TRUE : JNI_FALSE;
+}
+
 /**
  * Copies a Java Map<String, Object> into a new Python dictionary.
  */
