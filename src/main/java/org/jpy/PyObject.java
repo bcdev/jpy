@@ -139,6 +139,14 @@ public class PyObject {
     }
 
     /**
+     * @return This Python object as a Java {@code long} value.
+     */
+    public long getLongValue() {
+        assertPythonRuns();
+        return PyLib.getLongValue(getPointer());
+    }
+
+    /**
      * @return This Python object as a Java {@code boolean} value.
      */
     public boolean getBooleanValue() {
@@ -423,6 +431,24 @@ public class PyObject {
     }
 
     /**
+     * Unwraps the original Python object used to create {@code object}. The inverse of
+     * {@link #createProxy(Class)}.
+     *
+     * @param object The object that may be a proxy.
+     * @return The Python object, or null if the object is not a proxy.
+     */
+    public static PyObject unwrapProxy(Object object) {
+        if (!Proxy.isProxyClass(object.getClass())) {
+            return null;
+        }
+        InvocationHandler handler = Proxy.getInvocationHandler(object);
+        if (!(handler instanceof PyProxyHandler)) {
+            return null;
+        }
+        return ((PyProxyHandler)handler).getPyObject();
+    }
+
+    /**
      * Gets the python string representation of this object.
      *
      * @return A string representation of the object.
@@ -430,7 +456,7 @@ public class PyObject {
      */
     @Override
     public final String toString() {
-	    return PyLib.str(pointer);
+	    return str();
     }
 
     /**
@@ -441,6 +467,26 @@ public class PyObject {
      */
     public final String repr() {
 	    return PyLib.repr(pointer);
+    }
+
+    /**
+     * Runs the python str function on this object.
+     * @return The String representation of this object.
+     */
+    public final String str() {
+        return PyLib.str(pointer);
+    }
+
+    /**
+     * Runs the python hash function on this object.
+     * @return The hash.
+     */
+    public final long hash() {
+        return PyLib.hash(pointer);
+    }
+
+    public final boolean eq(Object other) {
+        return PyLib.eq(pointer, other);
     }
 
     /**

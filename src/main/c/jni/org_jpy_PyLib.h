@@ -113,6 +113,14 @@ JNIEXPORT jint JNICALL Java_org_jpy_PyLib_getIntValue
 
 /*
  * Class:     org_jpy_PyLib
+ * Method:    getLongValue
+ * Signature: (J)J
+ */
+JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_getLongValue
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     org_jpy_PyLib
  * Method:    getBooleanValue
  * Signature: (J)Z
  */
@@ -246,6 +254,22 @@ JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_str
  */
 JNIEXPORT jstring JNICALL Java_org_jpy_PyLib_repr
   (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    hash
+ * Signature: (J)J
+ */
+JNIEXPORT jlong JNICALL Java_org_jpy_PyLib_hash
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     org_jpy_PyLib
+ * Method:    eq
+ * Signature: (JLjava/lang/Object;)Z
+ */
+JNIEXPORT jboolean JNICALL Java_org_jpy_PyLib_eq
+  (JNIEnv *, jclass, jlong, jobject);
 
 /*
  * Class:     org_jpy_PyLib

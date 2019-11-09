@@ -260,6 +260,8 @@ public class PyLib {
 
     static native int getIntValue(long pointer);
 
+    static native int getLongValue(long pointer);
+
     static native boolean getBooleanValue(long pointer);
 
     static native double getDoubleValue(long pointer);
@@ -284,6 +286,10 @@ public class PyLib {
     static native String str(long pointer);
 
     static native String repr(long pointer);
+
+    static native long hash(long pointer);
+
+    static native boolean eq(long pointer1, Object other);
 
     static native PyObject newDict();
 

@@ -230,6 +230,7 @@ jclass JPy_PyObject_JClass = NULL;
 jclass JPy_PyDictWrapper_JClass = NULL;
 
 jmethodID JPy_PyObject_GetPointer_MID = NULL;
+jmethodID JPy_PyObject_UnwrapProxy_SMID = NULL;
 jmethodID JPy_PyObject_Init_MID = NULL;
 jmethodID JPy_PyModule_Init_MID = NULL;
 
@@ -715,7 +716,16 @@ jmethodID JPy_GetMethod(JNIEnv* jenv, jclass classRef, const char* name, const c
     return methodID;
 }
 
-
+jmethodID JPy_GetStaticMethod(JNIEnv *jenv, jclass classRef, const char *name, const char *sig)
+{
+    jmethodID methodID;
+    methodID = (*jenv)->GetStaticMethodID(jenv, classRef, name, sig);
+    if (methodID == NULL) {
+        PyErr_Format(PyExc_RuntimeError, "jpy: internal error: static method not found: %s%s", name, sig);
+        return NULL;
+    }
+    return methodID;
+}
 
 #define DEFINE_CLASS(C, N) \
     C = JPy_GetClass(jenv, N); \
@@ -726,6 +736,13 @@ jmethodID JPy_GetMethod(JNIEnv* jenv, jclass classRef, const char* name, const c
 
 #define DEFINE_METHOD(M, C, N, S) \
     M = JPy_GetMethod(jenv, C, N, S); \
+    if (M == NULL) { \
+        return -1; \
+    }
+
+
+#define DEFINE_STATIC_METHOD(M, C, N, S) \
+    M = JPy_GetStaticMethod(jenv, C, N, S); \
     if (M == NULL) { \
         return -1; \
     }
@@ -759,6 +776,7 @@ int initGlobalPyObjectVars(JNIEnv* jenv)
     } else {
         JPy_PyObject_JClass = JPy_JPyObject->classRef;
         DEFINE_METHOD(JPy_PyObject_GetPointer_MID, JPy_PyObject_JClass, "getPointer", "()J");
+        DEFINE_STATIC_METHOD(JPy_PyObject_UnwrapProxy_SMID, JPy_PyObject_JClass, "unwrapProxy", "(Ljava/lang/Object;)Lorg/jpy/PyObject;");
         DEFINE_METHOD(JPy_PyObject_Init_MID, JPy_PyObject_JClass, "<init>", "(J)V");
     }
 
@@ -1017,6 +1035,7 @@ void JPy_ClearGlobalVars(JNIEnv* jenv)
     JPy_Number_LongValue_MID = NULL;
     JPy_Number_DoubleValue_MID = NULL;
     JPy_PyObject_GetPointer_MID = NULL;
+    JPy_PyObject_UnwrapProxy_SMID = NULL;
 
     Py_XDECREF(JPy_JBoolean);
     Py_XDECREF(JPy_JChar);
