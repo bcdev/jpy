@@ -47,7 +47,7 @@ install:
 
 build_script:
   - set PATH=%JPY_PYTHON_HOME%;%JPY_PYTHON_HOME%\DLLs;%JPY_JDK_HOME%;%JPY_JDK_HOME%\bin;%PATH%
-  - call "%JPY_PYTHON_HOME%\python.exe" setup.py --maven bdist_wheel
+  - call "%JPY_PYTHON_HOME%\python.exe" setup.py maven bdist_wheel
   - move dist win
 
 artifacts:
