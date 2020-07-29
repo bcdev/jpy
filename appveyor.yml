@@ -1,38 +1,20 @@
 version: '{build}'
 
-image: Visual Studio 2015
+image: Visual Studio 2019
 configuration: Release
 
 platform:
-  - x86
   - x64
 
 environment:
   JDK8_X64: C:\Program Files\Java\jdk1.8.0
-  JDK8_X86: C:\Program Files (x86)\Java\jdk1.8.0
 
   matrix:
-    - JPY_PYTHON_HOME: C:\Python27
-      JPY_JDK_HOME: '%JDK8_X86%'
-    - JPY_PYTHON_HOME: C:\Python34
-      JPY_JDK_HOME: '%JDK8_X86%'
-    - JPY_PYTHON_HOME: C:\Python35
-      JPY_JDK_HOME: '%JDK8_X86%'
-    - JPY_PYTHON_HOME: C:\Python36
-      JPY_JDK_HOME: '%JDK8_X86%'
-    - JPY_PYTHON_HOME: C:\Python27-x64
-      JPY_JDK_HOME: '%JDK8_X64%'
-    - JPY_PYTHON_HOME: C:\Python34-x64
-      JPY_JDK_HOME: '%JDK8_X64%'
-    - JPY_PYTHON_HOME: C:\Python35-x64
-      JPY_JDK_HOME: '%JDK8_X64%'
-    - JPY_PYTHON_HOME: C:\Python36-x64
+    - JPY_PYTHON_HOME: C:\Python38-x64
       JPY_JDK_HOME: '%JDK8_X64%'
 
 matrix:
   exclude:
-    - platform: x86
-      JPY_JDK_HOME: '%JDK8_X64%'
     - platform: x64
       JPY_JDK_HOME: '%JDK8_X86%'
 
@@ -80,4 +62,4 @@ deploy:
     password:
       secure: AMte8IErI/LRGmLGq4Y5YQ==
     folder: software
-    debug: true    
+    debug: true
