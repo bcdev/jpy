@@ -34,8 +34,8 @@ install:
   #- copy C:\Windows\WinSxS\amd64_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.8387_none_08e793bfa83a89b5\msvcr90.dll C:\Python27-x64
   #- ps: Get-ChildItem -Path $env:JPY_PYTHON_HOME
   #- ps: Get-ChildItem -Path $env:JPY_PYTHON_HOME -Filter *.dll -Recurse
-  - call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /%PLATFORM%
-  - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86_amd64
+  # - call "C:\Program Files\Microsoft SDKs\Windows\v8.1\Bin\SetEnv.cmd" /%PLATFORM%
+  # - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86_amd64
   - set JDK_HOME=%JPY_JDK_HOME%
   # JAVA_HOME is used by Maven
   - set JAVA_HOME=%JPY_JDK_HOME%
