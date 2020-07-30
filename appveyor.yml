@@ -45,18 +45,17 @@ for:
   environment:
       JDK8_X64: /usr/lib/jvm/java-1.8.0-openjdk-amd64
       JPY_PYTHON_HOME: $HOME/venv3.8
-      JPY_JDK_HOME: '%JDK8_X64%'
+      JPY_JDK_HOME: $JDK8_X64
   install:
-    - set JDK_HOME=%JPY_JDK_HOME%
+    - set JDK_HOME=$JPY_JDK_HOME
     # JAVA_HOME is used by Maven
-    - set JAVA_HOME=%JPY_JDK_HOME%
-    - set
-    - '%JPY_JDK_HOME%/bin/java -XshowSettings:properties -version'
-    - '%JPY_PYTHON_HOME%/bin/pip install wheel'
-    - '%JPY_PYTHON_HOME%/bin/pip install psutil'
+    - set JAVA_HOME=$JPY_JDK_HOME
+    - $JPY_JDK_HOME/bin/java -XshowSettings:properties -version
+    - $JPY_PYTHON_HOME/bin/pip install wheel
+    - $JPY_PYTHON_HOME/bin/pip install psutil
   build_script:
-    - set PATH=%JPY_PYTHON_HOME%:%JPY_PYTHON_HOME%\DLLs:%JPY_JDK_HOME%:%JPY_JDK_HOME%/bin:$PATH
-    - '%JPY_PYTHON_HOME%/python setup.py maven bdist_wheel'
+    - set PATH=$JPY_PYTHON_HOME/bin:$JPY_JDK_HOME/bin:$PATH
+    - $JPY_PYTHON_HOME/python setup.py maven bdist_wheel
     - mv dist linux
   artifacts:
     - path: 'linux/*.whl'
