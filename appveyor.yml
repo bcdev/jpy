@@ -80,9 +80,9 @@ for:
   build_script:
     - set PATH=$JPY_PYTHON_HOME/bin:$JPY_JDK_HOME/bin:$PATH
     - $JPY_PYTHON_HOME/bin/python setup.py maven bdist_wheel
-    - mv dist macos
+    - mv dist osx
   artifacts:
-    - path: 'macos/*.whl'
+    - path: 'osx/*.whl'
       name: wheel
 
 deploy:
