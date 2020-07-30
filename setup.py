@@ -169,6 +169,11 @@ def package_maven():
         exit(1)
     for jar_file in jar_files:
         build_dir = _build_dir()
+        if os.path.exists(build_dir):
+            log.info(f'Build directory "{build_dir}" exists.')
+        else:
+            log.info(f'Creating missing build directory "{build_dir}".')
+            os.makedirs(build_dir)
         log.info("Copying " + jar_file + " -> " + build_dir + "")
         shutil.copy(jar_file, build_dir)
 
@@ -255,6 +260,7 @@ def test_suite():
     suite.addTest(test_java)
 
     return suite
+
 
 class MavenBuildCommand(Command):
     """ Custom JPY Maven builder command """
