@@ -38,6 +38,10 @@ for:
   artifacts:
     - path: 'win\*.whl'
       name: wheel
+  # see https://www.appveyor.com/docs/build-cache/
+  cache:
+    - '%MAVEN_HOME% -> pom.xml'
+    - '%UserProfile%\.m2 -> pom.xml'
 -
   matrix:
     only:
@@ -51,8 +55,6 @@ for:
     # JAVA_HOME is used by Maven
     - set JAVA_HOME=$JPY_JDK_HOME
     - $JPY_JDK_HOME/bin/java -XshowSettings:properties -version
-    - $JPY_PYTHON_HOME/bin/pip install wheel
-    - $JPY_PYTHON_HOME/bin/pip install psutil
   build_script:
     - set PATH=$JPY_PYTHON_HOME/bin:$JPY_JDK_HOME/bin:$PATH
     - $JPY_PYTHON_HOME/bin/python setup.py maven bdist_wheel
@@ -61,10 +63,6 @@ for:
     - path: 'linux/*.whl'
       name: wheel
 
-# see https://www.appveyor.com/docs/build-cache/
-cache:
-  - '%MAVEN_HOME% -> pom.xml'
-  - '%UserProfile%\.m2 -> pom.xml'
 
 deploy:
   - provider: FTP
