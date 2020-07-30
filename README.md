@@ -2,7 +2,6 @@
 [![Build Status](https://ci.appveyor.com/api/projects/status/ywkcey4nlt0avasf?svg=true)](https://ci.appveyor.com/project/bcdev/jpy)
 [![Documentation Status](https://readthedocs.org/projects/jpy/badge/?version=latest)](http://jpy.readthedocs.org/en/latest/?badge=latest)
 
-
 jpy - a Python-Java Bridge
 ==========================
 
@@ -20,7 +19,7 @@ It comes with a number of outstanding features:
 * Java arrays translate into Python sequence objects
 * Java API for accessing Python objects (`jpy.jar`)
 
-jpy has been tested with Python 2.7, 3.3-3.6, Oracle Java 7 and 8 JDKs and OpenJDK 8. 
+jpy has been tested with Python 3.8 and OpenJDK 8 on 64-bit Ubuntu Linux, Windows, and macOS.
 
 The initial development of jpy has been driven by the need to write Python extensions to an established scientific
 imaging application programmed in Java, namely the [SNAP](http://step.esa.int/) toolbox, the SeNtinel Application 
@@ -33,7 +32,6 @@ For more information please have a look into jpy's
 * [documentation](http://jpy.readthedocs.org/en/latest/)
 * [source repository](https://github.com/bcdev/jpy)
 * [issue tracker](https://github.com/bcdev/jpy/issues?state=open)
-
 
 How to build wheels for Linux and Mac
 -------------------------------------
@@ -55,7 +53,6 @@ To deploy the `jpy.jar` (if you don't know why you need this step, this is not f
 How to build a wheel for Windows
 --------------------------------
 
-If you are on Windows, please note that if you run a 32-bit Python you'll also need a 32-bit JDK.
 Set JDK_HOME or JPY_JDK_HOME to point to your JDK installation. You'll need Windows SDK 7.1 or Visual Studio C++ to 
 build the sources. With Windows SDK 7.1::
 
@@ -73,13 +70,11 @@ With Visual Studio 14 and higher it is much easier::
     > python get-pip.py
     > python setup.py build maven bdist_wheel
 
-On success, the wheel is found in the `dist` directory.
-
+On success, the wheel can be found in the `dist` directory.
 
 How to install from sources
 ---------------------------
 TBD
-
 
 Releasing jpy
 -------------
@@ -87,14 +82,8 @@ Releasing jpy
 The target reader of this section is a jpy developer wishing to release a new jpy version.
 Note: You need to have Sphinx installed to update the documentation.
 
-
 1. Make sure all Java *and* Python units tests run green
 2. Remove the `-SNAPSHOT` qualifier from versions names in both the Maven `pom.xml` and `setup.py` files.
 3. Generate Java API doc by running `mvn javadoc:javadoc` which will update directory `doc/_static`
 4. Update documentation, `cd doc` and run `make html` 
 5. http://peterdowns.com/posts/first-time-with-pypi.html
-
-
-
-
-

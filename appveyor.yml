@@ -1,9 +1,9 @@
 version: '{build}'
 
 image:
-  - macos
   - Ubuntu2004
   - Visual Studio 2019
+  - macos
 
 configuration: Release
 
@@ -20,10 +20,6 @@ for:
     JPY_PYTHON_HOME: C:\Python38-x64
     JPY_JDK_HOME: '%JDK8_X64%'
   install:
-    # The two commented-out commands below were present in the old Windows-only configuration. They don't
-    # appear to be available on Windows Server 2019, neither do they appear to be necessary.
-    # - call "C:\Program Files\Microsoft SDKs\Windows\v8.1\Bin\SetEnv.cmd" /%PLATFORM%
-    # - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86_amd64
     - set JDK_HOME=%JPY_JDK_HOME%
     # JAVA_HOME is used by Maven
     - set JAVA_HOME=%JPY_JDK_HOME%
@@ -39,8 +35,8 @@ for:
   artifacts:
     - path: 'win\*.whl'
       name: wheel
-  # see https://www.appveyor.com/docs/build-cache/
   cache:
+    # see https://www.appveyor.com/docs/build-cache/
     - '%MAVEN_HOME% -> pom.xml'
     - '%UserProfile%\.m2 -> pom.xml'
 -
@@ -75,6 +71,7 @@ for:
     - set JDK_HOME=$JPY_JDK_HOME
     # JAVA_HOME is used by Maven
     - set JAVA_HOME=$JPY_JDK_HOME
+    # In contrast to Ubuntu and Windows, the AppVeyor macOS image does not have Maven preinstalled.
     - brew install maven
     - $JPY_JDK_HOME/bin/java -XshowSettings:properties -version
   build_script:
@@ -82,6 +79,8 @@ for:
     - $JPY_PYTHON_HOME/bin/python setup.py maven bdist_wheel
     - mv dist osx
   artifacts:
+    # Apple call their OS "macOS" these days, but this name has to match the directory name on
+    # the FTP server.
     - path: 'osx/*.whl'
       name: wheel
 
@@ -91,6 +90,7 @@ deploy:
     host: ftp.brockmann-consult.de
     username: jpy
     password:
+      # See https://www.appveyor.com/docs/build-configuration/#secure-variables
       secure: AMte8IErI/LRGmLGq4Y5YQ==
     folder: software
     debug: true
