@@ -69,7 +69,7 @@ for:
       - image: macos
   environment:
     JDK8_X64: /Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home/
-    JPY_PYTHON_HOME: /home/appveyor/venv3.8
+    JPY_PYTHON_HOME: /Users/appveyor/venv3.8
     JPY_JDK_HOME: $JDK8_X64
   install:
     - set JDK_HOME=$JPY_JDK_HOME
