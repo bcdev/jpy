@@ -44,7 +44,7 @@ for:
       - image: Ubuntu2004
   environment:
       JDK8_X64: /usr/lib/jvm/java-1.8.0-openjdk-amd64
-      JPY_PYTHON_HOME: $HOME/venv3.8
+      JPY_PYTHON_HOME: /home/appveyor/venv3.8
       JPY_JDK_HOME: $JDK8_X64
   install:
     - set JDK_HOME=$JPY_JDK_HOME
