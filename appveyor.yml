@@ -1,8 +1,8 @@
 version: '{build}'
 
 image:
-  - Visual Studio 2019
   - Ubuntu2004
+  - Visual Studio 2019
 
 configuration: Release
 
@@ -55,7 +55,7 @@ for:
     - $JPY_PYTHON_HOME/bin/pip install psutil
   build_script:
     - set PATH=$JPY_PYTHON_HOME/bin:$JPY_JDK_HOME/bin:$PATH
-    - $JPY_PYTHON_HOME/python setup.py maven bdist_wheel
+    - $JPY_PYTHON_HOME/bin/python setup.py maven bdist_wheel
     - mv dist linux
   artifacts:
     - path: 'linux/*.whl'
