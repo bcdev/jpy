@@ -1,6 +1,7 @@
 version: '{build}'
 
 image:
+  - macos
   - Ubuntu2004
   - Visual Studio 2019
 
@@ -62,7 +63,26 @@ for:
   artifacts:
     - path: 'linux/*.whl'
       name: wheel
-
+-
+  matrix:
+    only:
+      - image: macos
+  environment:
+    JDK8_X64: /Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home/
+    JPY_PYTHON_HOME: /home/appveyor/venv3.8
+    JPY_JDK_HOME: $JDK8_X64
+  install:
+    - set JDK_HOME=$JPY_JDK_HOME
+    # JAVA_HOME is used by Maven
+    - set JAVA_HOME=$JPY_JDK_HOME
+    - $JPY_JDK_HOME/bin/java -XshowSettings:properties -version
+  build_script:
+    - set PATH=$JPY_PYTHON_HOME/bin:$JPY_JDK_HOME/bin:$PATH
+    - $JPY_PYTHON_HOME/bin/python setup.py maven bdist_wheel
+    - mv dist macos
+  artifacts:
+    - path: 'macos/*.whl'
+      name: wheel
 
 deploy:
   - provider: FTP
