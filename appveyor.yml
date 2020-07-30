@@ -75,6 +75,7 @@ for:
     - set JDK_HOME=$JPY_JDK_HOME
     # JAVA_HOME is used by Maven
     - set JAVA_HOME=$JPY_JDK_HOME
+    - brew install maven
     - $JPY_JDK_HOME/bin/java -XshowSettings:properties -version
   build_script:
     - set PATH=$JPY_PYTHON_HOME/bin:$JPY_JDK_HOME/bin:$PATH
