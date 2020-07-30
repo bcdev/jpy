@@ -41,7 +41,6 @@ and run the build script:
 
     $ export JDK_HOME=<your-jdk-dir>
     $ export JAVA_HOME=$JDK_HOME
-    $ python get-pip.py
     $ python setup.py build maven bdist_wheel
 
 On success, the wheel is found in the `dist` directory.
@@ -60,14 +59,12 @@ build the sources. With Windows SDK 7.1::
     > SET DISTUTILS_USE_SDK=1
     > C:\Program Files\Microsoft SDKs\Windows\v7.1\bin\setenv /x64 /release
     > SET JDK_HOME=<your-jdk-dir>
-    > python get-pip.py
     > python setup.py build maven bdist_wheel
     
 With Visual Studio 14 and higher it is much easier::
 
     > SET VS100COMNTOOLS=C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\
     > SET JDK_HOME=<your-jdk-dir>
-    > python get-pip.py
     > python setup.py build maven bdist_wheel
 
 On success, the wheel can be found in the `dist` directory.

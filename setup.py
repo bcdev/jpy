@@ -1,6 +1,6 @@
 # !/usr/bin/env python3
 
-# Copyright 2014-2017 Brockmann Consult GmbH
+# Copyright 2014-2020 Brockmann Consult GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import glob
 import os
 import os.path
@@ -153,9 +154,7 @@ def package_maven():
     if code:
         exit(code)
 
-    #
     # Copy JAR results to lib/*.jar
-    #
 
     if not os.path.exists(lib_dir):
         os.mkdir(lib_dir)
@@ -206,6 +205,7 @@ def test_maven():
     log.info("Executing Maven goal 'test' with arg line " + repr(mvn_args))
     code = subprocess.call(['mvn', 'test', mvn_args], shell=platform.system() == 'Windows')
     return code == 0
+
 
 def _write_jpy_config(target_dir=None, install_dir=None):
     """
