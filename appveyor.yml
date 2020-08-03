@@ -10,6 +10,15 @@ configuration: Release
 platform:
   - x64
 
+environment:
+  matrix:
+    - JPY_PYTHON_HOME_WINDOWS: C:\Python34-x64
+      JPY_PYTHON_HOME_UBUNTU: /home/appveyor/venv3.4
+      JPY_PYTHON_HOME_MAC: /Users/appveyor/venv3.4
+    - JPY_PYTHON_HOME_WINDOWS: C:\Python38-x64
+      JPY_PYTHON_HOME_UBUNTU: /home/appveyor/venv3.8
+      JPY_PYTHON_HOME_MAC: /Users/appveyor/venv3.8
+
 for:
 -
   matrix:
@@ -19,21 +28,15 @@ for:
     JDK8_X64: C:\Program Files\Java\jdk1.8.0
     JPY_JDK_HOME: '%JDK8_X64%'
 
-    matrix:
-      - JPY_PYTHON_HOME: C:\Python38-x64
-
-      - JPY_PYTHON_HOME: C:\Python34-x64
-
-
   install:
     - set JDK_HOME=%JPY_JDK_HOME%
     # JAVA_HOME is used by Maven
     - set JAVA_HOME=%JPY_JDK_HOME%
     - set
     - call "%JPY_JDK_HOME%\bin\java.exe" -XshowSettings:properties -version
-    - call "%JPY_PYTHON_HOME%\Scripts\pip.exe" install wheel
-    - call "%JPY_PYTHON_HOME%\Scripts\pip.exe" install psutil
-    - call "%JPY_PYTHON_HOME%\python.exe" ci\appveyor\dump-dlls.py
+    - call "%JPY_PYTHON_HOME_WINDOWS%\Scripts\pip.exe" install wheel
+    - call "%JPY_PYTHON_HOME_WINDOWS%\Scripts\pip.exe" install psutil
+    - call "%JPY_PYTHON_HOME_WINDOWS%\python.exe" ci\appveyor\dump-dlls.py
   build_script:
     - set PATH=%JPY_PYTHON_HOME%;%JPY_PYTHON_HOME%\DLLs;%JPY_JDK_HOME%;%JPY_JDK_HOME%\bin;%PATH%
     - call "%JPY_PYTHON_HOME%\python.exe" setup.py maven bdist_wheel
@@ -59,7 +62,7 @@ for:
     - set JAVA_HOME=$JPY_JDK_HOME
     - $JPY_JDK_HOME/bin/java -XshowSettings:properties -version
   build_script:
-    - set PATH=$JPY_PYTHON_HOME/bin:$JPY_JDK_HOME/bin:$PATH
+    - set PATH=$JPY_PYTHON_HOME_UBUNTU/bin:$JPY_JDK_HOME/bin:$PATH
     - $JPY_PYTHON_HOME/bin/python setup.py maven bdist_wheel
     - mv dist linux
   artifacts:
@@ -81,7 +84,7 @@ for:
     - brew install maven
     - $JPY_JDK_HOME/bin/java -XshowSettings:properties -version
   build_script:
-    - set PATH=$JPY_PYTHON_HOME/bin:$JPY_JDK_HOME/bin:$PATH
+    - set PATH=$JPY_PYTHON_HOME_MAC/bin:$JPY_JDK_HOME/bin:$PATH
     - $JPY_PYTHON_HOME/bin/python setup.py maven bdist_wheel
     - mv dist osx
   artifacts:
