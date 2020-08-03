@@ -1,8 +1,8 @@
 version: '{build}'
 
 image:
-  - Ubuntu2004
   - Visual Studio 2019
+  - Ubuntu2004
   - macos
 
 configuration: Release
@@ -20,9 +20,10 @@ for:
     JPY_JDK_HOME: '%JDK8_X64%'
 
     matrix:
+      - JPY_PYTHON_HOME: C:\Python38-x64
+
       - JPY_PYTHON_HOME: C:\Python34-x64
 
-      - JPY_PYTHON_HOME: C:\Python38-x64
 
   install:
     - set JDK_HOME=%JPY_JDK_HOME%
