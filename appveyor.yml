@@ -17,8 +17,13 @@ for:
       - image: Visual Studio 2019
   environment:
     JDK8_X64: C:\Program Files\Java\jdk1.8.0
-    JPY_PYTHON_HOME: C:\Python38-x64
     JPY_JDK_HOME: '%JDK8_X64%'
+
+    matrix:
+      - JPY_PYTHON_HOME: C:\Python34-x64
+
+      - JPY_PYTHON_HOME: C:\Python38-x64
+
   install:
     - set JDK_HOME=%JPY_JDK_HOME%
     # JAVA_HOME is used by Maven
