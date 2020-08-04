@@ -19,13 +19,11 @@ environment:
       JPY_PYTHON_HOME_UBUNTU: /home/appveyor/venv3.8
       JPY_PYTHON_HOME_MAC: /Users/appveyor/venv3.8
 
-build_script:
-
 for:
 -
   matrix:
     only:
-      - image: Visual Studio 2019
+      - image: Visual Studio 2017
   environment:
     JDK8_X64: C:\Program Files\Java\jdk1.8.0
     JPY_JDK_HOME: '%JDK8_X64%'
