@@ -1,7 +1,7 @@
 version: '{build}'
 
 image:
-  - Visual Studio 2019
+  - Visual Studio 2017
   - Ubuntu2004
   - macos
 
@@ -34,6 +34,7 @@ for:
     - set JAVA_HOME=%JPY_JDK_HOME%
     - set
     - call "%JPY_JDK_HOME%\bin\java.exe" -XshowSettings:properties -version
+    - call "%JPY_PYTHON_HOME_WINDOWS%\Scripts\pip.exe" install --upgrade setuptools
     - call "%JPY_PYTHON_HOME_WINDOWS%\Scripts\pip.exe" install wheel
     - call "%JPY_PYTHON_HOME_WINDOWS%\Scripts\pip.exe" install psutil
     - call "%JPY_PYTHON_HOME_WINDOWS%\python.exe" ci\appveyor\dump-dlls.py
