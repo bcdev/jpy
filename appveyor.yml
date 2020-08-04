@@ -1,7 +1,7 @@
 version: '{build}'
 
 image:
-  - Visual Studio 2019
+  - Visual Studio 2015
   - Ubuntu2004
   - macos
 
@@ -23,7 +23,7 @@ for:
 -
   matrix:
     only:
-      - image: Visual Studio 2019
+      - image: Visual Studio 2015
   environment:
     JDK8_X64: C:\Program Files\Java\jdk1.8.0
     JPY_JDK_HOME: '%JDK8_X64%'
