@@ -19,6 +19,8 @@ environment:
       JPY_PYTHON_HOME_UBUNTU: /home/appveyor/venv3.8
       JPY_PYTHON_HOME_MAC: /Users/appveyor/venv3.8
 
+build_script:
+
 for:
 -
   matrix:
