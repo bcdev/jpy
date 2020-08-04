@@ -169,9 +169,9 @@ def package_maven():
     for jar_file in jar_files:
         build_dir = _build_dir()
         if os.path.exists(build_dir):
-            log.info(f'Build directory "{build_dir}" exists.')
+            log.info('Build directory "%s" exists.' % build_dir)
         else:
-            log.info(f'Creating missing build directory "{build_dir}".')
+            log.info('Creating missing build directory "%s".' % build_dir)
             os.makedirs(build_dir)
         log.info("Copying " + jar_file + " -> " + build_dir + "")
         shutil.copy(jar_file, build_dir)
