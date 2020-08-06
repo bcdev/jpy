@@ -4,6 +4,7 @@ image:
   - Visual Studio 2015
   - Ubuntu2004
   - macos
+  - macos-mojave
 
 configuration: Release
 
@@ -73,6 +74,7 @@ for:
   matrix:
     only:
       - image: macos
+      - image: macos-mojave
   environment:
     JDK8_X64: /Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home/
     JPY_PYTHON_HOME: /Users/appveyor/venv3.8
