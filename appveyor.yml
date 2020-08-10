@@ -85,7 +85,7 @@ for:
     - $JPY_JDK_HOME/bin/java -XshowSettings:properties -version
     - brew update
     - brew install pyenv
-    - pyenv install 3.8
+    - pyenv install 3.8.5
     - set JPY_PYTHON_HOME_MAC=/Users/appveyor/.pyenv/versions/3.8
   build_script:
     - set PATH=$JPY_PYTHON_HOME_MAC/bin:$JPY_JDK_HOME/bin:$PATH
