@@ -4,7 +4,6 @@ image:
   - Visual Studio 2015
   - Ubuntu2004
   - macos
-  - macos-mojave
 
 configuration: Release
 
@@ -40,7 +39,7 @@ for:
     - call "%JPY_PYTHON_HOME_WINDOWS%\Scripts\pip.exe" install psutil
     - call "%JPY_PYTHON_HOME_WINDOWS%\python.exe" ci\appveyor\dump-dlls.py
   build_script:
-    - set PATH=%JPY_PYTHON_HOME_WINDOWS%;%JPY_PYTHON_HOME%\DLLs;%JPY_JDK_HOME%;%JPY_JDK_HOME%\bin;%PATH%
+    - set PATH=%JPY_PYTHON_HOME_WINDOWS%;%JPY_PYTHON_HOME_WINDOWS%\DLLs;%JPY_JDK_HOME%;%JPY_JDK_HOME%\bin;%PATH%
     - call "%JPY_PYTHON_HOME_WINDOWS%\python.exe" setup.py maven bdist_wheel
     - move dist win
   artifacts:
@@ -56,7 +55,6 @@ for:
       - image: Ubuntu2004
   environment:
       JDK8_X64: /usr/lib/jvm/java-1.8.0-openjdk-amd64
-      JPY_PYTHON_HOME: /home/appveyor/venv3.8
       JPY_JDK_HOME: $JDK8_X64
   install:
     - set JDK_HOME=$JPY_JDK_HOME
@@ -65,7 +63,7 @@ for:
     - $JPY_JDK_HOME/bin/java -XshowSettings:properties -version
   build_script:
     - set PATH=$JPY_PYTHON_HOME_UBUNTU/bin:$JPY_JDK_HOME/bin:$PATH
-    - $JPY_PYTHON_HOME/bin/python setup.py maven bdist_wheel
+    - $JPY_PYTHON_HOME_UBUNTU/bin/python setup.py maven bdist_wheel
     - mv dist linux
   artifacts:
     - path: 'linux/*.whl'
@@ -77,18 +75,18 @@ for:
       - image: macos-mojave
   environment:
     JDK8_X64: /Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home/
-    JPY_PYTHON_HOME: /Users/appveyor/venv3.8
     JPY_JDK_HOME: $JDK8_X64
   install:
     - set JDK_HOME=$JPY_JDK_HOME
     # JAVA_HOME is used by Maven
     - set JAVA_HOME=$JPY_JDK_HOME
+    - set MACOSX_DEPLOYMENT_TARGET=10.9
     # In contrast to Ubuntu and Windows, the AppVeyor macOS image does not have Maven preinstalled.
     - brew install maven
     - $JPY_JDK_HOME/bin/java -XshowSettings:properties -version
   build_script:
     - set PATH=$JPY_PYTHON_HOME_MAC/bin:$JPY_JDK_HOME/bin:$PATH
-    - $JPY_PYTHON_HOME/bin/python setup.py maven bdist_wheel
+    - $JPY_PYTHON_HOME_MAC/bin/python setup.py maven bdist_wheel
     - mv dist osx
   artifacts:
     # Apple call their OS "macOS" these days, but this name has to match the directory name on

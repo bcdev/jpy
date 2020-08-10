@@ -253,9 +253,7 @@ def _find_jvm_dll_file(java_home_dir):
 def _find_python_dll_file(fail=False):
     logger.debug("Searching for Python shared library file")
 
-    #
     # Prepare list of search directories
-    #
 
     search_dirs = [sys.prefix]
 
@@ -277,9 +275,7 @@ def _find_python_dll_file(fail=False):
 
     logger.debug("Potential Python shared library search dirs: %s" % repr(search_dirs))
 
-    #
     # Prepare list of possible library file names
-    #
 
     vmaj = str(sys.version_info.major)
     vmin = str(sys.version_info.minor)

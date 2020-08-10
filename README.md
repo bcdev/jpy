@@ -19,11 +19,13 @@ It comes with a number of outstanding features:
 * Java arrays translate into Python sequence objects
 * Java API for accessing Python objects (`jpy.jar`)
 
-jpy has been tested with Python 3.8 and OpenJDK 8 on 64-bit Ubuntu Linux, Windows, and macOS.
+jpy has been tested with Python 3.4 and 3.8 and OpenJDK 8 on 64-bit Ubuntu Linux, Windows 10, and macOS.
 
 The initial development of jpy has been driven by the need to write Python extensions to an established scientific
 imaging application programmed in Java, namely the [SNAP](http://step.esa.int/) toolbox, the SeNtinel Application 
-Platform project, funded by the [European Space Agency](http://www.esa.int/ESA) (ESA).
+Platform project, funded by the [European Space Agency](http://www.esa.int/ESA) (ESA). (jpy is bundled with the SNAP
+distribution.)
+
 Writing such Python plug-ins for a Java application usually requires a bi-directional communication between Python and
 Java since the Python extension code must be able to call back into the Java APIs.
 
@@ -71,6 +73,7 @@ On success, the wheel can be found in the `dist` directory.
 
 How to install from sources
 ---------------------------
+
 TBD
 
 Releasing jpy
