@@ -83,6 +83,10 @@ for:
     # In contrast to Ubuntu and Windows, the AppVeyor macOS image does not have Maven preinstalled.
     - brew install maven
     - $JPY_JDK_HOME/bin/java -XshowSettings:properties -version
+    - brew update
+    - brew install pyenv
+    - pyenv install 3.8
+    - set JPY_PYTHON_HOME_MAC=/Users/appveyor/.pyenv/versions/3.8
   build_script:
     - set PATH=$JPY_PYTHON_HOME_MAC/bin:$JPY_JDK_HOME/bin:$PATH
     - $JPY_PYTHON_HOME_MAC/bin/python setup.py maven bdist_wheel
