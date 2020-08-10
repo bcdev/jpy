@@ -14,10 +14,10 @@ environment:
   matrix:
     - JPY_PYTHON_HOME_WINDOWS: C:\Python34-x64
       JPY_PYTHON_HOME_UBUNTU: /home/appveyor/venv3.4
-      JPY_PYTHON_HOME_MAC: /Users/appveyor/venv3.4
+      JPY_PYTHON_HOME_MAC: /Users/appveyor/.pyenv/versions/3.8.5
     - JPY_PYTHON_HOME_WINDOWS: C:\Python38-x64
       JPY_PYTHON_HOME_UBUNTU: /home/appveyor/venv3.8
-      JPY_PYTHON_HOME_MAC: /Users/appveyor/venv3.8
+      JPY_PYTHON_HOME_MAC: /Users/appveyor/.pyenv/versions/3.8.5
 
 for:
 -
