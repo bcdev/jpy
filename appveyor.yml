@@ -86,8 +86,9 @@ for:
     - brew update
     - brew install pyenv
     - pyenv install 3.8.5
-    - set JPY_PYTHON_HOME_MAC=/Users/appveyor/.pyenv/versions/3.8
     - pyenv global 3.8.5
+    - set JPY_PYTHON_HOME_MAC=/Users/appveyor/.pyenv/versions/3.8.5
+    - ls $JPY_PYTHON_HOME_MAC
   build_script:
     - set PATH=$JPY_PYTHON_HOME_MAC/bin:$JPY_JDK_HOME/bin:$PATH
     - $JPY_PYTHON_HOME_MAC/bin/python setup.py maven bdist_wheel
