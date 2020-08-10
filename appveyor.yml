@@ -87,6 +87,7 @@ for:
     - brew install pyenv
     - pyenv install 3.8.5
     - pyenv global 3.8.5
+    - pip install wheel
     - set JPY_PYTHON_HOME_MAC=/Users/appveyor/.pyenv/versions/3.8.5
     - ls $JPY_PYTHON_HOME_MAC
   build_script:
