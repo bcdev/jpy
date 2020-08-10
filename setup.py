@@ -138,8 +138,7 @@ def _build_dir():
     # this is hacky, but use distutils logic to get build dir. see: distutils.command.build
     plat = '.%s-%d.%d' % (get_platform(), sys.version_info.major, sys.version_info.minor)
     log.info('Platform specifier: "%s"' % plat)
-    if plat == '.macosx-10.15':
-        plat = '.macosx-10.9'
+    plat.replace('.macosx-10.15', '.macosx-10.9')
     log.info('Final platform specifier: "%s"' % plat)
     path = os.path.join('build', 'lib' + plat)
     log.info('Build directory path: "%s"' % path)
