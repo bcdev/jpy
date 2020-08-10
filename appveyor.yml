@@ -1,9 +1,9 @@
 version: '{build}'
 
 image:
+  - macos
   - Visual Studio 2015
   - Ubuntu2004
-  - macos
 
 configuration: Release
 
