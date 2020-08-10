@@ -136,7 +136,9 @@ elif platform.system() == 'Darwin':
 # ----------- Functions -------------
 def _build_dir():
     # this is hacky, but use distutils logic to get build dir. see: distutils.command.build
-    plat = ".%s-%d.%d" % (get_platform(), sys.version_info.major, sys.version_info.minor)
+    plat = '.%s-%d.%d' % (get_platform(), sys.version_info.major, sys.version_info.minor)
+    if plat == '.macosx-10.15':
+        plat = '.macosx-10.9'
     return os.path.join('build', 'lib' + plat)
 
 
