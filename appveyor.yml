@@ -15,6 +15,8 @@ environment:
     - JPY_PYTHON_HOME_WINDOWS: C:\Python34-x64
       JPY_PYTHON_HOME_UBUNTU: /home/appveyor/venv3.4
       JPY_PYTHON_HOME_MAC: /Users/appveyor/.pyenv/versions/3.8.5
+      # TODO: Change the Mac configuration in this section to 3.4 and
+      # update the Mac install script accordingly.
     - JPY_PYTHON_HOME_WINDOWS: C:\Python38-x64
       JPY_PYTHON_HOME_UBUNTU: /home/appveyor/venv3.8
       JPY_PYTHON_HOME_MAC: /Users/appveyor/.pyenv/versions/3.8.5
@@ -80,12 +82,25 @@ for:
     - set JDK_HOME=$JPY_JDK_HOME
     # JAVA_HOME is used by Maven
     - set JAVA_HOME=$JPY_JDK_HOME
-    # In contrast to Ubuntu and Windows, the AppVeyor macOS image does not have Maven preinstalled.
+    # In contrast to Ubuntu and Windows, the AppVeyor macOS image does not
+    # have Maven preinstalled.
     - brew install maven
     - $JPY_JDK_HOME/bin/java -XshowSettings:properties -version
+    # We want to produce a macOS 10.9 wheel that will be compatible with
+    # versions 10.9 and up -- see
+    # https://github.com/MacPython/wiki/wiki/Spinning-wheels . We can't use the
+    # preinstalled Python for this, since we need to set
+    # MACOSX_DEPLOYMENT_TARGET before installing Python. We set
+    # MACOSX_DEPLOYMENT_TARGET in the "environment" section. Then here we
+    # use brew to install pyenv and pyenv to install a 10.9-targeted Python
+    # environment.
     - brew update
     - brew install pyenv
+    # Currently, we hard-code version 3.8.5.
+    # TODO: set the Python version in the environment matrix so we can
+    # use this install script to install other Python versions too.
     - pyenv install 3.8.5
+    # Set pyenv's python as the global Python environment
     - pyenv global 3.8.5
     - /Users/appveyor/.pyenv/versions/3.8.5/bin/pip install wheel
     - set JPY_PYTHON_HOME_MAC=/Users/appveyor/.pyenv/versions/3.8.5
@@ -95,8 +110,8 @@ for:
     - $JPY_PYTHON_HOME_MAC/bin/python setup.py maven bdist_wheel
     - mv dist osx
   artifacts:
-    # Apple call their OS "macOS" these days, but this name has to match the directory name on
-    # the FTP server.
+    # Apple call their OS "macOS" these days, but this name has to match the
+    # directory name on the FTP server.
     - path: 'osx/*.whl'
       name: wheel
 
