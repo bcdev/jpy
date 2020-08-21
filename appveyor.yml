@@ -19,7 +19,7 @@ environment:
       # update the Mac install script accordingly.
     - JPY_PYTHON_HOME_WINDOWS: C:\Python38-x64
       JPY_PYTHON_HOME_UBUNTU: /home/appveyor/venv3.8
-      JPY_PYTHON_HOME_MAC: 3.8.5
+      JPY_MAC_PYTHON_VERSION: 3.8.5
 
 for:
 -
@@ -96,15 +96,13 @@ for:
     # use brew to install pyenv and pyenv to install a 10.9-targeted Python
     # environment.
     - brew update
+    - brew install openssl
     - brew install pyenv
-    # Currently, we hard-code version 3.8.5.
-    # TODO: set the Python version in the environment matrix so we can
-    # use this install script to install other Python versions too.
-    - pyenv install $JPY_MAC_PYTHON_VERSION
+    - CFLAGS="-I$(brew --prefix openssl)/include" LDFLAGS="-L$(brew --prefix openssl)/lib" pyenv install $JPY_MAC_PYTHON_VERSION
     # Set pyenv's python as the global Python environment
     - pyenv global $JPY_MAC_PYTHON_VERSION
-    - /Users/appveyor/.pyenv/versions/3.8.5/bin/pip install wheel
-    - set JPY_PYTHON_HOME_MAC=/Users/appveyor/.pyenv/versions/3.8.5
+    - /Users/appveyor/.pyenv/versions/$JPY_MAC_PYTHON_VERSION/bin/pip install wheel
+    - set JPY_PYTHON_HOME_MAC=/Users/appveyor/.pyenv/versions/$JPY_MAC_PYTHON_VERSION
     - ls $JPY_PYTHON_HOME_MAC
   build_script:
     - set PATH=$JPY_PYTHON_HOME_MAC/bin:$JPY_JDK_HOME/bin:$PATH
