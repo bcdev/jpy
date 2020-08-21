@@ -14,12 +14,12 @@ environment:
   matrix:
     - JPY_PYTHON_HOME_WINDOWS: C:\Python34-x64
       JPY_PYTHON_HOME_UBUNTU: /home/appveyor/venv3.4
-      JPY_PYTHON_HOME_MAC: /Users/appveyor/.pyenv/versions/3.8.5
+      JPY_MAC_PYTHON_VERSION: 3.4.10
       # TODO: Change the Mac configuration in this section to 3.4 and
       # update the Mac install script accordingly.
     - JPY_PYTHON_HOME_WINDOWS: C:\Python38-x64
       JPY_PYTHON_HOME_UBUNTU: /home/appveyor/venv3.8
-      JPY_PYTHON_HOME_MAC: /Users/appveyor/.pyenv/versions/3.8.5
+      JPY_PYTHON_HOME_MAC: 3.8.5
 
 for:
 -
@@ -75,6 +75,7 @@ for:
     only:
       - image: macos
   environment:
+    JPY_PYTHON_HOME_MAC: /Users/appveyor/.pyenv/versions/$JPY_MAC_PYTHON_VERSION
     JDK8_X64: /Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home/
     JPY_JDK_HOME: $JDK8_X64
     MACOSX_DEPLOYMENT_TARGET: 10.9
@@ -99,9 +100,9 @@ for:
     # Currently, we hard-code version 3.8.5.
     # TODO: set the Python version in the environment matrix so we can
     # use this install script to install other Python versions too.
-    - pyenv install 3.8.5
+    - pyenv install $JPY_MAC_PYTHON_VERSION
     # Set pyenv's python as the global Python environment
-    - pyenv global 3.8.5
+    - pyenv global $JPY_MAC_PYTHON_VERSION
     - /Users/appveyor/.pyenv/versions/3.8.5/bin/pip install wheel
     - set JPY_PYTHON_HOME_MAC=/Users/appveyor/.pyenv/versions/3.8.5
     - ls $JPY_PYTHON_HOME_MAC
