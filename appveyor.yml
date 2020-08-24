@@ -98,7 +98,14 @@ for:
     - brew update
     - brew install openssl
     - brew install pyenv
-    - CFLAGS="-I$(brew --prefix openssl)/include" LDFLAGS="-L$(brew --prefix openssl)/lib" pyenv install $JPY_MAC_PYTHON_VERSION
+    - brew install openssl@1.1
+    - ssldir=$(brew --prefix openssl@1.1 2>/dev/null || true)
+    - export PKG_CONFIG_PATH="${ssldir}/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+    - export LDFLAGS="-L${ssldir}/lib"
+    - export LD_LIBRARY_PATH="${ssldir}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+    - export CFLAGS="-I${ssldir}/include"
+    - export CPPFLAGS="-I${ssldir}/include"
+    - pyenv install $JPY_MAC_PYTHON_VERSION
     # Set pyenv's python as the global Python environment
     - pyenv global $JPY_MAC_PYTHON_VERSION
     - /Users/appveyor/.pyenv/versions/$JPY_MAC_PYTHON_VERSION/bin/pip install wheel
