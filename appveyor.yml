@@ -15,11 +15,11 @@ environment:
     - JPY_PYTHON_HOME_WINDOWS: C:\Python34-x64
       JPY_PYTHON_HOME_UBUNTU: /home/appveyor/venv3.4
       JPY_MAC_PYTHON_VERSION: 3.4.10
-      # TODO: Change the Mac configuration in this section to 3.4 and
-      # update the Mac install script accordingly.
+      JPY_MAC_OPENSSL_VERSION: https://raw.githubusercontent.com/Homebrew/homebrew-core/64555220bfbf4a25598523c2e4d3a232560eaad7/Formula/openssl.rb
     - JPY_PYTHON_HOME_WINDOWS: C:\Python38-x64
       JPY_PYTHON_HOME_UBUNTU: /home/appveyor/venv3.8
       JPY_MAC_PYTHON_VERSION: 3.8.5
+      JPY_MAC_OPENSSL_VERSION: openssl@1.1
 
 for:
 -
@@ -96,9 +96,8 @@ for:
     # use brew to install pyenv and pyenv to install a 10.9-targeted Python
     # environment.
     - brew update
-    - brew install openssl
+    - brew install $JPY_MAC_OPENSSL_VERSION -f
     - brew install pyenv
-    - brew install openssl@1.1
     - ssldir=$(brew --prefix openssl@1.1 2>/dev/null || true)
     - export PKG_CONFIG_PATH="${ssldir}/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
     - export LDFLAGS="-L${ssldir}/lib"
