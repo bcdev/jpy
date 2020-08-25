@@ -101,7 +101,7 @@ for:
     - brew update
     - brew install $JPY_MAC_OPENSSL_VERSION -f
     - brew install pyenv
-    - export ssldir=$(brew --prefix openssl@1.0.2 2>/dev/null || true)
+    - export ssldir=/usr/local/opt/openssl
     - echo $ssldir
     - export PKG_CONFIG_PATH="${ssldir}/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
     - export LDFLAGS="-L${ssldir}/lib"
