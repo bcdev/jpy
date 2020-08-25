@@ -18,11 +18,11 @@ environment:
       # Python 3.4 is incompatible with OpenSSL 1.1, so we have to force the
       # installation of OpenSSL 1.0 (see https://bugs.python.org/issue31838
       # and https://gist.github.com/souzagab/0ae60e61939d51385de87904b65b2da2 ).
-      JPY_MAC_OPENSSL_VERSION: https://raw.githubusercontent.com/Homebrew/homebrew-core/64555220bfbf4a25598523c2e4d3a232560eaad7/Formula/openssl.rb
+      JPY_MAC_OPENSSL_PACKAGE: https://raw.githubusercontent.com/Homebrew/homebrew-core/64555220bfbf4a25598523c2e4d3a232560eaad7/Formula/openssl.rb
     - JPY_PYTHON_HOME_WINDOWS: C:\Python38-x64
       JPY_PYTHON_HOME_UBUNTU: /home/appveyor/venv3.8
       JPY_MAC_PYTHON_VERSION: 3.8.5
-      JPY_MAC_OPENSSL_VERSION: openssl@1.1
+      JPY_MAC_OPENSSL_PACKAGE: openssl@1.1
 
 for:
 -
@@ -81,6 +81,7 @@ for:
     JPY_PYTHON_HOME_MAC: /Users/appveyor/.pyenv/versions/$JPY_MAC_PYTHON_VERSION
     JDK8_X64: /Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home/
     JPY_JDK_HOME: $JDK8_X64
+    # See note on deployment targets below.
     MACOSX_DEPLOYMENT_TARGET: 10.9
   install:
     - set JDK_HOME=$JPY_JDK_HOME
@@ -98,19 +99,23 @@ for:
     # MACOSX_DEPLOYMENT_TARGET in the "environment" section. Then here we
     # use brew to install pyenv and pyenv to install a 10.9-targeted Python
     # environment.
+    #
+    # The Python 3.4 Mac build is particularly challenging, because Python 3.4
+    # is incompatible with OpenSSL 1.1, and OpenSSL 1.0 is no longer supported
+    # by homebrew. We install OpenSSL 1.0 by directly specifying the URL of
+    # the appropriate homebrew formula, set a lot of environment variables to
+    # make sure that pyenv can find it, then uninstall version 1.1. (For the
+    # Python 3.8 build, OpenSSL 1.1 is then automatically reinstalled by pyenv.)
+    # Most of this configuration can be removed once we drop Python 3.4 support.
     - brew update
-    - brew install $JPY_MAC_OPENSSL_VERSION -f
+    - brew install $JPY_MAC_OPENSSL_PACKAGE -f
     - brew install pyenv
     - export ssldir=/usr/local/opt/openssl
-    - echo $ssldir
-    - ls $ssldir
-    - ls -l /usr/local/opt
     - export PKG_CONFIG_PATH="${ssldir}/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
     - export LDFLAGS="-L${ssldir}/lib"
     - export LD_LIBRARY_PATH="${ssldir}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
     - export CFLAGS="-I${ssldir}/include"
     - export CPPFLAGS="-I${ssldir}/include"
-    - env
     - brew uninstall --ignore-dependencies openssl@1.1
     - export PYTHON_CONFIGURE_OPTS="--enable-shared"
     - pyenv install $JPY_MAC_PYTHON_VERSION
