@@ -110,6 +110,7 @@ for:
     - export LD_LIBRARY_PATH="${ssldir}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
     - export CFLAGS="-I${ssldir}/include"
     - export CPPFLAGS="-I${ssldir}/include"
+    - env
     - pyenv install $JPY_MAC_PYTHON_VERSION
     # Set pyenv's python as the global Python environment
     - pyenv global $JPY_MAC_PYTHON_VERSION
