@@ -99,13 +99,12 @@ for:
     # use brew to install pyenv and pyenv to install a 10.9-targeted Python
     # environment.
     - brew update
-    - brew uninstall --ignore-dependencies openssl@1.1
     - brew install $JPY_MAC_OPENSSL_VERSION -f
     - brew install pyenv
     - export ssldir=/usr/local/opt/openssl
     - echo $ssldir
     - ls $ssldir
-    - ls /usr/local/opt
+    - ls -l /usr/local/opt
     - export PKG_CONFIG_PATH="${ssldir}/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
     - export LDFLAGS="-L${ssldir}/lib"
     - export LD_LIBRARY_PATH="${ssldir}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
