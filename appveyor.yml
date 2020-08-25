@@ -111,6 +111,8 @@ for:
     - export CFLAGS="-I${ssldir}/include"
     - export CPPFLAGS="-I${ssldir}/include"
     - env
+    - brew uninstall --ignore-dependencies openssl@1.1
+    - export PYTHON_CONFIGURE_OPTS="--enable-shared"
     - pyenv install $JPY_MAC_PYTHON_VERSION
     # Set pyenv's python as the global Python environment
     - pyenv global $JPY_MAC_PYTHON_VERSION
