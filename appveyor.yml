@@ -25,11 +25,11 @@ environment:
       JPY_MAC_OPENSSL_PACKAGE: openssl@1.1
     - JPY_PYTHON_HOME_WINDOWS: C:\Python36-x64
       JPY_PYTHON_HOME_UBUNTU: /home/appveyor/venv3.6
-      JPY_MAC_PYTHON_VERSION: 3.6.12
+      JPY_MAC_PYTHON_VERSION: 3.6.11
       JPY_MAC_OPENSSL_PACKAGE: openssl@1.1
     - JPY_PYTHON_HOME_WINDOWS: C:\Python37-x64
       JPY_PYTHON_HOME_UBUNTU: /home/appveyor/venv3.7
-      JPY_MAC_PYTHON_VERSION: 3.7.9
+      JPY_MAC_PYTHON_VERSION: 3.7.8
       JPY_MAC_OPENSSL_PACKAGE: openssl@1.1
     - JPY_PYTHON_HOME_WINDOWS: C:\Python38-x64
       JPY_PYTHON_HOME_UBUNTU: /home/appveyor/venv3.8
