@@ -182,7 +182,7 @@ def package_maven():
 
 def _read(filename):
     """ Helper function for reading in project files """
-    with open(filename) as file:
+    with open(filename, encoding='UTF-8') as file:
         return file.read()
 
 
