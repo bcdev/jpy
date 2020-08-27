@@ -12,6 +12,9 @@ Version 0.10 (in development)
   [#140](https://github.com/bcdev/jpy/issues/140). Contribution by Dr-Irv.
 * Fixed: Cannot iterate through a dict in Python 3.x 
   [#136](https://github.com/bcdev/jpy/issues/136). Contribution by Dr-Irv.
+* Automatically build 64-bit Python wheels for all Python versions from 3.4 to
+  3.8 on Linux, Windows, and Mac (fixes
+  [#174](https://github.com/bcdev/jpy/issues/174)). 
 
 Version 0.9
 ===========

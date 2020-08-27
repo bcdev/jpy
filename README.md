@@ -21,8 +21,8 @@ languages.  It comes with a number of outstanding features:
 * Java arrays translate into Python sequence objects
 * Java API for accessing Python objects (`jpy.jar`)
 
-jpy has been tested with Python 3.4 and 3.8 and OpenJDK 8 on 64-bit Ubuntu
-Linux, Windows 10, and macOS.
+jpy has been tested with Python 3.4–3.8 and OpenJDK 8 on 64-bit Ubuntu Linux,
+Windows 10, and macOS.
 
 The initial development of jpy has been driven by the need to write Python
 extensions to an established scientific imaging application programmed in
@@ -102,12 +102,12 @@ documentation.
 Automated builds
 ----------------
 
-As of 2020-08-11, [Python wheel](https://pythonwheels.com/) packages for jpy
+As of 2020-08-27, [Python wheel](https://pythonwheels.com/) packages for jpy
 are automatically built on
 [AppVeyor](https://ci.appveyor.com/project/bcdev/jpy), but at present they are
 uploaded only to a private FTP server and not publicly released. Wheels are
-built for Linux 64-bit (Python 3.4 and 3.8), Windows 64-bit (Python 3.4 and
-3.8), and macOS 10.9+ 64-bit (Python 3.8).
+built for Python versions 3.4, 3.5, 3.6, 3.7, and 3.8 on Linux, Windows, and
+macOS (≥10.9). Only 64-bit wheels are built.
 
 The repository also contains an outdated configuration for [automated Travis
 builds](https://travis-ci.org/github/bcdev/jpy), but this configuration is
