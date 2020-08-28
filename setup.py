@@ -1,6 +1,6 @@
 # !/usr/bin/env python3
 
-# Copyright 2014-2017 Brockmann Consult GmbH
+# Copyright 2014-2020 Brockmann Consult GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import glob
 import os
 import os.path
@@ -135,8 +136,11 @@ elif platform.system() == 'Darwin':
 # ----------- Functions -------------
 def _build_dir():
     # this is hacky, but use distutils logic to get build dir. see: distutils.command.build
-    plat = ".%s-%d.%d" % (get_platform(), sys.version_info.major, sys.version_info.minor)
-    return os.path.join('build', 'lib' + plat)
+    plat = '.%s-%d.%d' % (get_platform(), sys.version_info.major, sys.version_info.minor)
+    log.info('Platform specifier: "%s"' % plat)
+    path = os.path.join('build', 'lib' + plat)
+    log.info('Build directory path: "%s"' % path)
+    return path
 
 
 def package_maven():
@@ -153,9 +157,7 @@ def package_maven():
     if code:
         exit(code)
 
-    #
     # Copy JAR results to lib/*.jar
-    #
 
     if not os.path.exists(lib_dir):
         os.mkdir(lib_dir)
@@ -169,13 +171,18 @@ def package_maven():
         exit(1)
     for jar_file in jar_files:
         build_dir = _build_dir()
+        if os.path.exists(build_dir):
+            log.info('Build directory "%s" exists.' % build_dir)
+        else:
+            log.info('Creating missing build directory "%s".' % build_dir)
+            os.makedirs(build_dir)
         log.info("Copying " + jar_file + " -> " + build_dir + "")
         shutil.copy(jar_file, build_dir)
 
 
 def _read(filename):
     """ Helper function for reading in project files """
-    with open(filename) as file:
+    with open(filename, encoding='UTF-8') as file:
         return file.read()
 
 
@@ -201,6 +208,7 @@ def test_maven():
     log.info("Executing Maven goal 'test' with arg line " + repr(mvn_args))
     code = subprocess.call(['mvn', 'test', mvn_args], shell=platform.system() == 'Windows')
     return code == 0
+
 
 def _write_jpy_config(target_dir=None, install_dir=None):
     """
@@ -255,6 +263,7 @@ def test_suite():
     suite.addTest(test_java)
 
     return suite
+
 
 class MavenBuildCommand(Command):
     """ Custom JPY Maven builder command """
@@ -346,9 +355,9 @@ setup(name='jpy',
 
                    # Specify the Python versions you support here. In particular, ensure
                    # that you indicate whether you support Python 2, Python 3 or both.
-                   'Programming Language :: Python :: 2',
-                   'Programming Language :: Python :: 2.7',
-                   'Programming Language :: Python :: 3',
-                   'Programming Language :: Python :: 3.3',
                    'Programming Language :: Python :: 3.4',
-                   'Programming Language :: Python :: 3.5'])
+                   'Programming Language :: Python :: 3.5',
+                   'Programming Language :: Python :: 3.6',
+                   'Programming Language :: Python :: 3.7',
+                   'Programming Language :: Python :: 3.8'
+                   ])

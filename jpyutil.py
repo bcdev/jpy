@@ -84,26 +84,26 @@ def _get_unique_config_values(names):
     values = []
     for name in names:
         value = sysconfig.get_config_var(name)
-        if value and not value in values:
+        if value and value not in values:
             values.append(value)
     return values
 
 
 def _add_paths_if_exists(path_list, *paths):
     for path in paths:
-        if os.path.exists(path) and not path in path_list:
+        if os.path.exists(path) and path not in path_list:
             path_list.append(path)
     return path_list
 
 
 def _get_module_path(name, fail=False, install_path=None):
     """ Find the path to the jpy jni modules. """
-    import imp
+    import importlib.util
 
-    module = imp.find_module(name)
-    if not module and fail:
+    spec = importlib.util.find_spec(name)
+    if not spec and fail:
         raise RuntimeError("can't find module '" + name + "'")
-    path = module[1]
+    path = spec.origin
     if not path and fail:
         raise RuntimeError("module '" + name + "' is missing a file path")
     
@@ -115,8 +115,8 @@ def _get_module_path(name, fail=False, install_path=None):
 
 def _find_file(search_dirs, *filenames):
     for filename in filenames:
-        for dir in search_dirs:
-            path = os.path.normpath(os.path.join(dir, filename))
+        for dir_ in search_dirs:
+            path = os.path.normpath(os.path.join(dir_, filename))
             path_exists = os.path.exists(path)
             logger.debug("Exists '%s'? %s" % (path, "yes" if path_exists else "no"))
             if path_exists:
@@ -150,7 +150,7 @@ def find_jdk_home_dir():
     try:
         output = subprocess.check_output(['mvn', '-v'])
         if isinstance(output, bytes) and not isinstance(output, str):
-            #PY3 related
+            # In Python 3, byte arrays must be explicitly converted into strings.
             output = output.decode('utf-8')
         for part in output.split('\n'):
             if part.startswith('Java home:'):
@@ -169,6 +169,8 @@ def find_jvm_dll_file(java_home_dir=None, fail=False):
     """
     Try to detect the JVM's shared library file.
     :param java_home_dir: The Java JRE or JDK installation directory to be used for searching.
+    :param fail: Controls behaviour when library file cannot be found. If False, use a fallback. If True, raise
+                a runtime error.
     :return: pathname if found, else None
     """
 
@@ -218,8 +220,8 @@ def _get_jvm_lib_dirs(java_home_dir):
 
 def _get_existing_subdirs(dirs, subdirname):
     new_dirs = []
-    for dir in dirs:
-        new_dir = os.path.join(dir, subdirname)
+    for dir_ in dirs:
+        new_dir = os.path.join(dir_, subdirname)
         if os.path.isdir(new_dir):
             new_dirs.append(new_dir)
     return new_dirs
@@ -251,15 +253,13 @@ def _find_jvm_dll_file(java_home_dir):
 def _find_python_dll_file(fail=False):
     logger.debug("Searching for Python shared library file")
 
-    #
     # Prepare list of search directories
-    #
 
     search_dirs = [sys.prefix]
 
     extra_search_dirs = [sysconfig.get_config_var(name) for name in PYTHON_LIB_DIR_CONFIG_VAR_NAMES]
     for extra_dir in extra_search_dirs:
-        if extra_dir and not extra_dir in search_dirs and os.path.exists(extra_dir):
+        if extra_dir and extra_dir not in search_dirs and os.path.exists(extra_dir):
             search_dirs.append(extra_dir)
 
     if platform.system() == 'Windows':
@@ -275,9 +275,7 @@ def _find_python_dll_file(fail=False):
 
     logger.debug("Potential Python shared library search dirs: %s" % repr(search_dirs))
 
-    #
     # Prepare list of possible library file names
-    #
 
     vmaj = str(sys.version_info.major)
     vmin = str(sys.version_info.minor)
@@ -323,7 +321,6 @@ def _get_python_api_config(config_file=None):
     try:
         # 2. Try Python import machinery
         import jpyconfig
-
         return jpyconfig
 
     except ImportError:
@@ -483,7 +480,7 @@ class Properties:
 
     def set_property(self, key, value):
         if value:
-            if not key in self.keys:
+            if key not in self.keys:
                 self.keys.append(key)
             self.values[key] = value
         else:
@@ -621,16 +618,17 @@ def _main():
     parser.add_argument("--install_dir", action='store', default=None, help="Optional. Used during pip install of JPY")
     args = parser.parse_args()
 
-    log_level = getattr(logging, args.log_level.upper(), None)
-    if not isinstance(log_level, int):
-        raise ValueError('Invalid log level: %s' % log_level)
+    # Using _ suffix to avoid shadowing global log_level variable
+    log_level_ = getattr(logging, args.log_level.upper(), None)
+    if not isinstance(log_level_, int):
+        raise ValueError('Invalid log level: %s' % log_level_)
 
     log_format = '%(levelname)s: %(message)s'
     log_file = args.log_file
     if log_file:
-        logging.basicConfig(format=log_format, level=log_level, filename=log_file, filemode='w')
+        logging.basicConfig(format=log_format, level=log_level_, filename=log_file, filemode='w')
     else:
-        logging.basicConfig(format=log_format, level=log_level)
+        logging.basicConfig(format=log_format, level=log_level_)
 
     try:
         retcode = write_config_files(out_dir=args.out,

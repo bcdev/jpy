@@ -1,83 +1,158 @@
 version: '{build}'
 
-image: Visual Studio 2015
+image:
+  - macos
+  - Visual Studio 2015
+  - Ubuntu2004
+
 configuration: Release
 
 platform:
-  - x86
   - x64
 
 environment:
-  JDK8_X64: C:\Program Files\Java\jdk1.8.0
-  JDK8_X86: C:\Program Files (x86)\Java\jdk1.8.0
-
   matrix:
-    - JPY_PYTHON_HOME: C:\Python27
-      JPY_JDK_HOME: '%JDK8_X86%'
-    - JPY_PYTHON_HOME: C:\Python34
-      JPY_JDK_HOME: '%JDK8_X86%'
-    - JPY_PYTHON_HOME: C:\Python35
-      JPY_JDK_HOME: '%JDK8_X86%'
-    - JPY_PYTHON_HOME: C:\Python36
-      JPY_JDK_HOME: '%JDK8_X86%'
-    - JPY_PYTHON_HOME: C:\Python27-x64
-      JPY_JDK_HOME: '%JDK8_X64%'
-    - JPY_PYTHON_HOME: C:\Python34-x64
-      JPY_JDK_HOME: '%JDK8_X64%'
-    - JPY_PYTHON_HOME: C:\Python35-x64
-      JPY_JDK_HOME: '%JDK8_X64%'
-    - JPY_PYTHON_HOME: C:\Python36-x64
-      JPY_JDK_HOME: '%JDK8_X64%'
+    - JPY_PYTHON_HOME_WINDOWS: C:\Python34-x64
+      JPY_PYTHON_HOME_UBUNTU: /home/appveyor/venv3.4
+      JPY_MAC_PYTHON_VERSION: 3.4.10
+      # Python 3.4 is incompatible with OpenSSL 1.1, so we have to force the
+      # installation of OpenSSL 1.0 (see https://bugs.python.org/issue31838
+      # and https://gist.github.com/souzagab/0ae60e61939d51385de87904b65b2da2 ).
+      JPY_MAC_OPENSSL_PACKAGE: https://raw.githubusercontent.com/Homebrew/homebrew-core/64555220bfbf4a25598523c2e4d3a232560eaad7/Formula/openssl.rb
+    - JPY_PYTHON_HOME_WINDOWS: C:\Python35-x64
+      JPY_PYTHON_HOME_UBUNTU: /home/appveyor/venv3.5
+      JPY_MAC_PYTHON_VERSION: 3.5.9
+      JPY_MAC_OPENSSL_PACKAGE: openssl@1.1
+    - JPY_PYTHON_HOME_WINDOWS: C:\Python36-x64
+      JPY_PYTHON_HOME_UBUNTU: /home/appveyor/venv3.6
+      JPY_MAC_PYTHON_VERSION: 3.6.11
+      JPY_MAC_OPENSSL_PACKAGE: openssl@1.1
+    - JPY_PYTHON_HOME_WINDOWS: C:\Python37-x64
+      JPY_PYTHON_HOME_UBUNTU: /home/appveyor/venv3.7
+      JPY_MAC_PYTHON_VERSION: 3.7.8
+      JPY_MAC_OPENSSL_PACKAGE: openssl@1.1
+    - JPY_PYTHON_HOME_WINDOWS: C:\Python38-x64
+      JPY_PYTHON_HOME_UBUNTU: /home/appveyor/venv3.8
+      JPY_MAC_PYTHON_VERSION: 3.8.5
+      JPY_MAC_OPENSSL_PACKAGE: openssl@1.1
 
-matrix:
-  exclude:
-    - platform: x86
-      JPY_JDK_HOME: '%JDK8_X64%'
-    - platform: x64
-      JPY_JDK_HOME: '%JDK8_X86%'
+for:
+-
+  matrix:
+    only:
+      - image: Visual Studio 2015
+  environment:
+    JDK8_X64: C:\Program Files\Java\jdk1.8.0
+    JPY_JDK_HOME: '%JDK8_X64%'
 
-# see https://www.appveyor.com/docs/build-cache/
-cache:
-  - '%MAVEN_HOME% -> pom.xml'
-  - '%UserProfile%\.m2 -> pom.xml'
+  install:
+    - set JDK_HOME=%JPY_JDK_HOME%
+    # JAVA_HOME is used by Maven
+    - set JAVA_HOME=%JPY_JDK_HOME%
+    - set
+    - call "%JPY_JDK_HOME%\bin\java.exe" -XshowSettings:properties -version
+    - call "%JPY_PYTHON_HOME_WINDOWS%\Scripts\pip.exe" install --upgrade setuptools
+    - call "%JPY_PYTHON_HOME_WINDOWS%\Scripts\pip.exe" install wheel
+    - call "%JPY_PYTHON_HOME_WINDOWS%\Scripts\pip.exe" install psutil
+    - call "%JPY_PYTHON_HOME_WINDOWS%\python.exe" ci\appveyor\dump-dlls.py
+  build_script:
+    - set PATH=%JPY_PYTHON_HOME_WINDOWS%;%JPY_PYTHON_HOME_WINDOWS%\DLLs;%JPY_JDK_HOME%;%JPY_JDK_HOME%\bin;%PATH%
+    - call "%JPY_PYTHON_HOME_WINDOWS%\python.exe" setup.py maven bdist_wheel
+    - move dist win
+  artifacts:
+    - path: 'win\*.whl'
+      name: wheel
+  cache:
+    # see https://www.appveyor.com/docs/build-cache/
+    - '%MAVEN_HOME% -> pom.xml'
+    - '%UserProfile%\.m2 -> pom.xml'
+-
+  matrix:
+    only:
+      - image: Ubuntu2004
+  environment:
+      JDK8_X64: /usr/lib/jvm/java-1.8.0-openjdk-amd64
+      JPY_JDK_HOME: $JDK8_X64
+  install:
+    - set JDK_HOME=$JPY_JDK_HOME
+    # JAVA_HOME is used by Maven
+    - set JAVA_HOME=$JPY_JDK_HOME
+    - $JPY_JDK_HOME/bin/java -XshowSettings:properties -version
+  build_script:
+    - set PATH=$JPY_PYTHON_HOME_UBUNTU/bin:$JPY_JDK_HOME/bin:$PATH
+    - $JPY_PYTHON_HOME_UBUNTU/bin/python setup.py maven bdist_wheel
+    - mv dist linux
+  artifacts:
+    - path: 'linux/*.whl'
+      name: wheel
+-
+  matrix:
+    only:
+      - image: macos
+  environment:
+    JPY_PYTHON_HOME_MAC: /Users/appveyor/.pyenv/versions/$JPY_MAC_PYTHON_VERSION
+    JDK8_X64: /Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home/
+    JPY_JDK_HOME: $JDK8_X64
+    # See note on deployment targets below.
+    MACOSX_DEPLOYMENT_TARGET: 10.9
+  install:
+    - set JDK_HOME=$JPY_JDK_HOME
+    # JAVA_HOME is used by Maven
+    - set JAVA_HOME=$JPY_JDK_HOME
+    # In contrast to Ubuntu and Windows, the AppVeyor macOS image does not
+    # have Maven preinstalled.
+    - brew install maven
+    - $JPY_JDK_HOME/bin/java -XshowSettings:properties -version
+    # We want to produce a macOS 10.9 wheel that will be compatible with
+    # versions 10.9 and up -- see
+    # https://github.com/MacPython/wiki/wiki/Spinning-wheels . We can't use the
+    # preinstalled Python for this, since we need to set
+    # MACOSX_DEPLOYMENT_TARGET before installing Python. We set
+    # MACOSX_DEPLOYMENT_TARGET in the "environment" section. Then here we
+    # use brew to install pyenv and pyenv to install a 10.9-targeted Python
+    # environment.
+    #
+    # The Python 3.4 Mac build is particularly challenging, because Python 3.4
+    # is incompatible with OpenSSL 1.1, and OpenSSL 1.0 is no longer supported
+    # by homebrew. We install OpenSSL 1.0 by directly specifying the URL of
+    # the appropriate homebrew formula, set a lot of environment variables to
+    # make sure that pyenv can find it, then uninstall version 1.1. (For the
+    # Python 3.8 build, OpenSSL 1.1 is then automatically reinstalled by pyenv.)
+    # Most of this configuration can be removed once we drop Python 3.4 support.
+    - brew update
+    - brew install $JPY_MAC_OPENSSL_PACKAGE -f
+    - brew install pyenv
+    - export ssldir=/usr/local/opt/openssl
+    - export PKG_CONFIG_PATH="${ssldir}/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+    - export LDFLAGS="-L${ssldir}/lib"
+    - export LD_LIBRARY_PATH="${ssldir}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+    - export CFLAGS="-I${ssldir}/include"
+    - export CPPFLAGS="-I${ssldir}/include"
+    - brew uninstall --ignore-dependencies openssl@1.1
+    - export PYTHON_CONFIGURE_OPTS="--enable-shared"
+    - pyenv install $JPY_MAC_PYTHON_VERSION
+    # Set pyenv's python as the global Python environment
+    - pyenv global $JPY_MAC_PYTHON_VERSION
+    - /Users/appveyor/.pyenv/versions/$JPY_MAC_PYTHON_VERSION/bin/pip install wheel
+    - set JPY_PYTHON_HOME_MAC=/Users/appveyor/.pyenv/versions/$JPY_MAC_PYTHON_VERSION
+    - ls $JPY_PYTHON_HOME_MAC
+  build_script:
+    - set PATH=$JPY_PYTHON_HOME_MAC/bin:$JPY_JDK_HOME/bin:$PATH
+    - $JPY_PYTHON_HOME_MAC/bin/python setup.py maven bdist_wheel
+    - mv dist osx
+  artifacts:
+    # Apple call their OS "macOS" these days, but this name has to match the
+    # directory name on the FTP server.
+    - path: 'osx/*.whl'
+      name: wheel
 
-install:
-  # For Python 2.7 builds, we still get following error
-  #    org.jpy.PyLib: System.load("C:\projects\jpy\build\lib.win32-2.7\jpy.pyd")
-  #    java.lang.UnsatisfiedLinkError: C:\projects\jpy\build\lib.win32-2.7\jpy.pyd: Can't find dependent libraries
-  # The following did NOT help at all:
-  #- copy C:\Windows\SysWOW64\python27.dll C:\Python27
-  #- copy C:\Windows\System32\python27.dll C:\Python27-x64
-  #- copy C:\Windows\WinSxS\x86_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.8387_none_5094ca96bcb6b2bb\msvcr90.dll C:\Python27
-  #- copy C:\Windows\WinSxS\amd64_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.8387_none_08e793bfa83a89b5\msvcr90.dll C:\Python27-x64
-  #- ps: Get-ChildItem -Path $env:JPY_PYTHON_HOME
-  #- ps: Get-ChildItem -Path $env:JPY_PYTHON_HOME -Filter *.dll -Recurse
-  - call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /%PLATFORM%
-  - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86_amd64
-  - set JDK_HOME=%JPY_JDK_HOME%
-  # JAVA_HOME is used by Maven
-  - set JAVA_HOME=%JPY_JDK_HOME%
-  - set
-  - call "%JPY_JDK_HOME%\bin\java.exe" -XshowSettings:properties -version
-  - call "%JPY_PYTHON_HOME%\Scripts\pip.exe" install wheel
-  - call "%JPY_PYTHON_HOME%\Scripts\pip.exe" install psutil
-  - call "%JPY_PYTHON_HOME%\python.exe" ci\appveyor\dump-dlls.py
-
-build_script:
-  - set PATH=%JPY_PYTHON_HOME%;%JPY_PYTHON_HOME%\DLLs;%JPY_JDK_HOME%;%JPY_JDK_HOME%\bin;%PATH%
-  - call "%JPY_PYTHON_HOME%\python.exe" setup.py --maven bdist_wheel
-  - move dist win
-
-artifacts:
-  - path: 'win\*.whl'
-    name: wheel
-    
 deploy:
   - provider: FTP
     protocol: ftp
     host: ftp.brockmann-consult.de
     username: jpy
     password:
+      # See https://www.appveyor.com/docs/build-configuration/#secure-variables
       secure: AMte8IErI/LRGmLGq4Y5YQ==
     folder: software
-    debug: true    
+    debug: true
