@@ -1,9 +1,6 @@
-*************
-jpy Changelog
-*************
+# jpy Changelog
 
-Version 0.10 (in development)
-=============================
+## Version 0.10 (in development)
 
 * Make jpy work with Anaconda by setting environment variable 
   `PYTHONHOME` from Java 
@@ -16,13 +13,11 @@ Version 0.10 (in development)
   3.8 on Linux, Windows, and Mac (fixes
   [#174](https://github.com/bcdev/jpy/issues/174)). 
 
-Version 0.9
-===========
+## Version 0.9
 
 This version includes a number of contributions from supportive GitHub users. Thanks to all of you!
 
-Fixes
------
+### Fixes
 
 * Corrected Java reference count of complex PyObject passed back and forth to methods (issue #120). Fix by sbarnoud.
 * Fixed problem where default methods on Java 8 Interfaces were not found (issue #102). Fix by Charles P. Wright.
@@ -30,10 +25,9 @@ Fixes
 * Fixed problem where calling jpy.get_type() too many times causes a memory access error (issue #74). Fix by Dave Voutila.
 * Fixed a corruption when retrieving long values (#72). Fix by chipkent.
 * Fixed fatal error when stopping python session (issue #70, #77). Fix by Dave Voutila.
-# Explicit null checks for avoiding JVM crash (issue #126). Fix by Geomatys.
+* Explicit null checks for avoiding JVM crash (issue #126). Fix by Geomatys.
 
-Improvements
-------------
+### Improvements
 
 * Can now use pip to install Python `jpy` package directly from GitHub (#83).
   This works for Linux and OS X where C compilers are available by default
@@ -54,11 +48,9 @@ Improvements
 * Support for isAssignable checks when dealing with Python Strings and primitives, to allow
   matches for argument types such as `java.lang.Comparable` or `java.lang.Number`.
 
-Version 0.8
-===========
+## Version 0.8
 
-Fixes
------
+### Fixes
 
 * Java interface types don't include methods of extended interfaces (issue #64)
 * Loading of jpy DLL fails for user-specific Python installations on Windows (issue #58)
@@ -67,8 +59,7 @@ Fixes
 * Python interpreter crash occurred when executing del statement on Java arrays (issue #52)
 * Python extensions loaded from Java couldn't see Python symbols (Linux) (issue #38)
 
-Improvements
-------------
+### Improvements
 
 * It is now possible to use jpy Java API to work with multiple Python installations (issue #35).
   A tool called 'jpyutil.py' can be used to write configuration files that determine the required shared libraries
@@ -80,61 +71,53 @@ Improvements
   - removed need to specify JDK_HOME environment variable, if JAVA_HOME already points to a JDK
  * Added 'jclass' attribute to Python type that wraps a Java class (issue #63) .
  * Java API extensions
-  - new jpy.org.PyObject.executeCode() methods
-  - new jpy.org.PyModule.getBuiltins() method
-  - new jpy.org.PyModule.getMain() method
-  - new jpy.org.PyModule.extendSysPath() method
+  - new `jpy.org.PyObject.executeCode()` methods
+  - new `jpy.org.PyModule.getBuiltins()` method
+  - new `jpy.org.PyModule.getMain()` method
+  - new `jpy.org.PyModule.extendSysPath()` method
 * Java API configuration changes:
-  - System property jpy.jpyLib:
-  - System property jpy.jdlLib:
-  - System property jpy.pythonLib:
-  - System property jpy.config:
+  - System property `jpy.jpyLib`:
+  - System property `jpy.jdlLib`:
+  - System property `jpy.pythonLib`:
+  - System property `jpy.config`:
   - Loaded from
-    # File ./jpyconfig.properties
-    # Resource /jpyconfig.properties
-    # File ${jpy.config}
+    - File `./jpyconfig.properties`
+    - Resource `/jpyconfig.properties`
+    - File `${jpy.config}`
 * Python API configuration changes:
   - Loaded from
-    # File ./jpyconfig.py
-    # Resource ${jpy-module}/jpyconfig.py
+    - File `./jpyconfig.py`
+    - Resource `${jpy-module}/jpyconfig.py`
   - Attribute java_home
   - Attribute jvm_dll
 * Python API extensions
-  - new jpyutil module
-    # jpyutil.init_jvm(...)
-    # jpyutil.preload_jvm_lib(...)
-  - new jpyutil tool
-    # usage: jpyutil.py [-h] [--out OUT] [--java_home JAVA_HOME] [--jvm_dll JVM_DLL]
+  - new `jpyutil` module
+    - `jpyutil.init_jvm(...)`
+    - `jpyutil.preload_jvm_lib(...)`
+  - new `jpyutil` tool
+    - usage: `jpyutil.py [-h] [--out OUT] [--java_home JAVA_HOME] [--jvm_dll JVM_DLL]`
 * Added basic support for Java Scripting Engine API (issue #53)
 
-Other changes
--------------
+### Other changes
+
 * Switched to Apache 2.0 license from version 0.8 and later (issue #60)
 
-
-Version 0.7.5
-=============
+## Version 0.7.5
 
 * Fixed bad pointer in C-code which caused unpredictable crashes (issue #43)
 
-
-Version 0.7.4
-=============
+## Version 0.7.4
 
 * Fixed a problem where jpy crashes with unicode arguments (issue #42)
 * Fixed segmentation fault occurring occasionally during installation of jpy (issue #40)
 * Improved Java exception messages on Python errors (issue #39)
 
-
-Version 0.7.3
-=============
+## Version 0.7.3
 
 * Fixed problem where a Java primitive array argument has occasionally not been initialised by a
   related Python buffer argument (issue #37)
 
-
-Version 0.7.2
-=============
+## Version 0.7.2
 
 * Added backward compatibility with Python 2.7 (issue #34).
 * Added Java parameter annotation 'output' (issue #36).
@@ -146,16 +129,11 @@ Version 0.7.2
 * Added new diagnostic F_ERR flag to Java class PyLib.Diag
 * Java class PyLib is no longer instantiable
 
-
-Version 0.7.1
-=============
+## Version 0.7.1
 
 * Updated README and added MANIFEST.in after recognising that the jpy-0.7.zip distribution misses most of the
   required source files and learning what to do on this case.
 
-
-Version 0.7
-===========
+## Version 0.7
 
 * Initial version.
-
