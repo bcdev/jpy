@@ -24,7 +24,7 @@ languages.  It comes with a number of outstanding features:
 jpy has been tested with Python 3.4–3.8 and OpenJDK 8 on 64-bit Ubuntu Linux,
 Windows 10, and macOS.
 
-The initial development of jpy has been driven by the need to write Python
+The initial development of jpy was driven by the need to write Python
 extensions to an established scientific imaging application programmed in
 Java, namely the [SNAP](http://step.esa.int/) toolbox, the SeNtinel
 Application Platform project, funded by the [European Space
@@ -93,7 +93,8 @@ documentation.
 
 1. Make sure all Java *and* Python units tests run green
 2. Remove the `-SNAPSHOT` qualifier from versions names in both the Maven
-   `pom.xml` and `setup.py` files.
+   `pom.xml` and `setup.py` files, and update the version numbers and copyright
+   years in `jpyutil.py` and `doc/conf.py`.
 3. Generate Java API doc by running `mvn javadoc:javadoc` which will update
    directory `doc/_static`
 4. Update documentation, `cd doc` and run `make html` 
