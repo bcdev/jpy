@@ -531,7 +531,9 @@ def write_config_files(out_dir='.',
                        jvm_dll_file=None,
                        install_dir=None,
                        req_java_api_conf=True,
-                       req_py_api_conf=True):
+                       req_py_api_conf=True,
+                       jvm_properties=None,
+                       jvm_options=None):
     """
     Writes the jpy configuration files for Java and/or Python.
 
@@ -566,8 +568,14 @@ def write_config_files(out_dir='.',
                 f.write('jvm_dll = %s\n' % repr(jvm_dll_file))
                 f.write('jvm_maxmem = None\n')
                 f.write('jvm_classpath = []\n')
-                f.write('jvm_properties = {}\n')
-                f.write('jvm_options = []\n')
+                if jvm_properties is None:
+                    f.write('jvm_properties = {}\n')
+                else:
+                    f.write('jvm_properties = ' + str(jvm_properties) + '\n')
+                if jvm_options is None:
+                    f.write('jvm_options = []\n')
+                else:
+                    f.write('jvm_options = [''' + jvm_options + ''']\n''')
             logger.info("jpy Python API configuration written to '%s'" % py_api_config_file)
         except Exception:
             logger.exception("Error while writing Python API configuration")
