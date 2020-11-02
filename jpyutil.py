@@ -575,7 +575,7 @@ def write_config_files(out_dir='.',
                 if jvm_options is None:
                     f.write('jvm_options = []\n')
                 else:
-                    f.write('jvm_options = [''' + jvm_options + ''']\n''')
+                    f.write('jvm_options = [\'' + jvm_options + '\']\n')
             logger.info("jpy Python API configuration written to '%s'" % py_api_config_file)
         except Exception:
             logger.exception("Error while writing Python API configuration")
