@@ -2,8 +2,9 @@
 
 ## Version 0.10 (in development)
 
-* [#180] Add the ability to pass properties and options to write_config_files. These values get passed 
-  to the jvm when it is initialized.  Contribution by davidlehrian.
+* Add the ability to pass properties and options to write_config_files. These values get passed 
+  to the jvm when it is initialized.
+  [#180](https://github.com/bcdev/jpy/pull/180#issue-513362903) Contribution by davidlehrian.
 * Make jpy work with Anaconda by setting environment variable 
   `PYTHONHOME` from Java 
   [#143](https://github.com/bcdev/jpy/issues/143). Contribution by Dr-Irv.  
