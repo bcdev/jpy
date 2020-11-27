@@ -120,7 +120,8 @@ for:
     # Python 3.8 build, OpenSSL 1.1 is then automatically reinstalled by pyenv.)
     # Most of this configuration can be removed once we drop Python 3.4 support.
     - brew update
-    - brew install $JPY_MAC_OPENSSL_PACKAGE -f
+    - curl $JPY_MAC_OPENSSL_PACKAGE > openssl.rb
+    - brew install -f openssl.rb
     - brew install pyenv
     - export ssldir=/usr/local/opt/openssl
     - export PKG_CONFIG_PATH="${ssldir}/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
