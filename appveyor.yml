@@ -18,7 +18,7 @@ environment:
       # Python 3.4 is incompatible with OpenSSL 1.1, so we have to force the
       # installation of OpenSSL 1.0 (see https://bugs.python.org/issue31838
       # and https://gist.github.com/souzagab/0ae60e61939d51385de87904b65b2da2 ).
-      JPY_MAC_OPENSSL_PACKAGE: https://raw.githubusercontent.com/Homebrew/homebrew-core/64555220bfbf4a25598523c2e4d3a232560eaad7/Formula/openssl.rb
+      JPY_MAC_OPENSSL_PACKAGE: old_openssl.rb
     - JPY_PYTHON_HOME_WINDOWS: C:\Python35-x64
       JPY_PYTHON_HOME_UBUNTU: /home/appveyor/venv3.5
       JPY_MAC_PYTHON_VERSION: 3.5.9
@@ -120,8 +120,8 @@ for:
     # Python 3.8 build, OpenSSL 1.1 is then automatically reinstalled by pyenv.)
     # Most of this configuration can be removed once we drop Python 3.4 support.
     - brew update
-    - curl $JPY_MAC_OPENSSL_PACKAGE > openssl.rb
-    - brew install -f openssl.rb
+    - curl https://raw.githubusercontent.com/Homebrew/homebrew-core/64555220bfbf4a25598523c2e4d3a232560eaad7/Formula/openssl.rb > old_openssl.rb
+    - brew install -f $JPY_MAC_OPENSSL_PACKAGE
     - brew install pyenv
     - export ssldir=/usr/local/opt/openssl
     - export PKG_CONFIG_PATH="${ssldir}/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
