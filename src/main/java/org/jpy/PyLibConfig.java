@@ -38,6 +38,7 @@ class PyLibConfig {
     public static final String JPY_LIB_KEY = "jpy.jpyLib";
     public static final String JPY_CONFIG_KEY = "jpy.config";
     public static final String JPY_CONFIG_RESOURCE = "jpyconfig.properties";
+    public static final String JPY_CONFIG_PREFIX = "jpy.pythonPrefix";
 
     public enum OS {
         WINDOWS,

@@ -8,10 +8,10 @@
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  *
  * This file was modified by Illumon.
  *
@@ -128,7 +128,6 @@ public class PyObjectTest {
                 PyInputMode.SCRIPT, null, localMap);
         assertNotNull(pyVoid);
         assertEquals(null, pyVoid.getObjectValue());
-        
         assertNotNull(localMap.get("jpy"));
         assertNotNull(localMap.get("File"));
         assertNotNull(localMap.get("f"));
@@ -138,29 +137,33 @@ public class PyObjectTest {
         
         assertEquals(new File("test.txt"), localMap.get("f"));
     }
-    
+
     @Test
     public void testLocals() throws Exception {
         HashMap<String, Object> localMap = new HashMap<>();
         localMap.put("x", 7);
         localMap.put("y", 6);
-        PyObject pyVoid = PyObject.executeCode("z = x + y", PyInputMode.STATEMENT, null, localMap);
+        PyObject pyVoid = PyObject.executeCode("z = x + y",
+                                               PyInputMode.STATEMENT,
+                                               null,
+                                               localMap);
         assertEquals(null, pyVoid.getObjectValue());
-        
+
         System.out.println("LocalMap size = " + localMap.size());
         for (Map.Entry<String, Object> entry : localMap.entrySet()) {
             System.out.println("LocalMap[" + entry.getKey() + "]: " + entry.getValue());
         }
-        
+
         assertNotNull(localMap.get("x"));
         assertNotNull(localMap.get("y"));
         assertNotNull(localMap.get("z"));
-        
+
         assertEquals(7, localMap.get("x"));
         assertEquals(6, localMap.get("y"));
         assertEquals(13, localMap.get("z"));
+
     }
-    
+        
     @Test
     public void testExecuteScript_ErrorExpr() throws Exception {
         try {
@@ -209,7 +212,7 @@ public class PyObjectTest {
         PyObject a = myobj.getAttribute("a");
         Assert.assertEquals("Tut tut!", a.getStringValue());
     }
-    
+
     private boolean hasKey(Map<PyObject, PyObject> dict, String key) {
         for (Map.Entry<PyObject, PyObject> entry : dict.entrySet()) {
             if (entry.getKey().isString()) {
@@ -220,22 +223,22 @@ public class PyObjectTest {
         }
         return false;
     }
-    
+
     @Test
     public void testDictCopy() throws Exception {
         PyObject globals = PyLib.getMainGlobals();
         PyDictWrapper dict = globals.asDict();
         PyDictWrapper dictCopy = dict.copy();
-        
+
         PyObject.executeCode("x = 42", PyInputMode.STATEMENT, globals, dictCopy.unwrap());
-        
+
         boolean copyHasX = hasKey(dictCopy, "x");
         boolean origHasX = hasKey(dict, "x");
-        
+
         assertTrue(copyHasX);
         assertFalse(origHasX);
     }
-    
+
     @Test
     public void testCreateProxyAndCallSingleThreaded() throws Exception {
         // addTestDirToPythonSysPath();
@@ -349,6 +352,7 @@ public class PyObjectTest {
     
     private static interface ISimple {
         public int getValue();
+        public ISimple add(ISimple other);
     }
     
     private static ISimple newTestObj(PyModule pyModule, String pythonClass, int value) {
@@ -375,5 +379,10 @@ public class PyObjectTest {
         assertEquals(eqRes, eqResExpected);
         assertEquals(simple.hashCode() == simple2.hashCode(), eqResExpected);
         assertEquals(simple.equals(simple), true);
+        ISimple sum = simple.add(simple2);
+        assertEquals(sum.getValue(), 2468);
+        ISimple simple3 = newTestObj(pyModule, pythonClass, 5678);
+        sum = simple.add(simple3);
+        assertEquals(sum.getValue(), 1234 + 5678);
     }
 }

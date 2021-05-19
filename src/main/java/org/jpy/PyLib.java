@@ -22,7 +22,6 @@ package org.jpy;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Map;
 
 import static org.jpy.PyLibConfig.JPY_LIB_KEY;
 import static org.jpy.PyLibConfig.OS;
@@ -203,6 +202,11 @@ public class PyLib {
                 System.out.printf("org.jpy.PyLib:   %s%n", path);
             }
             Diag.setFlags(Diag.F_EXEC);
+        }
+        
+        String pythonHome = getProperty(PyLibConfig.JPY_CONFIG_PREFIX, false);
+        if (pythonHome != null) {
+            setPythonHome(pythonHome);
         }
 
         startPython0(extraPaths);
